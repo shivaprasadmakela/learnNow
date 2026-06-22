@@ -12,6 +12,7 @@ interface HomeProps {
     onSelectCourse: (id: number) => void;
     onResetProgress: () => void;
     searchQuery: string;
+    setSearchQuery: (val: string) => void;
     isLoggedIn: boolean;
     setAuthModalOpen: (val: boolean) => void;
 }
@@ -22,6 +23,7 @@ export const Home: React.FC<HomeProps> = ({
     onSelectCourse,
     onResetProgress: _onResetProgress,
     searchQuery,
+    setSearchQuery,
     isLoggedIn,
     setAuthModalOpen
 }) => {
@@ -62,6 +64,8 @@ export const Home: React.FC<HomeProps> = ({
                     setActiveTab={setActiveTab}
                     getCourseProgress={getCourseProgress}
                     onSelectCourse={onSelectCourse}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
                 />
                 <Community onSelectCourse={onSelectCourse} />
                 <FinalCTA onSelectCourse={onSelectCourse} isLoggedIn={isLoggedIn} setAuthModalOpen={setAuthModalOpen} />

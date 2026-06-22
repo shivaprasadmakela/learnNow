@@ -292,3 +292,34 @@
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* Auth Modal Mobile overrides */
+@media (max-width: 480px) {
+    .modalContainer {
+        padding: 24px;
+        border-radius: 16px;
+        width: 95%;
+    }
+    
+    .modalHeader {
+        margin-bottom: 20px;
+    }
+    
+    .logoTitle {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .subtitle {
+        font-size: 13px;
+    }
+    
+    .tabs {
+        margin-bottom: 20px;
+    }
+    
+    .tab {
+        padding: 8px;
+        font-size: 14px;
+    }
+}

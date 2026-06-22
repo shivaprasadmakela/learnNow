@@ -267,3 +267,95 @@
         margin: 0;
     }
 }
+
+/* Certificate Mobile Responsiveness overrides */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 12px 40px;
+    }
+    
+    .toolbar {
+        margin-bottom: 16px;
+    }
+    
+    .certificateOuterFrame {
+        margin: 0 8px;
+        border-radius: var(--radius-md);
+    }
+    
+    .certificateInnerPaper {
+        padding: 32px 16px;
+    }
+    
+    .certHeader {
+        margin-bottom: 24px;
+        gap: 12px;
+    }
+    
+    .academyLogo {
+        font-size: 1.35rem;
+    }
+    
+    .logoBrand, .logoAcademy {
+        font-size: 1.35rem;
+    }
+    
+    .docType {
+        font-size: 0.8rem;
+        width: 200px;
+        padding-bottom: 4px;
+    }
+    
+    .certBody {
+        margin-bottom: 32px;
+    }
+    
+    .congratsText {
+        font-size: 0.9rem;
+    }
+    
+    .studentName {
+        font-size: 1.85rem;
+        margin-bottom: 12px;
+    }
+    
+    .evaluationText {
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+        line-height: 1.5;
+    }
+    
+    .courseTitle {
+        font-size: 1.25rem;
+    }
+    
+    .certFooter {
+        gap: 20px;
+        margin-top: 16px;
+    }
+    
+    .footerRow {
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        text-align: center;
+    }
+    
+    .signatureBlock {
+        width: 150px;
+    }
+    
+    .signatureLine {
+        font-size: 1rem;
+        padding-bottom: 4px;
+    }
+    
+    .signLabel {
+        font-size: 0.7rem;
+    }
+    
+    .sealSvg {
+        width: 72px;
+        height: 72px;
+    }
+}

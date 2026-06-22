@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Course } from '../../../features/learning/types';
 import { Button } from '../../../shared/components/Button/Button';
-import { BookOpenIcon, LockIcon, RightArrowIcon } from '../../../shared/components/Icons';
+import { BookOpenIcon, LockIcon, RightArrowIcon, SearchIcon } from '../../../shared/components/Icons';
 import styles from './Home.module.css';
 
 interface CatalogBlockProps {
@@ -10,6 +10,8 @@ interface CatalogBlockProps {
     setActiveTab: (tab: string) => void;
     getCourseProgress: (courseId: number) => number;
     onSelectCourse: (courseId: number) => void;
+    searchQuery: string;
+    setSearchQuery: (val: string) => void;
 }
 
 export const CatalogBlock: React.FC<CatalogBlockProps> = ({
@@ -17,7 +19,9 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
     activeTab,
     setActiveTab,
     getCourseProgress,
-    onSelectCourse
+    onSelectCourse,
+    searchQuery,
+    setSearchQuery
 }) => {
     return (
         <section id="catalog-section" className={styles.darkBlockContainer}>
@@ -42,6 +46,18 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
                         Software engineering is constantly changing. Learn backend architectures,
                         frontend hooks, and API integrations with hands-on practice.
                     </p>
+                </div>
+
+                {/* Mobile Search Input */}
+                <div className={styles.mobileSearchContainer}>
+                    <SearchIcon size={18} className={styles.mobileSearchIcon} />
+                    <input
+                        type="text"
+                        className={styles.mobileSearchInput}
+                        placeholder="Search courses..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                    />
                 </div>
 
                 {/* Course cards */}

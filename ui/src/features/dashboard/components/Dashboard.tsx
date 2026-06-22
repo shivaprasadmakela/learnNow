@@ -80,7 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         ) : (
                             <div className={styles.profileForm}>
                                 <h3 className={styles.formTitle}>Edit Profile Settings</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '16px', width: '100%' }}>
+                                <div className={styles.formRow}>
                                     <Input 
                                         label="Avatar (Emoji)" 
                                         value={avatar} 

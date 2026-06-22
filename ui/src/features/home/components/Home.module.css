@@ -658,3 +658,163 @@
     max-width: 580px;
     line-height: 1.7;
 }
+
+/* Home Page Mobile Responsiveness Override */
+@media (max-width: 768px) {
+    .noticeBanner {
+        padding: 8px 16px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 6px;
+    }
+    
+    .heroSection {
+        padding: 48px 16px 64px;
+    }
+    
+    .heroTitle {
+        font-size: 2rem;
+        margin-bottom: 16px;
+    }
+    
+    .heroSubtitle {
+        font-size: 1rem;
+        margin-bottom: 28px;
+    }
+    
+    .heroButtons {
+        flex-direction: column;
+        width: 100%;
+        gap: 12px;
+    }
+    
+    .heroButtons button,
+    .heroSecondaryBtn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .darkBlockContainer {
+        padding: 0 16px;
+        margin-top: -24px;
+    }
+    
+    .darkBlock {
+        padding: 32px 20px 40px;
+    }
+    
+    .darkBlockTitle {
+        font-size: 1.85rem;
+        margin-bottom: 12px;
+    }
+    
+    .darkBlockDesc {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .darkBlockHeader {
+        margin-bottom: 32px;
+    }
+    
+    .mobileSearchContainer {
+        display: block;
+        position: relative;
+        width: 100%;
+        margin-bottom: 24px;
+        max-width: 440px;
+    }
+    
+    .mobileSearchInput {
+        width: 100%;
+        padding: 10px 16px 10px 48px;
+        border-radius: var(--radius-pill);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        font-size: 0.95rem;
+        outline: none;
+        transition: all var(--transition-fast);
+    }
+    
+    .mobileSearchInput:focus {
+        border-color: var(--tech-blue);
+        background-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+    }
+    
+    .mobileSearchIcon {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.4);
+        pointer-events: none;
+    }
+    
+    .coursesGrid {
+        gap: 16px;
+        margin-bottom: 36px;
+    }
+    
+    .courseCard {
+        padding: 20px;
+        min-height: auto;
+    }
+    
+    .cardTitle {
+        font-size: 1.15rem;
+    }
+    
+    .cardDesc {
+        margin-bottom: 16px;
+    }
+    
+    .communitySection {
+        padding: 40px 16px;
+        gap: 32px;
+    }
+    
+    .communityTitle {
+        font-size: 1.85rem;
+    }
+    
+    .communityDesc {
+        font-size: 0.95rem;
+        margin-bottom: 20px;
+    }
+    
+    .gearCard {
+        padding: 32px 20px 24px;
+    }
+    
+    .gearTitle {
+        font-size: 2.75rem;
+        margin-bottom: 20px;
+    }
+    
+    .pipelineNode {
+        min-width: 100%;
+        font-size: 0.8rem;
+        padding: 10px 16px;
+    }
+    
+    .gearSubtitle {
+        font-size: 0.72rem;
+        margin-top: 20px;
+    }
+    
+    .bottomBannerSection {
+        padding: 60px 16px;
+    }
+    
+    .bottomTitle {
+        font-size: 1.85rem;
+    }
+    
+    .bottomDesc {
+        font-size: 0.95rem;
+        margin-bottom: 28px;
+    }
+}

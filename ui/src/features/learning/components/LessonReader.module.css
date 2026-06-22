@@ -634,3 +634,81 @@
     text-align: center;
     color: var(--text-secondary);
 }
+
+/* Lesson Reader Workbench Responsiveness overrides */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1001;
+        box-shadow: var(--shadow-lg);
+        background-color: var(--bg-primary);
+        border-right: 1px solid var(--border-color);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .sidebarOpen {
+        width: 280px;
+        transform: translateX(0);
+    }
+    
+    .sidebarCollapsed {
+        width: 280px;
+        transform: translateX(-280px);
+        border-right: none;
+    }
+    
+    .scrollArea {
+        padding: 24px 16px;
+    }
+    
+    .lessonHeadingTitle {
+        font-size: 1.75rem;
+    }
+    
+    .mdH1 {
+        font-size: 1.5rem;
+    }
+    
+    .mdH2 {
+        font-size: 1.25rem;
+    }
+    
+    .mdH3 {
+        font-size: 1.1rem;
+    }
+    
+    .mdPara, .mdLi, .mdLiOl {
+        font-size: 0.95rem;
+    }
+    
+    .sandboxBody {
+        grid-template-columns: 1fr;
+    }
+    
+    .editorPane {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .quizCard {
+        padding: 20px;
+    }
+    
+    .optionItem {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .readerFooterBar {
+        padding: 0 12px;
+        height: 64px;
+    }
+    
+    .navControlBtn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+}

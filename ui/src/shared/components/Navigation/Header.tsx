@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
                 <div className={styles.logo} onClick={() => changeView(isLoggedIn ? 'DASHBOARD' : 'HOME')}>
                     <span className={styles.logoBrand}>Bugfix</span>
-                    <span className={styles.logoAcademy}>Academy</span>
+                    <span className={`${styles.logoAcademy} ${styles.hideOnMobile}`}>Academy</span>
                 </div>
             </div>
 
@@ -80,8 +80,8 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                     {theme === 'light' ? <MoonIcon size={20} /> : <SunIcon size={20} />}
                 </button>
-                <button className={styles.headerIconBtn}><GlobeIcon size={20} /></button>
-                <button className={styles.headerIconBtn}><HelpIcon size={20} /></button>
+                <button className={`${styles.headerIconBtn} ${styles.hideOnMobile}`}><GlobeIcon size={20} /></button>
+                <button className={`${styles.headerIconBtn} ${styles.hideOnMobile}`}><HelpIcon size={20} /></button>
                 
                 {isLoggedIn ? (
                     <div className={styles.loggedInContainer}>

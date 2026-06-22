@@ -464,3 +464,46 @@
     color: var(--text-primary);
     border-color: var(--text-secondary);
 }
+
+/* Mobile Responsiveness for Header and Sidebar */
+@media (max-width: 768px) {
+    .header {
+        padding: 0 16px;
+    }
+    
+    .headerSearchContainer {
+        display: none !important;
+    }
+    
+    .hideOnMobile {
+        display: none !important;
+    }
+    
+    .headerRight {
+        gap: 8px;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 64px;
+        left: -256px;
+        width: 256px;
+        height: calc(100vh - 64px);
+        z-index: 1000;
+        box-shadow: var(--shadow-lg);
+        border-right: 1px solid var(--border-color);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color var(--transition-normal);
+    }
+    
+    .sidebarExpanded {
+        transform: translateX(256px);
+        padding: 16px 12px;
+    }
+    
+    .sidebarCollapsed {
+        transform: translateX(0);
+        width: 256px;
+        padding: 16px 12px;
+        border-right: none;
+    }
+}

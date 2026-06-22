@@ -374,3 +374,68 @@
     color: var(--tech-red);
     margin-bottom: 8px;
 }
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 16px;
+    width: 100%;
+}
+
+@media (max-width: 480px) {
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dashboard Responsiveness Overrides */
+@media (max-width: 768px) {
+    .mainLayout {
+        padding: 24px 16px;
+        gap: 32px;
+    }
+    
+    .profileCard {
+        padding: 24px;
+    }
+    
+    .statsCardGrid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+    
+    .pathwayLeft {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .pathwayRight {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        width: 100%;
+    }
+    
+    .pathwayRight button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .certificateShowcaseCard {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+    
+    .certificateShowcaseCard button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .certShowcaseLeft {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}

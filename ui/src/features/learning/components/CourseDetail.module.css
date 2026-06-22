@@ -334,3 +334,42 @@
     text-align: center;
     color: var(--text-secondary);
 }
+
+/* Course Detail Mobile Overrides */
+@media (max-width: 768px) {
+    .heroBanner {
+        padding: 40px 16px;
+    }
+    
+    .title {
+        font-size: 2rem;
+    }
+    
+    .desc {
+        font-size: 1rem;
+        margin-bottom: 24px;
+    }
+    
+    .mainLayout {
+        padding: 40px 16px;
+        gap: 40px;
+    }
+    
+    .sectionTitle {
+        font-size: 1.45rem;
+        margin-bottom: 16px;
+    }
+    
+    .lessonItem {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .lessonItemRight {
+        width: 100%;
+        justify-content: space-between;
+        padding-left: 40px;
+    }
+}
