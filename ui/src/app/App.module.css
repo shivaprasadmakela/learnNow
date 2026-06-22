@@ -65,5 +65,31 @@
     flex-direction: column;
     height: calc(100vh - 64px);
     overflow-y: auto;
+    width: 100%;
+}
+
+.backdrop {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .backdrop {
+        display: block;
+        position: fixed;
+        top: 64px;
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - 64px);
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 99;
+        animation: fadeIn var(--transition-fast) ease-out;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 

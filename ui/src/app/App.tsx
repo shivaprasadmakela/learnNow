@@ -109,6 +109,7 @@ export default function App() {
                             }}
                             onResetProgress={resetAllProgress}
                             searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
                             isLoggedIn={isLoggedIn}
                             setAuthModalOpen={setAuthModalOpen}
                         />
@@ -161,6 +162,11 @@ export default function App() {
                     )}
                 </main>
             </div>
+
+            {/* Backdrop overlay for mobile sidebar */}
+            {isExpanded && (
+                <div className={styles.backdrop} onClick={() => setIsExpanded(false)} />
+            )}
 
             {/* Authentication Glassmorphic Modal */}
             <AuthModal
