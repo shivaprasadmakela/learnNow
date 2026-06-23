@@ -507,3 +507,48 @@
         border-right: none;
     }
 }
+
+.headerStatsRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-right: 8px;
+}
+
+.headerStatBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.headerStatBadge:hover {
+    border-color: var(--tech-blue);
+    background-color: var(--bg-tertiary);
+}
+
+.headerStatValue {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+    .headerStatsRow {
+        gap: 6px;
+        margin-right: 0;
+    }
+    
+    .headerStatBadge {
+        padding: 4px 8px;
+        gap: 4px;
+    }
+    
+    .headerStatValue {
+        font-size: 0.8rem;
+    }
+}

@@ -41,7 +41,8 @@
     gap: 16px;
 }
 
-.xpBadge, .streakBadge {
+.xpBadge,
+.streakBadge {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -55,7 +56,7 @@
 }
 
 .mainLayout {
-    max-width: 1200px;
+
     margin: 0 auto;
     padding: 32px 24px;
     display: flex;
@@ -395,7 +396,8 @@
     width: 100%;
 }
 
-.pathwayCard, .pathwayCardLocked {
+.pathwayCard,
+.pathwayCardLocked {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -596,7 +598,9 @@
     gap: 16px;
 }
 
-.badgeGraphicShield, .badgeGraphicDiamond, .badgeGraphicOrange {
+.badgeGraphicShield,
+.badgeGraphicDiamond,
+.badgeGraphicOrange {
     width: 44px;
     height: 44px;
     display: flex;
@@ -672,8 +676,15 @@
 
 /* Animations */
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Media Queries for full layout responsiveness */
@@ -682,33 +693,34 @@
         grid-template-columns: 1fr;
         gap: 24px;
     }
-    
+
     .activitiesGrid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     .heroCard {
         padding: 24px;
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .heroLeft {
         max-width: 100%;
     }
-    
+
     .heroRight {
         display: flex;
         justify-content: center;
     }
-    
-    .pathwayCard, .pathwayCardLocked {
+
+    .pathwayCard,
+    .pathwayCardLocked {
         flex-direction: column;
         align-items: stretch;
         gap: 20px;
     }
-    
+
     .pathwayRight {
         width: 100%;
         justify-content: space-between;

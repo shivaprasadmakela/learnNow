@@ -149,8 +149,8 @@ export const Certificate: React.FC<CertificateProps> = ({
                     {/* Header */}
                     <div className={styles.certHeader}>
                         <div className={styles.academyLogo}>
-                            <span className={styles.logoBrand}>Bugfix</span>
-                            <span className={styles.logoAcademy}>Academy</span>
+                            <span className={styles.logoBrand}>Learn</span>
+                            <span className={styles.logoAcademy}>with Shiva</span>
                         </div>
                         <span className={styles.docType}>Certificate of Completion</span>
                     </div>
@@ -172,7 +172,7 @@ export const Certificate: React.FC<CertificateProps> = ({
                     <div className={styles.certFooter}>
                         <div className={styles.footerRow}>
                             <div className={styles.signatureBlock}>
-                                <div className={styles.signatureLine}>Bugfix Academy Team</div>
+                                <div className={styles.signatureLine}>Learn with Shiva Team</div>
                                 <span className={styles.signLabel}>Program Directorate</span>
                             </div>
                             <div className={styles.badgeSeal}>
@@ -191,7 +191,7 @@ export const Certificate: React.FC<CertificateProps> = ({
                         {/* Cryptographic verification bottom metadata */}
                         <div className={styles.verificationBlock}>
                             <span className={styles.verificationText}>
-                                Certificate verification link: <strong>academy.bugfix.com/verify/{verificationHash.slice(7, 24)}</strong>
+                                Certificate verification link: <strong>learn-with-shiva.com/verify/{verificationHash.slice(7, 24)}</strong>
                             </span>
                             <span className={styles.verificationText}>
                                 Security Authentication Hash: <strong>{verificationHash}</strong>

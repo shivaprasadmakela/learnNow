@@ -11,7 +11,7 @@ export const Community: React.FC<CommunityProps> = ({ onSelectCourse }) => {
             <div className={styles.communityLeft}>
                 <h2 className={styles.communityTitle}>Learn and build with other developers</h2>
                 <p className={styles.communityDesc}>
-                    Continuous learning starts with community. Join the Bugfix Academy program and
+                    Continuous learning starts with community. Join the Learn with Shiva program and
                     accelerate your journey with structured learning paths, collaborative projects,
                     and hands-on exercises — at no cost to you.
                 </p>

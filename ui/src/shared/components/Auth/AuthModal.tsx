@@ -77,7 +77,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
 
                 <div className={styles.modalHeader}>
-                    <div className={styles.logoTitle}>BUGFIX ACADEMY</div>
+                    <div className={styles.logoTitle}>LEARN WITH SHIVA</div>
                     <p className={styles.subtitle}>
                         {isSignUpMode 
                             ? "Start your journey in React & Spring Boot" 

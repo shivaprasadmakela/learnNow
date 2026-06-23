@@ -55,7 +55,7 @@ export default function App() {
         return (
             <div className={styles.loadingScreen}>
                 <div className={styles.spinner}></div>
-                <p>Loading Bugfix Academy Platform...</p>
+                <p>Loading Learn with Shiva Platform...</p>
             </div>
         );
     }
@@ -75,6 +75,7 @@ export default function App() {
                 activeView={activeView}
                 changeView={changeView}
                 profile={profile}
+                progress={progress}
                 theme={theme}
                 toggleTheme={toggleTheme}
                 searchQuery={searchQuery}

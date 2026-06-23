@@ -51,11 +51,7 @@ const MaximizeIcon = () => (
     </svg>
 );
 
-const StarIcon = ({ size = 16 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="#eab308" stroke="#ca8a04" strokeWidth="2">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-    </svg>
-);
+// SVG Icons helpers
 
 interface DashboardProps {
     courses: Course[];
@@ -73,7 +69,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     courses,
     progress,
     profile,
-    onBack,
+    onBack: _onBack,
     onResetProgress,
     onSelectCourse,
     onSelectLesson,
@@ -104,7 +100,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     // Find active learning lesson
     const activeCourse = courses.find(c => c.id === 1);
     let nextLesson: any = null;
-    let pathBreadcrumb = "Bugfix Paths > Fullstack Development";
+    let pathBreadcrumb = "Shiva Paths > Fullstack Development";
     let activeLessonTitle = "All completed! Check your portal.";
     
     if (activeCourse && activeCourse.modules) {
@@ -192,23 +188,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     return (
         <div className={styles.container}>
-            {/* Top Toolbar / Profile Header */}
-            <header className={styles.header}>
-                <button className={styles.backBtn} onClick={onBack}>
-                    ← Back to catalog
-                </button>
-                <div className={styles.headerRightInfo}>
-                    <div className={styles.xpBadge}>
-                        <StarIcon size={16} />
-                        <span><strong>{completedCount * 150 + (claimStatus === 'claimed' ? 500 : 0)}</strong> XP</span>
-                    </div>
-                    <div className={styles.streakBadge}>
-                        <FlameIcon size={18} active={currentStreak > 0} />
-                        <span><strong>{currentStreak}</strong> Day Streak</span>
-                    </div>
-                </div>
-            </header>
-
             <main className={styles.mainLayout}>
                 {/* Profile collapsable settings block */}
                 {isEditing ? (
