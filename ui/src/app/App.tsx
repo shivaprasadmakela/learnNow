@@ -148,6 +148,7 @@ export default function App() {
                             onBack={() => changeView('HOME')}
                             onResetProgress={resetAllProgress}
                             onSelectCourse={selectCourse}
+                            onSelectLesson={selectLesson}
                             onSaveProfile={saveProfile}
                             onChangeView={changeView}
                         />
