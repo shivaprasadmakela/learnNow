@@ -3,6 +3,7 @@ import { useLearning, CourseDetail, LessonReader } from '../features/learning';
 import { Home } from '../features/home';
 import { Dashboard } from '../features/dashboard';
 import { Certificate } from '../features/certificate';
+import { Paths } from '../features/paths';
 import { Header, Sidebar, AuthModal } from '../shared/components';
 import styles from './App.module.css';
 
@@ -94,7 +95,6 @@ export default function App() {
                     setIsCollectionsExpanded={setIsCollectionsExpanded}
                     activeView={activeView}
                     changeView={changeView}
-                    selectCourse={selectCourse}
                     isLoggedIn={isLoggedIn}
                 />
 
@@ -160,6 +160,12 @@ export default function App() {
                             course={currentCourse || (courses.length > 0 ? courses[0] : null)}
                             profile={profile}
                             onBack={() => changeView('DASHBOARD')}
+                        />
+                    )}
+
+                    {activeView === 'PATHS' && (
+                        <Paths 
+                            searchQuery={searchQuery}
                         />
                     )}
                 </main>
