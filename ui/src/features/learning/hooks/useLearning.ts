@@ -3,7 +3,7 @@ import { supabase } from '../../../shared/supabaseClient';
 import type { Course, Lesson, UserProgress, UserProfile } from '../types';
 import * as api from '../api/learningApi';
 
-export type ViewState = 'HOME' | 'COURSE_DETAIL' | 'LESSON_READER' | 'DASHBOARD' | 'CERTIFICATE';
+export type ViewState = 'HOME' | 'COURSE_DETAIL' | 'LESSON_READER' | 'DASHBOARD' | 'CERTIFICATE' | 'PATHS';
 
 export const useLearning = () => {
     const [activeView, setActiveView] = useState<ViewState>('HOME');
@@ -65,6 +65,8 @@ export const useLearning = () => {
                 setActiveView('HOME');
             } else if (path === '/dashboard') {
                 setActiveView('DASHBOARD');
+            } else if (path === '/paths') {
+                setActiveView('PATHS');
             } else if (path === '/certificate') {
                 setActiveView('CERTIFICATE');
             } else if (path.startsWith('/course/')) {
@@ -180,6 +182,7 @@ export const useLearning = () => {
     const changeView = useCallback((view: ViewState) => {
         if (view === 'HOME') navigate('/');
         else if (view === 'DASHBOARD') navigate('/dashboard');
+        else if (view === 'PATHS') navigate('/paths');
         else if (view === 'CERTIFICATE') navigate('/certificate');
         else if (view === 'COURSE_DETAIL') {
             if (currentCourse) navigate(`/course/${currentCourse.id}`);

@@ -18,7 +18,6 @@ interface SidebarProps {
     setIsCollectionsExpanded: (val: boolean) => void;
     activeView: string;
     changeView: (view: any) => void;
-    selectCourse: (courseId: number) => void;
     isLoggedIn: boolean;
 }
 
@@ -29,7 +28,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setIsCollectionsExpanded,
     activeView,
     changeView,
-    selectCourse,
     isLoggedIn
 }) => {
     return (
@@ -79,8 +77,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {isLoggedIn && (
                         <>
                             <div 
-                                className={styles.navItemExpanded}
-                                onClick={() => selectCourse(1)}
+                                className={`${styles.navItemExpanded} ${activeView === 'PATHS' ? styles.navItemActive : ''}`}
+                                onClick={() => changeView('PATHS')}
                                 title="Paths"
                             >
                                 <PathsIcon size={20} />
@@ -176,10 +174,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <>
                             <div 
                                 className={styles.navItemCollapsed}
-                                onClick={() => selectCourse(1)}
+                                onClick={() => changeView('PATHS')}
                                 title="Paths"
                             >
-                                <div className={styles.iconPill}>
+                                <div className={`${styles.iconPill} ${activeView === 'PATHS' ? styles.iconPillActive : ''}`}>
                                     <PathsIcon size={20} />
                                 </div>
                                 <span className={styles.navLabelCollapsed}>Paths</span>
