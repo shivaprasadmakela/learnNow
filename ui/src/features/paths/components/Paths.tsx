@@ -25,10 +25,10 @@ interface PathItem {
 const PATHS_DATA: PathItem[] = [
     {
         id: 1,
-        title: "DevSecOps",
-        category: "Security",
-        managedBy: "Google Cloud",
-        description: "Integrate security practices into your DevOps pipeline. Learn container security, vulnerability scanning, and secure deployments on Google Cloud.",
+        title: "HTML5, CSS3, & Web Layouts",
+        category: "Frontend",
+        managedBy: "Web Dev Skills",
+        description: "Integrate semantic design practices into your frontend development. Learn CSS layout systems, responsive design, and accessible styling.",
         modules: 4,
         duration: "12 hours",
         activitiesCount: 12,
@@ -36,40 +36,40 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 101,
-                title: "Introduction to DevSecOps on Google Cloud",
+                title: "Introduction to HTML5",
                 tags: ["Course"],
                 duration: "2 hours",
-                description: "Understand the core principles of DevSecOps and how Google Cloud tools facilitate security automation throughout the development lifecycle."
+                description: "Understand the core syntax of modern HTML5 and how browsers render documents."
             },
             {
                 id: 102,
-                title: "Configuring Cloud Build for Secure Deployments",
+                title: "Styling layouts with CSS Flexbox",
                 tags: ["Lab"],
                 duration: "1 hour",
-                description: "In this hands-on lab, you will configure a Cloud Build pipeline to scan container images for vulnerabilities before deploying."
+                description: "In this hands-on lab, you will design responsive single-axis layouts using CSS Flexbox."
             },
             {
                 id: 103,
-                title: "Vulnerability Scanning with Artifact Registry",
+                title: "Semantic Web & Accessibility",
                 tags: ["Course", "Skill badge"],
                 duration: "2 hours",
-                description: "Learn how to use Artifact Registry to store and automatically scan container images for security vulnerabilities."
+                description: "Learn how to use semantic elements to build pages accessible to screen readers."
             },
             {
                 id: 104,
-                title: "Secure Kubernetes Containers with GKE",
+                title: "Responsive Design with CSS Grid",
                 tags: ["Course", "Skill badge"],
                 duration: "7 hours",
-                description: "Implement security best practices on Google Kubernetes Engine (GKE), including role-based access control and network policies."
+                description: "Implement complex grid interfaces, grid-areas, and media queries for mobile-first views."
             }
         ]
     },
     {
         id: 2,
-        title: "Vertex AI Search for Retail",
-        category: "AI / ML",
-        managedBy: "Google Cloud",
-        description: "Build advanced retail search engines using Vertex AI. Learn query understanding, personalized recommendations, and semantic search.",
+        title: "Modern Web Development with React",
+        category: "React",
+        managedBy: "React Academy",
+        description: "Build advanced Single Page Applications (SPAs) using React. Learn state management, components lifecycle, and standard hooks.",
         modules: 3,
         duration: "8 hours",
         activitiesCount: 9,
@@ -77,33 +77,33 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 201,
-                title: "Introduction to Vertex AI Search",
+                title: "React Fundamentals",
                 tags: ["Course"],
                 duration: "2 hours",
-                description: "Explore the capabilities of Vertex AI Search and how it enables search engines optimized for retail products and customer queries."
+                description: "Explore React components, virtual DOM reconciliation, JSX syntax, and static page rendering."
             },
             {
                 id: 202,
-                title: "Setting Up Retail Data Stores & Search Engines",
+                title: "Building a React Todo Application",
                 tags: ["Lab"],
                 duration: "1.5 hours",
-                description: "Learn to ingest retail catalog data into Vertex AI Search, configure schema mappings, and run search queries in Google Cloud."
+                description: "Create your first interactive app using states, props, event handlers, and lists key arrays."
             },
             {
                 id: 203,
-                title: "Configuring Recommendations and Personalization",
+                title: "React Hooks & Custom Hooks",
                 tags: ["Course", "Skill badge"],
                 duration: "4.5 hours",
-                description: "Implement personalization algorithms and product recommendations based on search histories and customer behavior."
+                description: "Understand useEffect, useRef, useMemo, and write custom reuse hooks for modular data fetching."
             }
         ]
     },
     {
         id: 3,
-        title: "Professional Cloud Architect Certification Renewal",
-        category: "Infrastructure",
-        managedBy: "Google Cloud",
-        description: "Refresh and renew your Google Cloud Architect certification. Deepen your knowledge of HA design, migrations, and cost optimization.",
+        title: "Relational Database Design & SQL Fundamentals",
+        category: "Databases",
+        managedBy: "SQL Academy",
+        description: "Learn relational database design from scratch. Master SQL queries, data relationships, and optimization patterns.",
         modules: 5,
         duration: "16 hours",
         activitiesCount: 15,
@@ -111,33 +111,33 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 301,
-                title: "Cloud Architecture Best Practices",
+                title: "Introduction to Databases & SQL",
                 tags: ["Course"],
                 duration: "4 hours",
-                description: "Review core architecture principles on GCP: reliability, operational excellence, security, performance, and cost optimization."
+                description: "Review core database concepts: tables, primary keys, relational design, and basic SELECT queries."
             },
             {
                 id: 302,
-                title: "Designing for High Availability on Compute Engine",
+                title: "Writing SQL SELECT queries",
                 tags: ["Lab"],
                 duration: "2 hours",
-                description: "Hands-on implementation of managed instance groups, autoscaling, and global load balancing for high-availability apps."
+                description: "Hands-on implementation of WHERE clauses, ORDER BY, GROUP BY, and basic SQL aggregates."
             },
             {
                 id: 303,
-                title: "Designing Secure and Cost-Optimized Architectures",
+                title: "Advanced SQL Joins and Aggregations",
                 tags: ["Course", "Skill badge"],
                 duration: "10 hours",
-                description: "Review advanced cost management practices, resource optimization tools, identity management, and compliance on Google Cloud."
+                description: "Review INNER JOIN, LEFT/RIGHT OUTER JOIN, subqueries, and database indexing for high performance."
             }
         ]
     },
     {
         id: 4,
-        title: "Professional Machine Learning Engineer Certification",
-        category: "AI / ML",
-        managedBy: "Google Cloud",
-        description: "A Machine Learning Engineer designs, builds, and productionizes ML systems to solve business challenges. This certification learning path provides the advanced knowledge and practical skills required for this role, preparing you to successfully operate and maintain ML systems on Google Cloud.\n\nThrough a curated collection of on-demand courses, labs, and skill badges, you will gain real-world, applied experience with Google Cloud technologies. This path focuses on the essential skills for the ML Engineer role, from designing and building ML systems to optimizing and maintaining them in production.\n\nUpon completion, you will be equipped with the skills validated by the Professional Machine Learning Engineer certification. Take the next step in your professional journey and demonstrate your expertise by preparing for the Google Cloud Professional Machine Learning Engineer exam.\n#googlecloudcertified",
+        title: "Frontend Web Developer Certification",
+        category: "Frontend",
+        managedBy: "Web Dev Skills",
+        description: "A Frontend Web Developer designs, builds, and optimizes web applications to solve client and business challenges. This certification learning path provides the advanced knowledge and practical skills required for this role, preparing you to successfully create and maintain modern websites and user interfaces.\n\nThrough a curated collection of on-demand courses, labs, and skill badges, you will gain real-world, applied experience with web technologies. This path focuses on the essential skills for the Frontend Developer role, from designing and styling layouts to optimizing performance and operationalizing React applications.\n\nUpon completion, you will be equipped with the skills validated by the Frontend Web Developer certification. Take the next step in your professional journey and demonstrate your expertise by preparing for the Frontend Web Developer exam.\n#webdevelopercertified",
         modules: 6,
         duration: "24 hours",
         activitiesCount: 18,
@@ -145,75 +145,75 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 401,
-                title: "Build a Certification Study Guide: PMLE",
+                title: "Build a Certification Study Guide: Frontend Developer",
                 tags: ["Course"],
                 duration: "1 hour",
-                description: "Learn how to use NotebookLM to create a personalized study guide for the Professional Machine Learning Engineer certification exam."
+                description: "Learn how to use NotebookLM to create a personalized study guide for the Frontend Web Developer certification exam."
             },
             {
                 id: 402,
-                title: "A Tour of Google Cloud Hands-on Labs",
+                title: "A Tour of the Browser Developer Tools",
                 tags: ["Lab"],
                 duration: "45 minutes",
-                description: "In this first hands-on lab you will access the Google Cloud console and use these basic Google Cloud features: Projects, Resources, IAM."
+                description: "In this hands-on lab, you will explore Chrome DevTools, inspect elements, analyze network requests, and debug JS code."
             },
             {
                 id: 403,
-                title: "Introduction to AI and Machine Learning on Google Cloud",
+                title: "Introduction to HTML5 and CSS3",
                 tags: ["Course"],
                 duration: "8 hours",
-                description: "This course introduces Google Cloud's AI and machine learning (ML) capabilities, with a focus on developing both generative and predictive ML workflows."
+                description: "This course introduces semantic HTML5 elements, CSS styling, flexbox, grid, responsive layouts, and basic accessibility practices."
             },
             {
                 id: 404,
-                title: "Prepare Data for ML APIs on Google Cloud",
+                title: "Intermediate JavaScript: DOM & Web APIs",
                 tags: ["Course", "Skill badge"],
-                duration: "45 minutes",
-                description: "Complete the introductory Prepare Data for ML APIs on Google Cloud skill badge to demonstrate skills in the following: cleaning data, API usage, and pipeline setup."
+                duration: "2 hours",
+                description: "Complete the intermediate JS course and earn a skill badge validating DOM manipulation, event loops, and asynchronous web requests."
             },
             {
                 id: 405,
-                title: "Create ML Models with BigQuery ML",
+                title: "SQL Foundations for Web Developers",
                 tags: ["Course", "Skill badge"],
-                duration: "30 minutes",
-                description: "Complete the intermediate Create ML Models with BigQuery ML skill badge to demonstrate skills in creating and evaluating machine learning models using standard SQL."
+                duration: "3 hours",
+                description: "Complete the database fundamentals course. Learn schema design, SQL SELECT queries, joins, and indexing for fast performance."
             },
             {
                 id: 406,
-                title: "Engineer Data for Predictive Modeling with BigQuery ML",
+                title: "React Core Concepts: State, Props & Effects",
                 tags: ["Course", "Skill badge"],
-                duration: "30 minutes",
-                description: "Complete the intermediate Engineer Data for Predictive Modeling with BigQuery ML skill badge to demonstrate skills in the following: feature engineering and hyperparameter tuning."
+                duration: "4 hours",
+                description: "Complete the React core course. Build custom components, handle user state, implement side effects with hooks, and manage forms."
             },
             {
                 id: 407,
-                title: "[Deprecated] Build, Train and Deploy ML Models with Keras on Google Cloud",
+                title: "CSS Frameworks & Responsive Design Systems",
                 tags: ["Course"],
                 duration: "3 hours",
-                description: "This course covers building ML models with Keras on Google Cloud, training models, and deploying them to Vertex AI endpoints for online predictions."
+                description: "Explore popular CSS frameworks like Tailwind CSS, Bootstrap, and CSS modules to rapidly prototype responsive web interfaces."
             },
             {
                 id: 408,
-                title: "Production Machine Learning Systems",
+                title: "State Management in React: Redux & Zustand",
                 tags: ["Course"],
                 duration: "4 hours",
-                description: "This course covers how to implement the various flavors of production ML systems—static, dynamic, batch, and online inference."
+                description: "Learn how to manage global state in complex React applications using Redux Toolkit, Context API, and Zustand."
             },
             {
                 id: 409,
-                title: "Machine Learning Operations (MLOps): Getting Started",
+                title: "Web Security Essentials: CORS, XSS & CSP",
                 tags: ["Course"],
                 duration: "5 hours",
-                description: "This course introduces participants to MLOps tools and best practices for deploying, evaluating, monitoring, and operating production ML systems."
+                description: "Understand common web vulnerabilities, implement security headers, prevent Cross-Site Scripting (XSS), and configure CORS."
             }
         ]
     },
     {
         id: 5,
-        title: "Agentic AI on Google Cloud",
-        category: "Agents",
-        managedBy: "Google Cloud",
-        description: "Develop autonomous AI agents using Gemini and LangChain on GCP. Implement tools, agent orchestration, and memory systems.",
+        title: "JavaScript Essentials & Advanced DOM",
+        category: "JavaScript",
+        managedBy: "JS Academy",
+        description: "Develop interactive web applications using JavaScript. Implement event handling, asynchronous tasks, and ES6+ features.",
         modules: 4,
         duration: "10 hours",
         activitiesCount: 12,
@@ -221,40 +221,40 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 501,
-                title: "Fundamentals of Agentic AI",
+                title: "JavaScript Foundations",
                 tags: ["Course"],
                 duration: "2 hours",
-                description: "Explore the core definitions, designs, and use cases of agentic workflows, function calling, and reasoning loops."
+                description: "Explore language primitives, scopes, closures, arrays, loops, and object prototypes."
             },
             {
                 id: 502,
-                title: "Building Agents using LangChain & Gemini",
+                title: "Creating Interactive Interfaces with DOM",
                 tags: ["Lab"],
                 duration: "1.5 hours",
-                description: "Build an interactive chatbot agent using Gemini Pro and LangChain. Implement memory, web search tools, and routing."
+                description: "Register click handlers, modify tag attributes, create dynamic elements, and handle key input."
             },
             {
                 id: 503,
-                title: "Agent Orchestration with GCP Tools",
+                title: "Asynchronous JavaScript: Promises & Async/Await",
                 tags: ["Course"],
                 duration: "3 hours",
-                description: "Deploy complex Multi-Agent architectures using Vertex AI Agent Builder, Cloud Functions, and firewalls."
+                description: "Work with web APIs. Fetch JSON data, process async states, and resolve promise execution chains."
             },
             {
                 id: 504,
-                title: "Evaluating and Monitoring Agent Behaviour",
+                title: "Modern JS Syntax (ES6+)",
                 tags: ["Course", "Skill badge"],
                 duration: "3.5 hours",
-                description: "Integrate evaluation frameworks to verify safety guidelines, trace steps, monitor execution costs, and optimize agent actions."
+                description: "Master destructuring, arrow functions, template literals, modules, and error-safe execution contexts."
             }
         ]
     },
     {
         id: 6,
-        title: "Professional Cloud Architect Certification",
-        category: "Infrastructure",
-        managedBy: "Google Cloud",
-        description: "Master Google Cloud solutions architecture. Study compute, networking, storage, databases, and DevOps automation from the ground up.",
+        title: "Full Stack JavaScript Web Developer",
+        category: "Backend",
+        managedBy: "Web Dev Skills",
+        description: "Master full stack solutions. Connect react frontends to database servers via Node and Express APIs.",
         modules: 8,
         duration: "32 hours",
         activitiesCount: 24,
@@ -262,40 +262,40 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 601,
-                title: "Google Cloud Fundamentals: Core Infrastructure",
+                title: "Full Stack Concepts & Client-Server Architecture",
                 tags: ["Course"],
                 duration: "6 hours",
-                description: "Get started with the fundamentals of computing, virtual networking, IAM, databases, and containers on Google Cloud."
+                description: "Get started with servers, routing, backend architectures, databases, and client rendering flow."
             },
             {
                 id: 602,
-                title: "Architecting with Google Compute Engine",
+                title: "Server-side Development with Express",
                 tags: ["Course"],
                 duration: "8 hours",
-                description: "Deep dive into virtual machines, disks, auto-scaling, resource monitoring, load balancing, and design patterns."
+                description: "Deep dive into Node.js server building, writing middleware, handling REST parameters, and parsing bodies."
             },
             {
                 id: 603,
-                title: "Configuring VPC Networks and Load Balancing",
+                title: "Connecting Express Backend to MySQL Database",
                 tags: ["Lab"],
                 duration: "2 hours",
-                description: "Configure custom VPC networks, establish firewall rules, implement internal load balancer and global HTTP(S) load balancer."
+                description: "Establish connections, setup schema queries, trigger data migrations, and resolve concurrent database threads."
             },
             {
                 id: 604,
-                title: "Architecting with Google Kubernetes Engine",
+                title: "Deploying Full Stack Apps on Vercel and Render",
                 tags: ["Course", "Skill badge"],
                 duration: "16 hours",
-                description: "Develop containerized application architectures. Learn cluster administration, deployments, services, storage, and secrets."
+                description: "Build production packages. Set environment keys, setup proxy paths, and launch full stack configurations."
             }
         ]
     },
     {
         id: 7,
-        title: "BigQuery and Data Analytics Fundamentals",
-        category: "Data",
-        managedBy: "Google Cloud",
-        description: "Dive into cloud data warehousing. Master SQL queries, data modeling, ingestion, and real-time visualization with BigQuery.",
+        title: "UI/UX Design & CSS Methodologies",
+        category: "Frontend",
+        managedBy: "Web Dev Skills",
+        description: "Learn web layout architectures. Master UI mockups, CSS styles isolation, and BEM/Modules rules.",
         modules: 4,
         duration: "10 hours",
         activitiesCount: 12,
@@ -303,33 +303,33 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 701,
-                title: "Google Cloud Big Data and Machine Learning Fundamentals",
+                title: "Introduction to Web Design & UI/UX",
                 tags: ["Course"],
                 duration: "4 hours",
-                description: "An overview of data pipelines, streaming architectures, managed databases, and analytical tools on GCP."
+                description: "Overview of colors, layout balance, web graphics, visual hierarchy, and basic prototype design."
             },
             {
                 id: 702,
-                title: "Writing Optimized SQL Queries in BigQuery",
+                title: "Figma Design to CSS Implementation",
                 tags: ["Lab"],
                 duration: "2 hours",
-                description: "Implement partitioning, clustering, nested fields, and explain plan analysis to optimize large scale BigQuery storage."
+                description: "Extract spacing, typography weights, layout heights, and implement pixel-perfect CSS panels."
             },
             {
                 id: 703,
-                title: "Building BI Dashboards using Looker Studio",
+                title: "CSS Architecture: BEM and CSS Modules",
                 tags: ["Course", "Skill badge"],
                 duration: "4 hours",
-                description: "Connect BigQuery datasets to Looker Studio. Create interactive tables, charts, filters, and share findings."
+                description: "Learn how to write clean, maintainable CSS styles using BEM notation and React CSS module namespaces."
             }
         ]
     },
     {
         id: 8,
-        title: "Modern DevTools and CI/CD on GCP",
+        title: "Git, GitHub & Modern Deployment Pipelines",
         category: "Dev Tools",
-        managedBy: "Google Cloud",
-        description: "Automate code deployments. Learn how to configure Cloud Build, Artifact Registry, and Google Cloud Deploy pipelines.",
+        managedBy: "Web Dev Skills",
+        description: "Manage repository version history. Configure GitHub actions, build tasks, and automated static page releases.",
         modules: 3,
         duration: "7 hours",
         activitiesCount: 9,
@@ -337,33 +337,33 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 801,
-                title: "Continuous Integration on GCP",
+                title: "Version Control with Git & GitHub",
                 tags: ["Course"],
                 duration: "2 hours",
-                description: "Automate tests and builds. Configure source code repositories, triggers, and integrations with Cloud Source Repositories."
+                description: "Learn stage commits, manage merge conflicts, create branches, and push codes to GitHub repositories."
             },
             {
                 id: 802,
-                title: "Creating Automated Build Pipelines with Cloud Build",
+                title: "Configuring a GitHub Action CI/CD Workflow",
                 tags: ["Lab"],
                 duration: "1.5 hours",
-                description: "Write `cloudbuild.yaml` files, configure multi-step builds, pass environment variables, and manage artifact outputs."
+                description: "Write deployment YAMLs, specify build dependencies, configure automated testing steps on repo triggers."
             },
             {
                 id: 803,
-                title: "Automated Deployments with Cloud Deploy",
+                title: "Continuous Deployment to Netlify and Vercel",
                 tags: ["Course", "Skill badge"],
                 duration: "3.5 hours",
-                description: "Deploy to GKE or Cloud Run using Cloud Deploy. Learn promotions, approvals, rollbacks, and release verification."
+                description: "Link GitHub repositories directly to automated cloud host environments to launch updates on push commands."
             }
         ]
     },
     {
         id: 9,
-        title: "Google Workspace Administration & Automation",
-        category: "Productivity",
-        managedBy: "Google Cloud",
-        description: "Streamline enterprise workflows. Learn AppSheet integrations, Apps Script automation, and Workspace admin controls.",
+        title: "Node.js & REST API Architecture",
+        category: "Backend",
+        managedBy: "Web Dev Skills",
+        description: "Design robust backend systems. Learn HTTP handlers, database queries, and route authentication protocols.",
         modules: 3,
         duration: "6 hours",
         activitiesCount: 9,
@@ -371,24 +371,24 @@ const PATHS_DATA: PathItem[] = [
         activities: [
             {
                 id: 901,
-                title: "Google Workspace Administration Fundamentals",
+                title: "Introduction to Node.js Runtime",
                 tags: ["Course"],
                 duration: "3 hours",
-                description: "Understand user provisioning, organizational units, custom email routing, calendar sharing, and mobile management."
+                description: "Understand asynchronous event loops, require/import specifications, file systems, and Node process controls."
             },
             {
                 id: 902,
-                title: "Writing Automated Apps Scripts for Sheets",
+                title: "Building REST Endpoints with HTTP Module",
                 tags: ["Lab"],
                 duration: "1 hour",
-                description: "Use Javascript-based Google Apps Script to automate calculations, spreadsheet tasks, and trigger custom emails."
+                description: "Create barebones HTTP servers, read URL queries, return custom JSON objects, and handle response headers."
             },
             {
                 id: 903,
-                title: "Building No-Code Apps with AppSheet",
+                title: "Authentication with JWT in Node.js",
                 tags: ["Course", "Skill badge"],
                 duration: "2 hours",
-                description: "Create customized enterprise mobile applications using spreadsheets and database sources without coding."
+                description: "Design access control middlewares, verify login payloads, generate session keys, and store passwords safely."
             }
         ]
     }
@@ -556,12 +556,12 @@ interface FilterConfig {
 }
 
 const FILTERS: FilterConfig[] = [
-    { name: "AI / ML", icon: AIMLIcon },
-    { name: "Agents", icon: AgentsIcon },
-    { name: "Data", icon: DataIcon },
+    { name: "Frontend", icon: AIMLIcon },
+    { name: "React", icon: AgentsIcon },
+    { name: "Databases", icon: DataIcon },
     { name: "Dev Tools", icon: DevToolsIcon },
-    { name: "Infrastructure", icon: InfrastructureIcon },
-    { name: "Productivity", icon: ProductivityIcon },
+    { name: "Backend", icon: InfrastructureIcon },
+    { name: "JavaScript", icon: ProductivityIcon },
     { name: "Security", icon: SecurityIcon }
 ];
 
