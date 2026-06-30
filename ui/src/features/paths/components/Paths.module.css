@@ -85,7 +85,7 @@
     justify-content: center;
     gap: 16px;
     min-width: max-content;
-    padding: 4px;
+    padding: 4px 24px;
     margin: 0 auto;
 }
 
@@ -139,7 +139,7 @@
 .pathsGrid {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     gap: 28px;
     z-index: 1;
 }
@@ -295,7 +295,23 @@
     padding: 40px;
     position: relative;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    scrollbar-width: thin;
     animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modalContent::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modalContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modalContent::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
 }
 
 :global(.dark-theme) .modalContent {
@@ -343,6 +359,7 @@
     color: var(--text-primary);
     margin-bottom: 8px;
     line-height: 1.25;
+    padding-right: 32px; /* Prevent overlap with close button */
 }
 
 .modalSubtitle {
@@ -449,17 +466,793 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 900px) {
+    .filtersContainer {
+        justify-content: flex-start;
+        gap: 10px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .filterChip {
+        padding: 8px 16px;
+        font-size: 0.88rem;
+    }
+}
+
 @media (max-width: 768px) {
+    .backgroundBlob {
+        width: 400px;
+        height: 400px;
+        top: -50px;
+        right: -50px;
+    }
+    .pathsContainer {
+        padding: 32px 20px;
+    }
     .title {
-        font-size: 2.5rem;
+        font-size: 2.4rem;
+        margin-bottom: 16px;
+    }
+    .subtitle {
+        font-size: 1rem;
+    }
+    .header {
+        margin-bottom: 36px;
+    }
+    .pathsGrid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+        gap: 20px;
+    }
+    .pathCard {
+        padding: 24px;
+        min-height: 220px;
+    }
+    .modalContent {
+        padding: 28px;
+        border-radius: 20px;
+        max-height: calc(100vh - 32px);
+    }
+    .modalActions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .enrollBtn, .secondaryBtn {
+        padding: 12px 24px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .backgroundBlob {
+        width: 300px;
+        height: 300px;
+        top: -30px;
+        right: -30px;
+    }
+    .pathsContainer {
+        padding: 24px 16px;
+    }
+    .title {
+        font-size: 1.85rem;
+        letter-spacing: -0.02em;
+    }
+    .subtitle {
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+    .filterChip {
+        padding: 6px 12px;
+        font-size: 0.82rem;
     }
     .pathsGrid {
         grid-template-columns: 1fr;
     }
-    .modalContent {
-        padding: 24px;
+    .pathCard {
+        padding: 20px;
+        min-height: 200px;
     }
-    .modalActions {
-        flex-direction: column;
+    .cardTitle {
+        font-size: 1.15rem;
+        margin-bottom: 16px;
+    }
+    .modalOverlay {
+        padding: 12px;
+    }
+    .modalContent {
+        padding: 20px;
+        border-radius: 16px;
+        max-height: calc(100vh - 24px);
+    }
+    .closeModal {
+        top: 16px;
+        right: 16px;
+    }
+    .modalTitle {
+        font-size: 1.4rem;
+    }
+    .modalSubtitle {
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+    }
+    .metaGrid {
+        grid-template-columns: 1fr 1fr;
+        padding: 12px;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .metaValue {
+        font-size: 0.95rem;
+    }
+    .metaLabel {
+        font-size: 0.72rem;
+    }
+    .modalDesc {
+        font-size: 0.92rem;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+    .enrollBtn, .secondaryBtn {
+        padding: 11px 20px;
+        font-size: 0.9rem;
     }
 }
+
+/* Detail View Layout & Styling */
+.detailContainer {
+    animation: fadeIn 0.3s ease-out;
+    padding: 24px 8px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.breadcrumbsRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.breadcrumbHome {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.breadcrumbHome:hover {
+    color: #1a73e8;
+}
+
+:global(.dark-theme) .breadcrumbHome:hover {
+    color: #8ab4f8;
+}
+
+.breadcrumbSeparator {
+    color: var(--border-color);
+    font-weight: 400;
+}
+
+.breadcrumbLink {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.breadcrumbLink:hover {
+    color: #1a73e8;
+    text-decoration: underline;
+}
+
+:global(.dark-theme) .breadcrumbLink:hover {
+    color: #8ab4f8;
+}
+
+.breadcrumbActive {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.consolePromo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.consolePromoText {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.consoleBtn {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1a73e8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+:global(.dark-theme) .consoleBtn {
+    color: #8ab4f8;
+}
+
+.consoleBtn:hover {
+    background-color: var(--bg-secondary);
+    border-color: #1a73e8;
+}
+
+:global(.dark-theme) .consoleBtn:hover {
+    border-color: #8ab4f8;
+}
+
+/* Hero Banner */
+.heroBanner {
+    background: #041e42; /* Premium Deep Navy */
+    color: #ffffff;
+    border-radius: 24px;
+    padding: 40px 48px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 36px;
+    box-shadow: 0 8px 24px rgba(0, 29, 61, 0.15);
+}
+
+.heroContent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 75%;
+    z-index: 1;
+}
+
+.heroBadge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.heroTitle {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.25;
+}
+
+.heroMetaCapsules {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.heroMetaCapsule {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.heroActionsRow {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 12px;
+}
+
+.heroStartBtn {
+    background: #ffffff;
+    color: #041e42;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.heroStartBtn:hover {
+    background: #f4f8fe;
+    transform: translateY(-1px);
+}
+
+.heroStartBtnEnrolled {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: none;
+}
+
+.heroStartBtnEnrolled:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: none;
+}
+
+.startArrow {
+    font-size: 1.1rem;
+}
+
+.progressBarWrapper {
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.progressBarTrack {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.progressBarFill {
+    height: 100%;
+    background: #ffffff;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.heroPatternContainer {
+    position: absolute;
+    right: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #4285f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.85;
+}
+
+/* Contents & Description Section */
+.overviewSection {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.contentsSelectContainer {
+    grid-column: 1;
+}
+
+.contentsSelectFieldset {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 4px 12px 12px 12px;
+    position: relative;
+    margin: 0;
+}
+
+.contentsSelectLegend {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 0 6px;
+    font-weight: 500;
+}
+
+.contentsSelectBox {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.chevronDownSymbol {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.pathLongDescription {
+    grid-column: 2;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.pathLongDescription p {
+    margin: 0 0 16px 0;
+}
+
+.pathLongDescription p:last-child {
+    margin-bottom: 0;
+}
+
+.utilsRow {
+    grid-column: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.feedbackBtn {
+    display: flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.feedbackBtn:hover {
+    background: var(--bg-secondary);
+    border-color: var(--text-secondary);
+}
+
+.viewToggleGroup {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.toggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggleBtn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.toggleBtnActive {
+    background: #e8f0fe !important;
+    color: #1a73e8 !important;
+}
+
+:global(.dark-theme) .toggleBtnActive {
+    background: rgba(26, 115, 232, 0.15) !important;
+    color: #8ab4f8 !important;
+}
+
+/* Activity Cards Grid Layout */
+.activitiesGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 12px;
+}
+
+.activityCard {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+    cursor: pointer;
+}
+
+.activityCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    border-color: var(--text-tertiary);
+}
+
+:global(.dark-theme) .activityCard:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    border-color: #4285f4;
+}
+
+.cardHeaderArea {
+    margin-bottom: 12px;
+}
+
+.activityTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.activityTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.tagCourse {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+
+:global(.dark-theme) .tagCourse {
+    background: rgba(26, 115, 232, 0.15);
+    color: #8ab4f8;
+}
+
+.tagLab {
+    background: #fef7e0;
+    color: #b06000;
+}
+
+:global(.dark-theme) .tagLab {
+    background: rgba(244, 180, 0, 0.15);
+    color: #fdd663;
+}
+
+.tagBadge {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+:global(.dark-theme) .tagBadge {
+    background: rgba(15, 157, 88, 0.15);
+    color: #81c995;
+}
+
+.activityCardTitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+    line-height: 1.35;
+}
+
+.activityCardDesc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.activityCardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activityDuration {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.activityArrowBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e8f0fe;
+    color: #1a73e8;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+:global(.dark-theme) .activityArrowBtn {
+    background: rgba(26, 115, 232, 0.15);
+    color: #8ab4f8;
+}
+
+.activityCard:hover .activityArrowBtn {
+    background: #1a73e8;
+    color: #ffffff;
+}
+
+:global(.dark-theme) .activityCard:hover .activityArrowBtn {
+    background: #8ab4f8;
+    color: #202124;
+}
+
+/* Activity Cards List Layout */
+.activitiesList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.activitiesList .activityCard {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 24px;
+}
+
+.activitiesList .activityCard:hover {
+    transform: translateX(4px);
+}
+
+.activitiesList .cardHeaderArea {
+    margin-bottom: 0;
+    width: 160px;
+    flex-shrink: 0;
+}
+
+.activitiesList .activityCardTitle {
+    margin: 0;
+    flex-grow: 1;
+    font-size: 1rem;
+    max-width: 360px;
+}
+
+.activitiesList .activityCardDesc {
+    margin: 0;
+    flex-grow: 2;
+    padding: 0 24px;
+    -webkit-line-clamp: 2;
+}
+
+.activitiesList .activityCardFooter {
+    width: 140px;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+/* Responsive adjustments for Detail view */
+@media (max-width: 1024px) {
+    .activitiesGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .heroBanner {
+        padding: 32px 36px;
+    }
+    
+    .heroContent {
+        max-width: 100%;
+    }
+    
+    .heroPatternContainer {
+        display: none;
+    }
+    
+    .overviewSection {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    
+    .contentsSelectContainer {
+        max-width: 240px;
+    }
+    
+    .pathLongDescription {
+        grid-column: 1;
+    }
+    
+    .utilsRow {
+        grid-column: 1;
+    }
+    
+    .activitiesGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .activitiesList .activityCard {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 20px;
+    }
+    
+    .activitiesList .activityCard:hover {
+        transform: translateY(-4px);
+    }
+    
+    .activitiesList .cardHeaderArea {
+        width: 100%;
+    }
+    
+    .activitiesList .activityCardTitle {
+        max-width: 100%;
+    }
+    
+    .activitiesList .activityCardDesc {
+        padding: 0;
+    }
+    
+    .activitiesList .activityCardFooter {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+    .heroBanner {
+        padding: 24px;
+        border-radius: 16px;
+    }
+    
+    .heroTitle {
+        font-size: 1.65rem;
+    }
+    
+    .heroActionsRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .progressBarWrapper {
+        width: 100%;
+    }
+    
+    .breadcrumbsRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .consolePromo {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
