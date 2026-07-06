@@ -3,7 +3,14 @@ import { supabase } from '../../../shared/supabaseClient';
 import type { Course, Lesson, UserProgress, UserProfile } from '../types';
 import * as api from '../api/learningApi';
 
-export type ViewState = 'HOME' | 'COURSE_DETAIL' | 'LESSON_READER' | 'DASHBOARD' | 'CERTIFICATE' | 'PATHS';
+export type ViewState = 'HOME' | 'COURSE_DETAIL' | 'LESSON_READER' | 'DASHBOARD' | 'CERTIFICATE' | 'PATHS' | 'COMING_SOON';
+
+const toSlug = (text: string) => {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+};
 
 export const useLearning = () => {
     const [activeView, setActiveView] = useState<ViewState>('HOME');
@@ -55,41 +62,108 @@ export const useLearning = () => {
         }
     }, []);
 
+    const [activePathSlug, setActivePathSlug] = useState<string | null>(null);
+    const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
+
     // Sync React state with URL path (Routing)
     const handlePathChange = useCallback(async () => {
         const path = window.location.pathname;
+        const parts = path.split('/').filter(Boolean);
         setError(null);
         
         try {
-            if (!path || path === '/' || path === '') {
+            if (parts.length === 0) {
                 setActiveView('HOME');
-            } else if (path === '/dashboard') {
-                setActiveView('DASHBOARD');
-            } else if (path === '/paths') {
-                setActiveView('PATHS');
-            } else if (path === '/certificate') {
-                setActiveView('CERTIFICATE');
-            } else if (path.startsWith('/course/')) {
-                const courseId = parseInt(path.replace('/course/', ''), 10);
-                if (!isNaN(courseId)) {
-                    setIsLoading(true);
-                    const courseDetails = await api.fetchCourseDetails(courseId);
-                    setCurrentCourse(courseDetails);
-                    setActiveView('COURSE_DETAIL');
+            } else if (parts.length === 1) {
+                if (parts[0] === 'dashboard') {
+                    setActiveView('DASHBOARD');
+                } else if (parts[0] === 'paths') {
+                    setActiveView('PATHS');
+                    setActivePathSlug(null);
+                } else if (parts[0] === 'certificate') {
+                    setActiveView('CERTIFICATE');
+                } else if (parts[0] === 'coming-soon') {
+                    setActiveView('COMING_SOON');
+                } else {
+                    setActiveView('HOME');
                 }
-            } else if (path.startsWith('/lesson/')) {
-                const lessonId = parseInt(path.replace('/lesson/', ''), 10);
-                if (!isNaN(lessonId)) {
+            } else if (parts.length === 2) {
+                if (parts[0] === 'paths') {
+                    setActiveView('PATHS');
+                    setActivePathSlug(parts[1]);
+                } else if (parts[0] === 'course') {
                     setIsLoading(true);
-                    const lessonDetails = await api.fetchLesson(lessonId);
-                    setActiveLesson(lessonDetails);
+                    const matchedCourse = courses.find(c => toSlug(c.title) === parts[1]);
+                    const courseId = matchedCourse ? matchedCourse.id : parseInt(parts[1], 10);
                     
-                    // Ensure we have currentCourse details loaded for syllabus structure
-                    if (!currentCourse || currentCourse.id !== 1) {
-                        const courseDetails = await api.fetchCourseDetails(1);
+                    if (!isNaN(courseId)) {
+                        const courseDetails = await api.fetchCourseDetails(courseId);
                         setCurrentCourse(courseDetails);
+                        setActiveModuleId(null);
+                        setActiveView('COURSE_DETAIL');
+                    } else {
+                        setActiveView('HOME');
                     }
-                    setActiveView('LESSON_READER');
+                } else if (parts[0] === 'lesson') {
+                    const lessonId = parseInt(parts[1], 10);
+                    if (!isNaN(lessonId)) {
+                        setIsLoading(true);
+                        const lessonDetails = await api.fetchLesson(lessonId);
+                        setActiveLesson(lessonDetails);
+                        const courseDetails = await api.fetchCourseDetails(lessonDetails.moduleId ? 5 : 1);
+                        setCurrentCourse(courseDetails);
+                        setActiveView('LESSON_READER');
+                    }
+                }
+            } else if (parts.length === 3) {
+                if (parts[0] === 'course') {
+                    setIsLoading(true);
+                    const matchedCourse = courses.find(c => toSlug(c.title) === parts[1]);
+                    const courseId = matchedCourse ? matchedCourse.id : parseInt(parts[1], 10);
+                    
+                    if (!isNaN(courseId)) {
+                        const courseDetails = await api.fetchCourseDetails(courseId);
+                        setCurrentCourse(courseDetails);
+                        
+                        const matchedModule = courseDetails.modules?.find(m => toSlug(m.title) === parts[2]);
+                        if (matchedModule) {
+                            setActiveModuleId(matchedModule.id);
+                            setActiveView('COURSE_DETAIL');
+                        } else {
+                            setActiveModuleId(null);
+                            setActiveView('COURSE_DETAIL');
+                        }
+                    } else {
+                        setActiveView('HOME');
+                    }
+                }
+            } else if (parts.length === 4) {
+                if (parts[0] === 'course') {
+                    setIsLoading(true);
+                    const matchedCourse = courses.find(c => toSlug(c.title) === parts[1]);
+                    const courseId = matchedCourse ? matchedCourse.id : parseInt(parts[1], 10);
+                    
+                    if (!isNaN(courseId)) {
+                        const courseDetails = await api.fetchCourseDetails(courseId);
+                        setCurrentCourse(courseDetails);
+                        
+                        const matchedModule = courseDetails.modules?.find(m => toSlug(m.title) === parts[2]);
+                        let matchedLesson: Lesson | null = null;
+                        if (matchedModule && matchedModule.lessons) {
+                            matchedLesson = matchedModule.lessons.find(l => toSlug(l.title) === parts[3]) || null;
+                        }
+                        
+                        if (matchedLesson) {
+                            const fullLesson = await api.fetchLesson(matchedLesson.id);
+                            setActiveLesson(fullLesson);
+                            setActiveView('LESSON_READER');
+                        } else {
+                            setActiveModuleId(matchedModule ? matchedModule.id : null);
+                            setActiveView('COURSE_DETAIL');
+                        }
+                    } else {
+                        setActiveView('HOME');
+                    }
                 }
             }
         } catch (err: any) {
@@ -98,7 +172,7 @@ export const useLearning = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [currentCourse]);
+    }, [courses]);
 
     const navigate = useCallback((path: string) => {
         window.history.pushState(null, '', path);
@@ -129,7 +203,7 @@ export const useLearning = () => {
     // Supabase Auth listener
     useEffect(() => {
         setIsLoading(true);
-        
+
         // Get current session
         supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
             setSession(currentSession);
@@ -172,27 +246,68 @@ export const useLearning = () => {
     }, [loadUserData, navigate]);
 
     const selectCourse = useCallback(async (courseId: number) => {
-        navigate(`/course/${courseId}`);
-    }, [navigate]);
+        const found = courses.find(c => c.id === courseId);
+        if (found) {
+            navigate(`/course/${toSlug(found.title)}`);
+        } else {
+            navigate(`/course/${courseId}`);
+        }
+    }, [navigate, courses]);
 
     const selectLesson = useCallback(async (lessonId: number) => {
-        navigate(`/lesson/${lessonId}`);
-    }, [navigate]);
+        if (currentCourse) {
+            const courseSlug = toSlug(currentCourse.title);
+            let levelSlug = 'level';
+            let lessonTitle = 'lesson';
+            if (currentCourse.modules) {
+                for (const mod of currentCourse.modules) {
+                    const found = mod.lessons?.find(l => l.id === lessonId);
+                    if (found) {
+                        levelSlug = toSlug(mod.title);
+                        lessonTitle = found.title;
+                        break;
+                    }
+                }
+            }
+            navigate(`/course/${courseSlug}/${levelSlug}/${toSlug(lessonTitle)}`);
+        } else {
+            navigate(`/lesson/${lessonId}`);
+        }
+    }, [navigate, currentCourse]);
 
     const changeView = useCallback((view: ViewState) => {
         if (view === 'HOME') navigate('/');
         else if (view === 'DASHBOARD') navigate('/dashboard');
         else if (view === 'PATHS') navigate('/paths');
         else if (view === 'CERTIFICATE') navigate('/certificate');
+        else if (view === 'COMING_SOON') navigate('/coming-soon');
         else if (view === 'COURSE_DETAIL') {
-            if (currentCourse) navigate(`/course/${currentCourse.id}`);
-            else navigate('/');
+            if (currentCourse) {
+                if (activeModuleId) {
+                    const mod = currentCourse.modules?.find(m => m.id === activeModuleId);
+                    if (mod) {
+                        navigate(`/course/${toSlug(currentCourse.title)}/${toSlug(mod.title)}`);
+                        return;
+                    }
+                }
+                navigate(`/course/${toSlug(currentCourse.title)}`);
+            } else {
+                navigate('/');
+            }
         }
         else if (view === 'LESSON_READER') {
-            if (activeLesson) navigate(`/lesson/${activeLesson.id}`);
-            else navigate('/');
+            if (activeLesson && currentCourse) {
+                let levelSlug = 'level';
+                if (currentCourse.modules) {
+                    const mod = currentCourse.modules.find(m => m.id === activeLesson.moduleId);
+                    if (mod) levelSlug = toSlug(mod.title);
+                }
+                navigate(`/course/${toSlug(currentCourse.title)}/${levelSlug}/${toSlug(activeLesson.title)}`);
+            } else {
+                navigate('/');
+            }
         }
-    }, [navigate, currentCourse, activeLesson]);
+    }, [navigate, currentCourse, activeLesson, activeModuleId]);
 
     const signUp = async (email: string, pass: string, fullName: string) => {
         const { data, error: err } = await supabase.auth.signUp({
@@ -319,6 +434,10 @@ export const useLearning = () => {
         resetAllProgress,
         saveProfile,
         refreshInitialData: loadUserData,
+        activePathSlug,
+        activeModuleId,
+        setActiveModuleId,
+        navigate,
 
         // Auth properties
         session,

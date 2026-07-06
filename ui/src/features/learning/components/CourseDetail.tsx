@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import type { Course, UserProgress } from '../types';
+import type { Course, CourseModule, UserProgress } from '../types';
 import { Button } from '../../../shared/components/Button/Button';
-import { ChevronDownIcon, ChevronRightIcon } from '../../../shared/components/Icons';
 import styles from './CourseDetail.module.css';
 
-// Direct SVG icon definitions to avoid imports if icons-stub is not ready
 const BackIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -28,9 +26,21 @@ const BarChartIcon = () => (
 );
 
 const CheckCircleIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--tech-green)' }}>
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
         <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+);
+
+const FolderIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--tech-blue)' }}>
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+    </svg>
+);
+
+const PlayIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
     </svg>
 );
 
@@ -47,7 +57,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
     onBack,
     onStartLesson
 }) => {
-    const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
+    const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
 
     if (!course) {
         return (
@@ -57,155 +67,180 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
         );
     }
 
-    const toggleModule = (moduleId: number) => {
-        setExpandedModuleId(expandedModuleId === moduleId ? null : moduleId);
+    // Helper functions for progress
+    const getModuleProgress = (mod: CourseModule) => {
+        if (!mod.lessons || mod.lessons.length === 0) return { completed: 0, total: 0, percent: 0 };
+        const completed = mod.lessons.filter(l => progress.some(p => p.lessonId === l.id && p.completed)).length;
+        const total = mod.lessons.length;
+        return {
+            completed,
+            total,
+            percent: Math.round((completed / total) * 100)
+        };
     };
 
     const isLessonCompleted = (lessonId: number): boolean => {
         return progress.some(p => p.lessonId === lessonId && p.completed);
     };
 
-    const getLessonScore = (lessonId: number): number | null => {
-        const p = progress.find(p => p.lessonId === lessonId);
-        return p ? p.quizScore : null;
-    };
+    // Find the currently active module if we are inside a sub-level
+    const activeModule = course.modules?.find(m => m.id === activeModuleId);
 
-    const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
+    // If activeModuleId is set but doesn't exist, reset it
+    if (activeModuleId !== null && !activeModule) {
+        setActiveModuleId(null);
+    }
 
     return (
         <div className={styles.container}>
-            {/* Top Toolbar */}
+            {/* Top Toolbar / Breadcrumbs */}
             <div className={styles.toolbar}>
-                <button className={styles.backBtn} onClick={onBack}>
-                    <BackIcon />
-                    <span>Back to catalog</span>
-                </button>
+                <div className={styles.breadcrumbs}>
+                    <button className={styles.breadcrumbLink} onClick={onBack}>
+                        Courses
+                    </button>
+                    <span className={styles.breadcrumbSeparator}>&gt;</span>
+                    <button
+                        className={`${styles.breadcrumbLink} ${activeModuleId === null ? styles.breadcrumbActive : ''}`}
+                        onClick={() => setActiveModuleId(null)}
+                    >
+                        {course.title}
+                    </button>
+                    {activeModule && (
+                        <>
+                            <span className={styles.breadcrumbSeparator}>&gt;</span>
+                            <span className={styles.breadcrumbActive}>{activeModule.title}</span>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Course Header Banner */}
             <div className={styles.heroBanner}>
                 <div className={styles.heroContent}>
-                    <div className={styles.badge}>{course.category} Certification Path</div>
-                    <h1 className={styles.title}>{course.title}</h1>
-                    <p className={styles.desc}>{course.description}</p>
-                    
+                    <div className={styles.badge}>{course.category} Pathway</div>
+                    <h1 className={styles.title}>
+                        {activeModule ? activeModule.title : course.title}
+                    </h1>
+                    <p className={styles.desc}>
+                        {activeModule
+                            ? `Master all topics in ${activeModule.title} to complete this level of the ${course.title}.`
+                            : course.description
+                        }
+                    </p>
+
                     <div className={styles.metaGrid}>
                         <div className={styles.metaItem}>
                             <ClockIcon />
-                            <span>Estimated Duration: <strong>{course.duration}</strong></span>
+                            <span>Duration: <strong>{course.duration}</strong></span>
                         </div>
                         <div className={styles.metaItem}>
                             <BarChartIcon />
-                            <span>Difficulty Level: <strong>{course.level}</strong></span>
+                            <span>Level: <strong>{course.level}</strong></span>
                         </div>
                     </div>
 
-                    <div className={styles.actions}>
-                        {firstLessonId && (
-                            <Button 
-                                variant="primary" 
-                                size="lg" 
-                                onClick={() => onStartLesson(firstLessonId)}
+                    {activeModuleId !== null && (
+                        <div className={styles.actions}>
+                            <Button
+                                variant="secondary"
+                                onClick={() => setActiveModuleId(null)}
                             >
-                                Start Learning Path
+                                <BackIcon />
+                                <span>Back to Levels</span>
                             </Button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Content Syllabus */}
+            {/* Content Syllabus Grid */}
             <main className={styles.mainLayout}>
-                <section className={styles.overviewSection}>
-                    <h2 className={styles.sectionTitle}>What you will master in this path</h2>
-                    <div className={styles.skillsGrid}>
-                        <div className={styles.skillItem}>
-                            <div className={styles.skillNumber}>01</div>
-                            <div>
-                                <h4 className={styles.skillTitle}>Fullstack Architecture</h4>
-                                <p className={styles.skillDesc}>Understand client-server configurations, REST endpoints, and dynamic HTTP mapping variables.</p>
-                            </div>
-                        </div>
-                        <div className={styles.skillItem}>
-                            <div className={styles.skillNumber}>02</div>
-                            <div>
-                                <h4 className={styles.skillTitle}>React TypeScript Frontends</h4>
-                                <p className={styles.skillDesc}>Build reactive views, utilize hooks, and config local Vite development server proxies.</p>
-                            </div>
-                        </div>
-                        <div className={styles.skillItem}>
-                            <div className={styles.skillNumber}>03</div>
-                            <div>
-                                <h4 className={styles.skillTitle}>Spring Boot Persistence</h4>
-                                <p className={styles.skillDesc}>Map entities, build controller request annotations, and persist data in in-memory H2 databases.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                {activeModuleId === null ? (
+                    // LEVEL 1: RENDER LEVELS (MODULES) AS CARDS
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Course Levels & Sections</h2>
+                        <p className={styles.sectionSubtitle}>
+                            Select a level to view its topics and start learning.
+                        </p>
 
-                <section className={styles.syllabusSection}>
-                    <h2 className={styles.sectionTitle}>Syllabus & Modules</h2>
-                    <p className={styles.sectionSubtitle}>Complete all lessons and pass end-of-module quiz checks to unlock your certificate.</p>
-                    
-                    <div className={styles.modulesList}>
-                        {course.modules?.map((mod, idx) => {
-                            const isExpanded = expandedModuleId === mod.id || (expandedModuleId === null && idx === 0);
-                            
-                            return (
-                                <div key={mod.id} className={styles.moduleWrapper}>
-                                    <div 
-                                        className={styles.moduleHeader}
-                                        onClick={() => toggleModule(mod.id)}
+                        <div className={styles.cardsGrid}>
+                            {course.modules?.map((mod, idx) => {
+                                const { total, percent } = getModuleProgress(mod);
+                                return (
+                                    <div
+                                        key={mod.id}
+                                        className={styles.levelCard}
+                                        onClick={() => setActiveModuleId(mod.id)}
                                     >
-                                        <div className={styles.moduleHeaderLeft}>
-                                            <span className={styles.moduleIndex}>Module 0{mod.orderIndex}</span>
-                                            <h3 className={styles.moduleTitle}>{mod.title}</h3>
+                                        <div className={styles.cardHeader}>
+                                            <span className={styles.cardIndex}>Level {idx + 1}</span>
+                                            <FolderIcon />
                                         </div>
-                                        <div className={styles.moduleHeaderRight}>
-                                            <span className={styles.lessonCount}>{mod.lessons?.length || 0} Lessons</span>
-                                            {isExpanded ? <ChevronDownIcon size={20} /> : <ChevronRightIcon size={20} />}
+                                        <h3 className={styles.cardTitle}>{mod.title}</h3>
+                                        <p className={styles.cardDescription}>
+                                            Learn core topics and build your skillset in this section.
+                                        </p>
+                                        <div className={styles.cardFooter}>
+                                            <span className={styles.cardMeta}>{total} Topics</span>
+                                            <div className={styles.cardProgressWrapper}>
+                                                <div className={styles.cardProgressBar}>
+                                                    <div
+                                                        className={styles.cardProgressFill}
+                                                        style={{ width: `${percent}%` }}
+                                                    />
+                                                </div>
+                                                <span className={styles.cardProgressText}>{percent}%</span>
+                                            </div>
                                         </div>
                                     </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                ) : (
+                    // LEVEL 2: RENDER TOPICS (LESSONS) AS CARDS inside selected level
+                    <section className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Topics in this Level</h2>
+                        <p className={styles.sectionSubtitle}>
+                            Select a topic below to read, practice in the sandbox, and verify your knowledge.
+                        </p>
 
-                                    {isExpanded && (
-                                        <div className={styles.lessonsList}>
-                                            {mod.lessons?.map(les => {
-                                                const completed = isLessonCompleted(les.id);
-                                                const score = getLessonScore(les.id);
-                                                
-                                                return (
-                                                    <div 
-                                                        key={les.id} 
-                                                        className={styles.lessonItem}
-                                                        onClick={() => onStartLesson(les.id)}
-                                                    >
-                                                        <div className={styles.lessonItemLeft}>
-                                                            <div className={`${styles.statusIndicator} ${completed ? styles.completedIndicator : ''}`}>
-                                                                {completed ? <CheckCircleIcon /> : <div className={styles.dot}></div>}
-                                                            </div>
-                                                            <span className={styles.lessonTitle}>{les.title}</span>
-                                                        </div>
-                                                        <div className={styles.lessonItemRight}>
-                                                            {score !== null && (
-                                                                <span className={styles.scoreTag}>Quiz: {score}%</span>
-                                                            )}
-                                                            <span className={styles.duration}>{les.durationMinutes} mins</span>
-                                                            <button className={styles.startBtn}>
-                                                                {completed ? "Review" : "Start"}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                        <div className={styles.cardsGrid}>
+                            {activeModule?.lessons?.map((les, idx) => {
+                                const completed = isLessonCompleted(les.id);
+                                return (
+                                    <div
+                                        key={les.id}
+                                        className={styles.topicCard}
+                                        onClick={() => onStartLesson(les.id)}
+                                    >
+                                        <div className={styles.cardHeader}>
+                                            <span className={styles.cardIndex}>Topic {idx + 1}</span>
+                                            {completed ? <CheckCircleIcon /> : <PlayIcon />}
                                         </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
+                                        <h3 className={styles.cardTitle}>{les.title}</h3>
+                                        <p className={styles.cardDescription}>
+                                            {les.content
+                                                ? les.content.replace(/[#*`\-+]/g, '').substring(0, 120) + '...'
+                                                : "Read instructions, play in the sandbox, and take the check quiz."
+                                            }
+                                        </p>
+                                        <div className={styles.cardFooter}>
+                                            <span className={styles.cardMeta}>{les.durationMinutes} mins read</span>
+                                            <button className={styles.cardStartBtn}>
+                                                {completed ? "Review" : "Start"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
             </main>
         </div>
     );
 };
+
 export default CourseDetail;

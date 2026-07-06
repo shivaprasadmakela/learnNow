@@ -391,6 +391,26 @@ const PATHS_DATA: PathItem[] = [
                 description: "Design access control middlewares, verify login payloads, generate session keys, and store passwords safely."
             }
         ]
+    },
+    {
+        id: 10,
+        title: "Advanced Java Course",
+        category: "Backend",
+        managedBy: "Java Academy",
+        description: "Master Java from core architecture and modern enhancements to advanced concurrency, JVM internals, and reactive programming.",
+        modules: 8,
+        duration: "20 hours",
+        activitiesCount: 30,
+        lastUpdated: "Last updated 1 day ago",
+        activities: [
+            {
+                id: 1001,
+                title: "Java Architecture: JDK vs. JRE vs. JVM",
+                tags: ["Course"],
+                duration: "30 mins",
+                description: "Understand the core syntax of modern Java and how JVM execution engine executes bytecode."
+            }
+        ]
     }
 ];
 
@@ -532,17 +552,17 @@ const DecorativePattern = () => (
         <circle cx="54" cy="30" r="14" fill="currentColor" fillOpacity="0.2" />
         <circle cx="78" cy="30" r="14" fill="currentColor" fillOpacity="0.2" />
         <circle cx="102" cy="30" r="14" fill="currentColor" fillOpacity="0.1" />
-        
+
         <circle cx="30" cy="54" r="14" fill="currentColor" fillOpacity="0.2" />
         <circle cx="54" cy="54" r="14" fill="currentColor" fillOpacity="0.35" />
         <circle cx="78" cy="54" r="14" fill="currentColor" fillOpacity="0.35" />
         <circle cx="102" cy="54" r="14" fill="currentColor" fillOpacity="0.2" />
-        
+
         <circle cx="30" cy="78" r="14" fill="currentColor" fillOpacity="0.2" />
         <circle cx="54" cy="78" r="14" fill="currentColor" fillOpacity="0.35" />
         <circle cx="78" cy="78" r="14" fill="currentColor" fillOpacity="0.35" />
         <circle cx="102" cy="78" r="14" fill="currentColor" fillOpacity="0.2" />
-        
+
         <circle cx="30" cy="102" r="14" fill="currentColor" fillOpacity="0.1" />
         <circle cx="54" cy="102" r="14" fill="currentColor" fillOpacity="0.2" />
         <circle cx="78" cy="102" r="14" fill="currentColor" fillOpacity="0.2" />
@@ -565,17 +585,36 @@ const FILTERS: FilterConfig[] = [
     { name: "Security", icon: SecurityIcon }
 ];
 
+const toSlug = (text: string) => {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+};
+
 interface PathsProps {
     searchQuery: string;
+    onSelectCourse?: (id: number) => void;
+    courses?: any[];
+    activePathSlug?: string | null;
+    onPathSlugChange?: (slug: string | null) => void;
+    onShowComingSoon?: () => void;
 }
 
-export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
+export const Paths: React.FC<PathsProps> = ({
+    searchQuery,
+    onSelectCourse,
+    courses,
+    activePathSlug,
+    onPathSlugChange,
+    onShowComingSoon
+}) => {
     const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
-    const [activePathDetail, setActivePathDetail] = useState<PathItem | null>(null);
-    
+    const activePathDetail = PATHS_DATA.find(p => toSlug(p.title) === activePathSlug) || null;
+
     // UI states for details page
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [enrolledPaths, setEnrolledPaths] = useState<Record<number, number>>({});
+    const [enrolledPaths] = useState<Record<number, number>>({});
 
     const handleFilterClick = (filter: string) => {
         if (selectedFilter === filter) {
@@ -585,23 +624,51 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
         }
     };
 
-    const handleStartPath = (pathId: number) => {
-        // Mock enrollment: set progress to 15% on first click, toggle state
-        setEnrolledPaths(prev => ({
-            ...prev,
-            [pathId]: prev[pathId] !== undefined ? prev[pathId] : 15
-        }));
+    const handleStartPath = (path: PathItem) => {
+        let backendCourseTitle = "";
+        if (path.id === 10) backendCourseTitle = "Advanced Java Course";
+        else if (path.id === 2) backendCourseTitle = "React & Spring Boot Fullstack Development";
+
+        if (backendCourseTitle) {
+            const matched = courses?.find(c => c.title === backendCourseTitle);
+            if (matched && onSelectCourse) {
+                onSelectCourse(matched.id);
+                return;
+            }
+        }
+
+        if (onShowComingSoon) {
+            onShowComingSoon();
+        }
+    };
+
+    const handleActivityClick = (path: PathItem) => {
+        let backendCourseTitle = "";
+        if (path.id === 10) backendCourseTitle = "Advanced Java Course";
+        else if (path.id === 2) backendCourseTitle = "React & Spring Boot Fullstack Development";
+
+        if (backendCourseTitle) {
+            const matched = courses?.find(c => c.title === backendCourseTitle);
+            if (matched && onSelectCourse) {
+                onSelectCourse(matched.id);
+                return;
+            }
+        }
+
+        if (onShowComingSoon) {
+            onShowComingSoon();
+        }
     };
 
     // Filter paths by search query and category filter
     const filteredPaths = PATHS_DATA.filter(path => {
         const matchesSearch = searchQuery
-            ? path.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              path.description.toLowerCase().includes(searchQuery.toLowerCase())
+            ? path.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            path.description.toLowerCase().includes(searchQuery.toLowerCase())
             : true;
-        
+
         const matchesCategory = selectedFilter ? path.category === selectedFilter : true;
-        
+
         return matchesSearch && matchesCategory;
     });
 
@@ -615,18 +682,13 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
                 {/* Breadcrumbs Row */}
                 <div className={styles.breadcrumbsRow}>
                     <div className={styles.breadcrumbs}>
-                        <button className={styles.breadcrumbHome} onClick={() => setActivePathDetail(null)} aria-label="Go to Home">
+                        <button className={styles.breadcrumbHome} onClick={() => onPathSlugChange?.(null)} aria-label="Go to Home">
                             <HomeBreadcrumbIcon />
                         </button>
                         <span className={styles.breadcrumbSeparator}>&gt;</span>
-                        <button className={styles.breadcrumbLink} onClick={() => setActivePathDetail(null)}>Paths</button>
+                        <button className={styles.breadcrumbLink} onClick={() => onPathSlugChange?.(null)}>Paths</button>
                         <span className={styles.breadcrumbSeparator}>&gt;</span>
                         <span className={styles.breadcrumbActive}>{activePathDetail.title}</span>
-                    </div>
-
-                    <div className={styles.consolePromo}>
-                        <span className={styles.consolePromoText}>Apply your skills in Google Cloud console</span>
-                        <button className={styles.consoleBtn}>Get started</button>
                     </div>
                 </div>
 
@@ -638,7 +700,7 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
                             <span>Path</span>
                         </div>
                         <h1 className={styles.heroTitle}>{activePathDetail.title}</h1>
-                        
+
                         <div className={styles.heroMetaCapsules}>
                             <span className={styles.heroMetaCapsule}>Managed by {activePathDetail.managedBy}</span>
                             <span className={styles.heroMetaCapsule}>{activePathDetail.activitiesCount} activities</span>
@@ -646,17 +708,17 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
                         </div>
 
                         <div className={styles.heroActionsRow}>
-                            <button 
+                            <button
                                 className={`${styles.heroStartBtn} ${isEnrolled ? styles.heroStartBtnEnrolled : ''}`}
-                                onClick={() => handleStartPath(activePathDetail.id)}
+                                onClick={() => handleStartPath(activePathDetail)}
                             >
                                 <span className={styles.startArrow}>&rarr;</span>
                                 <span>{isEnrolled ? 'In progress' : 'Start'}</span>
                             </button>
                             <div className={styles.progressBarWrapper}>
                                 <div className={styles.progressBarTrack}>
-                                    <div 
-                                        className={styles.progressBarFill} 
+                                    <div
+                                        className={styles.progressBarFill}
                                         style={{ width: `${isEnrolled ? progressPercentage : 0}%` }}
                                     />
                                 </div>
@@ -695,7 +757,7 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
                         </button>
 
                         <div className={styles.viewToggleGroup}>
-                            <button 
+                            <button
                                 className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.toggleBtnActive : ''}`}
                                 onClick={() => setViewMode('grid')}
                                 aria-label="Grid View"
@@ -703,7 +765,7 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
                                 <GridIcon />
                                 <span>Grid</span>
                             </button>
-                            <button 
+                            <button
                                 className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.toggleBtnActive : ''}`}
                                 onClick={() => setViewMode('list')}
                                 aria-label="List View"
@@ -715,10 +777,14 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
                     </div>
                 </div>
 
-                {/* Course Grid/List */}
                 <div className={viewMode === 'grid' ? styles.activitiesGrid : styles.activitiesList}>
                     {activePathDetail.activities.map((activity) => (
-                        <div key={activity.id} className={styles.activityCard}>
+                        <div
+                            key={activity.id}
+                            className={styles.activityCard}
+                            onClick={() => handleActivityClick(activePathDetail)}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div className={styles.cardHeaderArea}>
                                 <div className={styles.activityTags}>
                                     {activity.tags.map((tag, tagIdx) => (
@@ -763,9 +829,9 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
                     Shape <span className={styles.blueText}>your</span> <span className={styles.gradientText}>future</span> self
                 </h1>
                 <p className={styles.subtitle}>
-                    Paths are collections of learnings designed to build deep skills in a particular area. 
-                    Whether you're looking to earn achievements, build a collection of skill badges, or prepare for a 
-                    certification, there are paths right for you. When you're done, share your accomplishments on 
+                    Paths are collections of learnings designed to build deep skills in a particular area.
+                    Whether you're looking to earn achievements, build a collection of skill badges, or prepare for a
+                    certification, there are paths right for you. When you're done, share your accomplishments on
                     social media and hiring platforms like LinkedIn and Credly.
                 </p>
             </header>
@@ -794,7 +860,11 @@ export const Paths: React.FC<PathsProps> = ({ searchQuery }) => {
             <div className={styles.pathsGrid}>
                 {filteredPaths.length > 0 ? (
                     filteredPaths.map((path) => (
-                        <div key={path.id} className={styles.pathCard} onClick={() => setActivePathDetail(path)}>
+                        <div key={path.id} className={styles.pathCard} onClick={() => {
+                            if (onPathSlugChange) {
+                                onPathSlugChange(toSlug(path.title));
+                            }
+                        }}>
                             <div className={styles.cardHeader}>
                                 <div className={styles.pathBadge}>
                                     <PathBadgeIcon />

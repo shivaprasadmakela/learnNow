@@ -26,6 +26,8 @@ export default function App() {
         submitQuiz,
         resetAllProgress,
         saveProfile,
+        activePathSlug,
+        navigate,
 
         // Auth properties
         isLoggedIn,
@@ -101,7 +103,7 @@ export default function App() {
                 {/* Main Content Area */}
                 <main className={styles.mainContent}>
                     {activeView === 'HOME' && (
-                        <Home 
+                        <Home
                             courses={courses}
                             progress={progress}
                             onSelectCourse={(id) => {
@@ -117,7 +119,7 @@ export default function App() {
                     )}
 
                     {activeView === 'COURSE_DETAIL' && (
-                        <CourseDetail 
+                        <CourseDetail
                             course={currentCourse}
                             progress={progress}
                             onBack={() => changeView('HOME')}
@@ -129,7 +131,7 @@ export default function App() {
                     )}
 
                     {activeView === 'LESSON_READER' && currentCourse && (
-                        <LessonReader 
+                        <LessonReader
                             course={currentCourse}
                             lesson={activeLesson}
                             progress={progress}
@@ -142,7 +144,7 @@ export default function App() {
                     )}
 
                     {activeView === 'DASHBOARD' && (
-                        <Dashboard 
+                        <Dashboard
                             courses={courses}
                             progress={progress}
                             profile={profile}
@@ -156,7 +158,7 @@ export default function App() {
                     )}
 
                     {activeView === 'CERTIFICATE' && (
-                        <Certificate 
+                        <Certificate
                             course={currentCourse || (courses.length > 0 ? courses[0] : null)}
                             profile={profile}
                             onBack={() => changeView('DASHBOARD')}
@@ -164,9 +166,30 @@ export default function App() {
                     )}
 
                     {activeView === 'PATHS' && (
-                        <Paths 
+                        <Paths
                             searchQuery={searchQuery}
+                            onSelectCourse={selectCourse}
+                            courses={courses}
+                            activePathSlug={activePathSlug}
+                            onPathSlugChange={(slug) => {
+                                if (slug) navigate(`/paths/${slug}`);
+                                else navigate('/paths');
+                            }}
+                            onShowComingSoon={() => changeView('COMING_SOON')}
                         />
+                    )}
+
+                    {activeView === 'COMING_SOON' && (
+                        <div className={styles.comingSoonContainer}>
+                            <div className={styles.comingSoonCard}>
+                                <div className={styles.comingSoonIcon}>🚀</div>
+                                <h2>Coming Soon!</h2>
+                                <p>We're actively crafting this learning path. Check back soon for hands-on labs, interactive sandboxes, and verification quizzes!</p>
+                                <button className={styles.comingSoonBtn} onClick={() => changeView('PATHS')}>
+                                    Back to Paths
+                                </button>
+                            </div>
+                        </div>
                     )}
                 </main>
             </div>

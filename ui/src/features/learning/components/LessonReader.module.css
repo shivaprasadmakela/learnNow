@@ -712,3 +712,80 @@
         font-size: 0.8rem;
     }
 }
+
+/* Key Takeaways styles */
+.takeawaysContainer {
+    margin: 48px 0;
+    padding: 32px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-left: 6px solid var(--tech-blue);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 16px rgba(11, 87, 208, 0.03);
+}
+
+.takeawaysHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.takeawaysHeader h3 {
+    font-family: var(--font-family-display);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.takeawaysIcon {
+    color: var(--tech-blue);
+}
+
+.takeawaysContent {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Google Skills Style Navigation Buttons */
+.navGoogleBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--tech-blue);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-family-display);
+    box-shadow: 0 4px 12px rgba(11, 87, 208, 0.15);
+    transition: all 0.2s ease-in-out;
+}
+
+.navGoogleBtn:hover:not(:disabled) {
+    background-color: #0b57d0;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(11, 87, 208, 0.25);
+}
+
+.navGoogleBtn:disabled {
+    background-color: var(--border-color);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+    opacity: 0.5;
+}
+
+.prevBtn {
+    background-color: var(--tech-blue);
+}
+
+.nextBtn {
+    background-color: var(--tech-blue);
+}
+

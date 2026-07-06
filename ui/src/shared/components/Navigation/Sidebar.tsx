@@ -2,7 +2,6 @@ import React from 'react';
 import { 
     HomeIcon, 
     UserIcon, 
-    CatalogIcon, 
     PathsIcon, 
     CollectionsIcon, 
     SubscriptionsIcon, 
@@ -58,20 +57,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                     )}
 
-                    {/* Catalog is always visible */}
-                    <div 
-                        className={styles.navItemExpanded}
-                        onClick={() => {
-                            changeView(isLoggedIn ? 'DASHBOARD' : 'HOME');
-                            setTimeout(() => {
-                                document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
-                            }, 100);
-                        }}
-                        title="Catalog"
-                    >
-                        <CatalogIcon size={20} />
-                        <span className={styles.navLabelExpanded}>Catalog</span>
-                    </div>
 
                     {/* Authenticated-only sections */}
                     {isLoggedIn && (
@@ -152,22 +137,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                     )}
 
-                    {/* Catalog is always visible */}
-                    <div 
-                        className={styles.navItemCollapsed}
-                        onClick={() => {
-                            changeView(isLoggedIn ? 'DASHBOARD' : 'HOME');
-                            setTimeout(() => {
-                                document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
-                            }, 100);
-                        }}
-                        title="Catalog"
-                    >
-                        <div className={styles.iconPill}>
-                            <CatalogIcon size={20} />
-                        </div>
-                        <span className={styles.navLabelCollapsed}>Catalog</span>
-                    </div>
 
                     {/* Authenticated-only collapsed sections */}
                     {isLoggedIn && (

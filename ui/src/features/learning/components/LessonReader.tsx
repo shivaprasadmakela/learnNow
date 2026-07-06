@@ -17,6 +17,20 @@ const CloseIcon = () => (
     </svg>
 );
 
+const splitContent = (content: string) => {
+    const takeawaysMarker = '## ## Key Takeaways';
+    const markerIdx = content.indexOf(takeawaysMarker);
+    
+    if (markerIdx === -1) {
+        return { mainContent: content, takeaways: null };
+    }
+    
+    return {
+        mainContent: content.substring(0, markerIdx),
+        takeaways: content.substring(markerIdx + takeawaysMarker.length)
+    };
+};
+
 interface LessonReaderProps {
     course: Course;
     lesson: Lesson | null;
@@ -329,8 +343,23 @@ export const LessonReader: React.FC<LessonReaderProps> = ({
 
                         {/* Markdown Lesson Content */}
                         <div className={styles.lessonText}>
-                            {renderMarkdown(lesson.content || '')}
+                            {renderMarkdown(splitContent(lesson.content || '').mainContent)}
                         </div>
+
+                        {/* Highlighted Key Takeaways Box */}
+                        {splitContent(lesson.content || '').takeaways && (
+                            <div className={styles.takeawaysContainer}>
+                                <div className={styles.takeawaysHeader}>
+                                    <svg className={styles.takeawaysIcon} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0012 18.75c-.304 0-.604-.04-.9-.12l-.548-.547z"/>
+                                    </svg>
+                                    <h3>Key Takeaways</h3>
+                                </div>
+                                <div className={styles.takeawaysContent}>
+                                    {renderMarkdown(splitContent(lesson.content || '').takeaways || '')}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Interactive Developer Code Sandbox */}
                         <div className={styles.sandboxContainer}>
@@ -455,11 +484,15 @@ export const LessonReader: React.FC<LessonReaderProps> = ({
                 {/* Footer Action Navigation */}
                 <footer className={styles.readerFooterBar}>
                     <button 
-                        className={styles.navControlBtn} 
+                        className={`${styles.navGoogleBtn} ${styles.prevBtn}`}
                         onClick={handlePrevClick}
                         disabled={!prevLesson}
                     >
-                        ← Previous Lesson
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Previous</span>
                     </button>
 
                     <Button 
@@ -471,10 +504,14 @@ export const LessonReader: React.FC<LessonReaderProps> = ({
                     </Button>
 
                     <button 
-                        className={styles.navControlBtn} 
+                        className={`${styles.navGoogleBtn} ${styles.nextBtn}`}
                         onClick={handleNextClick}
                     >
-                        {nextLesson ? "Next Lesson →" : "View Dashboard"}
+                        <span>Next</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
                     </button>
                 </footer>
             </div>
