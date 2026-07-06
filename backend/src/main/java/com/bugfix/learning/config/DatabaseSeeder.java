@@ -25,9 +25,27 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        // Safe clean up of the old "Advanced Java Course" to ensure we re-seed it with the correct titles
+        courseRepository.findAll().stream()
+                .filter(c -> "Advanced Java Course".equals(c.getTitle()))
+                .findFirst()
+                .ifPresent(c -> {
+                    courseModuleRepository.findAll().stream()
+                            .filter(m -> m.getCourseId().equals(c.getId()))
+                            .forEach(m -> {
+                                lessonRepository.findAll().stream()
+                                        .filter(l -> l.getModuleId().equals(m.getId()))
+                                        .forEach(lessonRepository::delete);
+                                courseModuleRepository.delete(m);
+                            });
+                    courseRepository.delete(c);
+                });
+
         // Only seed if empty
         if (courseRepository.count() == 0) {
             seedCourses();
+        } else {
+            seedAdvancedJavaCourse();
         }
     }
 
@@ -420,5 +438,136 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "Intermediate",
                 "design_course"
         ));
+
+        // 5. Advanced Java Course
+        seedAdvancedJavaCourse();
+    }
+
+    private void seedAdvancedJavaCourse() {
+        Course javaCourse = courseRepository.save(new Course(
+                null,
+                "Advanced Java Course",
+                "Master Java from core architecture and modern enhancements to advanced concurrency, JVM internals, and reactive programming.",
+                "Backend",
+                "20 Hours",
+                "Advanced",
+                "java_course"
+        ));
+        Long javaId = javaCourse.getId();
+
+        // --- LEVEL 1 ---
+        CourseModule level1 = courseModuleRepository.save(new CourseModule(null, javaId, "Core Java Basics (The Foundation)", 1));
+        
+        Lesson lesson1_1 = lessonRepository.save(new Lesson(
+                null,
+                level1.getId(),
+                "Java Architecture: JDK vs. JRE vs. JVM",
+                "### Java Architecture: JDK vs. JRE vs. JVM (Complete Explanation)\n\n" +
+                "Excellent starting point. JDK vs JRE vs JVM is one of the most frequently asked Java interview topics because it tests whether you understand how Java actually runs. Since your goal is to become a strong Java Backend Engineer, I'll explain it from an interview and production perspective.\n\n" +
+                "When you write this program:\n\n" +
+                "```java\n" +
+                "public class Main {\n" +
+                "    public static void main(String[] args) {\n" +
+                "        System.out.println(\"Hello World\");\n" +
+                "    }\n" +
+                "}\n" +
+                "```\n\n" +
+                "A common beginner question is: How does this code actually execute?\n\n" +
+                "The answer involves three major components: **JDK**, **JRE**, and **JVM**. Think of them as nested layers:\n\n" +
+                "```\n" +
+                "Developer -> JDK (Development Kit) -> JRE (Runtime Environment) -> JVM (Virtual Machine) -> OS -> Hardware\n" +
+                "```\n\n" +
+                "### Why Does Java Need These Components?\n\n" +
+                "Java follows the principle: **Write Once, Run Anywhere (WORA)**. Unlike C/C++, Java doesn't compile directly into native machine code. Instead:\n\n" +
+                "```\n" +
+                "Java Source Code (.java) -> javac -> Bytecode (.class) -> JVM -> Native Machine Code\n" +
+                "```\n\n" +
+                "Every operating system has its own JVM. The bytecode never changes; only the JVM changes. This makes the bytecode platform-independent, while the JVM is platform-dependent.\n\n" +
+                "### 1. What is JDK?\n\n" +
+                "**JDK (Java Development Kit)** is the complete toolkit required to develop Java applications. It contains JRE + development tools like `javac` (compiler), `jdb` (debugger), `jar` (packager), and diagnostics tools like `jstack` and `jmap`.\n\n" +
+                "### 2. What is JRE?\n\n" +
+                "**JRE (Java Runtime Environment)** provides everything required to run a Java application. It includes the JVM, core Java libraries (like `java.lang`, `java.util`), and other support files. JRE does **not** contain development tools like `javac`.\n\n" +
+                "### 3. What is JVM?\n\n" +
+                "**JVM (Java Virtual Machine)** is the engine that executes Java bytecode, translating it to native machine instructions. It is responsible for loading classes, verifying bytecode, executing instructions, and performing Garbage Collection (GC) automatically.\n\n" +
+                "## ## Key Takeaways\n\n" +
+                "### Summary of JDK vs JRE vs JVM\n\n" +
+                "| Component | Full Form | Purpose | Contains |\n" +
+                "| :--- | :--- | :--- | :--- |\n" +
+                "| **JDK** | Java Development Kit | Develop, compile, package, debug, and run Java apps | JRE + compiler (javac) + dev tools |\n" +
+                "| **JRE** | Java Runtime Environment | Run Java applications | JVM + core Java libraries + runtime configs |\n" +
+                "| **JVM** | Java Virtual Machine | Execute Java bytecode | Class Loader, Verifier, Interpreter, JIT, GC |\n\n" +
+                "### Core Relationship\n\n" +
+                "```\n" +
+                "JDK\n" +
+                "└── JRE\n" +
+                "    └── JVM\n" +
+                "```\n" +
+                "Bytecode is fully portable, while the JVM itself is platform-dependent to act as a bridge between portable bytecode and the target OS.",
+                1,
+                30
+        ));
+
+        quizQuestionRepository.save(new QuizQuestion(
+                null,
+                lesson1_1.getId(),
+                "Which component of the Java platform is platform-dependent and acts as the execution engine for bytecode?",
+                "JDK;JRE;JVM;Bytecode Compiler",
+                2,
+                "The JVM translates bytecode into native OS instructions, making the JVM implementation OS-dependent."
+        ));
+
+        // Seed Level 1 Placeholder Lessons
+        lessonRepository.save(new Lesson(null, level1.getId(), "Datatypes & Variables: Primitive vs. Reference", "### Datatypes & Variables\n\nLearn the differences between primitive types (int, double, char) and reference types (objects, arrays) in Java.", 2, 20));
+        lessonRepository.save(new Lesson(null, level1.getId(), "Operators: Arithmetic, Logical, Bitwise, Ternary", "### Operators\n\nMaster standard operators and bitwise manipulations in Java.", 3, 15));
+        lessonRepository.save(new Lesson(null, level1.getId(), "Control Flow: Modern Switch & Loops", "### Control Flow\n\nUnderstand flow control using loops and the new modern switch expressions.", 4, 25));
+        lessonRepository.save(new Lesson(null, level1.getId(), "Arrays: Single & Multi-dimensional", "### Arrays in Java\n\nWork with contiguous memory structures in single and multi-dimensional shapes.", 5, 20));
+        lessonRepository.save(new Lesson(null, level1.getId(), "String Manipulation: Pool, Builder, Buffer", "### String Manipulation\n\nDeep dive into Java's String Pool, immutability, and thread safety of StringBuilder vs StringBuffer.", 6, 25));
+
+        // --- LEVEL 2 ---
+        CourseModule level2 = courseModuleRepository.save(new CourseModule(null, javaId, "Object-Oriented Programming (OOP)", 2));
+        lessonRepository.save(new Lesson(null, level2.getId(), "Classes and Objects: Constructors & Lifecycle", "### Classes & Objects\n\nConstructors, keyword 'this', and the lifecycle of objects.", 1, 20));
+        lessonRepository.save(new Lesson(null, level2.getId(), "The 4 Pillars of OOP", "### 4 Pillars of OOP\n\nDeep dive into Inheritance, Polymorphism, Encapsulation, and Abstraction.", 2, 30));
+        lessonRepository.save(new Lesson(null, level2.getId(), "Relationships: Association, Aggregation & Composition", "### Object Relationships\n\nUnderstand how objects connect in real systems.", 3, 20));
+        lessonRepository.save(new Lesson(null, level2.getId(), "Special Classes: Nested, Inner, Anonymous, Interfaces", "### Special Classes\n\nNested classes, static structures, and default interface methods.", 4, 25));
+
+        // --- LEVEL 3 ---
+        CourseModule level3 = courseModuleRepository.save(new CourseModule(null, javaId, "Java Collections Framework & Generics", 3));
+        lessonRepository.save(new Lesson(null, level3.getId(), "Generics: Wildcards & Type Erasure", "### Generics\n\nImplement compile-time type-safety using Generics.", 1, 25));
+        lessonRepository.save(new Lesson(null, level3.getId(), "The Collection Hierarchy: Lists, Sets & Queues", "### Collections\n\nArrayList vs LinkedList, Set hashing logic, and Queues.", 2, 30));
+        lessonRepository.save(new Lesson(null, level3.getId(), "Map Interface: HashMap internals & Concurrency", "### Maps\n\nHashMap bucket collision handling and ConcurrentHashMap.", 3, 30));
+        lessonRepository.save(new Lesson(null, level3.getId(), "Utility Classes: Collections and Arrays", "### Utilities\n\nSort, search, and copy utilities.", 4, 15));
+
+        // --- LEVEL 4 ---
+        CourseModule level4 = courseModuleRepository.save(new CourseModule(null, javaId, "Modern Java & Advanced Features (Java 8 to 21)", 4));
+        lessonRepository.save(new Lesson(null, level4.getId(), "Lambda Expressions & Functional Interfaces", "### Lambda Expressions\n\nFunctional interfaces like Predicate, Consumer, and Supplier.", 1, 20));
+        lessonRepository.save(new Lesson(null, level4.getId(), "Streams API: Intermediate & Terminal Operations", "### Streams API\n\nDeclarative data processing with map, filter, flatMap, and reduce.", 2, 30));
+        lessonRepository.save(new Lesson(null, level4.getId(), "Optional Class, Records, and Sealed Classes", "### Java 14+ Features\n\nBoilerplate-free DTOs (Records) and Sealed classes.", 3, 25));
+        lessonRepository.save(new Lesson(null, level4.getId(), "Pattern Matching for switch and instanceof", "### Pattern Matching\n\nClean type checking and switch patterns.", 4, 20));
+
+        // --- LEVEL 5 ---
+        CourseModule level5 = courseModuleRepository.save(new CourseModule(null, javaId, "Exceptions, File I/O, and Databases", 5));
+        lessonRepository.save(new Lesson(null, level5.getId(), "Exception Handling & Try-with-resources", "### Exception Handling\n\nChecked vs Unchecked exceptions and resource close checks.", 1, 25));
+        lessonRepository.save(new Lesson(null, level5.getId(), "Java I/O vs. NIO Buffer-Oriented Files", "### File Systems\n\nNon-blocking I/O and standard streams.", 2, 25));
+        lessonRepository.save(new Lesson(null, level5.getId(), "Database Access (JDBC) and Connection Pooling", "### JDBC\n\nEstablish SQL connections and optimize with pools.", 3, 20));
+
+        // --- LEVEL 6 ---
+        CourseModule level6 = courseModuleRepository.save(new CourseModule(null, javaId, "Concurrency & Multithreading (Advanced)", 6));
+        lessonRepository.save(new Lesson(null, level6.getId(), "Basics of Threads & Lifecycle States", "### Threading Basics\n\nRunnable interface, Thread class, and thread states.", 1, 25));
+        lessonRepository.save(new Lesson(null, level6.getId(), "Synchronization, Locks, and Volatile Keyword", "### Synchronizations\n\nDeadlocks, ReentrantLocks, and memory visibility.", 2, 30));
+        lessonRepository.save(new Lesson(null, level6.getId(), "CompletableFuture & Asynchronous Pipelines", "### CompletableFuture\n\nAsync tasks chaining and error handling.", 3, 30));
+        lessonRepository.save(new Lesson(null, level6.getId(), "Virtual Threads (Java 21 / Project Loom)", "### Virtual Threads\n\nLightweight threads for high-throughput reactive concurrency.", 4, 30));
+
+        // --- LEVEL 7 ---
+        CourseModule level7 = courseModuleRepository.save(new CourseModule(null, javaId, "JVM Internals & Memory Management (Deep Dive)", 7));
+        lessonRepository.save(new Lesson(null, level7.getId(), "JVM Memory Structure: Heap, Stack & Metaspace", "### JVM Memory\n\nYoung vs Old generation, thread stack, and Metaspace.", 1, 25));
+        lessonRepository.save(new Lesson(null, level7.getId(), "Garbage Collection (GC) and Collectors", "### Garbage Collection\n\nReachability analysis, G1GC, and low-latency ZGC.", 2, 30));
+        lessonRepository.save(new Lesson(null, level7.getId(), "JVM Performance Tuning & Diagnosing Diagnostics", "### JVM Tuning\n\nXms/Xmx arguments, heap dumps, and thread dump inspection.", 3, 25));
+
+        // --- LEVEL 8 ---
+        CourseModule level8 = courseModuleRepository.save(new CourseModule(null, javaId, "Reactive Programming & Spring WebFlux (Enterprise Level)", 8));
+        lessonRepository.save(new Lesson(null, level8.getId(), "Reactive Streams Specification", "### Reactive Streams\n\nPublisher, Subscriber, and Subscription contract flows.", 1, 20));
+        lessonRepository.save(new Lesson(null, level8.getId(), "Project Reactor: Mono, Flux & Schedulers", "### Reactor Operators\n\nflatMap, zip, backpressure, and elastic threading models.", 2, 30));
+        lessonRepository.save(new Lesson(null, level8.getId(), "WebFlux & R2DBC REST APIs", "### WebFlux\n\nNon-blocking web endpoints and reactive SQL adapters.", 3, 25));
     }
 }
+
