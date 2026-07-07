@@ -1,118 +1,71 @@
-/* Dashboard.module.css */
+/* Google Skills Dashboard Layout Styles */
 
 .container {
-    background-color: var(--bg-primary);
-    min-height: 100vh;
-    color: var(--text-primary);
-    transition: background-color var(--transition-normal);
-}
-
-.header {
-    height: 64px;
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-primary);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    transition: background-color var(--transition-normal), border-color var(--transition-normal);
-}
-
-.backBtn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--tech-blue);
-    font-family: var(--font-family-display);
-}
-
-.backBtn:hover {
-    text-decoration: underline;
-}
-
-.headerRightInfo {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.xpBadge,
-.streakBadge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: var(--radius-pill);
-    font-size: 0.88rem;
-    font-weight: 500;
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-}
-
-.mainLayout {
-
+    max-width: 1200px;
     margin: 0 auto;
     padding: 32px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
+    color: var(--text-primary);
+    font-family: var(--font-family-display, 'Figtree', sans-serif);
 }
 
-/* Collapsible profile editing section */
-.profileEditSection {
+/* Modal Overlay & Editing Box */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    padding: 24px;
-    animation: slideDown 0.3s ease-out;
-}
-
-.profileForm {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s ease-out;
 }
 
 .formTitle {
-    font-family: var(--font-family-display);
-    font-size: 1.15rem;
+    font-size: 1.35rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 20px;
+    color: var(--text-primary);
 }
 
 .formRow {
     display: grid;
-    grid-template-columns: 1fr 3fr;
+    grid-template-columns: 1fr 2fr;
     gap: 16px;
-}
-
-@media (max-width: 580px) {
-    .formRow {
-        grid-template-columns: 1fr;
-    }
+    margin-bottom: 16px;
 }
 
 .textareaContainer {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    margin-top: 16px;
 }
 
 .textareaLabel {
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-secondary);
 }
 
 .textarea {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -120,41 +73,62 @@
     color: var(--text-primary);
     outline: none;
     resize: vertical;
+    font-family: inherit;
 }
 
 .textarea:focus {
     border-color: var(--tech-blue);
-    box-shadow: 0 0 0 3px var(--accent-blue-light);
 }
 
-/* Welcome Section */
+/* Welcome Banner */
 .welcomeHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-sm);
+}
+
+.welcomeLeft {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.avatarCircle {
+    font-size: 2.2rem;
+    width: 60px;
+    height: 60px;
+    background-color: var(--bg-tertiary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--border-color);
 }
 
 .welcomeTitle {
-    font-family: var(--font-family-display);
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0;
 }
 
 .welcomeSubtitle {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: var(--text-secondary);
-    margin-top: 4px;
+    margin: 4px 0 0 0;
 }
 
-/* Grid Layout */
+/* Dashboard 2-Column Grid */
 .dashboardGrid {
     display: grid;
     grid-template-columns: 2.2fr 1fr;
     gap: 32px;
-    width: 100%;
 }
 
 .leftCol {
@@ -169,101 +143,94 @@
     gap: 32px;
 }
 
-/* Left Column components: Active Hero Card */
-.heroCard {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.04) 0%, rgba(99, 102, 241, 0.04) 100%);
-    border: 1.5px solid var(--border-color);
-    border-radius: 24px;
-    padding: 40px;
+/* Current Course Header Card */
+.currentCourseCard {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 28px;
     display: flex;
-    justify-content: space-between;
+    gap: 28px;
     align-items: center;
-    gap: 32px;
-    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+
+.courseCardLeft {
+    flex-shrink: 0;
+    width: 140px;
+}
+
+.courseCardIllustration {
+    width: 140px;
+    height: 90px;
+    border-radius: var(--radius-md);
     overflow: hidden;
 }
 
-.heroCard::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
-    z-index: 0;
-    pointer-events: none;
+.courseCardRight {
+    flex-grow: 1;
 }
 
-.heroLeft {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    max-width: 60%;
-    position: relative;
-    z-index: 1;
-}
-
-.heroBreadcrumb {
-    font-size: 0.8rem;
+.courseCardPreTitle {
+    font-size: 0.78rem;
     font-weight: 700;
     color: var(--tech-blue);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 6px;
 }
 
-.heroTitle {
-    font-family: var(--font-family-display);
-    font-size: 2.2rem;
-    font-weight: 800;
-    line-height: 1.2;
+.courseCardTitle {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
     color: var(--text-primary);
-    letter-spacing: -0.02em;
 }
 
-.heroStartBtn {
+.courseCardDesc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.startButton {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-    background-color: var(--tech-blue);
+    background-color: #1a73e8;
     color: #ffffff;
     border: none;
     border-radius: var(--radius-pill);
-    padding: 12px 28px;
-    font-size: 0.95rem;
+    padding: 10px 24px;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-fast);
-    align-self: flex-start;
-    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.18);
+    transition: all 0.2s ease-in-out;
 }
 
-.heroStartBtn:hover {
-    background-color: var(--tech-blue-hover);
+.startButton:hover {
+    background-color: #1557b0;
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.28);
 }
 
-.heroRight {
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-}
-
-.illustration {
-    display: block;
+.playIcon {
+    width: 16px;
+    height: 16px;
 }
 
 /* Tabs list */
-.tabsContainer {
+.tabContainer {
     display: flex;
-    gap: 24px;
-    border-bottom: 1.5px solid var(--border-color);
+    gap: 28px;
+    border-bottom: 2px solid var(--border-color);
     padding-bottom: 2px;
 }
 
-.tabBtn {
+.tabLink {
     background: none;
     border: none;
     padding: 12px 4px;
@@ -272,21 +239,21 @@
     color: var(--text-secondary);
     cursor: pointer;
     position: relative;
-    transition: color var(--transition-fast);
+    transition: color 0.15s ease;
 }
 
-.tabBtn:hover {
+.tabLink:hover {
     color: var(--text-primary);
 }
 
-.tabBtnActive {
+.activeTab {
     color: var(--tech-blue);
 }
 
-.tabBtnActive::after {
+.activeTab::after {
     content: '';
     position: absolute;
-    bottom: -2px;
+    bottom: -4px;
     left: 0;
     right: 0;
     height: 3px;
@@ -294,391 +261,355 @@
     border-radius: var(--radius-pill);
 }
 
-/* Activities Grid and cards */
-.activitiesGrid {
+/* Cards Grid of Activities */
+.cardsGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    width: 100%;
 }
 
-.activityCard {
-    background-color: var(--bg-primary);
+.previewCard {
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     padding: 24px;
     display: flex;
     flex-direction: column;
-    min-height: 240px;
+    min-height: 250px;
     position: relative;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
 }
 
-.activityCard:hover {
-    transform: translateY(-4px);
+.previewCard:hover {
+    transform: translateY(-3px);
     border-color: var(--tech-blue);
     box-shadow: var(--shadow-md);
 }
 
-.activityBadgeRow {
+.cardTags {
     display: flex;
     gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
-.activityBadgeFeatured {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #a855f7;
-    background-color: rgba(168, 85, 247, 0.08);
-    padding: 3px 8px;
-    border-radius: var(--radius-pill);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-}
-
-.activityBadgePath {
+.cardTag {
     font-size: 0.72rem;
     font-weight: 700;
     color: var(--tech-blue);
-    background-color: var(--accent-blue-light);
+    background-color: rgba(26, 115, 232, 0.08);
     padding: 3px 8px;
     border-radius: var(--radius-pill);
     text-transform: uppercase;
-    letter-spacing: 0.02em;
 }
 
-.activityTitle {
-    font-family: var(--font-family-display);
-    font-size: 1.15rem;
+.cardTitle {
+    font-size: 1.1rem;
     font-weight: 700;
-    line-height: 1.3;
-    margin-bottom: 10px;
+    line-height: 1.35;
+    margin: 0 0 10px 0;
     color: var(--text-primary);
 }
 
-.activityDesc {
-    font-size: 0.88rem;
+.cardDesc {
+    font-size: 0.85rem;
     color: var(--text-secondary);
     line-height: 1.5;
-    margin-bottom: 24px;
+    margin: 0 0 32px 0;
     flex-grow: 1;
 }
 
-.activityArrowBtn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
+.cardFooter {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.circleArrowBtn {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
     color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-color);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
 }
 
-.activityCard:hover .activityArrowBtn {
+.previewCard:hover .circleArrowBtn {
     background-color: var(--tech-blue);
     color: #ffffff;
     border-color: var(--tech-blue);
+    transform: scale(1.05);
 }
 
-/* Pathways list in tab 2 */
-.pathsList {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
+/* Coming Soon Panel */
+.comingSoonPanel {
+    background-color: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 48px;
+    text-align: center;
 }
 
-.pathwayCard,
-.pathwayCardLocked {
+.comingSoonIcon {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+.comingSoonPanel h3 {
+    font-size: 1.25rem;
+    margin: 0 0 8px 0;
+}
+
+.comingSoonPanel p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Streak Card Layout */
+.streakCard {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 32px;
-    transition: background-color var(--transition-normal), border-color var(--transition-normal);
-}
-
-.pathwayCardLocked {
-    opacity: 0.75;
-}
-
-.pathwayLeft {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.pathwayCardTitle {
-    font-family: var(--font-family-display);
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.pathwayMeta {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-.pathwayRight {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-grow: 0.4;
-}
-
-.progressBlock {
-    flex-grow: 1;
-}
-
-.progressLineOuter {
-    height: 6px;
-    background-color: var(--bg-tertiary);
-    border-radius: var(--radius-pill);
-    overflow: hidden;
-}
-
-.progressLineInner {
-    height: 100%;
-    background-color: var(--tech-green);
-    border-radius: var(--radius-pill);
-}
-
-/* Right column components: Streak card */
-.streakCard {
-    background-color: var(--bg-primary);
-    border: 1.5px solid var(--border-color);
-    border-radius: 24px;
-    padding: 28px;
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-.streakCardHeader {
+.streakInfo {
     display: flex;
-    align-items: baseline;
-    gap: 12px;
+    align-items: center;
+    gap: 16px;
 }
 
-.streakNumber {
-    font-family: var(--font-family-display);
-    font-size: 4.5rem;
+.streakBigNumber {
+    font-size: 4rem;
     font-weight: 800;
     line-height: 1;
     color: var(--text-primary);
     letter-spacing: -0.05em;
 }
 
-.streakSub {
+.streakLabelContainer {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.streakFlameIcon {
+    width: 24px;
+    height: 24px;
+    color: #ea580c;
+    margin-bottom: 2px;
+}
+
+.streakSubLabel {
+    font-size: 0.8rem;
+    font-weight: 700;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
-.daysRow {
+.weekCalendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 8px;
-    width: 100%;
     border-top: 1px solid var(--border-color);
-    padding-top: 20px;
+    padding-top: 16px;
 }
 
-.dayCol {
+.calendarDay {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
 }
 
-.dayIndicator {
-    width: 28px;
-    height: 28px;
+.dayIndicatorCircle {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: 1.5px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-fast);
+    background-color: var(--bg-primary);
+    transition: all 0.2s ease;
 }
 
-.dayIndicatorToday {
-    border-color: var(--tech-blue);
-    background-color: var(--accent-blue-light);
+.dayCircleActive {
+    border-color: #22c55e;
+    background-color: #e8f5e9;
+    color: #22c55e;
 }
 
-.dayIndicatorActive {
-    border-color: #ea580c;
-    background-color: rgba(249, 115, 22, 0.08);
+.dayCircleDotted {
+    border-style: dotted;
+    border-width: 2px;
 }
 
-.dayDot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--border-color);
+.checkIcon {
+    width: 16px;
+    height: 16px;
 }
 
-.dayLabel {
+.calendarDayLabel {
     font-size: 0.72rem;
     font-weight: 600;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
 }
 
-/* Achievements Card */
+/* Achievements Card Layout */
 .achievementsCard {
-    background-color: var(--bg-primary);
-    border: 1.5px solid var(--border-color);
-    border-radius: 24px;
-    padding: 28px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
 }
 
-.achievementsHeader {
+.cardHeaderWithAction {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 20px;
 }
 
-.achievementsHeader h3 {
-    font-family: var(--font-family-display);
-    font-size: 1.25rem;
+.cardHeaderTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.expandIconBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.expandIconBtn:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.achievementsStack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.achievementItem {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.achievementIconWrapper {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+
+.achievementMeta {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.achievementName {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progressBarBg {
+    height: 6px;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    width: 100%;
+}
+
+.progressBarFill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+}
+
+/* Progress Table Card Layout */
+.progressCard {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.progressStatsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.progressRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.progressRow:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.progressLabel {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.progressValue {
+    font-size: 0.9rem;
     font-weight: 700;
     color: var(--text-primary);
 }
 
-.headerIconBtn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color var(--transition-fast);
-}
-
-.headerIconBtn:hover {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-}
-
-.badgesStack {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
-
-.badgeItem {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.badgeGraphicShield,
-.badgeGraphicDiamond,
-.badgeGraphicOrange {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.badgeName {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    flex-grow: 1;
-}
-
-.claimBtn {
-    background-color: var(--tech-blue);
-    color: #ffffff;
-    border: none;
-    border-radius: var(--radius-pill);
-    padding: 6px 16px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.claimBtn:hover {
-    background-color: var(--tech-blue-hover);
-    transform: translateY(-1px);
-}
-
-.claimBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.claimedLabel {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--tech-green);
-}
-
-.badgeProgressContainer {
-    width: 80px;
-    height: 6px;
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-pill);
-    overflow: hidden;
-}
-
-.badgeProgressBar {
-    height: 100%;
-    background-color: var(--tech-yellow);
-    border-radius: var(--radius-pill);
-}
-
-/* Reset / Danger Zone */
-.dangerZone {
-    padding: 20px;
-    border: 1.5px solid rgba(234, 67, 53, 0.2);
-    border-radius: 20px;
-    background-color: rgba(234, 67, 53, 0.02);
-}
-
-.dangerZoneTitle {
-    font-family: var(--font-family-display);
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--tech-red);
-    margin-bottom: 4px;
-}
-
-/* Animations */
-@keyframes slideDown {
+/* Animation utilities */
+@keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
 
     to {
@@ -687,42 +618,46 @@
     }
 }
 
-/* Media Queries for full layout responsiveness */
-@media (max-width: 900px) {
+/* Responsive queries */
+@media (max-width: 992px) {
     .dashboardGrid {
         grid-template-columns: 1fr;
         gap: 24px;
     }
 
-    .activitiesGrid {
+    .cardsGrid {
         grid-template-columns: 1fr;
+    }
+
+    .currentCourseCard {
+        flex-direction: column;
+        align-items: flex-start;
         gap: 16px;
     }
 
-    .heroCard {
-        padding: 24px;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .heroLeft {
-        max-width: 100%;
-    }
-
-    .heroRight {
+    .courseCardLeft {
+        width: 100%;
         display: flex;
         justify-content: center;
     }
 
-    .pathwayCard,
-    .pathwayCardLocked {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 20px;
+    .courseCardIllustration {
+        width: 100%;
+        max-width: 240px;
+        height: auto;
     }
 
-    .pathwayRight {
+    .welcomeHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .welcomeRight {
         width: 100%;
-        justify-content: space-between;
+    }
+
+    .welcomeRight button {
+        width: 100%;
     }
 }

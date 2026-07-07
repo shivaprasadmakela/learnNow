@@ -16,12 +16,11 @@ interface UserProfile {
 interface HeaderProps {
     isExpanded: boolean;
     setIsExpanded: (val: boolean) => void;
-    changeView: (view: any) => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => void;
     profile: UserProfile | null;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     isLoggedIn: boolean;
-    setAuthModalOpen: (val: boolean) => void;
     signOut: () => Promise<void>;
 }
 
@@ -33,7 +32,6 @@ export const Header: React.FC<HeaderProps> = ({
     theme,
     toggleTheme,
     isLoggedIn,
-    setAuthModalOpen,
     signOut
 }) => {
     const userFirstName = profile?.fullName?.split(' ')[0] ?? 'there';
@@ -44,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button className={styles.menuBtn} onClick={() => setIsExpanded(!isExpanded)} aria-label="Toggle menu">
                     <MenuIcon size={22} />
                 </button>
-                <div className={styles.logo} onClick={() => changeView('DASHBOARD')}>
+                <div className={styles.logo} onClick={() => changeView(isLoggedIn ? 'DASHBOARD' : 'HOME')}>
                     <span className={styles.logoBrand}>learnNow</span>
                 </div>
             </div>
@@ -69,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
                         </button>
                     </div>
                 ) : (
-                    <button className={styles.signInBtn} onClick={() => setAuthModalOpen(true)}>
+                    <button className={styles.signInBtn} onClick={() => changeView('LOGIN')}>
                         Join Academy
                     </button>
                 )}

@@ -16,7 +16,10 @@ body {
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
-button, input, textarea, select {
+button,
+input,
+textarea,
+select {
   font-family: inherit;
   color: inherit;
 }

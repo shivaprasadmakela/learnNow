@@ -1,8 +1,8 @@
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/BackendApplication.java
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/common/config/SecurityConfig.java
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/common/config/WebConfig.java
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/profile/controller/UserController.java
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/profile/dto/UserDto.java
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/profile/entity/User.java
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/profile/repository/UserRepository.java
-/Users/shivaprasad/Documents/Projects/bugfix/backend/src/main/java/com/bugfix/profile/service/UserService.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/BackendApplication.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/common/config/SecurityConfig.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/common/config/WebConfig.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/profile/controller/UserController.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/profile/dto/UserDto.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/profile/entity/User.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/profile/repository/UserRepository.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/bugfix/profile/service/UserService.java

@@ -470,19 +470,19 @@
     .header {
         padding: 0 16px;
     }
-    
+
     .headerSearchContainer {
         display: none !important;
     }
-    
+
     .hideOnMobile {
         display: none !important;
     }
-    
+
     .headerRight {
         gap: 8px;
     }
-    
+
     .sidebar {
         position: fixed;
         top: 64px;
@@ -494,12 +494,12 @@
         border-right: 1px solid var(--border-color);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color var(--transition-normal);
     }
-    
+
     .sidebarExpanded {
         transform: translateX(256px);
         padding: 16px 12px;
     }
-    
+
     .sidebarCollapsed {
         transform: translateX(0);
         width: 256px;
@@ -542,12 +542,12 @@
         gap: 6px;
         margin-right: 0;
     }
-    
+
     .headerStatBadge {
         padding: 4px 8px;
         gap: 4px;
     }
-    
+
     .headerStatValue {
         font-size: 0.8rem;
     }

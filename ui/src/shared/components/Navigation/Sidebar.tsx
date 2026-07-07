@@ -8,7 +8,7 @@ import styles from './Navigation.module.css';
 interface SidebarProps {
     isExpanded: boolean;
     activeView: string;
-    changeView: (view: any) => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => void;
     isLoggedIn: boolean;
 }
 
