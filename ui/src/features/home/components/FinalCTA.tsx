@@ -6,7 +6,7 @@ import styles from './Home.module.css';
 interface FinalCTAProps {
     onSelectCourse: (courseId: number) => void;
     isLoggedIn: boolean;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => void;
 }
 
 export const FinalCTA: React.FC<FinalCTAProps> = ({ 

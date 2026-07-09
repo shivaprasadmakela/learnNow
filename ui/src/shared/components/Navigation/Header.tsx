@@ -17,7 +17,7 @@ interface UserProfile {
 interface HeaderProps {
     isExpanded: boolean;
     setIsExpanded: (val: boolean) => void;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => void;
     profile: UserProfile | null;
     theme: 'light' | 'dark';
     toggleTheme: () => void;

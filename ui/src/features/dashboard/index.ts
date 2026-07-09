@@ -3,4 +3,5 @@ export * from './hooks/useProfileDashboard';
 export * from './types';
 export * from './components/ProfileEditModal';
 export * from './api/profileApi';
+export * from './components/PathsModule';
 

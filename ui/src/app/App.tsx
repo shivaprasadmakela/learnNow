@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dashboard, useProfileDashboard, ProfileEditModal, fetchPaths } from '../features/dashboard';
+import { Dashboard, useProfileDashboard, ProfileEditModal, fetchPaths, PathsModule } from '../features/dashboard';
 import { Home } from '../features/home';
 import { LoginPage } from '../features/auth';
 import { Header, Sidebar } from '../shared/components';
@@ -15,33 +15,6 @@ const mockCourses: Course[] = [
         duration: "12 hours",
         level: "Advanced",
         imageUrl: "https://placeholder.co/ml"
-    },
-    {
-        id: 2,
-        title: "React Developer Foundations",
-        description: "Master modern frontend development using React.js, hooks, component architecture, global state management, and responsive styling systems.",
-        category: "Frontend",
-        duration: "8 hours",
-        level: "Intermediate",
-        imageUrl: "https://placeholder.co/genai-deploy"
-    },
-    {
-        id: 3,
-        title: "HTML & CSS Styles & Layouts",
-        description: "Understand document models, styling standards, CSS variables, layouts (Flexbox/Grid), and absolute/relative alignments.",
-        category: "Frontend",
-        duration: "10 hours",
-        level: "Intermediate",
-        imageUrl: "https://placeholder.co/genai-apps"
-    },
-    {
-        id: 4,
-        title: "AI for Nonprofits",
-        description: "Understand prompt engineering, artificial intelligence tools, LLM integrations, and process automations for social impact workflows.",
-        category: "AI / ML",
-        duration: "6 hours",
-        level: "Advanced",
-        imageUrl: "https://placeholder.co/genai-data"
     }
 ];
 
@@ -68,7 +41,12 @@ export default function App() {
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [courses, setCourses] = useState<Course[]>([]);
     const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths'>('activities');
-    const [isPathsActive, setIsPathsActive] = useState(false);
+    const [isPathsActive, setIsPathsActive] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.location.pathname.split('/').filter(Boolean)[0] === 'paths';
+        }
+        return false;
+    });
 
     // Fetch paths from backend
     useEffect(() => {
@@ -109,9 +87,13 @@ export default function App() {
         }
     }, [isLoggedIn, activeView, isLoading, changeView]);
 
-    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => {
+    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => {
         changeView(view);
-        setIsPathsActive(false);
+        if (view === 'PATHS') {
+            setIsPathsActive(true);
+        } else {
+            setIsPathsActive(false);
+        }
         if (view === 'DASHBOARD') {
             setDashboardTab('activities');
         }
@@ -119,18 +101,7 @@ export default function App() {
 
     const handleSelectPaths = () => {
         setIsPathsActive(true);
-        if (isLoggedIn) {
-            changeView('DASHBOARD');
-            setDashboardTab('paths');
-        } else {
-            changeView('HOME');
-            setTimeout(() => {
-                const element = document.getElementById('catalog-section');
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                }
-            }, 150);
-        }
+        changeView('PATHS');
     };
 
     if (isLoading) {
@@ -203,6 +174,14 @@ export default function App() {
                             courses={courses}
                             activeTab={dashboardTab}
                             setActiveTab={setDashboardTab}
+                        />
+                    )}
+
+                    {activeView === 'PATHS' && (
+                        <PathsModule
+                            courses={courses}
+                            isLoggedIn={isLoggedIn}
+                            changeView={handleViewChange}
                         />
                     )}
 

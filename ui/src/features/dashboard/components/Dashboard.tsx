@@ -20,8 +20,6 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
     const activeTab = propActiveTab || localActiveTab;
     const setActiveTab = propSetActiveTab || localSetActiveTab;
 
-    const [selectedCategory, setSelectedCategory] = useState<string>('All');
-
     // Streak weekday configuration
     const weekdays = [
         { name: 'Thu', completed: false, isDotted: false },
@@ -32,97 +30,6 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
         { name: 'Tue', completed: false, isDotted: false },
         { name: 'Wed', completed: false, isDotted: false }
     ];
-
-    // Default categories row
-    const defaultCategories = ['AI / ML', 'Agents', 'Data', 'Dev Tools', 'Infrastructure', 'Productivity', 'Security'];
-    // Extract unique categories from backend paths
-    const backendCategories = Array.from(new Set(courses.map(c => c.category))).filter(Boolean);
-    // Combine uniquely
-    const allCategories = ['All', ...Array.from(new Set([...defaultCategories, ...backendCategories]))];
-
-    // Filter paths based on selected category
-    const filteredPaths = courses.filter(course => {
-        if (selectedCategory === 'All') return true;
-        return course.category.toLowerCase() === selectedCategory.toLowerCase();
-    });
-
-    const getCategoryIcon = (category: string) => {
-        switch (category) {
-            case 'AI / ML':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" />
-                    </svg>
-                );
-            case 'Agents':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M5 3v4M3 5h4M19 17v4M17 19h4M12 12l2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4z" />
-                    </svg>
-                );
-            case 'Data':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <path d="M21 16H3M21 11H3M10 21V3" />
-                    </svg>
-                );
-            case 'Dev Tools':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-                    </svg>
-                );
-            case 'Infrastructure':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="2" y="2" width="20" height="8" rx="2" />
-                        <rect x="2" y="14" width="20" height="8" rx="2" />
-                        <line x1="6" y1="6" x2="6.01" y2="6" />
-                        <line x1="6" y1="18" x2="6.01" y2="18" />
-                    </svg>
-                );
-            case 'Productivity':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                );
-            case 'Security':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                );
-            case 'Backend':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <ellipse cx="12" cy="5" rx="9" ry="3" />
-                        <path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                        <path d="M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6" />
-                    </svg>
-                );
-            case 'Frontend':
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                        <line x1="8" y1="21" x2="16" y2="21" />
-                        <line x1="12" y1="17" x2="12" y2="21" />
-                    </svg>
-                );
-            default:
-                return (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    </svg>
-                );
-        }
-    };
 
     // Grab first course (Java) as current course
     const activeCourse = courses.length > 0 ? courses[0] : {
@@ -224,39 +131,11 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
                             </div>
                         ) : (
                             <div className={styles.pathsContainer}>
-                                {/* Paths Catalog Header */}
-                                <div className={styles.pathsBreadcrumb}>
-                                    <span>Home</span>
-                                    <span className={styles.breadcrumbDivider}>&gt;</span>
-                                    <span className={styles.breadcrumbActive}>Paths</span>
+                                <div style={{ marginBottom: '20px' }}>
+                                    <h3 className={styles.cardHeaderTitle} style={{ fontSize: '1.25rem' }}>Learning Paths</h3>
                                 </div>
-
-                                <div className={styles.pathsHeader}>
-                                    <h1 className={styles.pathsTitle}>Shape <span>your</span> future self</h1>
-                                    <p className={styles.pathsSubtitle}>
-                                        Paths are collections of learnings designed to build deep skills in a particular area. Whether you're looking to earn achievements, build a collection of skill badges, or prepare for a certification, there are paths right for you. When you're done, share your accomplishments on social media and hiring platforms like LinkedIn and Credly.
-                                    </p>
-                                </div>
-
-                                {/* Category Filters Row */}
-                                <div className={styles.categoriesRow}>
-                                    {allCategories.map((cat, idx) => (
-                                        <div 
-                                            key={idx} 
-                                            className={`${styles.categoryItem} ${selectedCategory === cat ? styles.categoryItemActive : ''}`}
-                                            onClick={() => setSelectedCategory(cat)}
-                                        >
-                                            <div className={styles.categoryIcon}>
-                                                {getCategoryIcon(cat)}
-                                            </div>
-                                            <span className={styles.categoryLabel}>{cat}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Dynamic Cards Grid */}
                                 <div className={styles.cardsGrid}>
-                                    {filteredPaths.map((path, idx) => (
+                                    {courses.map((path, idx) => (
                                         <div key={idx} className={styles.previewCard}>
                                             <div className={styles.cardTags}>
                                                 <span className={`${styles.cardTag} ${styles.tagPath}`}>

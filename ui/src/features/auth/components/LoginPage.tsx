@@ -5,7 +5,7 @@ import styles from './LoginPage.module.css';
 interface LoginPageProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
     signUp: (email: string, pass: string, fullName: string) => Promise<unknown>;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {

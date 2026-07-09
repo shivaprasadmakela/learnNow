@@ -816,3 +816,14 @@
     font-weight: 500;
     white-space: nowrap;
 }
+
+.breadcrumbLink {
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color var(--transition-fast);
+}
+
+.breadcrumbLink:hover {
+    color: var(--tech-blue);
+}

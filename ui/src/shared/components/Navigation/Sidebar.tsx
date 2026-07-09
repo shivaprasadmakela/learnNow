@@ -9,7 +9,7 @@ import styles from './Navigation.module.css';
 interface SidebarProps {
     isExpanded: boolean;
     activeView: string;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => void;
     isLoggedIn: boolean;
     isPathsActive: boolean;
     onSelectPaths: () => void;

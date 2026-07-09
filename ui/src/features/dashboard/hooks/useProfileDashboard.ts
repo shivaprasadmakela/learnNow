@@ -4,7 +4,7 @@ import type { User } from '@supabase/supabase-js';
 import type { UserProfile } from '../../../types';
 import * as api from '../api/profileApi';
 
-export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN';
+export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS';
 
 export const useProfileDashboard = () => {
     const [activeView, setActiveView] = useState<ViewState>(() => {
@@ -15,6 +15,8 @@ export const useProfileDashboard = () => {
                 return 'DASHBOARD';
             } else if (parts.length === 1 && parts[0] === 'login') {
                 return 'LOGIN';
+            } else if (parts.length === 1 && parts[0] === 'paths') {
+                return 'PATHS';
             }
         }
         return 'HOME';
@@ -61,6 +63,8 @@ export const useProfileDashboard = () => {
             setActiveView('DASHBOARD');
         } else if (parts.length === 1 && parts[0] === 'login') {
             setActiveView('LOGIN');
+        } else if (parts.length === 1 && parts[0] === 'paths') {
+            setActiveView('PATHS');
         } else {
             setActiveView('HOME');
         }
@@ -72,6 +76,8 @@ export const useProfileDashboard = () => {
             window.history.pushState(null, '', '/dashboard');
         } else if (view === 'LOGIN') {
             window.history.pushState(null, '', '/login');
+        } else if (view === 'PATHS') {
+            window.history.pushState(null, '', '/paths');
         } else {
             window.history.pushState(null, '', '/');
         }
