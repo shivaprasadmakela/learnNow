@@ -67,11 +67,10 @@ export const PathsModule: React.FC<PathsModuleProps> = ({ courses, isLoggedIn, c
 
             <div className={styles.pathsHeader}>
                 <h1 className={styles.pathsTitle}>
-                    Shape <span style={{ color: '#1a73e8' }}>your</span> <span style={{ color: '#1a73e8' }}>fu</span><span style={{ color: '#ea4335' }}>ture</span> self
+                    Shape <span>your</span> <span>future</span> self
                 </h1>
                 <p className={styles.pathsSubtitle}>
-                    Paths are collections of learnings designed to build deep skills in a particular area. Whether you're looking to earn achievements, build a collection of skill badges, or prepare for a certification, there are paths right for you. When you're done, share your accomplishments on social media and hiring platforms like LinkedIn and Credly.
-                </p>
+                    Discover top-tier learning content and easy-to-follow courses to build your skills. Complete your path and showcase your achievements directly to hiring platforms.                </p>
             </div>
 
             {/* Category Filters Row */}
@@ -91,24 +90,12 @@ export const PathsModule: React.FC<PathsModuleProps> = ({ courses, isLoggedIn, c
             </div>
 
             {/* Dynamic Cards Grid */}
-            <div className={styles.cardsGrid}>
+            <div className={styles.pathsCardsGrid}>
                 {filteredPaths.map((path, idx) => (
                     <div key={idx} className={styles.previewCard}>
                         <div className={styles.cardTags}>
-                            <span
-                                className={`${styles.cardTag} ${styles.tagPath}`}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    backgroundColor: 'var(--bg-secondary, #f1f3f4)',
-                                    color: 'var(--text-primary, #3c4043)',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 500
-                                }}
-                            >
-                                <span style={{ display: 'inline-block', width: '8px', height: '8px', backgroundColor: '#000000', borderRadius: '1.5px', marginRight: '6px' }} />
+                            <span className={styles.tagPathScreenshot}>
+                                <span className={styles.tagPathIcon} />
                                 Path
                             </span>
                         </div>
@@ -118,22 +105,7 @@ export const PathsModule: React.FC<PathsModuleProps> = ({ courses, isLoggedIn, c
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                 {path.managedBy || 'Managed by Academy'}
                             </span>
-                            <button
-                                className={styles.circleArrowBtn}
-                                style={{
-                                    backgroundColor: '#e8f0fe',
-                                    color: '#1a73e8',
-                                    border: 'none',
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer'
-                                }}
-                                title="Explore Path"
-                            >
+                            <button className={styles.circleArrowBtnScreenshot} title="Explore Path">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
                                     <polyline points="12 5 19 12 12 19"></polyline>

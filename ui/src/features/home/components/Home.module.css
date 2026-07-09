@@ -16,7 +16,7 @@
 
 /* ─── Header ──────────────────────────────────────────────────── */
 .header {
-    height: 64px;
+    height: 72px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
@@ -57,8 +57,9 @@
     font-weight: 700;
     font-size: 1.4rem;
     letter-spacing: -0.05em;
-    background: linear-gradient(135deg, #10b981, #06b6d4, #6366f1);
+    background: linear-gradient(135deg, #00B4DB, #0083B0);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 

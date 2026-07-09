@@ -1,16 +1,22 @@
+/* src/shared/components/Button/Button.module.css */
 .button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-pill);
-    font-weight: 500;
+    border-radius: var(--radius-md); /* 12px border radius */
+    font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid transparent;
     outline: none;
     user-select: none;
-    font-family: var(--font-family-display);
+    font-family: var(--font-family);
     text-decoration: none;
+    box-sizing: border-box;
+}
+
+.button:hover:not(:disabled) {
+    transform: scale(1.02); /* Button motion: Scale(1.02) */
 }
 
 .button:focus-visible {
@@ -22,65 +28,60 @@
     cursor: not-allowed;
 }
 
-/* Variants */
+/* Variants using central theme tokens */
 .primary {
-    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    background-color: var(--tech-blue); /* #2563EB */
     color: #ffffff;
     border: none;
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
+    box-shadow: var(--shadow-sm);
 }
 
 .primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #0284c7, #4f46e5);
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+    background-color: var(--tech-blue-hover); /* #1D4ED8 */
+    box-shadow: var(--shadow-md);
 }
 
 .primary:active:not(:disabled) {
-    transform: scale(0.98);
+    background-color: var(--tech-blue-active); /* #1E40AF */
 }
 
 .secondary {
     background-color: transparent;
-    color: var(--tech-blue);
+    color: var(--text-primary);
     border-color: var(--border-color);
 }
 
 .secondary:hover:not(:disabled) {
-    background-color: var(--accent-blue-light);
-    border-color: var(--tech-blue);
-}
-
-.secondary:active:not(:disabled) {
-    transform: scale(0.98);
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-color-light);
 }
 
 .danger {
-    background-color: var(--tech-red);
+    background-color: var(--tech-red); /* #EF4444 */
     color: #ffffff;
 }
 
 .danger:hover:not(:disabled) {
-    background-color: #e11d48;
+    background-color: #DC2626; /* Darker red hover */
 }
 
-.danger:active:not(:disabled) {
-    transform: scale(0.98);
-}
-
-/* Sizes */
+/* Sizes aligned to the Constitution padding and heights */
 .sm {
-    padding: 0.35rem 0.85rem;
-    font-size: 0.85rem;
+    height: 36px;
+    padding: 0 16px;
+    font-size: 13px;
 }
 
 .md {
-    padding: 0.5rem 1.25rem;
-    font-size: 0.95rem;
+    height: 48px; /* 48px height */
+    padding: 0 24px;
+    font-size: 15px; /* 15px typography */
 }
 
 .lg {
-    padding: 0.7rem 1.75rem;
-    font-size: 1.05rem;
+    height: 56px;
+    padding: 0 32px;
+    font-size: 17px;
 }
 
 /* Loader */
@@ -89,7 +90,7 @@
     height: 1.15rem;
     border: 2px solid currentColor;
     border-bottom-color: transparent;
-    border-radius: 50%;
+    border-radius: var(--radius-pill);
     display: inline-block;
     box-sizing: border-box;
     animation: rotation 0.6s linear infinite;

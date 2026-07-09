@@ -1,50 +1,50 @@
 /* src/styles/variables.css */
 :root {
-  /* Typography */
-  --font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  --font-family-sans: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  --font-family-display: 'Figtree', var(--font-family-sans);
+  /* Typography - Font family aligned to UI Design Constitution */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-display: 'Inter', var(--font-family-sans);
   --font-family-mono: 'Fira Code', monospace;
 
-  /* Brand Tech Colors */
-  --tech-blue: #0ea5e9;
-  /* Vibrant Cyan-Sky */
-  --tech-blue-hover: #0284c7;
-  --tech-red: #f43f5e;
-  /* Sleek Coral-Rose */
-  --tech-yellow: #a855f7;
-  /* Violet/Purple accent */
-  --tech-green: #10b981;
-  /* Emerald */
+  /* Brand Tech Colors - Primary and status colors matching Constitution tokens */
+  --tech-blue: #2563EB;        /* Primary */
+  --tech-blue-hover: #1D4ED8;  /* Primary Hover */
+  --tech-blue-active: #1E40AF; /* Primary Active */
+  --tech-red: #EF4444;         /* Error */
+  --tech-yellow: #F59E0B;      /* Warning */
+  --tech-green: #22C55E;       /* Success */
+  --tech-purple: #3B82F6;      /* Info (Standard primary/info variant) */
 
-  /* Light Theme (Default - matches Google Skills screenshots) */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #f1f3f4;
-  --bg-dark-section: #0b0f19;
-  /* The dark container seen in screenshot 2 */
+  /* Light Theme (Default - Aligned to UI Design Constitution tokens) */
+  --bg-primary: #FFFFFF;       /* Background */
+  --bg-secondary: #F8FAFC;     /* Surface */
+  --bg-tertiary: #F1F5F9;      /* Secondary Surface */
+  --bg-dark-section: #0B0F19;  /* Section Dark Background */
 
-  --text-primary: #202124;
-  --text-secondary: #5f6368;
-  --text-tertiary: #80868b;
-  --text-light: #ffffff;
+  --text-primary: #0F172A;     /* Primary Text */
+  --text-secondary: #475569;   /* Secondary Text */
+  --text-tertiary: #64748B;    /* Muted Text */
+  --text-light: #FFFFFF;
 
-  --border-color: #dadce0;
-  --border-color-light: #f1f3f4;
+  --border-color: #E2E8F0;     /* Border */
+  --border-color-light: #CBD5E1; /* Divider */
 
-  --accent-blue-light: rgba(14, 165, 233, 0.08);
-  --accent-blue-text: var(--tech-blue);
+  --accent-blue-light: rgba(37, 99, 235, 0.08); /* Transparent Primary */
+  --accent-blue-text: #2563EB;                  /* Primary Accent text */
 
-  --shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-  --shadow-md: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
-  --shadow-lg: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.20);
+  /* Shadows - Aligned to UI Design Constitution */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-pill: 9999px;
+  /* Border Radius - Aligned to UI Design Constitution */
+  --radius-sm: 8px;            /* Small */
+  --radius-md: 12px;           /* Medium */
+  --radius-lg: 16px;           /* Large */
+  --radius-xl: 20px;           /* XL */
+  --radius-pill: 999px;        /* Round */
 
+  /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
   --transition-slow: 0.4s ease;
@@ -52,22 +52,18 @@
 
 /* Dark Theme Variables */
 [data-theme="dark"] {
-  --bg-primary: #1e293b;     /* Slate card/panel background */
-  --bg-secondary: #0f172a;   /* Dark slate secondary background */
-  --bg-tertiary: #0b0f19;    /* Darkest slate page background */
+  --bg-primary: #1E293B;       /* Slate card/panel background */
+  --bg-secondary: #0F172A;     /* Dark slate secondary background */
+  --bg-tertiary: #020617;      /* Darkest slate page background */
   --bg-dark-section: #020617;
 
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
 
   --border-color: #334155;
-  --border-color-light: #1e293b;
+  --border-color-light: #1E293B;
 
-  --accent-blue-light: rgba(14, 165, 233, 0.15);
-  --accent-blue-text: #38bdf8;
-
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --accent-blue-light: rgba(59, 130, 246, 0.15);
+  --accent-blue-text: #3B82F6;
 }
