@@ -27,3 +27,17 @@ export const updateProfile = async (profile: UserProfile): Promise<UserProfile> 
     if (!response.ok) throw new Error('Failed to update profile');
     return response.json();
 };
+
+export interface PathData {
+    id: number;
+    title: string;
+    description: string;
+    category: string;
+    managedBy: string;
+}
+
+export const fetchPaths = async (): Promise<PathData[]> => {
+    const response = await fetch('/api/paths');
+    if (!response.ok) throw new Error('Failed to fetch paths');
+    return response.json();
+};

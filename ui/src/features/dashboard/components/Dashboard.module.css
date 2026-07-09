@@ -1,11 +1,10 @@
-/* Google Skills Dashboard Layout Styles */
-
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 32px 24px;
     color: var(--text-primary);
     font-family: var(--font-family-display, 'Figtree', sans-serif);
+    background-color: var(--bg-tertiary);
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
 }
 
 /* Modal Overlay & Editing Box */
@@ -80,49 +79,74 @@
     border-color: var(--tech-blue);
 }
 
-/* Welcome Banner */
-.welcomeHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* side-by-side Metric Cards */
+.metricsRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.metricCard {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    padding: 24px;
-    margin-bottom: 32px;
-    box-shadow: var(--shadow-sm);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 124px;
+    box-sizing: border-box;
+    transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
-.welcomeLeft {
+.metricHeader {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.avatarCircle {
-    font-size: 2.2rem;
-    width: 60px;
-    height: 60px;
-    background-color: var(--bg-tertiary);
+.metricBadgeIcon {
+    font-size: 1.1rem;
+}
+
+.metricBody {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.metricNumber {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.metricArrowBtn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.welcomeTitle {
-    font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-    margin: 0;
+.metricArrowBtn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+    background-color: var(--bg-primary);
 }
 
-.welcomeSubtitle {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    margin: 4px 0 0 0;
-}
 
 /* Dashboard 2-Column Grid */
 .dashboardGrid {
@@ -145,14 +169,14 @@
 
 /* Current Course Header Card */
 .currentCourseCard {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    border: none;
     border-radius: var(--radius-lg);
     padding: 28px;
     display: flex;
     gap: 28px;
     align-items: center;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
 }
 
 .courseCardLeft {
@@ -269,8 +293,8 @@
 }
 
 .previewCard {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    border: none;
     border-radius: var(--radius-lg);
     padding: 24px;
     display: flex;
@@ -278,13 +302,12 @@
     min-height: 250px;
     position: relative;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
 }
 
 .previewCard:hover {
     transform: translateY(-3px);
-    border-color: var(--tech-blue);
-    box-shadow: var(--shadow-md);
+    box-shadow: none;
 }
 
 .cardTags {
@@ -296,11 +319,39 @@
 .cardTag {
     font-size: 0.72rem;
     font-weight: 700;
-    color: var(--tech-blue);
-    background-color: rgba(26, 115, 232, 0.08);
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: var(--radius-pill);
     text-transform: uppercase;
+}
+
+.tagFeatured {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+}
+
+:global(.dark-theme) .tagFeatured {
+    background-color: #3b0764;
+    color: #e9d5ff;
+}
+
+.tagPath {
+    background-color: #e2e8f0;
+    color: #334155;
+}
+
+:global(.dark-theme) .tagPath {
+    background-color: #1e293b;
+    color: #cbd5e1;
+}
+
+.tagCourse {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+:global(.dark-theme) .tagCourse {
+    background-color: #1e3a8a;
+    color: #bfdbfe;
 }
 
 .cardTitle {
@@ -373,11 +424,11 @@
 
 /* Streak Card Layout */
 .streakCard {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    border: none;
     border-radius: var(--radius-lg);
     padding: 24px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -469,11 +520,11 @@
 
 /* Achievements Card Layout */
 .achievementsCard {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    border: none;
     border-radius: var(--radius-lg);
     padding: 24px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
 }
 
 .cardHeaderWithAction {
@@ -557,11 +608,11 @@
 
 /* Progress Table Card Layout */
 .progressCard {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    border: none;
     border-radius: var(--radius-lg);
     padding: 24px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
 }
 
 .progressStatsGrid {
@@ -660,4 +711,108 @@
     .welcomeRight button {
         width: 100%;
     }
+}
+
+/* Paths View Styling */
+.pathsBreadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.breadcrumbDivider {
+    color: var(--text-tertiary);
+}
+
+.breadcrumbActive {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.pathsHeader {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.pathsTitle {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.pathsTitle span {
+    color: var(--tech-blue);
+}
+
+.pathsSubtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.categoriesRow {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.categoryItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    background-color: transparent;
+    transition: transform var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+    width: 90px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.categoryItem:hover {
+    transform: translateY(-2px);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.categoryItemActive {
+    background-color: var(--bg-primary) !important;
+    color: var(--tech-blue) !important;
+    font-weight: 600;
+}
+
+.categoryIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--bg-secondary);
+    color: inherit;
+    transition: background-color var(--transition-fast);
+}
+
+.categoryItemActive .categoryIcon {
+    background-color: rgba(26, 115, 232, 0.1);
+    color: var(--tech-blue);
+}
+
+.categoryLabel {
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
 }

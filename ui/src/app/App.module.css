@@ -60,9 +60,10 @@
 .appLayout {
     display: flex;
     flex-direction: row;
-    min-height: 100vh;
+    min-height: calc(100vh - 64px);
     width: 100%;
 }
+
 
 .mainContent {
     flex-grow: 1;
@@ -71,6 +72,7 @@
     height: calc(100vh - 64px);
     overflow-y: auto;
     width: 100%;
+    background-color: var(--bg-tertiary);
 }
 
 .backdrop {

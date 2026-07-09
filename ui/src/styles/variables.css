@@ -52,9 +52,9 @@
 
 /* Dark Theme Variables */
 [data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
+  --bg-primary: #1e293b;     /* Slate card/panel background */
+  --bg-secondary: #0f172a;   /* Dark slate secondary background */
+  --bg-tertiary: #0b0f19;    /* Darkest slate page background */
   --bg-dark-section: #020617;
 
   --text-primary: #f8fafc;

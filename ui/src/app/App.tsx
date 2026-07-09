@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dashboard, useProfileDashboard } from '../features/dashboard';
+import { Dashboard, useProfileDashboard, ProfileEditModal, fetchPaths } from '../features/dashboard';
 import { Home } from '../features/home';
 import { LoginPage } from '../features/auth';
 import { Header, Sidebar } from '../shared/components';
@@ -9,36 +9,36 @@ import type { Course } from '../types';
 const mockCourses: Course[] = [
     {
         id: 1,
-        title: "Professional Machine Learning Engineer Certification",
-        description: "Build a Certification Study Guide: PMLE. Learn how to design, build, and productionize ML models using Google Cloud technology.",
-        category: "Cloud",
+        title: "Java Backend Path",
+        description: "Learn core Java programming, object-oriented design patterns, collections framework, multithreading, and Spring Boot enterprise APIs.",
+        category: "Backend",
         duration: "12 hours",
         level: "Advanced",
         imageUrl: "https://placeholder.co/ml"
     },
     {
         id: 2,
-        title: "Deploy and Manage Generative AI Models",
-        description: "This learning path provides a comprehensive introduction to machine learning operations (MLOps) for generative AI models on Google Cloud.",
-        category: "Cloud",
+        title: "React Developer Foundations",
+        description: "Master modern frontend development using React.js, hooks, component architecture, global state management, and responsive styling systems.",
+        category: "Frontend",
         duration: "8 hours",
         level: "Intermediate",
         imageUrl: "https://placeholder.co/genai-deploy"
     },
     {
         id: 3,
-        title: "Build and Modernize Applications With Generative AI",
-        description: "This learning path is for application developers who want to enhance their projects with cutting edge generative AI capabilities and modern frameworks.",
-        category: "Fullstack",
+        title: "HTML & CSS Styles & Layouts",
+        description: "Understand document models, styling standards, CSS variables, layouts (Flexbox/Grid), and absolute/relative alignments.",
+        category: "Frontend",
         duration: "10 hours",
         level: "Intermediate",
         imageUrl: "https://placeholder.co/genai-apps"
     },
     {
         id: 4,
-        title: "Integrate Generative AI Into Your Data Workflow",
-        description: "This learning path is for data professionals who want to integrate generative AI tools and LLMs into their existing data engineering pipelines.",
-        category: "Backend",
+        title: "AI for Nonprofits",
+        description: "Understand prompt engineering, artificial intelligence tools, LLM integrations, and process automations for social impact workflows.",
+        category: "AI / ML",
         duration: "6 hours",
         level: "Advanced",
         imageUrl: "https://placeholder.co/genai-data"
@@ -65,6 +65,38 @@ export default function App() {
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths'>('activities');
+    const [isPathsActive, setIsPathsActive] = useState(false);
+
+    // Fetch paths from backend
+    useEffect(() => {
+        const loadPaths = async () => {
+            try {
+                const fetched = await fetchPaths();
+                if (fetched && fetched.length > 0) {
+                    const mapped: Course[] = fetched.map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        description: p.description,
+                        category: p.category,
+                        duration: '10 hours',
+                        level: 'Intermediate',
+                        imageUrl: 'https://placeholder.co/ml',
+                        managedBy: p.managedBy
+                    }));
+                    setCourses(mapped);
+                } else {
+                    setCourses(mockCourses);
+                }
+            } catch (err) {
+                console.error("Failed to load paths from backend, falling back to static", err);
+                setCourses(mockCourses);
+            }
+        };
+        loadPaths();
+    }, []);
 
     // Force redirection based on auth state
     useEffect(() => {
@@ -76,6 +108,30 @@ export default function App() {
             }
         }
     }, [isLoggedIn, activeView, isLoading, changeView]);
+
+    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => {
+        changeView(view);
+        setIsPathsActive(false);
+        if (view === 'DASHBOARD') {
+            setDashboardTab('activities');
+        }
+    };
+
+    const handleSelectPaths = () => {
+        setIsPathsActive(true);
+        if (isLoggedIn) {
+            changeView('DASHBOARD');
+            setDashboardTab('paths');
+        } else {
+            changeView('HOME');
+            setTimeout(() => {
+                const element = document.getElementById('catalog-section');
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 150);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -98,12 +154,13 @@ export default function App() {
             <Header
                 isExpanded={isExpanded}
                 setIsExpanded={setIsExpanded}
-                changeView={changeView}
+                changeView={handleViewChange}
                 profile={profile}
                 theme={theme}
                 toggleTheme={toggleTheme}
                 isLoggedIn={isLoggedIn}
                 signOut={signOut}
+                onOpenSettings={() => setIsEditingProfile(true)}
             />
 
             <div className={styles.appLayout}>
@@ -112,8 +169,10 @@ export default function App() {
                     <Sidebar
                         isExpanded={isExpanded}
                         activeView={activeView}
-                        changeView={changeView}
+                        changeView={handleViewChange}
                         isLoggedIn={isLoggedIn}
+                        isPathsActive={isPathsActive}
+                        onSelectPaths={handleSelectPaths}
                     />
                 )}
 
@@ -121,23 +180,29 @@ export default function App() {
                 <main className={styles.mainContent}>
                     {activeView === 'HOME' && (
                         <Home
-                            courses={mockCourses}
+                            courses={courses}
                             progress={[]}
                             onSelectCourse={() => {
-                                if (isLoggedIn) changeView('DASHBOARD');
-                                else changeView('LOGIN');
+                                if (isLoggedIn) {
+                                    changeView('DASHBOARD');
+                                    setDashboardTab('paths');
+                                } else {
+                                    changeView('LOGIN');
+                                }
                             }}
                             searchQuery={searchQuery}
                             setSearchQuery={setSearchQuery}
                             isLoggedIn={isLoggedIn}
-                            changeView={changeView}
+                            changeView={handleViewChange}
                         />
                     )}
 
                     {activeView === 'DASHBOARD' && isLoggedIn && (
                         <Dashboard
                             profile={profile}
-                            onSaveProfile={saveProfile}
+                            courses={courses}
+                            activeTab={dashboardTab}
+                            setActiveTab={setDashboardTab}
                         />
                     )}
 
@@ -145,7 +210,7 @@ export default function App() {
                         <LoginPage
                             signIn={signIn}
                             signUp={signUp}
-                            changeView={changeView}
+                            changeView={handleViewChange}
                         />
                     )}
                 </main>
@@ -154,6 +219,15 @@ export default function App() {
             {/* Backdrop overlay for mobile sidebar */}
             {isExpanded && (
                 <div className={styles.backdrop} onClick={() => setIsExpanded(false)} />
+            )}
+
+            {/* Global Profile Editing Overlay */}
+            {isEditingProfile && (
+                <ProfileEditModal
+                    profile={profile}
+                    onSaveProfile={saveProfile}
+                    onClose={() => setIsEditingProfile(false)}
+                />
             )}
         </div>
     );

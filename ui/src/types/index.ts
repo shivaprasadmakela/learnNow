@@ -15,6 +15,7 @@ export interface Course {
     duration: string;
     level: string;
     imageUrl: string;
+    managedBy?: string;
 }
 
 export interface UserProgress {
