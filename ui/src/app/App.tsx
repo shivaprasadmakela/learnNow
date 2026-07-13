@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Dashboard, useProfileDashboard, ProfileEditModal, fetchPaths, PathsModule } from '../features/dashboard';
+import { Dashboard, useProfileDashboard, ProfileEditModal } from '../features/dashboard';
+import { PathsPage } from '../features/paths';
+import { fetchPaths } from '../shared/api';
 import { Home } from '../features/home';
+import { RoadmapPage } from '../features/roadmap';
+import type { Subtopic } from '../features/roadmap';
 import { LoginPage } from '../features/auth';
-import { Header, Sidebar } from '../shared/components';
+import { Header, Sidebar, Breadcrumb } from '../shared/components';
 import styles from './App.module.css';
 import type { Course } from '../types';
 
@@ -15,6 +19,73 @@ const mockCourses: Course[] = [
         duration: "12 hours",
         level: "Advanced",
         imageUrl: "https://placeholder.co/ml"
+    }
+];
+
+const javaSubtopics: Subtopic[] = [
+    {
+        id: 1,
+        title: "Core Java Basics (The Foundation)",
+        description: "Master primitive types, flow control, arrays, and syntax basics. Set up your JDK development environment.",
+        category: "course",
+        duration: "2 hours",
+        isCompleted: true
+    },
+    {
+        id: 2,
+        title: "Object-Oriented Programming (OOP)",
+        description: "Delve deep into classes, interfaces, inheritance, polymorphism, encapsulation, and abstraction.",
+        category: "course",
+        duration: "3 hours",
+        isCompleted: false
+    },
+    {
+        id: 3,
+        title: "Java Collections Framework & Generics",
+        description: "Work with Lists, Sets, Maps, Queues, and define type-safe generic classes and methods.",
+        category: "course",
+        duration: "2 hours",
+        isCompleted: false
+    },
+    {
+        id: 4,
+        title: "Modern Java & Advanced Features (Java 8 to 21)",
+        description: "Learn lambda expressions, streams, records, pattern matching, virtual threads, and new API features.",
+        category: "course",
+        duration: "4 hours",
+        isCompleted: false
+    },
+    {
+        id: 5,
+        title: "Exceptions, File I/O, and Databases",
+        description: "Handle runtime errors, use input/output streams, read/write files, and integrate with JDBC databases.",
+        category: "course",
+        duration: "2.5 hours",
+        isCompleted: false
+    },
+    {
+        id: 6,
+        title: "Concurrency & Multithreading (Advanced)",
+        description: "Understand thread creation, synchronization, volatile fields, lock frameworks, executors, and thread safety.",
+        category: "course",
+        duration: "3 hours",
+        isCompleted: false
+    },
+    {
+        id: 7,
+        title: "JVM Internals & Memory Management (Deep Dive)",
+        description: "Explore garbage collection, classloaders, stack vs heap memory, and profiling application performance.",
+        category: "lab",
+        duration: "1.5 hours",
+        isCompleted: false
+    },
+    {
+        id: 8,
+        title: "Reactive Programming & Spring WebFlux (Enterprise Level)",
+        description: "Build non-blocking, asynchronous reactive microservices using Project Reactor and WebFlux.",
+        category: "course",
+        duration: "4 hours",
+        isCompleted: false
     }
 ];
 
@@ -35,11 +106,20 @@ export default function App() {
         signUp,
         signIn
     } = useProfileDashboard();
-
     const [isExpanded, setIsExpanded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [courses, setCourses] = useState<Course[]>([]);
+    const [selectedPathId, setSelectedPathId] = useState<number | null>(() => {
+        if (typeof window !== 'undefined') {
+            const path = window.location.pathname;
+            const parts = path.split('/').filter(Boolean);
+            if (parts.length === 2 && parts[0] === 'paths' && parts[1] === 'java-backend-path') {
+                return 1;
+            }
+        }
+        return null;
+    });
     const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths'>('activities');
     const [isPathsActive, setIsPathsActive] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -87,12 +167,19 @@ export default function App() {
         }
     }, [isLoggedIn, activeView, isLoading, changeView]);
 
-    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => {
-        changeView(view);
-        if (view === 'PATHS') {
+    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => {
+        if (view === 'ROADMAP') {
+            changeView(view, 'java-backend-path');
+        } else {
+            changeView(view);
+        }
+        if (view === 'PATHS' || view === 'ROADMAP') {
             setIsPathsActive(true);
         } else {
             setIsPathsActive(false);
+        }
+        if (view !== 'ROADMAP') {
+            setSelectedPathId(null);
         }
         if (view === 'DASHBOARD') {
             setDashboardTab('activities');
@@ -101,7 +188,17 @@ export default function App() {
 
     const handleSelectPaths = () => {
         setIsPathsActive(true);
+        setSelectedPathId(null);
         changeView('PATHS');
+    };
+
+    const handleSelectPath = (pathId: number) => {
+        setSelectedPathId(pathId);
+        // Map path ID to slug
+        const path = courses.find(c => c.id === pathId) || mockCourses.find(c => c.id === pathId);
+        const slug = path?.title.toLowerCase().includes('java') ? 'java-backend-path' : undefined;
+        changeView('ROADMAP', slug);
+        setIsPathsActive(true);
     };
 
     if (isLoading) {
@@ -112,6 +209,7 @@ export default function App() {
             </div>
         );
     }
+    const selectedPath = courses.find(c => c.id === selectedPathId) || mockCourses.find(c => c.id === selectedPathId) || mockCourses[0];
 
     return (
         <div className={`${styles.appRoot} ${theme === 'dark' ? 'dark-theme' : ''}`}>
@@ -149,49 +247,79 @@ export default function App() {
 
                 {/* Main Content Area */}
                 <main className={styles.mainContent}>
-                    {activeView === 'HOME' && (
-                        <Home
-                            courses={courses}
-                            progress={[]}
-                            onSelectCourse={() => {
-                                if (isLoggedIn) {
-                                    changeView('DASHBOARD');
-                                    setDashboardTab('paths');
-                                } else {
-                                    changeView('LOGIN');
-                                }
-                            }}
-                            searchQuery={searchQuery}
-                            setSearchQuery={setSearchQuery}
-                            isLoggedIn={isLoggedIn}
-                            changeView={handleViewChange}
+                    {/* Top Breadcrumb Bar */}
+                    {(activeView === 'PATHS' || activeView === 'ROADMAP') && (
+                        <Breadcrumb
+                            crumbs={[
+                                { onClick: () => handleViewChange(isLoggedIn ? 'DASHBOARD' : 'HOME') },
+                                ...(activeView === 'ROADMAP'
+                                    ? [
+                                        { label: 'Paths', onClick: handleSelectPaths },
+                                        { label: selectedPath?.title || 'Java Backend Developer Path' },
+                                    ]
+                                    : [{ label: 'Paths' }]
+                                ),
+                            ]}
+
                         />
                     )}
 
-                    {activeView === 'DASHBOARD' && isLoggedIn && (
-                        <Dashboard
-                            profile={profile}
-                            courses={courses}
-                            activeTab={dashboardTab}
-                            setActiveTab={setDashboardTab}
-                        />
-                    )}
+                    {/* Main View Container */}
+                    <div className={activeView === 'DASHBOARD' ? styles.pageContentDashboard : styles.pageContent}>
+                        {activeView === 'HOME' && (
+                            <Home
+                                courses={courses}
+                                progress={[]}
+                                onSelectCourse={() => {
+                                    if (isLoggedIn) {
+                                        changeView('DASHBOARD');
+                                        setDashboardTab('paths');
+                                    } else {
+                                        changeView('LOGIN');
+                                    }
+                                }}
+                                searchQuery={searchQuery}
+                                setSearchQuery={setSearchQuery}
+                                isLoggedIn={isLoggedIn}
+                                changeView={handleViewChange}
+                            />
+                        )}
 
-                    {activeView === 'PATHS' && (
-                        <PathsModule
-                            courses={courses}
-                            isLoggedIn={isLoggedIn}
-                            changeView={handleViewChange}
-                        />
-                    )}
+                        {activeView === 'DASHBOARD' && isLoggedIn && (
+                            <Dashboard
+                                profile={profile}
+                                courses={courses}
+                                activeTab={dashboardTab}
+                                setActiveTab={setDashboardTab}
+                            />
+                        )}
 
-                    {activeView === 'LOGIN' && (
-                        <LoginPage
-                            signIn={signIn}
-                            signUp={signUp}
-                            changeView={handleViewChange}
-                        />
-                    )}
+                        {activeView === 'PATHS' && (
+                            <PathsPage
+                                courses={courses}
+                                onSelectPath={handleSelectPath}
+                            />
+                        )}
+
+                        {activeView === 'ROADMAP' && (
+                            <RoadmapPage
+                                pathTitle={selectedPath?.title || "Java Backend Developer Path"}
+                                managedBy="learnNow"
+                                activitiesCount={javaSubtopics.length}
+                                lastUpdated="2 days ago"
+                                subtopics={javaSubtopics}
+                                progressPercent={12.5}
+                            />
+                        )}
+
+                        {activeView === 'LOGIN' && (
+                            <LoginPage
+                                signIn={signIn}
+                                signUp={signUp}
+                                changeView={handleViewChange}
+                            />
+                        )}
+                    </div>
                 </main>
             </div>
 

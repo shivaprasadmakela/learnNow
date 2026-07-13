@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useToast } from '../../../shared/components/Toast/Toast';
-import styles from './LoginPage.module.css';
+import { useToast } from '../../../shared/components/feedback/Toast';
+import styles from '../styles/LoginPage.module.css';
 
 interface LoginPageProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
     signUp: (email: string, pass: string, fullName: string) => Promise<unknown>;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {

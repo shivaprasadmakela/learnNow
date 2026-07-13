@@ -164,3 +164,53 @@
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(11, 87, 208, 0.25);
 }
+
+/* Breadcrumb styles → see shared/components/navigation/Breadcrumb.module.css */
+/* bannerText and bannerBtn remain here as they are passed as rightSlot content */
+
+.headerRightBanner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.bannerText {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.bannerBtn {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.bannerBtn:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--text-secondary);
+}
+
+.pageContent {
+    flex-grow: 1;
+    padding: var(--space-6) var(--space-24);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dashboard overrides the wide side padding — uses only var(--space-6) on all sides */
+.pageContentDashboard {
+    flex-grow: 1;
+    padding: var(--space-6);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
