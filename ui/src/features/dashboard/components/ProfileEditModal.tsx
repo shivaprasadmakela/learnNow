@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../../../types';
-import { Button } from '../../../shared/components/Button/Button';
-import { Input } from '../../../shared/components/Input/Input';
-import styles from './ProfileEditModal.module.css';
+import { Button, Input } from '../../../shared/components';
+import styles from '../styles/ProfileEditModal.module.css';
 
 interface ProfileEditModalProps {
     profile: UserProfile | null;

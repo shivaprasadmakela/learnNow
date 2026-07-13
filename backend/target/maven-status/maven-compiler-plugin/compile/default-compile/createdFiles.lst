@@ -1,3 +1,5 @@
+com/bugfix/profile/mapper/UserMapper.class
+com/bugfix/profile/scheduler/ProfileScheduler.class
 com/bugfix/profile/entity/Path.class
 com/bugfix/profile/service/UserService.class
 com/bugfix/BackendApplication.class
@@ -5,9 +7,12 @@ com/bugfix/profile/entity/Path$PathBuilder.class
 com/bugfix/profile/repository/UserRepository.class
 com/bugfix/profile/repository/PathRepository.class
 com/bugfix/profile/config/DatabaseSeeder.class
+com/bugfix/profile/events/ProfileEvent.class
 com/bugfix/common/config/WebConfig.class
 com/bugfix/profile/controller/PathController.class
 com/bugfix/profile/entity/User.class
+com/bugfix/profile/validator/UserValidator.class
 com/bugfix/profile/controller/UserController.class
+com/bugfix/profile/exception/ProfileException.class
 com/bugfix/common/config/SecurityConfig.class
 com/bugfix/profile/dto/UserDto.class

@@ -1,9 +1,6 @@
 .container {
-    padding: 32px 24px;
     color: var(--text-primary);
     font-family: var(--font-family);
-    background-color: var(--bg-tertiary);
-    min-height: calc(100vh - 72px);
     box-sizing: border-box;
 }
 
@@ -191,6 +188,12 @@
     overflow: hidden;
 }
 
+.owlPointerImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 .courseCardRight {
     flex-grow: 1;
 }
@@ -223,7 +226,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background-color: #1a73e8;
+    background-color: var(--tech-blue);
     color: #ffffff;
     border: none;
     border-radius: var(--radius-pill);
@@ -231,14 +234,14 @@
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.18);
+    box-shadow: 0 4px 12px rgba(0, 89, 149, 0.18);
     transition: all 0.2s ease-in-out;
 }
 
 .startButton:hover {
-    background-color: #1557b0;
+    background-color: var(--tech-blue-hover);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.28);
+    box-shadow: 0 6px 16px rgba(0, 89, 149, 0.28);
 }
 
 .playIcon {
@@ -748,7 +751,7 @@
 }
 
 .pathsTitle span {
-    background: linear-gradient(135deg, #00B4DB, #0083B0);
+    background: linear-gradient(135deg, #005995, #99bdd5);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: inline-block;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { UserProfile, Course } from '../../../types';
 import styles from './Dashboard.module.css';
+import owlPointer from '../../../assets/owl-pointer.png';
 
 interface DashboardProps {
     profile: UserProfile | null;
@@ -48,19 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
                     <div className={styles.currentCourseCard}>
                         <div className={styles.courseCardLeft}>
                             <div className={styles.courseCardIllustration}>
-                                <svg width="100%" height="100%" viewBox="0 0 200 120" fill="none">
-                                    <rect width="200" height="120" rx="8" fill="#e8f0fe" />
-                                    {/* Monitor Shape */}
-                                    <rect x="40" y="20" width="120" height="70" rx="4" fill="#ffffff" stroke="#1a73e8" strokeWidth="2" />
-                                    <line x1="100" y1="90" x2="100" y2="105" stroke="#1a73e8" strokeWidth="3" />
-                                    <line x1="80" y1="105" x2="120" y2="105" stroke="#1a73e8" strokeWidth="3" />
-                                    {/* Inside Screen Content */}
-                                    <rect x="50" y="30" width="30" height="50" fill="#adcbfa" rx="2" />
-                                    <rect x="90" y="30" width="60" height="8" fill="#1a73e8" rx="1" />
-                                    <rect x="90" y="44" width="50" height="6" fill="#dadce0" rx="1" />
-                                    <rect x="90" y="56" width="40" height="6" fill="#dadce0" rx="1" />
-                                    <rect x="90" y="68" width="55" height="6" fill="#dadce0" rx="1" />
-                                </svg>
+                                <img src={owlPointer} className={styles.owlPointerImg} alt="Learning Path" />
                             </div>
                         </div>
                         <div className={styles.courseCardRight}>

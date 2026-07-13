@@ -1,0 +1,19 @@
+/* ui/src/styles/themes/theme-dark.css */
+[data-theme="dark"] {
+  --bg-primary: var(--color-slate-800);
+  --bg-secondary: var(--color-slate-900);
+  --bg-tertiary: var(--color-slate-950);
+  --bg-dark-section: var(--color-slate-950);
+
+  --text-primary: var(--color-slate-50);
+  --text-secondary: var(--color-slate-300);
+  --text-tertiary: var(--color-slate-400);
+
+  --border-color: var(--color-slate-700);
+  --border-color-light: var(--color-slate-800);
+
+  --accent-primary: #99bdd5;
+  --accent-secondary: #005995;
+  --accent-blue-light: rgba(153, 189, 213, 0.25);
+  --accent-blue-text: #99bdd5;
+}

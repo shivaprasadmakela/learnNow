@@ -1,0 +1,77 @@
+/* shared/components/navigation/Breadcrumb.module.css
+   Single source of truth for all breadcrumb styles.
+   Import this via the Breadcrumb component — do NOT copy these styles elsewhere. */
+
+/* ── Sticky bar ── */
+.breadcrumbBar {
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--space-3) var(--space-6);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--bg-tertiary);
+}
+
+/* ── Crumb row ── */
+.pathsBreadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* Clickable crumb */
+.breadcrumbLink {
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: color var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    user-select: none;
+}
+
+.breadcrumbLink:hover {
+    color: var(--accent-primary, #005995);
+}
+
+.breadcrumbLink:focus-visible {
+    outline: 2px solid var(--accent-primary, #005995);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Non-clickable plain crumb */
+.breadcrumbText {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+/* › separator */
+.breadcrumbDivider {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    user-select: none;
+    line-height: 1;
+}
+
+/* Active / current-page crumb */
+.breadcrumbActive {
+    color: var(--text-primary);
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+/* ── Right slot (banner text + button) ── */
+.breadcrumbRight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}

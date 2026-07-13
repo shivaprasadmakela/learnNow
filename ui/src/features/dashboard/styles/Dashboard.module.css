@@ -1,0 +1,896 @@
+.container {
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    box-sizing: border-box;
+}
+
+/* Modal Overlay & Editing Box */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s ease-out;
+}
+
+.formTitle {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.textareaContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.textareaLabel {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.textarea:focus {
+    border-color: var(--tech-blue);
+}
+
+/* side-by-side Metric Cards */
+.metricsRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.metricCard {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 124px;
+    box-sizing: border-box;
+    transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.metricHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.metricBadgeIcon {
+    font-size: 1.1rem;
+}
+
+.metricBody {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.metricNumber {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.metricArrowBtn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.metricArrowBtn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+    background-color: var(--bg-primary);
+}
+
+
+/* Dashboard 2-Column Grid */
+.dashboardGrid {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: 32px;
+}
+
+.leftCol {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.rightCol {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* Current Course Header Card */
+.currentCourseCard {
+    background-color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    box-shadow: none;
+}
+
+.courseCardLeft {
+    flex-shrink: 0;
+    width: 140px;
+}
+
+.courseCardIllustration {
+    width: 150px;
+    height: 150px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.owlPointerImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.courseCardRight {
+    flex-grow: 1;
+}
+
+.courseCardPreTitle {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--tech-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.courseCardTitle {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+}
+
+.courseCardDesc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.startButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--tech-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 89, 149, 0.18);
+    transition: all 0.2s ease-in-out;
+}
+
+.startButton:hover {
+    background-color: var(--tech-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 89, 149, 0.28);
+}
+
+.playIcon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Tabs list */
+.tabContainer {
+    display: flex;
+    gap: 28px;
+
+    padding-bottom: 2px;
+}
+
+.tabLink {
+    background: none;
+    border: none;
+    padding: 12px 4px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s ease;
+}
+
+.tabLink:hover {
+    color: var(--text-primary);
+}
+
+.activeTab {
+    color: var(--tech-blue);
+}
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--tech-blue);
+    border-radius: var(--radius-pill);
+}
+
+/* Cards Grid of Activities */
+.cardsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.previewCard {
+    background-color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 250px;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+}
+
+.previewCard:hover {
+    transform: translateY(-3px);
+    box-shadow: none;
+}
+
+.cardTags {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.cardTag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+}
+
+.tagFeatured {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+}
+
+:global(.dark-theme) .tagFeatured {
+    background-color: #3b0764;
+    color: #e9d5ff;
+}
+
+.tagPath {
+    background-color: #e2e8f0;
+    color: #334155;
+}
+
+:global(.dark-theme) .tagPath {
+    background-color: #1e293b;
+    color: #cbd5e1;
+}
+
+.tagCourse {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+:global(.dark-theme) .tagCourse {
+    background-color: #1e3a8a;
+    color: #bfdbfe;
+}
+
+.cardTitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0 0 10px 0;
+    color: var(--text-primary);
+}
+
+.cardDesc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 32px 0;
+    flex-grow: 1;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.circleArrowBtn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.previewCard:hover .circleArrowBtn {
+    background-color: var(--tech-blue);
+    color: #ffffff;
+    border-color: var(--tech-blue);
+    transform: scale(1.05);
+}
+
+/* Coming Soon Panel */
+.comingSoonPanel {
+    background-color: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 48px;
+    text-align: center;
+}
+
+.comingSoonIcon {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+.comingSoonPanel h3 {
+    font-size: 1.25rem;
+    margin: 0 0 8px 0;
+}
+
+.comingSoonPanel p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Streak Card Layout */
+.streakCard {
+    background-color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.streakInfo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.streakBigNumber {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-primary);
+    letter-spacing: -0.05em;
+}
+
+.streakLabelContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.streakFlameIcon {
+    width: 24px;
+    height: 24px;
+    color: #ea580c;
+    margin-bottom: 2px;
+}
+
+.streakSubLabel {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.weekCalendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.calendarDay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.dayIndicatorCircle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-primary);
+    transition: all 0.2s ease;
+}
+
+.dayCircleActive {
+    border-color: #22c55e;
+    background-color: #e8f5e9;
+    color: #22c55e;
+}
+
+.dayCircleDotted {
+    border-style: dotted;
+    border-width: 2px;
+}
+
+.checkIcon {
+    width: 16px;
+    height: 16px;
+}
+
+.calendarDayLabel {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Achievements Card Layout */
+.achievementsCard {
+    background-color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: none;
+}
+
+.cardHeaderWithAction {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.cardHeaderTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.expandIconBtn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.expandIconBtn:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.achievementsStack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.achievementItem {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.achievementIconWrapper {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+
+.achievementMeta {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.achievementName {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progressBarBg {
+    height: 6px;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    width: 100%;
+}
+
+.progressBarFill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+}
+
+/* Progress Table Card Layout */
+.progressCard {
+    background-color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: none;
+}
+
+.progressStatsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.progressRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.progressRow:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.progressLabel {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.progressValue {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive queries */
+@media (max-width: 992px) {
+    .dashboardGrid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .cardsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .currentCourseCard {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .courseCardLeft {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .courseCardIllustration {
+        width: 100%;
+        max-width: 240px;
+        height: auto;
+    }
+
+    .welcomeHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .welcomeRight {
+        width: 100%;
+    }
+
+    .welcomeRight button {
+        width: 100%;
+    }
+}
+
+/* Paths View Styling */
+.pathsBreadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.breadcrumbDivider {
+    color: var(--text-tertiary);
+}
+
+.breadcrumbActive {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.pathsHeader {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.pathsTitle {
+    font-size: 56px;
+    /* Display Large in Constitution */
+    font-weight: 700;
+    line-height: 64px;
+    margin: 0 0 16px 0;
+    color: var(--text-primary);
+    letter-spacing: -1px;
+}
+
+.pathsTitle span {
+    background: linear-gradient(135deg, #005995, #99bdd5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.pathsSubtitle {
+    font-size: 18px;
+    /* Body Large in Constitution */
+    font-weight: 400;
+    line-height: 28px;
+    color: var(--text-secondary);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.categoriesRow {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+}
+
+.categoryItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    background-color: transparent;
+    transition: transform var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+    width: 90px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.categoryItem:hover {
+    transform: translateY(-2px);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.categoryItemActive {
+    background-color: var(--bg-primary) !important;
+    color: var(--tech-blue) !important;
+    font-weight: 600;
+}
+
+.categoryIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--bg-secondary);
+    color: inherit;
+    transition: background-color var(--transition-fast);
+}
+
+.categoryItemActive .categoryIcon {
+    background-color: rgba(26, 115, 232, 0.1);
+    color: var(--tech-blue);
+}
+
+.categoryLabel {
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.breadcrumbLink {
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color var(--transition-fast);
+}
+
+.breadcrumbLink:hover {
+    color: var(--tech-blue);
+}
+
+.tagPathScreenshot {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: none;
+}
+
+.tagPathIcon {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--text-primary);
+    border-radius: 1.5px;
+    margin-right: 6px;
+}
+
+.circleArrowBtnScreenshot {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-pill);
+    background-color: var(--accent-blue-light);
+    color: var(--accent-blue-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.circleArrowBtnScreenshot:hover {
+    background-color: var(--tech-blue);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.pathsCardsGrid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    /* Consistent gap */
+    width: 100%;
+    margin-top: 24px;
+}
+
+.pathsCardsGrid .previewCard {
+    width: 360px;
+    /* Align to max 3 per row (3 * 360px + gaps fits perfectly in content width) */
+    max-width: 100%;
+    flex-shrink: 0;
+}

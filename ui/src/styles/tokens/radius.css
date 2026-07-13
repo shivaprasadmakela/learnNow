@@ -1,0 +1,8 @@
+/* ui/src/styles/tokens/radius.css */
+:root {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+}

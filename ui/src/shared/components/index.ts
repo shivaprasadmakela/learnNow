@@ -1,8 +1,4 @@
-export * from './Button/Button';
-export * from './Input/Input';
-export * from './Icons';
-export * from './Navigation/Header';
-export * from './Navigation/Sidebar';
-export * from './Toast/Toast';
-
-
+export * from './ui/Button';
+export * from './ui/Input';
+export * from './navigation';
+export * from './feedback/Toast';

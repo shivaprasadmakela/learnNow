@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Course } from '../../../types';
-import styles from './Home.module.css';
+import styles from '../styles/Home.module.css';
 
 interface CatalogBlockProps {
     filteredCourses: Course[];

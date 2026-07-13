@@ -1,0 +1,27 @@
+/* ui/src/styles/tokens/colors.css */
+:root {
+  /* Brand Tech Colors */
+  --color-blue-500: #2563EB;
+  --color-blue-600: #1D4ED8;
+  --color-blue-700: #1E40AF;
+  
+  --color-red-500: #EF4444;
+  --color-yellow-500: #F59E0B;
+  --color-green-500: #22C55E;
+  --color-purple-500: #3B82F6;
+  
+  --color-white: #FFFFFF;
+  --color-slate-50: #F8FAFC;
+  --color-slate-100: #F1F5F9;
+  --color-slate-200: #E2E8F0;
+  --color-slate-300: #CBD5E1;
+  --color-slate-400: #94A3B8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1E293B;
+  --color-slate-900: #0F172A;
+  --color-slate-950: #020617;
+  
+  --color-dark-section: #0B0F19;
+}

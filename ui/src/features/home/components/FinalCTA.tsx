@@ -1,12 +1,12 @@
 import React from 'react';
-import { Button } from '../../../shared/components/Button/Button';
-import { ChevronRightIcon } from '../../../shared/components/Icons';
-import styles from './Home.module.css';
+import { Button } from '../../../shared/components';
+import { ChevronRight } from 'lucide-react';
+import styles from '../styles/Home.module.css';
 
 interface FinalCTAProps {
     onSelectCourse: (courseId: number) => void;
     isLoggedIn: boolean;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
 }
 
 export const FinalCTA: React.FC<FinalCTAProps> = ({ 
@@ -32,9 +32,8 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
                     <line x1="14" y1="4" x2="10" y2="20" />
                     <defs>
                         <linearGradient id="techGradCTA" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#10b981" />
-                            <stop offset="50%" stopColor="#06b6d4" />
-                            <stop offset="100%" stopColor="#6366f1" />
+                            <stop offset="0%" stopColor="#005995" />
+                            <stop offset="100%" stopColor="#99bdd5" />
                         </linearGradient>
                     </defs>
                 </svg>
@@ -52,7 +51,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
                     className={styles.heroSecondaryBtn}
                     onClick={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })}
                 >
-                    Browse Catalog <ChevronRightIcon size={16} />
+                    Browse Catalog <ChevronRight size={16} />
                 </button>
             </div>
         </section>

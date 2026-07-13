@@ -1,69 +1,11 @@
 /* src/styles/variables.css */
-:root {
-  /* Typography - Font family aligned to UI Design Constitution */
-  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-family-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-family-display: 'Inter', var(--font-family-sans);
-  --font-family-mono: 'Fira Code', monospace;
-
-  /* Brand Tech Colors - Primary and status colors matching Constitution tokens */
-  --tech-blue: #2563EB;        /* Primary */
-  --tech-blue-hover: #1D4ED8;  /* Primary Hover */
-  --tech-blue-active: #1E40AF; /* Primary Active */
-  --tech-red: #EF4444;         /* Error */
-  --tech-yellow: #F59E0B;      /* Warning */
-  --tech-green: #22C55E;       /* Success */
-  --tech-purple: #3B82F6;      /* Info (Standard primary/info variant) */
-
-  /* Light Theme (Default - Aligned to UI Design Constitution tokens) */
-  --bg-primary: #FFFFFF;       /* Background */
-  --bg-secondary: #F8FAFC;     /* Surface */
-  --bg-tertiary: #F1F5F9;      /* Secondary Surface */
-  --bg-dark-section: #0B0F19;  /* Section Dark Background */
-
-  --text-primary: #0F172A;     /* Primary Text */
-  --text-secondary: #475569;   /* Secondary Text */
-  --text-tertiary: #64748B;    /* Muted Text */
-  --text-light: #FFFFFF;
-
-  --border-color: #E2E8F0;     /* Border */
-  --border-color-light: #CBD5E1; /* Divider */
-
-  --accent-blue-light: rgba(37, 99, 235, 0.08); /* Transparent Primary */
-  --accent-blue-text: #2563EB;                  /* Primary Accent text */
-
-  /* Shadows - Aligned to UI Design Constitution */
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
-
-  /* Border Radius - Aligned to UI Design Constitution */
-  --radius-sm: 8px;            /* Small */
-  --radius-md: 12px;           /* Medium */
-  --radius-lg: 16px;           /* Large */
-  --radius-xl: 20px;           /* XL */
-  --radius-pill: 999px;        /* Round */
-
-  /* Transitions */
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
-  --transition-slow: 0.4s ease;
-}
-
-/* Dark Theme Variables */
-[data-theme="dark"] {
-  --bg-primary: #1E293B;       /* Slate card/panel background */
-  --bg-secondary: #0F172A;     /* Dark slate secondary background */
-  --bg-tertiary: #020617;      /* Darkest slate page background */
-  --bg-dark-section: #020617;
-
-  --text-primary: #F8FAFC;
-  --text-secondary: #CBD5E1;
-  --text-tertiary: #94A3B8;
-
-  --border-color: #334155;
-  --border-color-light: #1E293B;
-
-  --accent-blue-light: rgba(59, 130, 246, 0.15);
-  --accent-blue-text: #3B82F6;
-}
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/radius.css";
+@import "./tokens/shadow.css";
+@import "./tokens/animation.css";
+@import "./tokens/breakpoints.css";
+@import "./tokens/z-index.css";
+@import "./themes/theme-light.css";
+@import "./themes/theme-dark.css";

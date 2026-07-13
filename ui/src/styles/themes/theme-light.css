@@ -1,0 +1,30 @@
+/* ui/src/styles/themes/theme-light.css */
+:root {
+  /* Brand Tech Colors Mapping */
+  --tech-blue: #005995;
+  --tech-blue-hover: #004b7d;
+  --tech-blue-active: #003e67;
+  --tech-red: var(--color-red-500);
+  --tech-yellow: var(--color-yellow-500);
+  --tech-green: var(--color-green-500);
+  --tech-purple: #99bdd5;
+
+  /* Light Theme Mappings */
+  --bg-primary: var(--color-white);
+  --bg-secondary: var(--color-slate-50);
+  --bg-tertiary: var(--color-slate-100);
+  --bg-dark-section: var(--color-dark-section);
+
+  --text-primary: var(--color-slate-900);
+  --text-secondary: var(--color-slate-600);
+  --text-tertiary: var(--color-slate-500);
+  --text-light: var(--color-white);
+
+  --border-color: var(--color-slate-200);
+  --border-color-light: var(--color-slate-300);
+
+  --accent-primary: #005995;
+  --accent-secondary: #99bdd5;
+  --accent-blue-light: rgba(153, 189, 213, 0.2);
+  --accent-blue-text: #005995;
+}

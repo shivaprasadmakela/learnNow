@@ -1,11 +1,11 @@
 import React from 'react';
-import { Button } from '../../../shared/components/Button/Button';
-import { ChevronRightIcon } from '../../../shared/components/Icons';
-import styles from './Home.module.css';
+import { Button } from '../../../shared/components';
+import { ChevronRight } from 'lucide-react';
+import styles from '../styles/Home.module.css';
 
 interface HeroProps {
     isLoggedIn: boolean;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ isLoggedIn, changeView }) => {
@@ -44,7 +44,7 @@ export const Hero: React.FC<HeroProps> = ({ isLoggedIn, changeView }) => {
                     className={styles.heroSecondaryBtn}
                     onClick={scrollToCatalog}
                 >
-                    Explore Paths <ChevronRightIcon size={16} />
+                    Explore Paths <ChevronRight size={16} />
                 </button>
             </div>
         </section>

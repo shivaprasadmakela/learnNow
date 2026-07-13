@@ -1,0 +1,109 @@
+/* src/shared/components/feedback/Toast/Toast.module.css */
+.toastContainer {
+    position: fixed;
+    top: var(--space-6);
+    right: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    z-index: var(--z-tooltip);
+    pointer-events: none;
+    max-width: 380px;
+    width: calc(100% - 48px);
+}
+
+.toastItem {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    animation: slideIn var(--transition-fast) ease-out forwards;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.toastItem:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.toastIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.iconSuccess {
+    color: var(--tech-green);
+}
+
+.iconError {
+    color: var(--tech-red);
+}
+
+.iconWarning {
+    color: var(--tech-yellow);
+}
+
+.iconInfo {
+    color: var(--tech-blue);
+}
+
+.toastMessage {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0 var(--space-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.closeBtn:hover {
+    color: var(--text-primary);
+}
+
+/* Toast types theme variants */
+.success {
+    border-left: 4px solid var(--tech-green);
+}
+
+.error {
+    border-left: 4px solid var(--tech-red);
+}
+
+.info {
+    border-left: 4px solid var(--tech-blue);
+}
+
+.warning {
+    border-left: 4px solid var(--tech-yellow);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

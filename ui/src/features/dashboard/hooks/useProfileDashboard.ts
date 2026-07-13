@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../../shared/supabaseClient';
 import type { User } from '@supabase/supabase-js';
 import type { UserProfile } from '../../../types';
-import * as api from '../api/profileApi';
+import * as api from '../../../shared/api';
 
-export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS';
+export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP';
 
 export const useProfileDashboard = () => {
     const [activeView, setActiveView] = useState<ViewState>(() => {
@@ -17,6 +17,8 @@ export const useProfileDashboard = () => {
                 return 'LOGIN';
             } else if (parts.length === 1 && parts[0] === 'paths') {
                 return 'PATHS';
+            } else if (parts.length === 2 && parts[0] === 'paths') {
+                return 'ROADMAP';
             }
         }
         return 'HOME';
@@ -65,19 +67,23 @@ export const useProfileDashboard = () => {
             setActiveView('LOGIN');
         } else if (parts.length === 1 && parts[0] === 'paths') {
             setActiveView('PATHS');
+        } else if (parts.length === 2 && parts[0] === 'paths') {
+            setActiveView('ROADMAP');
         } else {
             setActiveView('HOME');
         }
         setIsLoading(false);
     }, []);
 
-    const changeView = useCallback((view: ViewState) => {
+    const changeView = useCallback((view: ViewState, slug?: string) => {
         if (view === 'DASHBOARD') {
             window.history.pushState(null, '', '/dashboard');
         } else if (view === 'LOGIN') {
             window.history.pushState(null, '', '/login');
         } else if (view === 'PATHS') {
             window.history.pushState(null, '', '/paths');
+        } else if (view === 'ROADMAP') {
+            window.history.pushState(null, '', `/paths/${slug || 'java-backend-path'}`);
         } else {
             window.history.pushState(null, '', '/');
         }

@@ -1,0 +1,549 @@
+/* ui/src/features/roadmap/styles/Roadmap.module.css */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Header Row */
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-6);
+    width: 100%;
+}
+
+.pathsBreadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.breadcrumbLink {
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumbLink:hover {
+    color: var(--text-primary);
+}
+
+.breadcrumbDivider {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    user-select: none;
+}
+
+.breadcrumbActive {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.headerRightBanner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.bannerText {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.bannerBtn {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.bannerBtn:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--text-secondary);
+}
+
+/* ─── Hero Banner ─── */
+
+/* Outer wrapper — positions the notch pseudo-element */
+.heroBannerWrapper {
+    position: relative;
+    margin-bottom: var(--space-8);
+}
+
+/* Solid Brand Blue card */
+.heroBanner {
+    background-color: #005995;
+    border-radius: 16px;
+    padding: 28px 32px;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+    position: relative;
+    z-index: 0;
+}
+
+/* Step notch — same color as page background, sits over bottom-right */
+.heroBannerNotch {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40%;
+    height: 38%;
+    background-color: var(--bg-primary);
+    border-top-left-radius: 18px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Row 1: left content + right illustration */
+.heroTopContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.heroLeft {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.heroRight {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bunnyBrainImg {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+}
+
+/* "Path" chip */
+.heroBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    width: fit-content;
+}
+
+.heroBadgeIcon {
+    font-size: 0.7rem;
+    line-height: 1;
+    opacity: 0.8;
+}
+
+.heroTitle {
+    margin: 0 0 14px 0;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+}
+
+.metaRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Each meta detail — bordered dark pill */
+.metaDetail {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.88);
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 4px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+/* Row 2: button + progress bar */
+.progressRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Outlined white pill button */
+.continueButton {
+    background-color: transparent;
+    color: #ffffff;
+    border: 1.5px solid rgba(255, 255, 255, 0.75);
+    padding: 8px 20px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.continueButton:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 1);
+}
+
+.progressBarContainer {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.progressTrack {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 4px;
+    transition: width var(--transition-normal);
+}
+
+/* Overview Layout */
+.overviewLayout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    width: 100%;
+}
+
+.dropdownSelectContainer {
+    position: relative;
+    display: inline-block;
+    align-self: flex-start;
+}
+
+.overviewSelect {
+    appearance: none;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: var(--space-2) var(--space-8) var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.overviewSelect:hover {
+    border-color: var(--text-secondary);
+}
+
+.dropdownChevron {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.overviewText {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    max-width: 1000px;
+}
+
+/* Action Toggles Row */
+.actionRow {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: var(--space-4);
+}
+
+.feedbackBtn {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    transition: all var(--transition-fast);
+}
+
+.feedbackBtn:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.toggleGroup {
+    display: flex;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 2px;
+}
+
+.toggleBtn {
+    background: none;
+    border: none;
+    padding: var(--space-2) var(--space-3);
+    border-radius: calc(var(--radius-md) - 2px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    transition: all var(--transition-fast);
+}
+
+.toggleBtnActive {
+    background-color: var(--tech-blue);
+    color: var(--color-white) !important;
+}
+
+/* Course / Subtopic Cards Grid */
+.courseGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+    width: 100%;
+}
+
+/* List mode wrapper */
+.subtopicListContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: var(--space-6);
+    width: 100%;
+}
+
+.subtopicCard {
+    background-color: #ffffff;
+    border: none;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+    box-sizing: border-box;
+    min-height: 230px;
+}
+
+.subtopicCard:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+}
+
+/* List view: card becomes a horizontal row */
+.subtopicCardList {
+    flex-direction: row;
+    align-items: center;
+    min-height: unset;
+    padding: 16px 24px;
+    gap: 24px;
+}
+
+/* Grows to fill available width; holds badge + title */
+.subtopicCardMain {
+    flex: 1;
+    min-width: 0;
+}
+
+/* In list mode keep the footer compact, no top margin */
+.subtopicCardList .subtopicFooter {
+    margin-top: 0;
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+/* In list mode, title is a single truncated line */
+.subtopicCardList .subtopicTitle {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Hide description in list mode (already conditional via JS, belt+suspenders) */
+.subtopicCardList .subtopicDesc {
+    display: none;
+}
+
+.subtopicCardHeader {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: 14px;
+}
+
+.subtopicBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #f1f3f6;
+    color: #444;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    letter-spacing: 0.01em;
+}
+
+.subtopicTitle {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111;
+    line-height: 1.35;
+}
+
+.subtopicDesc {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.55;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.subtopicFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+
+}
+
+.durationWrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: #555;
+    font-weight: 500;
+}
+
+.exploreArrow {
+    background-color: #dbeafe;
+    color: #2563eb;
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.exploreArrow:hover {
+    background-color: #2563eb;
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+    .headerRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .headerRightBanner {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .heroBanner {
+        padding: var(--space-5);
+    }
+
+    .heroTopContent {
+        flex-direction: column;
+    }
+
+    .heroRight {
+        display: none;
+    }
+
+    .heroBannerNotch {
+        display: none;
+    }
+
+    .progressRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .continueButton {
+        justify-content: center;
+    }
+
+    .actionRow {
+        justify-content: space-between;
+        width: 100%;
+    }
+}
