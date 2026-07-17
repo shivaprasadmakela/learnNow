@@ -23,11 +23,11 @@ All UI logic is grouped by domain feature folders under `/src/features`.
 
 ### 2. Backend Architecture (`/backend`)
 
-Java packages are structured by context domain directories under `com.bugfix`:
+Java packages are structured by context domain directories under `com.learnnow`:
 
-- **Entities**: Keep Hibernate mapping classes in `com.bugfix.learning.entity`.
-- **Controllers**: Expose JSON API interfaces inside `com.bugfix.learning.controller`.
-- **Data Seeding**: Populate default tracks/quizzes inside `com.bugfix.learning.config.DatabaseSeeder`.
+- **Entities**: Keep Hibernate mapping classes in `com.learnnow.paths.entity`.
+- **Controllers**: Expose JSON API interfaces inside `com.learnnow.paths.controller`.
+- **Data Seeding**: Populate default tracks/quizzes inside `com.learnnow.paths.config.DatabaseSeeder`.
 
 ---
 
