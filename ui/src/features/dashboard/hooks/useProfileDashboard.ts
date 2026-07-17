@@ -4,7 +4,7 @@ import type { User } from '@supabase/supabase-js';
 import type { UserProfile } from '../../../types';
 import * as api from '../../../shared/api';
 
-export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP';
+export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP' | 'STUDY';
 
 export const useProfileDashboard = () => {
     const [activeView, setActiveView] = useState<ViewState>(() => {
@@ -19,6 +19,8 @@ export const useProfileDashboard = () => {
                 return 'PATHS';
             } else if (parts.length === 2 && parts[0] === 'paths') {
                 return 'ROADMAP';
+            } else if (parts.length === 3 && parts[0] === 'paths') {
+                return 'STUDY';
             }
         }
         return 'HOME';
@@ -69,13 +71,15 @@ export const useProfileDashboard = () => {
             setActiveView('PATHS');
         } else if (parts.length === 2 && parts[0] === 'paths') {
             setActiveView('ROADMAP');
+        } else if (parts.length === 3 && parts[0] === 'paths') {
+            setActiveView('STUDY');
         } else {
             setActiveView('HOME');
         }
         setIsLoading(false);
     }, []);
 
-    const changeView = useCallback((view: ViewState, slug?: string) => {
+    const changeView = useCallback((view: ViewState, slug?: string, subtopicSlug?: string) => {
         if (view === 'DASHBOARD') {
             window.history.pushState(null, '', '/dashboard');
         } else if (view === 'LOGIN') {
@@ -84,6 +88,8 @@ export const useProfileDashboard = () => {
             window.history.pushState(null, '', '/paths');
         } else if (view === 'ROADMAP') {
             window.history.pushState(null, '', `/paths/${slug || 'java-backend-path'}`);
+        } else if (view === 'STUDY') {
+            window.history.pushState(null, '', `/paths/${slug || 'java-backend-path'}/${subtopicSlug || ''}`);
         } else {
             window.history.pushState(null, '', '/');
         }

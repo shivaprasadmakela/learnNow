@@ -20,6 +20,7 @@ export interface RoadmapPageProps {
     lastUpdated?: string;
     subtopics: Subtopic[];
     progressPercent?: number;
+    onSelectSubtopic?: (id: number) => void;
 }
 
 export const RoadmapPage: React.FC<RoadmapPageProps> = ({
@@ -28,18 +29,23 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
     activitiesCount = 8,
     lastUpdated = 'Recently',
     subtopics,
-    progressPercent = 0
+    progressPercent = 0,
+    onSelectSubtopic
 }) => {
     const { showToast } = useToast();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    const handleSubtopicClick = (title: string) => {
-        showToast(`"${title}" workspace lessons are launching soon!`, 'info');
+    const handleSubtopicClick = (id: number, title: string) => {
+        if (onSelectSubtopic) {
+            onSelectSubtopic(id);
+        } else {
+            showToast(`"${title}" workspace lessons are launching soon!`, 'info');
+        }
     };
 
     const handleContinueClick = () => {
         if (subtopics && subtopics.length > 0) {
-            handleSubtopicClick(subtopics[0].title);
+            handleSubtopicClick(subtopics[0].id, subtopics[0].title);
         } else {
             showToast("Path launch is in progress!", "info");
         }
@@ -114,6 +120,8 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
                     <div
                         key={topic.id}
                         className={`${styles.subtopicCard} ${viewMode === 'list' ? styles.subtopicCardList : ''}`}
+                        onClick={() => handleSubtopicClick(topic.id, topic.title)}
+                        style={{ cursor: 'pointer' }}
                     >
                         {/* Left: badge + title (+ description in grid only) */}
                         <div className={styles.subtopicCardMain}>
@@ -140,7 +148,10 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
                             </div>
                             <button
                                 className={styles.exploreArrow}
-                                onClick={() => handleSubtopicClick(topic.title)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSubtopicClick(topic.id, topic.title);
+                                }}
                                 title="Explore Topic"
                             >
                                 <ArrowRight size={16} />

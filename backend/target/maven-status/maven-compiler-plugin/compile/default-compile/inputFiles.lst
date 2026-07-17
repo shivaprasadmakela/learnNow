@@ -3,9 +3,12 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/config/WebConfig.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/config/DatabaseSeeder.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/controller/PathController.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/controller/SubtopicController.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/entity/Path.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/entity/Subtopic.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/entity/TopicSection.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/repository/PathRepository.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/repository/SubtopicRepository.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/profile/controller/UserController.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/profile/dto/UserDto.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/profile/entity/User.java

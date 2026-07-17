@@ -61,8 +61,12 @@ mvn spring-boot:run &
 BACKEND_PID=$!
 cd ..
 
-# Give the backend a brief moment to initialize
-sleep 2
+# Wait for backend to start listening on port 8080
+echo "Waiting for backend to start on port 8080..."
+while ! nc -z localhost 8080 >/dev/null 2>&1; do
+    sleep 0.5
+done
+echo "Backend is ready!"
 
 echo "Starting UI Server..."
 cd ui

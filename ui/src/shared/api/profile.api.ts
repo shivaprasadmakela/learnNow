@@ -24,3 +24,34 @@ export const fetchPaths = async (): Promise<PathData[]> => {
     if (!response.ok) throw new Error('Failed to fetch paths');
     return response.json();
 };
+
+export interface TopicSectionData {
+    id: number;
+    title: string;
+    content: string;
+    orderIndex: number;
+}
+
+export interface SubtopicDetails {
+    id: number;
+    title: string;
+    description: string;
+    category: string;
+    duration: string;
+    isCompleted: boolean;
+    sections: TopicSectionData[];
+}
+
+export const fetchSubtopicDetails = async (id: number): Promise<SubtopicDetails> => {
+    const response = await apiFetch(`/api/subtopics/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch subtopic details');
+    return response.json();
+};
+
+export const toggleSubtopicComplete = async (id: number): Promise<SubtopicDetails> => {
+    const response = await apiFetch(`/api/subtopics/${id}/toggle-complete`, {
+        method: 'PUT'
+    });
+    if (!response.ok) throw new Error('Failed to toggle subtopic completion');
+    return response.json();
+};

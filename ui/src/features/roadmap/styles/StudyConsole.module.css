@@ -1,0 +1,433 @@
+.studyOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header */
+.studyHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    height: 70px;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.headerIcon {
+    color: var(--tech-blue);
+    width: 24px;
+    height: 24px;
+}
+
+.subtopicTitle {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.categoryBadge {
+    background: var(--accent-blue-light);
+    color: var(--tech-blue);
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+.durationRow {
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.headerCenter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    width: 300px;
+}
+
+.progressText {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.progressBarBg {
+    width: 100%;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progressBarFill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--tech-blue), var(--accent-primary));
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Body Split Columns */
+.studyBody {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* TOC Sidebar */
+.tocSidebar {
+    width: 320px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebarTitle {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 1.5rem 1.5rem 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.tocList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tocItem {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    color: var(--text-secondary);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tocItem:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.tocItemActive {
+    background: var(--bg-tertiary);
+    border-left-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+.tocIndex {
+    background: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.tocItemActive .tocIndex {
+    background: var(--tech-blue);
+    color: var(--text-light);
+}
+
+.tocName {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Content Area */
+.contentPane {
+    flex: 1;
+    background: var(--bg-tertiary);
+    overflow-y: auto;
+    padding: 3rem 4rem;
+}
+
+.article {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.sectionTitle {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    letter-spacing: -0.02em;
+}
+
+.articleBody {
+    line-height: 1.7;
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+}
+
+/* Custom Markdown Rendering Classes */
+.textBlock {
+    margin-bottom: 1.5rem;
+}
+
+.paragraph {
+    margin-bottom: 1.25rem;
+}
+
+.paragraph strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.heading2 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.heading3 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-top: 1.75rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.heading4 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.list {
+    padding-left: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.list li {
+    margin-bottom: 0.5rem;
+}
+
+.codeBlock {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    position: relative;
+}
+
+.codeBlock code {
+    color: var(--text-primary);
+}
+
+.codeLang {
+    position: absolute;
+    top: 6px;
+    right: 12px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* Tables */
+.tableWrapper {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.table th {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Footer Controls */
+.studyFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    height: 70px;
+}
+
+.navBtn {
+    background: var(--bg-tertiary);
+    border: none;
+    color: var(--text-primary);
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.navBtn:hover:not(:disabled) {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.navBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.completeBtn {
+    background: var(--tech-blue);
+    border: none;
+    color: var(--text-light);
+    padding: 0.7rem 1.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.completeBtn:hover:not(:disabled) {
+    background: var(--tech-blue-hover);
+}
+
+.completeBtnActive {
+    background: var(--tech-green);
+    color: var(--text-light);
+}
+
+.completeBtnActive:hover:not(:disabled) {
+    background: var(--color-green-600, #16a34a);
+}
+
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-tertiary);
+}
+
+/* Global modifications for rendering */
+:global(.inline-code) {
+    background: var(--bg-primary);
+    color: var(--tech-blue);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85em;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .tocSidebar {
+        display: none; /* Hide TOC sidebar on mobile */
+    }
+    
+    .contentPane {
+        padding: 2rem;
+    }
+    
+    .headerCenter {
+        display: none;
+    }
+}
