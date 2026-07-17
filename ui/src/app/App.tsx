@@ -4,7 +4,6 @@ import { PathsPage } from '../features/paths';
 import { fetchPaths } from '../shared/api';
 import { Home } from '../features/home';
 import { RoadmapPage } from '../features/roadmap';
-import type { Subtopic } from '../features/roadmap';
 import { LoginPage } from '../features/auth';
 import { Header, Sidebar, Breadcrumb } from '../shared/components';
 import styles from './App.module.css';
@@ -18,74 +17,8 @@ const mockCourses: Course[] = [
         category: "Backend",
         duration: "12 hours",
         level: "Advanced",
-        imageUrl: "https://placeholder.co/ml"
-    }
-];
-
-const javaSubtopics: Subtopic[] = [
-    {
-        id: 1,
-        title: "Core Java Basics (The Foundation)",
-        description: "Master primitive types, flow control, arrays, and syntax basics. Set up your JDK development environment.",
-        category: "course",
-        duration: "2 hours",
-        isCompleted: true
-    },
-    {
-        id: 2,
-        title: "Object-Oriented Programming (OOP)",
-        description: "Delve deep into classes, interfaces, inheritance, polymorphism, encapsulation, and abstraction.",
-        category: "course",
-        duration: "3 hours",
-        isCompleted: false
-    },
-    {
-        id: 3,
-        title: "Java Collections Framework & Generics",
-        description: "Work with Lists, Sets, Maps, Queues, and define type-safe generic classes and methods.",
-        category: "course",
-        duration: "2 hours",
-        isCompleted: false
-    },
-    {
-        id: 4,
-        title: "Modern Java & Advanced Features (Java 8 to 21)",
-        description: "Learn lambda expressions, streams, records, pattern matching, virtual threads, and new API features.",
-        category: "course",
-        duration: "4 hours",
-        isCompleted: false
-    },
-    {
-        id: 5,
-        title: "Exceptions, File I/O, and Databases",
-        description: "Handle runtime errors, use input/output streams, read/write files, and integrate with JDBC databases.",
-        category: "course",
-        duration: "2.5 hours",
-        isCompleted: false
-    },
-    {
-        id: 6,
-        title: "Concurrency & Multithreading (Advanced)",
-        description: "Understand thread creation, synchronization, volatile fields, lock frameworks, executors, and thread safety.",
-        category: "course",
-        duration: "3 hours",
-        isCompleted: false
-    },
-    {
-        id: 7,
-        title: "JVM Internals & Memory Management (Deep Dive)",
-        description: "Explore garbage collection, classloaders, stack vs heap memory, and profiling application performance.",
-        category: "lab",
-        duration: "1.5 hours",
-        isCompleted: false
-    },
-    {
-        id: 8,
-        title: "Reactive Programming & Spring WebFlux (Enterprise Level)",
-        description: "Build non-blocking, asynchronous reactive microservices using Project Reactor and WebFlux.",
-        category: "course",
-        duration: "4 hours",
-        isCompleted: false
+        imageUrl: "https://placeholder.co/ml",
+        subtopics: []
     }
 ];
 
@@ -142,7 +75,8 @@ export default function App() {
                         duration: '10 hours',
                         level: 'Intermediate',
                         imageUrl: 'https://placeholder.co/ml',
-                        managedBy: p.managedBy
+                        managedBy: p.managedBy,
+                        subtopics: p.subtopics
                     }));
                     setCourses(mapped);
                 } else {
@@ -305,9 +239,9 @@ export default function App() {
                             <RoadmapPage
                                 pathTitle={selectedPath?.title || "Java Backend Developer Path"}
                                 managedBy="learnNow"
-                                activitiesCount={javaSubtopics.length}
+                                activitiesCount={selectedPath?.subtopics?.length || 0}
                                 lastUpdated="2 days ago"
-                                subtopics={javaSubtopics}
+                                subtopics={selectedPath?.subtopics || []}
                                 progressPercent={12.5}
                             />
                         )}

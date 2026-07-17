@@ -1,3 +1,5 @@
+import type { Subtopic } from '../features/roadmap/pages/RoadmapPage';
+
 export interface Course {
     id: number;
     title: string;
@@ -7,6 +9,7 @@ export interface Course {
     level: string;
     imageUrl: string;
     managedBy?: string;
+    subtopics?: Subtopic[];
 }
 
 export interface UserProgress {
