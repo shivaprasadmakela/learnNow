@@ -1,4 +1,4 @@
-# Bugfix Academy / learnNow Platform
+# learnNow Platform
 
 Welcome to the interactive learning and code integration platform. This repository is built using a feature-based architecture consisting of a **React + Vite** frontend and a **Java Spring Boot** backend.
 
