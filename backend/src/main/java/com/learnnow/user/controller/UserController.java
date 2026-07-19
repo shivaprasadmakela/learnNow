@@ -1,14 +1,14 @@
-package com.learnnow.profile.controller;
+package com.learnnow.user.controller;
 
-import com.learnnow.profile.dto.UserDto;
-import com.learnnow.profile.service.UserService;
+import com.learnnow.user.dto.UserDto;
+import com.learnnow.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api/user")
 public class UserController {
 
     private final UserService userService;

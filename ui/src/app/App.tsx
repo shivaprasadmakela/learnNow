@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Dashboard, useProfileDashboard, ProfileEditModal } from '../features/dashboard';
 import { PathsPage } from '../features/paths';
-import { fetchPaths, fetchSubtopicDetails, toggleSubtopicComplete } from '../shared/api';
-import type { SubtopicDetails } from '../shared/api';
+import { fetchPaths, fetchTopicDetails, toggleTopicComplete } from '../shared/api';
+import type { TopicDetails } from '../shared/api';
+import type { Topic } from '../features/roadmap';
 import { Home } from '../features/home';
-import { RoadmapPage, StudyConsole } from '../features/roadmap';
-import { LoginPage } from '../features/auth';
+import { PathRoadmapPage, TopicStudyConsole } from '../features/roadmap';
+import { LoginPage, VerifyEmailPage } from '../features/auth';
 import { Header, Sidebar, Breadcrumb } from '../shared/components';
 import { useToast } from '../shared/components/feedback/Toast';
 import styles from './App.module.css';
@@ -20,7 +21,7 @@ const mockCourses: Course[] = [
         duration: "12 hours",
         level: "Advanced",
         imageUrl: "https://placeholder.co/ml",
-        subtopics: []
+        topics: []
     }
 ];
 
@@ -53,64 +54,64 @@ export default function App() {
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [courses, setCourses] = useState<Course[]>([]);
     const { showToast } = useToast();
-    const [activeSubtopicId, setActiveSubtopicId] = useState<number | null>(null);
-    const [activeSubtopic, setActiveSubtopic] = useState<SubtopicDetails | null>(null);
+    const [activeTopicId, setActiveTopicId] = useState<number | null>(null);
+    const [activeTopic, setActiveTopic] = useState<TopicDetails | null>(null);
     const [isStudyLoading, setIsStudyLoading] = useState(false);
     const [isStudyUpdating, setIsStudyUpdating] = useState(false);
 
-    const handleSelectSubtopic = useCallback(async (id: number) => {
+    const handleSelectTopic = useCallback(async (id: number) => {
         try {
             setIsStudyLoading(true);
-            const details = await fetchSubtopicDetails(id);
-            setActiveSubtopic(details);
-            setActiveSubtopicId(id);
+            const details = await fetchTopicDetails(id);
+            setActiveTopic(details);
+            setActiveTopicId(id);
 
             // Find parent course slug dynamically
-            const parentCourse = courses.find(c => c.subtopics?.some(s => s.id === id));
-            const sub = parentCourse?.subtopics?.find(s => s.id === id);
+            const parentCourse = courses.find(c => c.topics?.some(s => s.id === id));
+            const sub = parentCourse?.topics?.find(s => s.id === id);
             if (parentCourse && sub) {
                 const pathSlug = parentCourse.title.toLowerCase().includes('java') ? 'java-backend-path' : 'path';
-                const subtopicSlug = slugify(sub.title);
-                changeView('STUDY', pathSlug, subtopicSlug);
+                const topicSlug = slugify(sub.title);
+                changeView('STUDY', pathSlug, topicSlug);
             } else {
                 changeView('STUDY', 'java-backend-path', slugify(details.title));
             }
         } catch (err) {
-            console.error("Failed to load subtopic details", err);
-            showToast("Failed to load subtopic details", "error");
+            console.error("Failed to load topic details", err);
+            showToast("Failed to load topic details", "error");
         } finally {
             setIsStudyLoading(false);
         }
     }, [courses, changeView, showToast]);
 
-    const handleToggleStudyComplete = async () => {
-        if (!activeSubtopicId || !activeSubtopic) return;
+    const handleToggleTopicComplete = async () => {
+        if (!activeTopicId || !activeTopic) return;
         try {
             setIsStudyUpdating(true);
-            const updated = await toggleSubtopicComplete(activeSubtopicId);
+            const updated = await toggleTopicComplete(activeTopicId);
             
             // Update active subtopic state
-            setActiveSubtopic(prev => prev ? { ...prev, isCompleted: updated.isCompleted } : null);
+            setActiveTopic(prev => prev ? { ...prev, isCompleted: updated.isCompleted } : null);
             
             // Also update the course path state to refresh the roadmap checkboxes!
             setCourses(prevCourses => {
                 return prevCourses.map(course => {
-                    if (course.subtopics) {
-                        const updatedSubtopics = course.subtopics.map(sub => {
-                            if (sub.id === activeSubtopicId) {
+                    if (course.topics) {
+                        const updatedTopics = course.topics.map(sub => {
+                            if (sub.id === activeTopicId) {
                                 return { ...sub, isCompleted: updated.isCompleted };
                             }
                             return sub;
                         });
-                        return { ...course, subtopics: updatedSubtopics };
+                        return { ...course, topics: updatedTopics };
                     }
                     return course;
                 });
             });
-            showToast(updated.isCompleted ? "Subtopic marked as completed!" : "Subtopic marked as incomplete.", "success");
+            showToast(updated.isCompleted ? "Topic marked as completed!" : "Topic marked as incomplete.", "success");
         } catch (err) {
-            console.error("Failed to update subtopic status", err);
-            showToast("Failed to update subtopic status", "error");
+            console.error("Failed to update topic status", err);
+            showToast("Failed to update topic status", "error");
         } finally {
             setIsStudyUpdating(false);
         }
@@ -148,7 +149,7 @@ export default function App() {
                         level: 'Intermediate',
                         imageUrl: 'https://placeholder.co/ml',
                         managedBy: p.managedBy,
-                        subtopics: p.subtopics
+                        topics: p.topics
                     }));
                     setCourses(mapped);
 
@@ -167,19 +168,19 @@ export default function App() {
                                 setSelectedPathId(javaCourse.id);
                                 
                                 if (parts.length === 3) {
-                                    const subtopicSlug = parts[2];
-                                    const matchingSubtopic = javaCourse.subtopics?.find(s => {
-                                        return slugify(s.title) === subtopicSlug;
+                                    const topicSlug = parts[2];
+                                    const matchingTopic = javaCourse.topics?.find(s => {
+                                        return slugify(s.title) === topicSlug;
                                     });
-                                    if (matchingSubtopic) {
+                                    if (matchingTopic) {
                                         (async () => {
                                             try {
                                                 setIsStudyLoading(true);
-                                                const details = await fetchSubtopicDetails(matchingSubtopic.id);
-                                                setActiveSubtopic(details);
-                                                setActiveSubtopicId(matchingSubtopic.id);
+                                                const details = await fetchTopicDetails(matchingTopic.id);
+                                                setActiveTopic(details);
+                                                setActiveTopicId(matchingTopic.id);
                                             } catch (err) {
-                                                console.error("Failed to load subtopic details on refresh", err);
+                                                console.error("Failed to load topic details on refresh", err);
                                             } finally {
                                                 setIsStudyLoading(false);
                                             }
@@ -205,7 +206,7 @@ export default function App() {
         if (!isLoading) {
             if (isLoggedIn && (activeView === 'HOME' || activeView === 'LOGIN')) {
                 changeView('DASHBOARD');
-            } else if (!isLoggedIn && activeView === 'DASHBOARD') {
+            } else if (!isLoggedIn && (activeView === 'DASHBOARD' || activeView === 'ROADMAP' || activeView === 'STUDY')) {
                 changeView('LOGIN');
             }
         }
@@ -237,6 +238,10 @@ export default function App() {
     };
 
     const handleSelectPath = (pathId: number) => {
+        if (!isLoggedIn) {
+            changeView('LOGIN');
+            return;
+        }
         setSelectedPathId(pathId);
         // Map path ID to slug
         const path = courses.find(c => c.id === pathId) || mockCourses.find(c => c.id === pathId);
@@ -293,15 +298,15 @@ export default function App() {
 
                 {/* Main Content Area */}
                 {activeView === 'STUDY' ? (
-                    activeSubtopic ? (
-                        <StudyConsole
-                            subtopic={activeSubtopic}
+                    activeTopic ? (
+                        <TopicStudyConsole
+                            topic={activeTopic}
                             onClose={() => {
-                                setActiveSubtopicId(null);
-                                setActiveSubtopic(null);
+                                setActiveTopicId(null);
+                                setActiveTopic(null);
                                 changeView('ROADMAP', 'java-backend-path');
                             }}
-                            onToggleComplete={handleToggleStudyComplete}
+                            onToggleComplete={handleToggleTopicComplete}
                             isUpdating={isStudyUpdating}
                         />
                     ) : null
@@ -361,18 +366,18 @@ export default function App() {
                             )}
 
                             {activeView === 'ROADMAP' && (
-                                <RoadmapPage
+                                <PathRoadmapPage
                                     pathTitle={selectedPath?.title || "Java Backend Developer Path"}
                                     managedBy="learnNow"
-                                    activitiesCount={selectedPath?.subtopics?.length || 0}
+                                    activitiesCount={selectedPath?.topics?.length || 0}
                                     lastUpdated="2 days ago"
-                                    subtopics={selectedPath?.subtopics || []}
+                                    topics={selectedPath?.topics || []}
                                     progressPercent={
-                                        selectedPath?.subtopics && selectedPath.subtopics.length > 0
-                                            ? Math.round((selectedPath.subtopics.filter(s => s.isCompleted).length / selectedPath.subtopics.length) * 100)
+                                        selectedPath?.topics && selectedPath.topics.length > 0
+                                            ? Math.round((selectedPath.topics.filter((s: Topic) => s.isCompleted).length / selectedPath.topics.length) * 100)
                                             : 0
                                     }
-                                    onSelectSubtopic={handleSelectSubtopic}
+                                    onSelectTopic={handleSelectTopic}
                                 />
                             )}
 
@@ -380,6 +385,12 @@ export default function App() {
                                 <LoginPage
                                     signIn={signIn}
                                     signUp={signUp}
+                                    changeView={handleViewChange}
+                                />
+                            )}
+
+                            {activeView === 'VERIFY_EMAIL' && (
+                                <VerifyEmailPage
                                     changeView={handleViewChange}
                                 />
                             )}

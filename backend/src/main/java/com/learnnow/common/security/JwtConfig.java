@@ -1,0 +1,35 @@
+package com.learnnow.common.security;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+
+import javax.crypto.spec.SecretKeySpec;
+
+@Configuration
+public class JwtConfig {
+
+    @Value("${jwt.secret:dGhpcy1pcy1hLXNlY3JldC1rZXktZm9yLWxlYXJubm93LXNwcmluZy1ib290LWFwcGxpY2F0aW9uLXNlY3VyaXR5}")
+    private String jwtSecret;
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        byte[] bytes = jwtSecret.getBytes();
+        SecretKeySpec spec = new SecretKeySpec(bytes, "HmacSHA256");
+        return NimbusJwtDecoder.withSecretKey(spec).build();
+    }
+
+    @Bean
+    public JwtEncoder jwtEncoder() {
+        byte[] bytes = jwtSecret.getBytes();
+        JWKSource<SecurityContext> jwks = new ImmutableSecret<>(bytes);
+        return new NimbusJwtEncoder(jwks);
+    }
+}

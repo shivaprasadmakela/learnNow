@@ -1,30 +1,30 @@
 import { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock } from 'lucide-react';
-import type { SubtopicDetails, TopicSectionData } from '../../../shared/api/profile.api';
-import styles from '../styles/StudyConsole.module.css';
+import type { TopicDetails, SubtopicData } from '../../../shared/api/profile.api';
+import styles from '../styles/TopicStudyConsole.module.css';
 
-interface StudyConsoleProps {
-    subtopic: SubtopicDetails;
+interface TopicStudyConsoleProps {
+    topic: TopicDetails;
     onClose: () => void;
     onToggleComplete: () => Promise<void>;
     isUpdating: boolean;
 }
 
-export function StudyConsole({ subtopic, onClose, onToggleComplete, isUpdating }: StudyConsoleProps) {
-    const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+export function TopicStudyConsole({ topic, onClose, onToggleComplete, isUpdating }: TopicStudyConsoleProps) {
+    const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
 
-    const sections = subtopic.sections || [];
-    const activeSection: TopicSectionData | undefined = sections[activeSectionIndex];
+    const subtopics = topic.subtopics || [];
+    const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
 
     const handleNext = () => {
-        if (activeSectionIndex < sections.length - 1) {
-            setActiveSectionIndex(prev => prev + 1);
+        if (activeSubtopicIndex < subtopics.length - 1) {
+            setActiveSubtopicIndex(prev => prev + 1);
         }
     };
 
     const handlePrev = () => {
-        if (activeSectionIndex > 0) {
-            setActiveSectionIndex(prev => prev - 1);
+        if (activeSubtopicIndex > 0) {
+            setActiveSubtopicIndex(prev => prev - 1);
         }
     };
 
@@ -132,12 +132,12 @@ export function StudyConsole({ subtopic, onClose, onToggleComplete, isUpdating }
                 <div className={styles.headerLeft}>
                     <BookOpen className={styles.headerIcon} />
                     <div>
-                        <h2 className={styles.subtopicTitle}>{subtopic.title}</h2>
+                        <h2 className={styles.subtopicTitle}>{topic.title}</h2>
                         <div className={styles.metaRow}>
-                            <span className={styles.categoryBadge}>{subtopic.category}</span>
+                            <span className={styles.categoryBadge}>{topic.category}</span>
                             <span className={styles.durationRow}>
                                 <Clock size={13} />
-                                {subtopic.duration}
+                                {topic.duration}
                             </span>
                         </div>
                     </div>
@@ -145,12 +145,12 @@ export function StudyConsole({ subtopic, onClose, onToggleComplete, isUpdating }
 
                 <div className={styles.headerCenter}>
                     <span className={styles.progressText}>
-                        Section {activeSectionIndex + 1} of {sections.length}
+                        Section {activeSubtopicIndex + 1} of {subtopics.length}
                     </span>
                     <div className={styles.progressBarBg}>
                         <div 
                             className={styles.progressBarFill} 
-                            style={{ width: `${((activeSectionIndex + 1) / sections.length) * 100}%` }}
+                            style={{ width: `${subtopics.length > 0 ? ((activeSubtopicIndex + 1) / subtopics.length) * 100 : 0}%` }}
                         />
                     </div>
                 </div>
@@ -166,11 +166,11 @@ export function StudyConsole({ subtopic, onClose, onToggleComplete, isUpdating }
                 <aside className={styles.tocSidebar}>
                     <h3 className={styles.sidebarTitle}>Table of Contents</h3>
                     <ul className={styles.tocList}>
-                        {sections.map((sec, idx) => (
+                        {subtopics.map((sec, idx) => (
                             <li key={sec.id}>
                                 <button
-                                    className={`${styles.tocItem} ${idx === activeSectionIndex ? styles.tocItemActive : ''}`}
-                                    onClick={() => setActiveSectionIndex(idx)}
+                                    className={`${styles.tocItem} ${idx === activeSubtopicIndex ? styles.tocItemActive : ''}`}
+                                    onClick={() => setActiveSubtopicIndex(idx)}
                                 >
                                     <span className={styles.tocIndex}>{idx + 1}</span>
                                     <span className={styles.tocName}>{sec.title}</span>
@@ -182,16 +182,16 @@ export function StudyConsole({ subtopic, onClose, onToggleComplete, isUpdating }
 
                 {/* Main reading content pane */}
                 <main className={styles.contentPane}>
-                    {activeSection ? (
+                    {activeSubtopic ? (
                         <article className={styles.article}>
-                            <h1 className={styles.sectionTitle}>{activeSection.title}</h1>
+                            <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
                             <div className={styles.articleBody}>
-                                {renderContent(activeSection.content)}
+                                {renderContent(activeSubtopic.content)}
                             </div>
                         </article>
                     ) : (
                         <div className={styles.emptyState}>
-                            <p>No content sections loaded for this subtopic.</p>
+                            <p>No content sections loaded for this topic.</p>
                         </div>
                     )}
                 </main>
@@ -202,31 +202,31 @@ export function StudyConsole({ subtopic, onClose, onToggleComplete, isUpdating }
                 <button 
                     className={styles.navBtn} 
                     onClick={handlePrev} 
-                    disabled={activeSectionIndex === 0}
+                    disabled={activeSubtopicIndex === 0}
                 >
                     <ChevronLeft size={18} />
                     Previous
                 </button>
 
                 <button
-                    className={`${styles.completeBtn} ${subtopic.isCompleted ? styles.completeBtnActive : ''}`}
+                    className={`${styles.completeBtn} ${topic.isCompleted ? styles.completeBtnActive : ''}`}
                     onClick={onToggleComplete}
                     disabled={isUpdating}
                 >
-                    {subtopic.isCompleted ? (
+                    {topic.isCompleted ? (
                         <>
                             <Check size={16} />
                             Completed!
                         </>
                     ) : (
-                        "Mark Subtopic as Completed"
+                        "Mark Topic as Completed"
                     )}
                 </button>
 
                 <button 
                     className={styles.navBtn} 
                     onClick={handleNext} 
-                    disabled={activeSectionIndex === sections.length - 1}
+                    disabled={subtopics.length === 0 || activeSubtopicIndex === subtopics.length - 1}
                 >
                     Next
                     <ChevronRight size={18} />

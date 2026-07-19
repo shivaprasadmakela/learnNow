@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../../../shared/supabaseClient';
-import type { User } from '@supabase/supabase-js';
+import { useState, useEffect, useCallback } from 'react';
 import type { UserProfile } from '../../../types';
 import * as api from '../../../shared/api';
+import { authClient } from '../../../shared/api/authClient';
+import { apiFetch } from '../../../shared/api/client';
 
-export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP' | 'STUDY';
+export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP' | 'STUDY' | 'VERIFY_EMAIL';
 
 export const useProfileDashboard = () => {
     const [activeView, setActiveView] = useState<ViewState>(() => {
@@ -15,6 +15,8 @@ export const useProfileDashboard = () => {
                 return 'DASHBOARD';
             } else if (parts.length === 1 && parts[0] === 'login') {
                 return 'LOGIN';
+            } else if (parts.length === 1 && parts[0] === 'verify-email') {
+                return 'VERIFY_EMAIL';
             } else if (parts.length === 1 && parts[0] === 'paths') {
                 return 'PATHS';
             } else if (parts.length === 2 && parts[0] === 'paths') {
@@ -35,10 +37,6 @@ export const useProfileDashboard = () => {
         return 'light';
     });
 
-    // Supabase Auth state variables
-    const [user, setUser] = useState<User | null>(null);
-    const userRef = useRef<User | null>(null);
-
     // Toggle theme
     const toggleTheme = useCallback(() => {
         const nextTheme = theme === 'light' ? 'dark' : 'light';
@@ -52,8 +50,12 @@ export const useProfileDashboard = () => {
         try {
             const fetchedProfile = await api.fetchProfile();
             setProfile(fetchedProfile);
+            return fetchedProfile;
         } catch (err: unknown) {
             console.error('Failed to load user profile:', err);
+            authClient.clearToken();
+            setProfile(null);
+            throw err;
         }
     }, []);
 
@@ -67,6 +69,8 @@ export const useProfileDashboard = () => {
             setActiveView('DASHBOARD');
         } else if (parts.length === 1 && parts[0] === 'login') {
             setActiveView('LOGIN');
+        } else if (parts.length === 1 && parts[0] === 'verify-email') {
+            setActiveView('VERIFY_EMAIL');
         } else if (parts.length === 1 && parts[0] === 'paths') {
             setActiveView('PATHS');
         } else if (parts.length === 2 && parts[0] === 'paths') {
@@ -84,6 +88,8 @@ export const useProfileDashboard = () => {
             window.history.pushState(null, '', '/dashboard');
         } else if (view === 'LOGIN') {
             window.history.pushState(null, '', '/login');
+        } else if (view === 'VERIFY_EMAIL') {
+            window.history.pushState(null, '', `/verify-email${slug ? '?token=' + slug : ''}`);
         } else if (view === 'PATHS') {
             window.history.pushState(null, '', '/paths');
         } else if (view === 'ROADMAP') {
@@ -105,86 +111,71 @@ export const useProfileDashboard = () => {
         };
     }, [handlePathChange, theme]);
 
-    // Supabase Auth listener
+    // Session initialization check on mount
     useEffect(() => {
-        // Get current session
-        supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-            const currentUser = currentSession?.user ?? null;
-            userRef.current = currentUser;
-            setUser(currentUser);
-            if (currentSession) {
-                loadUserData().then(() => setIsLoading(false));
-            } else {
-                setIsLoading(false);
-            }
-        });
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-            const wasLoggedIn = userRef.current !== null;
-            const currentUser = currentSession?.user ?? null;
-            userRef.current = currentUser;
-            setUser(currentUser);
-
-            if (currentSession) {
-                // Fetch profile only on new sign-in or session changes, avoiding repeat calls on token refresh
-                if (!wasLoggedIn || event === 'SIGNED_IN') {
-                    await loadUserData();
-                }
-                if (!wasLoggedIn && event === 'SIGNED_IN') {
-                    setActiveView('DASHBOARD');
-                    window.history.pushState(null, '', '/dashboard');
-                }
-            } else {
-                setProfile(null);
-                if (wasLoggedIn) {
-                    setActiveView('HOME');
-                    window.history.pushState(null, '', '/');
-                }
-            }
+        const token = authClient.getToken();
+        if (token) {
+            loadUserData()
+                .then(() => setIsLoading(false))
+                .catch(() => {
+                    setIsLoading(false);
+                    changeView('LOGIN');
+                });
+        } else {
             setIsLoading(false);
-        });
-
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, [loadUserData]);
+        }
+    }, [loadUserData, changeView]);
 
     // Sign up / sign in methods
-    const signUp = async (email: string, pass: string, fullName: string) => {
+    const signUp = async (firstName: string, lastName: string, email: string, pass: string, dateOfBirth: string) => {
         setError(null);
-        const { data, error: signUpErr } = await supabase.auth.signUp({
-            email,
-            password: pass,
-            options: {
-                data: {
-                    full_name: fullName
-                }
-            }
+        const response = await apiFetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                firstName,
+                lastName,
+                email,
+                password: pass,
+                dateOfBirth
+            })
         });
-        if (signUpErr) {
-            setError(signUpErr.message);
-            throw signUpErr;
+
+        if (!response.ok) {
+            const errText = await response.text().catch(() => 'Registration failed');
+            setError(errText);
+            throw new Error(errText);
         }
-        return data;
     };
 
     const signIn = async (email: string, pass: string) => {
         setError(null);
-        const { data, error: signInErr } = await supabase.auth.signInWithPassword({
-            email,
-            password: pass
+        const response = await apiFetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email,
+                password: pass
+            })
         });
-        if (signInErr) {
-            setError(signInErr.message);
-            throw signInErr;
+
+        if (!response.ok) {
+            const errText = await response.text().catch(() => 'Invalid email or password');
+            setError(errText);
+            throw new Error(errText);
         }
+
+        const data = await response.json();
+        authClient.setToken(data.token);
+        setProfile(data.profile);
+        
+        changeView('DASHBOARD');
+        window.history.pushState(null, '', '/dashboard');
         return data;
     };
 
     const signOut = async () => {
-        await supabase.auth.signOut();
-        setUser(null);
+        authClient.clearToken();
         setProfile(null);
         changeView('HOME');
     };
@@ -216,7 +207,7 @@ export const useProfileDashboard = () => {
         theme,
         toggleTheme,
         saveProfile,
-        isLoggedIn: !!user,
+        isLoggedIn: !!profile,
         signUp,
         signIn,
         signOut

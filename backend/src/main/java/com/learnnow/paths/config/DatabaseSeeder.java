@@ -1,8 +1,8 @@
 package com.learnnow.paths.config;
 
 import com.learnnow.paths.entity.Path;
+import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.entity.Subtopic;
-import com.learnnow.paths.entity.TopicSection;
 import com.learnnow.paths.repository.PathRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -30,20 +30,20 @@ public class DatabaseSeeder implements CommandLineRunner {
                 .managedBy("Managed by Academy")
                 .build();
 
-        Subtopic foundationSubtopic = Subtopic.builder()
+        Topic foundationTopic = Topic.builder()
                 .title("Core Java Basics (The Foundation)")
                 .description("Master primitive types, flow control, arrays, and syntax basics. Set up your JDK development environment.")
-                .category("course")
+                .category("Topic")
                 .duration("2 hours")
                 .isCompleted(true)
                 .path(javaPath)
                 .build();
 
         // Seed rich reading content sections under Foundation Subtopic
-        TopicSection introSection = TopicSection.builder()
+        Subtopic introSection = Subtopic.builder()
                 .title("1. What is a String?")
                 .orderIndex(1)
-                .subtopic(foundationSubtopic)
+                .topic(foundationTopic)
                 .content("""
 ## Definition
 A **String** is an object in Java that represents a sequence of characters.
@@ -83,10 +83,10 @@ This led to:
 """)
                 .build();
 
-        TopicSection immutabilitySection = TopicSection.builder()
+        Subtopic immutabilitySection = Subtopic.builder()
                 .title("2. What is String Immutability?")
                 .orderIndex(2)
-                .subtopic(foundationSubtopic)
+                .topic(foundationTopic)
                 .content("""
 ## Definition
 An immutable object **cannot be modified after it is created**.
@@ -127,10 +127,10 @@ Java Programming
 """)
                 .build();
 
-        TopicSection poolSection = TopicSection.builder()
+        Subtopic poolSection = Subtopic.builder()
                 .title("3. String Constant Pool")
                 .orderIndex(3)
-                .subtopic(foundationSubtopic)
+                .topic(foundationTopic)
                 .content("""
 ## Definition
 The **String Pool** is a special memory area inside the Heap that stores unique string literals. Instead of creating duplicate string objects, Java reuses existing ones.
@@ -172,10 +172,10 @@ System.out.println(s2 == s3); // true
 """)
                 .build();
 
-        TopicSection compareSection = TopicSection.builder()
+        Subtopic compareSection = Subtopic.builder()
                 .title("4. equals() vs ==")
                 .orderIndex(4)
-                .subtopic(foundationSubtopic)
+                .topic(foundationTopic)
                 .content("""
 ## Comparison Operators
 It is a very common interview question.
@@ -199,10 +199,10 @@ System.out.println(s1.equals(s2)); // true
 """)
                 .build();
 
-        TopicSection buildersSection = TopicSection.builder()
+        Subtopic buildersSection = Subtopic.builder()
                 .title("5. StringBuilder & StringBuffer")
                 .orderIndex(5)
-                .subtopic(foundationSubtopic)
+                .topic(foundationTopic)
                 .content("""
 ## StringBuilder
 `StringBuilder` is a **mutable** sequence of characters. It modifies the same object instead of creating new ones.
@@ -232,10 +232,10 @@ Because `StringBuilder` has no synchronization overhead, it is much faster than 
 """)
                 .build();
 
-        TopicSection perfSection = TopicSection.builder()
+        Subtopic perfSection = Subtopic.builder()
                 .title("6. Performance & Compilation")
                 .orderIndex(6)
-                .subtopic(foundationSubtopic)
+                .topic(foundationTopic)
                 .content("""
 ## Performance Comparison
 Repeated string concatenation inside loops should always use `StringBuilder`.
@@ -273,10 +273,10 @@ The compiler automatically translates this to use a `StringBuilder` under the ho
 """)
                 .build();
 
-        TopicSection questionsSection = TopicSection.builder()
+        Subtopic questionsSection = Subtopic.builder()
                 .title("7. Mistakes & Interview Q&A")
                 .orderIndex(7)
-                .subtopic(foundationSubtopic)
+                .topic(foundationTopic)
                 .content("""
 ## Common Mistakes
 1. Using `==` instead of `.equals()` to compare contents.
@@ -296,23 +296,23 @@ The compiler automatically translates this to use a `StringBuilder` under the ho
 """)
                 .build();
 
-        foundationSubtopic.setSections(Arrays.asList(
+        foundationTopic.setSubtopics(Arrays.asList(
                 introSection, immutabilitySection, poolSection, compareSection, buildersSection, perfSection, questionsSection
         ));
 
         // Create other subtopics
-        Subtopic oopSubtopic = Subtopic.builder().title("Object-Oriented Programming (OOP)").description("Delve deep into classes, interfaces, inheritance, polymorphism, encapsulation, and abstraction.").category("course").duration("3 hours").isCompleted(false).path(javaPath).build();
-        Subtopic collSubtopic = Subtopic.builder().title("Java Collections Framework & Generics").description("Work with Lists, Sets, Maps, Queues, and define type-safe generic classes and methods.").category("course").duration("2 hours").isCompleted(false).path(javaPath).build();
-        Subtopic modernSubtopic = Subtopic.builder().title("Modern Java & Advanced Features (Java 8 to 21)").description("Learn lambda expressions, streams, records, pattern matching, virtual threads, and new API features.").category("course").duration("4 hours").isCompleted(false).path(javaPath).build();
-        Subtopic exceptionsSubtopic = Subtopic.builder().title("Exceptions, File I/O, and Databases").description("Handle runtime errors, use input/output streams, read/write files, and integrate with JDBC databases.").category("course").duration("2.5 hours").isCompleted(false).path(javaPath).build();
-        Subtopic concurrencySubtopic = Subtopic.builder().title("Concurrency & Multithreading (Advanced)").description("Understand thread creation, synchronization, volatile fields, lock frameworks, executors, and thread safety.").category("course").duration("3 hours").isCompleted(false).path(javaPath).build();
-        Subtopic jvmSubtopic = Subtopic.builder().title("JVM Internals & Memory Management (Deep Dive)").description("Explore garbage collection, classloaders, stack vs heap memory, and profiling application performance.").category("lab").duration("1.5 hours").isCompleted(false).path(javaPath).build();
-        Subtopic reactiveSubtopic = Subtopic.builder().title("Reactive Programming & Spring WebFlux (Enterprise Level)").description("Build non-blocking, asynchronous reactive microservices using Project Reactor and WebFlux.").category("course").duration("4 hours").isCompleted(false).path(javaPath).build();
+        Topic oopTopic = Topic.builder().title("Object-Oriented Programming (OOP)").description("Delve deep into classes, interfaces, inheritance, polymorphism, encapsulation, and abstraction.").category("Topic").duration("3 hours").isCompleted(false).path(javaPath).build();
+        Topic collTopic = Topic.builder().title("Java Collections Framework & Generics").description("Work with Lists, Sets, Maps, Queues, and define type-safe generic classes and methods.").category("Topic").duration("2 hours").isCompleted(false).path(javaPath).build();
+        Topic modernTopic = Topic.builder().title("Modern Java & Advanced Features (Java 8 to 21)").description("Learn lambda expressions, streams, records, pattern matching, virtual threads, and new API features.").category("Topic").duration("4 hours").isCompleted(false).path(javaPath).build();
+        Topic exceptionsTopic = Topic.builder().title("Exceptions, File I/O, and Databases").description("Handle runtime errors, use input/output streams, read/write files, and integrate with JDBC databases.").category("Topic").duration("2.5 hours").isCompleted(false).path(javaPath).build();
+        Topic concurrencyTopic = Topic.builder().title("Concurrency & Multithreading (Advanced)").description("Understand thread creation, synchronization, volatile fields, lock frameworks, executors, and thread safety.").category("Topic").duration("3 hours").isCompleted(false).path(javaPath).build();
+        Topic jvmTopic = Topic.builder().title("JVM Internals & Memory Management (Deep Dive)").description("Explore garbage collection, classloaders, stack vs heap memory, and profiling application performance.").category("Console").duration("1.5 hours").isCompleted(false).path(javaPath).build();
+        Topic reactiveTopic = Topic.builder().title("Reactive Programming & Spring WebFlux (Enterprise Level)").description("Build non-blocking, asynchronous reactive microservices using Project Reactor and WebFlux.").category("Topic").duration("4 hours").isCompleted(false).path(javaPath).build();
 
-        List<Subtopic> javaSubtopics = new ArrayList<>(Arrays.asList(
-                foundationSubtopic, oopSubtopic, collSubtopic, modernSubtopic, exceptionsSubtopic, concurrencySubtopic, jvmSubtopic, reactiveSubtopic
+        List<Topic> javaTopics = new ArrayList<>(Arrays.asList(
+                foundationTopic, oopTopic, collTopic, modernTopic, exceptionsTopic, concurrencyTopic, jvmTopic, reactiveTopic
         ));
-        javaPath.setSubtopics(javaSubtopics);
+        javaPath.setTopics(javaTopics);
 
         pathRepository.save(javaPath);
         System.out.println("Cleared database and seeded with Java Backend Path and subtopics!");

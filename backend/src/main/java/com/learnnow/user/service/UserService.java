@@ -1,8 +1,8 @@
-package com.learnnow.profile.service;
+package com.learnnow.user.service;
 
-import com.learnnow.profile.dto.UserDto;
-import com.learnnow.profile.entity.User;
-import com.learnnow.profile.repository.UserRepository;
+import com.learnnow.user.dto.UserDto;
+import com.learnnow.user.entity.User;
+import com.learnnow.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +19,15 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseGet(() -> {
                     // Create default user if none exists
-                    User newUser = new User(
-                            id,
-                            email,
-                            email != null && email.contains("@") ? email.split("@")[0] : "New Learner",
-                            "👨‍💻",
-                            "Fullstack Developer Apprentice",
-                            "Learning React & Spring Boot on Bugfix Academy!"
-                    );
+                    User newUser = User.builder()
+                            .id(id)
+                            .email(email)
+                            .fullName(email != null && email.contains("@") ? email.split("@")[0] : "New Learner")
+                            .avatar("👨‍💻")
+                            .role("Fullstack Developer Apprentice")
+                            .bio("Learning React & Spring Boot on Bugfix Academy!")
+                            .passwordHash("")
+                            .build();
                     return userRepository.save(newUser);
                 });
 

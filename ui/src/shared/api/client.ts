@@ -1,8 +1,7 @@
-import { supabase } from '../supabaseClient';
+import { authClient } from './authClient';
 
 export const getAuthHeaders = async (): Promise<HeadersInit> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
+    const token = authClient.getToken();
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 };
 

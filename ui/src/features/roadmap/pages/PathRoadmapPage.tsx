@@ -1,51 +1,51 @@
 import React, { useState } from 'react';
 import { LayoutGrid, List, ArrowRight, Clock, Award } from 'lucide-react';
 import { useToast } from '../../../shared/components/feedback/Toast';
-import styles from '../styles/Roadmap.module.css';
+import styles from '../styles/PathRoadmap.module.css';
 import bunnyBrain from '../../../assets/bunny-brain.png';
 
-export interface Subtopic {
+export interface Topic {
     id: number;
     title: string;
     description: string;
-    category: 'course' | 'lab' | 'skill badge';
+    category: string;
     duration: string;
     isCompleted?: boolean;
 }
 
-export interface RoadmapPageProps {
+export interface PathRoadmapPageProps {
     pathTitle: string;
     managedBy?: string;
     activitiesCount?: number;
     lastUpdated?: string;
-    subtopics: Subtopic[];
+    topics: Topic[];
     progressPercent?: number;
-    onSelectSubtopic?: (id: number) => void;
+    onSelectTopic?: (id: number) => void;
 }
 
-export const RoadmapPage: React.FC<RoadmapPageProps> = ({
+export const PathRoadmapPage: React.FC<PathRoadmapPageProps> = ({
     pathTitle,
     managedBy = 'learnNow',
     activitiesCount = 8,
     lastUpdated = 'Recently',
-    subtopics,
+    topics,
     progressPercent = 0,
-    onSelectSubtopic
+    onSelectTopic
 }) => {
     const { showToast } = useToast();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    const handleSubtopicClick = (id: number, title: string) => {
-        if (onSelectSubtopic) {
-            onSelectSubtopic(id);
+    const handleTopicClick = (id: number, title: string) => {
+        if (onSelectTopic) {
+            onSelectTopic(id);
         } else {
             showToast(`"${title}" workspace lessons are launching soon!`, 'info');
         }
     };
 
     const handleContinueClick = () => {
-        if (subtopics && subtopics.length > 0) {
-            handleSubtopicClick(subtopics[0].id, subtopics[0].title);
+        if (topics && topics.length > 0) {
+            handleTopicClick(topics[0].id, topics[0].title);
         } else {
             showToast("Path launch is in progress!", "info");
         }
@@ -98,7 +98,7 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
             <div className={styles.actionRow} style={{ justifyContent: 'flex-end' }}>
                 <div className={styles.toggleGroup}>
                     <button
-                        className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.toggleBtnActive : ''}`}
+                         className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.toggleBtnActive : ''}`}
                         onClick={() => setViewMode('grid')}
                         title="Grid View"
                     >
@@ -114,13 +114,13 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
                 </div>
             </div>
 
-            {/* Course Subtopics grid / list */}
+            {/* Course Topics grid / list */}
             <div className={viewMode === 'grid' ? styles.courseGrid : styles.subtopicListContainer}>
-                {subtopics.map((topic) => (
+                {topics.map((topic) => (
                     <div
                         key={topic.id}
                         className={`${styles.subtopicCard} ${viewMode === 'list' ? styles.subtopicCardList : ''}`}
-                        onClick={() => handleSubtopicClick(topic.id, topic.title)}
+                        onClick={() => handleTopicClick(topic.id, topic.title)}
                         style={{ cursor: 'pointer' }}
                     >
                         {/* Left: badge + title (+ description in grid only) */}
@@ -150,7 +150,7 @@ export const RoadmapPage: React.FC<RoadmapPageProps> = ({
                                 className={styles.exploreArrow}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleSubtopicClick(topic.id, topic.title);
+                                    handleTopicClick(topic.id, topic.title);
                                 }}
                                 title="Explore Topic"
                             >

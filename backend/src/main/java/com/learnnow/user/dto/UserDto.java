@@ -1,4 +1,4 @@
-package com.learnnow.profile.dto;
+package com.learnnow.user.dto;
 
 public record UserDto(
     String id,

@@ -3,7 +3,6 @@ package com.learnnow.paths.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "subtopics")
@@ -11,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = "path")
+@ToString(exclude = "topic")
 public class Subtopic {
 
     @Id
@@ -20,23 +19,13 @@ public class Subtopic {
 
     private String title;
 
-    @Column(length = 1000)
-    private String description;
+    @Column(columnDefinition = "TEXT")
+    private String content;
 
-    private String category; // "course" | "lab"
-    
-    private String duration;
-
-    @JsonProperty("isCompleted")
-    private boolean isCompleted;
+    private int orderIndex;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "path_id")
+    @JoinColumn(name = "topic_id")
     @JsonIgnore
-    private Path path;
-
-    @OneToMany(mappedBy = "subtopic", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("orderIndex ASC")
-    @Builder.Default
-    private java.util.List<TopicSection> sections = new java.util.ArrayList<>();
+    private Topic topic;
 }

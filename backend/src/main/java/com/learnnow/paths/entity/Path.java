@@ -29,5 +29,5 @@ public class Path {
 
     @OneToMany(mappedBy = "path", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @Builder.Default
-    private java.util.List<Subtopic> subtopics = new java.util.ArrayList<>();
+    private java.util.List<Topic> topics = new java.util.ArrayList<>();
 }

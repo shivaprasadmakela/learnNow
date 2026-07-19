@@ -1,4 +1,4 @@
-import type { Subtopic } from '../features/roadmap/pages/RoadmapPage';
+import type { Topic } from '../features/roadmap';
 
 export interface PathData {
     id: number;
@@ -6,5 +6,5 @@ export interface PathData {
     description: string;
     category: string;
     managedBy: string;
-    subtopics?: Subtopic[];
+    topics?: Topic[];
 }
