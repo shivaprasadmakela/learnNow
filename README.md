@@ -1,70 +1,86 @@
-# Bugfix Academy Platform
+# Bugfix Academy / learnNow Platform
 
-Welcome to **Bugfix Academy**, an interactive code integration and learning platform designed to help developers practice coding challenges, master core concepts, and track course accomplishments.
-
-This project is built using a feature-based architecture and consists of a React UI frontend and a Java Spring Boot backend.
+Welcome to the interactive learning and code integration platform. This repository is built using a feature-based architecture consisting of a **React + Vite** frontend and a **Java Spring Boot** backend.
 
 ---
 
-## Repository Structure
+## 🏗️ Tech Stack & Architecture
 
-The project is structured into two main subdirectories:
+### Backend
+*   **Java Spring Boot**: Exposes REST APIs on port `8080`.
+*   **Database & Migrations**: PostgreSQL database named `learnnow` with schema versioning managed via **Flyway**.
+*   **Security & JWT Auth**: Custom JWT authentication signed with a symmetric HMAC-SHA256 signature key. Passwords are hashed using BCrypt.
+*   **Email Verification**: Integrated with **Resend** (prints email verification links directly to local server logs in development for sandboxed testing).
+*   **Package Structure**: Organised around clean domains (e.g. `com.learnnow.user` for user profiles and `com.learnnow.paths` for course pathways).
 
-- **/backend**: Java Spring Boot backend running on Java 17+, handling course modules, lesson progression, database storage, and user profile management.
-- **/ui**: React + TypeScript + Vite frontend utilizing CSS Modules, with global typography utilizing the Figtree font-family and a modern, responsive, collapsible left-navigation flow.
+### Frontend
+*   **React + TypeScript + Vite**: Development client running on `http://localhost:5173/`.
+*   **CSS Modules**: Modular, scope-safe styling.
+*   **Route Security**: Public paths list (`PATHS` view) with secure, login-guarded path detail views (`ROADMAP` and `STUDY` console) that automatically redirect unauthenticated users to the login page.
 
-```
+---
+
+## 📂 Repository Structure
+
+```text
 bugfix/
-├── backend/                # Spring Boot REST API
-│   ├── src/main/java/      # Feature-packaged controller, entities, and services
+├── backend/                # Spring Boot REST API (Port 8080)
+│   ├── src/main/java/      # Feature-packaged code (user, paths, common/security)
+│   ├── src/main/resources/ # Configuration & db/migration scripts
 │   └── pom.xml             # Maven dependencies
-├── ui/                     # React + TypeScript + Vite
-│   ├── src/features/       # Feature-specific modules (learning, etc.)
-│   ├── src/shared/         # Reusable widgets and icons
-│   ├── src/styles/         # Global typography and theme configurations
+├── ui/                     # React + TypeScript + Vite Client (Port 5173)
+│   ├── src/features/       # Feature-specific modules (auth, dashboard, roadmap)
+│   ├── src/shared/         # Shared API utilities, UI widgets, and global hooks
 │   └── package.json        # Frontend configuration
+├── run.sh                  # Automation script to start both backend & frontend
+├── stop.sh                 # Automation script to stop port processes
 └── README.md               # Main instructions (this file)
 ```
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
-- Java Development Kit (JDK) 17 or higher
-- Node.js (v18+) & npm
-- Maven 3.6+
+*   Java Development Kit (JDK) 17 or higher
+*   Node.js (v18+) & npm
+*   PostgreSQL running locally on port `5432`
 
-### Step 1: Run the Backend Server
-Navigate to the backend directory and launch the Spring Boot application using Maven. The backend starts on port `8888` (or custom config, check properties) and exposes APIs on port `8081` (with CORS pre-flight configuration for the UI client).
-
-```bash
-cd backend
-mvn spring-boot:run
+### Setup Database
+Before starting the application, ensure a database named `learnnow` exists in your local PostgreSQL:
+```sql
+CREATE DATABASE learnnow;
 ```
 
-The database seeds automatically with core learning tracks, course modules, and lessons.
-
-### Step 2: Run the UI Development Client
-Navigate to the UI directory, install packages, and boot the local Vite dev server.
-
+### Start Both Servers (Recommended)
+You can start the compilation, database migrations, and development servers using the provided shell script in the root directory:
 ```bash
-cd ui
-npm install
-npm run dev
+chmod +x run.sh stop.sh
+./run.sh
 ```
+This automatically compiles the Java backend, boots the Spring Boot server on port `8080`, seeds the default learning tracks, and runs the Vite client dev server on `http://localhost:5173/`.
 
-Open `http://localhost:5173` in your browser.
+### Stop Both Servers
+To terminate all background processes binding ports `8080` and `5173`:
+```bash
+./stop.sh
+```
 
 ---
 
-## Contributing Guide
+## 🧪 Testing the Authentication Flow
+1. Go to `http://localhost:5173/` and click **Create account**.
+2. Register with your details.
+3. Fetch the verification link printed in the backend console logs.
+4. Paste the link into your browser to verify the account.
+5. Log in with your email and password to gain full access to the learning console.
 
+---
+
+## 🤝 Contributing Guide
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our coding standards, branch conventions, and layout structures when introducing new modules or fixing bugs.
 
 ---
 
-## References
-
-- [Owl Stickers Pack Reference](https://www.flaticon.com/stickers-pack/owl-2)
-
+## 📚 References
+*   [Owl Stickers Pack Reference](https://www.flaticon.com/stickers-pack/owl-2)
