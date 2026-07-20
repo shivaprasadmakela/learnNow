@@ -29,8 +29,7 @@ public class Topic {
     
     private String duration;
 
-    @JsonProperty("isCompleted")
-    private boolean isCompleted;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "path_id")

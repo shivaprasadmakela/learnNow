@@ -10,21 +10,32 @@ interface TopicStudyConsoleProps {
     isUpdating: boolean;
 }
 
-export function TopicStudyConsole({ topic, onClose, onToggleComplete, isUpdating }: TopicStudyConsoleProps) {
+export function TopicStudyConsole({ 
+    topic, 
+    onClose, 
+    onToggleComplete, 
+    isUpdating
+}: TopicStudyConsoleProps) {
     const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
 
+    const handleSubtopicChange = (index: number) => {
+        if (index >= 0 && index < subtopics.length) {
+            setActiveSubtopicIndex(index);
+        }
+    };
+
     const handleNext = () => {
         if (activeSubtopicIndex < subtopics.length - 1) {
-            setActiveSubtopicIndex(prev => prev + 1);
+            handleSubtopicChange(activeSubtopicIndex + 1);
         }
     };
 
     const handlePrev = () => {
         if (activeSubtopicIndex > 0) {
-            setActiveSubtopicIndex(prev => prev - 1);
+            handleSubtopicChange(activeSubtopicIndex - 1);
         }
     };
 
@@ -170,7 +181,13 @@ export function TopicStudyConsole({ topic, onClose, onToggleComplete, isUpdating
                             <li key={sec.id}>
                                 <button
                                     className={`${styles.tocItem} ${idx === activeSubtopicIndex ? styles.tocItemActive : ''}`}
-                                    onClick={() => setActiveSubtopicIndex(idx)}
+                                    onClick={() => handleSubtopicChange(idx)}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        width: '100%'
+                                    }}
                                 >
                                     <span className={styles.tocIndex}>{idx + 1}</span>
                                     <span className={styles.tocName}>{sec.title}</span>
@@ -216,7 +233,7 @@ export function TopicStudyConsole({ topic, onClose, onToggleComplete, isUpdating
                     {topic.isCompleted ? (
                         <>
                             <Check size={16} />
-                            Completed!
+                            Topic Completed!
                         </>
                     ) : (
                         "Mark Topic as Completed"

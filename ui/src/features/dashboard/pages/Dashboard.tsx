@@ -1,51 +1,78 @@
-import React, { useState } from 'react';
-import type { UserProfile, Course } from '../../../types';
+import React from 'react';
+import { Flame, Trophy, Play, CheckCircle2, ChevronRight, Activity, BookOpen } from 'lucide-react';
+import type { UserProfile } from '../types';
+import { useDashboard } from '../hooks/useDashboard';
 import styles from '../styles/Dashboard.module.css';
 import owlPointer from '../../../assets/owl-pointer.png';
 
 interface DashboardProps {
     profile: UserProfile | null;
-    courses?: Course[];
     activeTab?: 'activities' | 'paths';
     setActiveTab?: (tab: 'activities' | 'paths') => void;
+    onSelectPath: (pathId: number) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = (props) => {
-    const {
-        courses = [],
-        activeTab: propActiveTab,
-        setActiveTab: propSetActiveTab
-    } = props;
-    // Local state fallback if props are not supplied
-    const [localActiveTab, localSetActiveTab] = useState<'activities' | 'paths'>('activities');
-    const activeTab = propActiveTab || localActiveTab;
-    const setActiveTab = propSetActiveTab || localSetActiveTab;
+export const Dashboard: React.FC<DashboardProps> = ({
+    profile,
+    activeTab = 'activities',
+    setActiveTab,
+    onSelectPath
+}) => {
+    const { dashboardData, isLoading, error } = useDashboard();
 
-    // Streak weekday configuration
-    const weekdays = [
-        { name: 'Thu', completed: false, isDotted: false },
-        { name: 'Fri', completed: true, isDotted: false }, // checked
-        { name: 'Sat', completed: false, isDotted: true },  // dotted circles
-        { name: 'Sun', completed: false, isDotted: true },
-        { name: 'Mon', completed: false, isDotted: false },
-        { name: 'Tue', completed: false, isDotted: false },
-        { name: 'Wed', completed: false, isDotted: false }
-    ];
+    if (isLoading) {
+        return (
+            <div className={styles.container} style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
+                <div className={styles.loadingSkeleton}>
+                    <p style={{ color: 'var(--text-secondary)' }}>Loading your dashboard metrics...</p>
+                </div>
+            </div>
+        );
+    }
 
-    // Grab first course (Java) as current course
-    const activeCourse = courses.length > 0 ? courses[0] : {
-        title: "Java Backend Path",
-        description: "Learn core Java programming, object-oriented design patterns, collections framework, multithreading, and Spring Boot enterprise APIs.",
-        category: "Backend"
+    if (error || !dashboardData) {
+        return (
+            <div className={styles.container} style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
+                <div className={styles.errorContainer}>
+                    <p style={{ color: 'var(--tech-red)' }}>⚠️ {error || 'Failed to load progress data.'}</p>
+                </div>
+            </div>
+        );
+    }
+
+    const { currentStreak, totalPoints, weeklyCalendar, activities, paths, banner } = dashboardData;
+
+    // Grab stats count for summary grid
+    const totalPathsCount = paths.length;
+    const completedPathsCount = paths.filter(p => p.progressPercentage === 100).length;
+    const completedTopicsCount = paths.reduce((sum, p) => sum + p.completedTopicsCount, 0);
+    const totalTopicsCount = paths.reduce((sum, p) => sum + p.totalTopicsCount, 0);
+
+    const getHumanReadableActivity = (act: any) => {
+        const type = act.eventType;
+        if (type === 'TOPIC_COMPLETED') {
+            return `Finished learning topic "${act.topicTitle}"`;
+        }
+        return 'Completed a learning topic';
     };
 
     return (
         <div className={styles.container}>
+            {profile && (
+                <div style={{ marginBottom: 'var(--space-6)' }}>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>
+                        Welcome back, {profile.fullName || 'Learner'}!
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', margin: 'var(--space-1) 0 0 0', fontSize: '0.95rem' }}>
+                        Ready to continue your learning progress?
+                    </p>
+                </div>
+            )}
             {/* Main Google Skills Dashboard Grid */}
             <div className={styles.dashboardGrid}>
                 {/* Left Column: Course Card, Tabs & Grid Cards */}
                 <div className={styles.leftCol}>
-                    {/* Current Course Card */}
+                    {/* Current Course Banner */}
                     <div className={styles.currentCourseCard}>
                         <div className={styles.courseCardLeft}>
                             <div className={styles.courseCardIllustration}>
@@ -53,14 +80,19 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
                             </div>
                         </div>
                         <div className={styles.courseCardRight}>
-                            <span className={styles.courseCardPreTitle}>{activeCourse.category} Path &gt;</span>
-                            <h2 className={styles.courseCardTitle}>{activeCourse.title}</h2>
-                            <p className={styles.courseCardDesc}>{activeCourse.description}</p>
-                            <button className={styles.startButton} onClick={() => setActiveTab('activities')}>
-                                <svg className={styles.playIcon} viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                                <span>Start</span>
+                            <span className={styles.courseCardPreTitle}>
+                                {banner.type === 'FEATURED' ? 'Recommended Path' : 'Review Path'} &gt;
+                            </span>
+                            <h2 className={styles.courseCardTitle}>{banner.pathTitle}</h2>
+                            <p className={styles.courseCardDesc}>{banner.pathDescription}</p>
+                            <button
+                                type="button"
+                                className={styles.startButton}
+                                onClick={() => banner.pathId && onSelectPath(banner.pathId)}
+                                disabled={!banner.pathId}
+                            >
+                                <Play size={16} className={styles.playIcon} fill="currentColor" />
+                                <span>{banner.type === 'FEATURED' ? 'Start' : 'Review'}</span>
                             </button>
                         </div>
                     </div>
@@ -69,54 +101,75 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
                     <div className={styles.tabContainer}>
                         <button
                             className={`${styles.tabLink} ${activeTab === 'activities' ? styles.activeTab : ''}`}
-                            onClick={() => setActiveTab('activities')}
+                            onClick={() => setActiveTab && setActiveTab('activities')}
                         >
-                            Activities
+                            Recent Activity
                         </button>
                         <button
                             className={`${styles.tabLink} ${activeTab === 'paths' ? styles.activeTab : ''}`}
-                            onClick={() => setActiveTab('paths')}
+                            onClick={() => setActiveTab && setActiveTab('paths')}
                         >
-                            Paths
+                            Learning Paths
                         </button>
                     </div>
 
                     {/* Tab Content Panels */}
                     <div className={styles.tabContent}>
                         {activeTab === 'activities' ? (
-                            <div className={styles.cardsGrid}>
-                                {courses.map((act, index) => {
-                                    const isFeatured = act.category === 'Backend' || act.id === 1;
-                                    const displayTags = isFeatured ? ['Featured', 'Path'] : ['Path'];
-                                    
-                                    return (
-                                        <div key={index} className={styles.previewCard}>
-                                            <div className={styles.cardTags}>
-                                                {displayTags.map((tag, tIdx) => {
-                                                    let tagStyle = styles.tagPath;
-                                                    if (tag.toLowerCase() === 'featured') {
-                                                        tagStyle = styles.tagFeatured;
-                                                    }
-                                                    return (
-                                                        <span key={tIdx} className={`${styles.cardTag} ${tagStyle}`}>
-                                                            {tag}
-                                                        </span>
-                                                    );
-                                                })}
+                            <div className={styles.activitiesList}>
+                                {activities.length === 0 ? (
+                                    <div className={styles.emptyState}>
+                                        <Activity size={24} style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-2)' }} />
+                                        <p>Complete a topic to see your learning activity here.</p>
+                                    </div>
+                                ) : (
+                                    activities.map((act) => (
+                                        <div key={act.id} className={styles.activityFeedItem} style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: 'var(--space-4)',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            backgroundColor: 'var(--bg-secondary)',
+                                            borderRadius: 'var(--radius-md)',
+                                            marginBottom: 'var(--space-3)'
+                                        }}>
+                                            <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+                                                <div style={{
+                                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                                    color: 'var(--tech-blue)',
+                                                    borderRadius: '50%',
+                                                    padding: 'var(--space-2)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    <BookOpen size={16} />
+                                                </div>
+                                                <div>
+                                                    <p style={{ fontWeight: 500, fontSize: '0.95rem', margin: 0 }}>
+                                                        {getHumanReadableActivity(act)}
+                                                    </p>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                        {new Date(act.occurredAt).toLocaleString()}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <h3 className={styles.cardTitle}>{act.title}</h3>
-                                            <p className={styles.cardDesc}>{act.description}</p>
-                                            <div className={styles.cardFooter}>
-                                                <button className={styles.circleArrowBtn} title="Explore Path">
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                                    </svg>
-                                                </button>
-                                            </div>
+                                            {act.pointsAwarded > 0 && (
+                                                <span style={{
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: 600,
+                                                    color: 'var(--tech-yellow)',
+                                                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                                                    padding: 'var(--space-1) var(--space-2)',
+                                                    borderRadius: 'var(--radius-sm)'
+                                                }}>
+                                                    +{act.pointsAwarded} pts
+                                                </span>
+                                            )}
                                         </div>
-                                    );
-                                })}
+                                    ))
+                                )}
                             </div>
                         ) : (
                             <div className={styles.pathsContainer}>
@@ -124,30 +177,52 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
                                     <h3 className={styles.cardHeaderTitle} style={{ fontSize: '1.25rem' }}>Learning Paths</h3>
                                 </div>
                                 <div className={styles.cardsGrid}>
-                                    {courses.map((path, idx) => (
-                                        <div key={idx} className={styles.previewCard}>
+                                    {paths.map((path) => (
+                                        <div key={path.id} className={styles.previewCard}>
                                             <div className={styles.cardTags}>
                                                 <span className={`${styles.cardTag} ${styles.tagPath}`}>
-                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginRight: '4px' }}>
-                                                        <line x1="6" y1="3" x2="6" y2="15"></line>
-                                                        <circle cx="18" cy="6" r="3"></circle>
-                                                        <circle cx="6" cy="18" r="3"></circle>
-                                                        <path d="M18 9a9 9 0 0 1-9 9"></path>
-                                                    </svg>
                                                     Path
+                                                </span>
+                                                <span className={styles.progressBadge} style={{
+                                                    fontSize: '0.8rem',
+                                                    color: 'var(--tech-blue)',
+                                                    fontWeight: 600
+                                                }}>
+                                                    {path.progressPercentage}% Complete
                                                 </span>
                                             </div>
                                             <h3 className={styles.cardTitle}>{path.title}</h3>
                                             <p className={styles.cardDesc}>{path.description}</p>
+                                            
+                                            {/* Progress Bar */}
+                                            <div style={{
+                                                width: '100%',
+                                                height: '6px',
+                                                backgroundColor: 'var(--border-color)',
+                                                borderRadius: 'var(--radius-sm)',
+                                                overflow: 'hidden',
+                                                marginTop: 'var(--space-4)',
+                                                marginBottom: 'var(--space-2)'
+                                            }}>
+                                                <div style={{
+                                                    width: `${path.progressPercentage}%`,
+                                                    height: '100%',
+                                                    backgroundColor: 'var(--tech-blue)',
+                                                    transition: 'width 0.3s ease'
+                                                }} />
+                                            </div>
+
                                             <div className={styles.cardFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                    {path.managedBy || 'Managed by Academy'}
+                                                    {path.completedTopicsCount} / {path.totalTopicsCount} Topics
                                                 </span>
-                                                <button className={styles.circleArrowBtn} title="Explore Path">
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                                    </svg>
+                                                <button
+                                                    type="button"
+                                                    className={styles.circleArrowBtn}
+                                                    title={`Explore ${path.title}`}
+                                                    onClick={() => onSelectPath(path.id)}
+                                                >
+                                                    <ChevronRight size={20} />
                                                 </button>
                                             </div>
                                         </div>
@@ -163,23 +238,19 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
                     {/* Weekly Streak Card */}
                     <div className={styles.streakCard}>
                         <div className={styles.streakInfo}>
-                            <span className={styles.streakBigNumber}>0</span>
+                            <span className={styles.streakBigNumber}>{currentStreak}</span>
                             <div className={styles.streakLabelContainer}>
-                                <svg className={styles.streakFlameIcon} viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 2S6 7 6 12s4 8 6 8 6-3 6-8-6-10-6-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
-                                </svg>
+                                <Flame className={styles.streakFlameIcon} size={24} style={{ color: 'var(--tech-orange)' }} />
                                 <span className={styles.streakSubLabel}>Current streak</span>
                             </div>
                         </div>
 
                         <div className={styles.weekCalendar}>
-                            {weekdays.map((day, idx) => (
+                            {weeklyCalendar.map((day, idx) => (
                                 <div key={idx} className={styles.calendarDay}>
                                     <div className={`${styles.dayIndicatorCircle} ${day.completed ? styles.dayCircleActive : ''} ${day.isDotted ? styles.dayCircleDotted : ''}`}>
                                         {day.completed ? (
-                                            <svg className={styles.checkIcon} viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                                            </svg>
+                                            <CheckCircle2 size={14} style={{ color: 'var(--tech-green)' }} />
                                         ) : null}
                                     </div>
                                     <span className={styles.calendarDayLabel}>{day.name}</span>
@@ -188,79 +259,42 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
                         </div>
                     </div>
 
-                    {/* Achievements Card */}
+                    {/* Points Achievements Card */}
                     <div className={styles.achievementsCard}>
                         <div className={styles.cardHeaderWithAction}>
-                            <h3 className={styles.cardHeaderTitle}>Achievements</h3>
-                            <button className={styles.expandIconBtn} title="Expand">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                                </svg>
-                            </button>
+                            <h3 className={styles.cardHeaderTitle}>Points & Rank</h3>
+                            <Trophy size={20} style={{ color: 'var(--tech-yellow)' }} />
                         </div>
 
-                        <div className={styles.achievementsStack}>
-                            {/* Achievement 1 */}
-                            <div className={styles.achievementItem}>
-                                <div className={styles.achievementIconWrapper} style={{ backgroundColor: '#fffbeb' }}>
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2">
-                                        <polygon points="12 2 22 12 12 22 2 12" fill="#fef08a" />
-                                        <circle cx="12" cy="12" r="3" fill="#ca8a04" />
-                                    </svg>
-                                </div>
-                                <div className={styles.achievementMeta}>
-                                    <span className={styles.achievementName}>5 Courses</span>
-                                    <div className={styles.progressBarBg}>
-                                        <div className={styles.progressBarFill} style={{ width: '40%', backgroundColor: '#eab308' }} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Achievement 2 */}
-                            <div className={styles.achievementItem}>
-                                <div className={styles.achievementIconWrapper} style={{ backgroundColor: '#fff7ed' }}>
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2">
-                                        <polygon points="12 2 22 10 12 18 2 10" fill="#ffedd5" />
-                                        <path d="M12 6v8" stroke="#ea580c" />
-                                    </svg>
-                                </div>
-                                <div className={styles.achievementMeta}>
-                                    <span className={styles.achievementName}>10 Days</span>
-                                    <div className={styles.progressBarBg}>
-                                        <div className={styles.progressBarFill} style={{ width: '10%', backgroundColor: '#f97316' }} />
-                                    </div>
-                                </div>
-                            </div>
+                        <div style={{ padding: 'var(--space-2) 0', textAlign: 'center' }}>
+                            <span style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--tech-yellow)' }}>
+                                {totalPoints}
+                            </span>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                Total Points Earned
+                            </p>
                         </div>
                     </div>
 
                     {/* Progress Stats Table Card */}
                     <div className={styles.progressCard}>
-                        <h3 className={styles.cardHeaderTitle} style={{ marginBottom: '16px' }}>Progress</h3>
+                        <h3 className={styles.cardHeaderTitle} style={{ marginBottom: '16px' }}>Overall Progress</h3>
                         <div className={styles.progressStatsGrid}>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>🎓 Course</span>
-                                <span className={styles.progressValue}>2</span>
+                                <span className={styles.progressLabel}>🎓 Active Paths</span>
+                                <span className={styles.progressValue}>{totalPathsCount}</span>
                             </div>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>🔬 Lab</span>
-                                <span className={styles.progressValue}>0</span>
+                                <span className={styles.progressLabel}>🏆 Completed Paths</span>
+                                <span className={styles.progressValue}>{completedPathsCount}</span>
                             </div>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>✅ Check</span>
-                                <span className={styles.progressValue}>6</span>
+                                <span className={styles.progressLabel}>📖 Total Topics</span>
+                                <span className={styles.progressValue}>{totalTopicsCount}</span>
                             </div>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>📖 Lesson</span>
-                                <span className={styles.progressValue}>1</span>
-                            </div>
-                            <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>🏫 Classroom</span>
-                                <span className={styles.progressValue}>0</span>
-                            </div>
-                            <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>🗺️ Path</span>
-                                <span className={styles.progressValue}>0</span>
+                                <span className={styles.progressLabel}>✅ Completed Topics</span>
+                                <span className={styles.progressValue}>{completedTopicsCount}</span>
                             </div>
                         </div>
                     </div>

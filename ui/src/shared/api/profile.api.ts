@@ -30,6 +30,7 @@ export interface SubtopicData {
     title: string;
     content: string;
     orderIndex: number;
+    isCompleted?: boolean;
 }
 
 export interface TopicDetails {

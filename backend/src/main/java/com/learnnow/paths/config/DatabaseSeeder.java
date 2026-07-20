@@ -10,6 +10,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.springframework.context.annotation.Profile;
+
+@Profile({"local", "dev-seed"})
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
 
@@ -21,7 +24,10 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        pathRepository.deleteAll();
+        if (pathRepository.count() > 0) {
+            System.out.println("Catalog already seeded, skipping");
+            return;
+        }
         
         Path javaPath = Path.builder()
                 .title("Java Backend Path")
@@ -35,7 +41,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                 .description("Master primitive types, flow control, arrays, and syntax basics. Set up your JDK development environment.")
                 .category("Topic")
                 .duration("2 hours")
-                .isCompleted(true)
                 .path(javaPath)
                 .build();
 
@@ -301,13 +306,13 @@ The compiler automatically translates this to use a `StringBuilder` under the ho
         ));
 
         // Create other subtopics
-        Topic oopTopic = Topic.builder().title("Object-Oriented Programming (OOP)").description("Delve deep into classes, interfaces, inheritance, polymorphism, encapsulation, and abstraction.").category("Topic").duration("3 hours").isCompleted(false).path(javaPath).build();
-        Topic collTopic = Topic.builder().title("Java Collections Framework & Generics").description("Work with Lists, Sets, Maps, Queues, and define type-safe generic classes and methods.").category("Topic").duration("2 hours").isCompleted(false).path(javaPath).build();
-        Topic modernTopic = Topic.builder().title("Modern Java & Advanced Features (Java 8 to 21)").description("Learn lambda expressions, streams, records, pattern matching, virtual threads, and new API features.").category("Topic").duration("4 hours").isCompleted(false).path(javaPath).build();
-        Topic exceptionsTopic = Topic.builder().title("Exceptions, File I/O, and Databases").description("Handle runtime errors, use input/output streams, read/write files, and integrate with JDBC databases.").category("Topic").duration("2.5 hours").isCompleted(false).path(javaPath).build();
-        Topic concurrencyTopic = Topic.builder().title("Concurrency & Multithreading (Advanced)").description("Understand thread creation, synchronization, volatile fields, lock frameworks, executors, and thread safety.").category("Topic").duration("3 hours").isCompleted(false).path(javaPath).build();
-        Topic jvmTopic = Topic.builder().title("JVM Internals & Memory Management (Deep Dive)").description("Explore garbage collection, classloaders, stack vs heap memory, and profiling application performance.").category("Console").duration("1.5 hours").isCompleted(false).path(javaPath).build();
-        Topic reactiveTopic = Topic.builder().title("Reactive Programming & Spring WebFlux (Enterprise Level)").description("Build non-blocking, asynchronous reactive microservices using Project Reactor and WebFlux.").category("Topic").duration("4 hours").isCompleted(false).path(javaPath).build();
+        Topic oopTopic = Topic.builder().title("Object-Oriented Programming (OOP)").description("Delve deep into classes, interfaces, inheritance, polymorphism, encapsulation, and abstraction.").category("Topic").duration("3 hours").path(javaPath).build();
+        Topic collTopic = Topic.builder().title("Java Collections Framework & Generics").description("Work with Lists, Sets, Maps, Queues, and define type-safe generic classes and methods.").category("Topic").duration("2 hours").path(javaPath).build();
+        Topic modernTopic = Topic.builder().title("Modern Java & Advanced Features (Java 8 to 21)").description("Learn lambda expressions, streams, records, pattern matching, virtual threads, and new API features.").category("Topic").duration("4 hours").path(javaPath).build();
+        Topic exceptionsTopic = Topic.builder().title("Exceptions, File I/O, and Databases").description("Handle runtime errors, use input/output streams, read/write files, and integrate with JDBC databases.").category("Topic").duration("2.5 hours").path(javaPath).build();
+        Topic concurrencyTopic = Topic.builder().title("Concurrency & Multithreading (Advanced)").description("Understand thread creation, synchronization, volatile fields, lock frameworks, executors, and thread safety.").category("Topic").duration("3 hours").path(javaPath).build();
+        Topic jvmTopic = Topic.builder().title("JVM Internals & Memory Management (Deep Dive)").description("Explore garbage collection, classloaders, stack vs heap memory, and profiling application performance.").category("Console").duration("1.5 hours").path(javaPath).build();
+        Topic reactiveTopic = Topic.builder().title("Reactive Programming & Spring WebFlux (Enterprise Level)").description("Build non-blocking, asynchronous reactive microservices using Project Reactor and WebFlux.").category("Topic").duration("4 hours").path(javaPath).build();
 
         List<Topic> javaTopics = new ArrayList<>(Arrays.asList(
                 foundationTopic, oopTopic, collTopic, modernTopic, exceptionsTopic, concurrencyTopic, jvmTopic, reactiveTopic

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Dashboard, useProfileDashboard, ProfileEditModal } from '../features/dashboard';
 import { PathsPage } from '../features/paths';
-import { fetchPaths, fetchTopicDetails, toggleTopicComplete } from '../shared/api';
+import { fetchPaths, fetchTopicDetails } from '../shared/api';
 import type { TopicDetails } from '../shared/api';
 import type { Topic } from '../features/roadmap';
 import { Home } from '../features/home';
@@ -9,6 +9,7 @@ import { PathRoadmapPage, TopicStudyConsole } from '../features/roadmap';
 import { LoginPage, VerifyEmailPage } from '../features/auth';
 import { Header, Sidebar, Breadcrumb } from '../shared/components';
 import { useToast } from '../shared/components/feedback/Toast';
+import { useRecordActivity } from '../features/activity';
 import styles from './App.module.css';
 import type { Course } from '../types';
 
@@ -60,6 +61,8 @@ export default function App() {
     const [isStudyLoading, setIsStudyLoading] = useState(false);
     const [isStudyUpdating, setIsStudyUpdating] = useState(false);
 
+    const { recordTopicCompletion } = useRecordActivity();
+
     const handleSelectTopic = useCallback(async (id: number) => {
         try {
             setIsStudyLoading(true);
@@ -89,10 +92,12 @@ export default function App() {
         if (!activeTopicId || !activeTopic) return;
         try {
             setIsStudyUpdating(true);
-            const updated = await toggleTopicComplete(activeTopicId);
+            const nextCompleted = !activeTopic.isCompleted;
+            await recordTopicCompletion(activeTopicId, nextCompleted);
             
-            // Update active subtopic state
-            setActiveTopic(prev => prev ? { ...prev, isCompleted: updated.isCompleted } : null);
+            // Re-fetch progress to sync State
+            const details = await fetchTopicDetails(activeTopicId);
+            setActiveTopic(details);
             
             // Also update the course path state to refresh the roadmap checkboxes!
             setCourses(prevCourses => {
@@ -100,7 +105,7 @@ export default function App() {
                     if (course.topics) {
                         const updatedTopics = course.topics.map(sub => {
                             if (sub.id === activeTopicId) {
-                                return { ...sub, isCompleted: updated.isCompleted };
+                                return { ...sub, isCompleted: nextCompleted };
                             }
                             return sub;
                         });
@@ -109,7 +114,7 @@ export default function App() {
                     return course;
                 });
             });
-            showToast(updated.isCompleted ? "Topic marked as completed!" : "Topic marked as incomplete.", "success");
+            showToast(nextCompleted ? "Topic marked as completed!" : "Topic marked as incomplete.", "success");
         } catch (err) {
             console.error("Failed to update topic status", err);
             showToast("Failed to update topic status", "error");
@@ -117,6 +122,7 @@ export default function App() {
             setIsStudyUpdating(false);
         }
     };
+
     const [selectedPathId, setSelectedPathId] = useState<number | null>(() => {
         if (typeof window !== 'undefined') {
             const path = window.location.pathname;
@@ -353,9 +359,9 @@ export default function App() {
                             {activeView === 'DASHBOARD' && isLoggedIn && (
                                 <Dashboard
                                     profile={profile}
-                                    courses={courses}
                                     activeTab={dashboardTab}
                                     setActiveTab={setDashboardTab}
+                                    onSelectPath={handleSelectPath}
                                 />
                             )}
 

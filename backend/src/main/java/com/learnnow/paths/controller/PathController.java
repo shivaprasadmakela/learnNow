@@ -1,7 +1,7 @@
 package com.learnnow.paths.controller;
 
-import com.learnnow.paths.entity.Path;
-import com.learnnow.paths.repository.PathRepository;
+import com.learnnow.paths.dto.PathSummaryDto;
+import com.learnnow.paths.service.CatalogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,14 +12,14 @@ import java.util.List;
 @RequestMapping("/api/paths")
 public class PathController {
 
-    private final PathRepository pathRepository;
+    private final CatalogService catalogService;
 
-    public PathController(PathRepository pathRepository) {
-        this.pathRepository = pathRepository;
+    public PathController(CatalogService catalogService) {
+        this.catalogService = catalogService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Path>> getAllPaths() {
-        return ResponseEntity.ok(pathRepository.findAll());
+    public ResponseEntity<List<PathSummaryDto>> getAllPaths() {
+        return ResponseEntity.ok(catalogService.getAllPaths());
     }
 }

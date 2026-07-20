@@ -14,8 +14,7 @@ CREATE TABLE topics (
     title VARCHAR(255),
     description VARCHAR(1000),
     duration VARCHAR(255),
-    category VARCHAR(255),
-    is_completed BOOLEAN NOT NULL DEFAULT FALSE
+    category VARCHAR(255)
 );
 
 -- 3. Create subtopics table
@@ -52,3 +51,53 @@ CREATE TABLE email_verification_tokens (
     used BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP(6) WITH TIME ZONE
 );
+
+-- 6. Create user_learning_preferences table
+CREATE TABLE user_learning_preferences (
+    user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Kolkata',
+    current_streak INT NOT NULL DEFAULT 0,
+    longest_streak INT NOT NULL DEFAULT 0,
+    last_activity_date DATE,
+    total_points INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 7. Create learning_activity_events table
+CREATE TABLE learning_activity_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id UUID NOT NULL UNIQUE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    path_id BIGINT REFERENCES paths(id) ON DELETE RESTRICT,
+    topic_id BIGINT REFERENCES topics(id) ON DELETE RESTRICT,
+    event_type VARCHAR(32) NOT NULL,
+    points_awarded INT NOT NULL DEFAULT 0,
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_events_user_time ON learning_activity_events (user_id, occurred_at DESC);
+CREATE INDEX idx_events_user_topic_time ON learning_activity_events (user_id, topic_id, occurred_at DESC);
+
+-- 8. Create user_topic_progress table
+CREATE TABLE user_topic_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    topic_id BIGINT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+    path_id BIGINT NOT NULL REFERENCES paths(id) ON DELETE CASCADE,
+    status VARCHAR(16) NOT NULL DEFAULT 'NOT_STARTED', -- NOT_STARTED, IN_PROGRESS, COMPLETED
+    completed_at TIMESTAMPTZ,
+    UNIQUE (user_id, topic_id)
+);
+CREATE INDEX idx_topic_progress_user_path ON user_topic_progress (user_id, path_id);
+
+-- 9. Create user_learning_daily_activity table
+CREATE TABLE user_learning_daily_activity (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    activity_date DATE NOT NULL,
+    first_activity_at TIMESTAMPTZ NOT NULL,
+    last_activity_at TIMESTAMPTZ NOT NULL,
+    qualifying_event_count INT NOT NULL DEFAULT 0,
+    UNIQUE (user_id, activity_date)
+);
+CREATE INDEX idx_daily_activity_user_date ON user_learning_daily_activity (user_id, activity_date DESC);

@@ -1,35 +1,30 @@
 package com.learnnow.paths.controller;
 
-import com.learnnow.paths.entity.Topic;
-import com.learnnow.paths.repository.TopicRepository;
+import com.learnnow.paths.dto.TopicDetailDto;
+import com.learnnow.paths.service.CatalogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 @RestController
 @RequestMapping("/api/topics")
 public class TopicController {
 
-    private final TopicRepository topicRepository;
+    private final CatalogService catalogService;
 
-    public TopicController(TopicRepository topicRepository) {
-        this.topicRepository = topicRepository;
+    public TopicController(CatalogService catalogService) {
+        this.catalogService = catalogService;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Topic> getTopicDetails(@PathVariable Long id) {
-        return topicRepository.findByIdWithSubtopics(id)
+    public ResponseEntity<TopicDetailDto> getTopicDetails(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id) {
+        String userId = jwt.getSubject();
+        return catalogService.getTopicDetails(id, userId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/{id}/toggle-complete")
-    public ResponseEntity<Topic> toggleTopicComplete(@PathVariable Long id) {
-        return topicRepository.findById(id)
-                .map(topic -> {
-                    topic.setCompleted(!topic.isCompleted());
-                    Topic saved = topicRepository.save(topic);
-                    return ResponseEntity.ok(saved);
-                })
                 .orElse(ResponseEntity.notFound().build());
     }
 }

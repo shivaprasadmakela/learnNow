@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { ArrowRight, Code2, Globe2 } from 'lucide-react';
 import type { Course } from '../../../types';
 import styles from '../styles/PathsPage.module.css';
 
@@ -10,40 +11,19 @@ interface PathsPageProps {
 export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-    // Only show "All" and "Backend" categories
-    const categories = ['All', 'Backend'];
-
-    // Only show the Java Backend Path in this module for now
-    const pathsInModule = courses.filter(c =>
-        c.category.toLowerCase() === 'backend' &&
-        c.title.toLowerCase().includes('java')
+    const categories = useMemo(
+        () => ['All', ...Array.from(new Set(courses.map((course) => course.category).filter(Boolean)))],
+        [courses]
     );
 
-    // Apply category filtering within the allowed paths
-    const filteredPaths = pathsInModule.filter(path => {
+    const filteredPaths = courses.filter(path => {
         if (selectedCategory === 'All') return true;
-        return path.category.toLowerCase() === selectedCategory.toLowerCase();
+        return path.category === selectedCategory;
     });
 
-    const getCategoryIcon = (category: string) => {
-        if (category === 'Backend') {
-            return (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <ellipse cx="12" cy="5" rx="9" ry="3" />
-                    <path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                    <path d="M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6" />
-                </svg>
-            );
-        }
-        // Default/All icon
-        return (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-            </svg>
-        );
-    };
+    const getCategoryIcon = (category: string) => category === 'Backend'
+        ? <Code2 size={20} aria-hidden="true" />
+        : <Globe2 size={20} aria-hidden="true" />;
 
     return (
         <div className={styles.container}>
@@ -58,9 +38,10 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) =
 
             {/* Category Filters Row */}
             <div className={styles.categoriesRow} style={{ justifyContent: 'center', marginBottom: '32px' }}>
-                {categories.map((cat, idx) => (
-                    <div
-                        key={idx}
+                {categories.map((cat) => (
+                    <button
+                        key={cat}
+                        type="button"
                         className={`${styles.categoryItem} ${selectedCategory === cat ? styles.categoryItemActive : ''}`}
                         onClick={() => setSelectedCategory(cat)}
                     >
@@ -68,18 +49,20 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) =
                             {getCategoryIcon(cat)}
                         </div>
                         <span className={styles.categoryLabel}>{cat}</span>
-                    </div>
+                    </button>
                 ))}
             </div>
 
             {/* Dynamic Cards Grid */}
             <div className={styles.pathsCardsGrid}>
-                {filteredPaths.map((path, idx) => (
-                    <div 
-                        key={idx} 
+                {filteredPaths.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <p>No learning paths are available for this category yet.</p>
+                    </div>
+                ) : filteredPaths.map((path) => (
+                    <article
+                        key={path.id}
                         className={styles.previewCard}
-                        onClick={() => onSelectPath(path.id)}
-                        style={{ cursor: 'pointer' }}
                     >
                         <div className={styles.cardTags}>
                             <span className={styles.tagPathScreenshot}>
@@ -93,21 +76,16 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) =
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                 {path.managedBy || 'Managed by Academy'}
                             </span>
-                            <button 
+                            <button
+                                type="button"
                                 className={styles.circleArrowBtnScreenshot} 
                                 title="Explore Path"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSelectPath(path.id);
-                                }}
+                                onClick={() => onSelectPath(path.id)}
                             >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                    <polyline points="12 5 19 12 12 19"></polyline>
-                                </svg>
+                                <ArrowRight size={20} aria-hidden="true" />
                             </button>
                         </div>
-                    </div>
+                    </article>
                 ))}
             </div>
         </div>
