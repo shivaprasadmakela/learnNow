@@ -750,3 +750,64 @@
         transform: rotate(360deg);
     }
 }
+
+/* Email verification success screen styles */
+.successCardContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    animation: scaleInCheck 0.35s ease forwards;
+}
+
+.successMailIcon {
+    color: var(--tech-green);
+    margin-bottom: var(--space-5);
+    background: rgba(34, 197, 94, 0.08);
+    padding: var(--space-4);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.1);
+}
+
+.successHeading {
+    font-size: 1.65rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+    font-family: 'Google Sans', var(--font-family);
+    letter-spacing: -0.01em;
+}
+
+.successDescription {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-8);
+    max-width: 360px;
+}
+
+.successActionBtn {
+    height: 46px;
+    width: 100%;
+    max-width: 280px;
+    background-color: var(--tech-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-pill);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.successActionBtn:hover {
+    background-color: var(--tech-blue-hover);
+    box-shadow: var(--shadow-md);
+}

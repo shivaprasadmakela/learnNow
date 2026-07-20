@@ -43,7 +43,7 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest req) {
         if (userRepository.existsByEmailIgnoreCase(req.email())) {
-            throw new RuntimeException("Email already registered!");
+            throw new RuntimeException("user_already_created");
         }
 
         String userId = UUID.randomUUID().toString();
@@ -56,7 +56,6 @@ public class AuthService {
                 .lastName(req.lastName())
                 .fullName(fullName)
                 .passwordHash(passwordEncoder.encode(req.password()))
-                .dateOfBirth(req.dateOfBirth())
                 .emailVerified(false)
                 .avatar("👨‍💻")
                 .role("Fullstack Developer Apprentice")
@@ -88,35 +87,44 @@ public class AuthService {
     }
 
     @Transactional
-    public void verifyEmail(String rawToken) {
+    public AuthResponse verifyEmail(String rawToken) {
         String hash = sha256(rawToken);
         EmailVerificationToken token = tokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new RuntimeException("Invalid token!"));
-
-        if (token.isUsed()) {
-            throw new RuntimeException("Token already used!");
-        }
-        if (token.getExpiresAt().isBefore(Instant.now())) {
-            throw new RuntimeException("Token expired!");
-        }
+                .orElseThrow(() -> new RuntimeException("token_invalid"));
 
         User user = userRepository.findById(token.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found!"));
+                .orElseThrow(() -> new RuntimeException("user_not_found"));
+
+        if (token.isUsed()) {
+            if (user.isEmailVerified()) {
+                String jwt = tokenService.generateToken(user.getId(), user.getEmail());
+                UserDto profile = new UserDto(user.getId(), user.getEmail(), user.getFullName(), user.getAvatar(), user.getRole(), user.getBio());
+                return new AuthResponse(jwt, profile);
+            }
+            throw new RuntimeException("token_already_used");
+        }
+        if (token.getExpiresAt().isBefore(Instant.now())) {
+            throw new RuntimeException("token_expired");
+        }
 
         user.setEmailVerified(true);
         userRepository.save(user);
 
         token.setUsed(true);
         tokenRepository.save(token);
+
+        String jwt = tokenService.generateToken(user.getId(), user.getEmail());
+        UserDto profile = new UserDto(user.getId(), user.getEmail(), user.getFullName(), user.getAvatar(), user.getRole(), user.getBio());
+        return new AuthResponse(jwt, profile);
     }
 
     @Transactional
     public void resendVerification(String email) {
         User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new RuntimeException("User not found with this email!"));
+                .orElseThrow(() -> new RuntimeException("user_not_found"));
 
         if (user.isEmailVerified()) {
-            throw new RuntimeException("Email is already verified!");
+            throw new RuntimeException("email_already_verified");
         }
 
         // Invalidate old tokens
@@ -127,14 +135,14 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmailIgnoreCase(req.email())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password!"));
+                .orElseThrow(() -> new RuntimeException("user_credentials_mismatched"));
 
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid email or password!");
+            throw new RuntimeException("user_credentials_mismatched");
         }
 
         if (!user.isEmailVerified()) {
-            throw new RuntimeException("Please verify your email address before logging in.");
+            throw new RuntimeException("email_not_verified");
         }
 
         String token = tokenService.generateToken(user.getId(), user.getEmail());

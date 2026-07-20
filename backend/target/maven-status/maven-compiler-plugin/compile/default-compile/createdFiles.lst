@@ -20,6 +20,7 @@ com/learnnow/BackendApplication.class
 com/learnnow/user/dto/RegisterRequest.class
 com/learnnow/paths/controller/TopicController.class
 com/learnnow/user/service/UserService.class
+com/learnnow/common/exception/GlobalExceptionHandler.class
 com/learnnow/paths/entity/Subtopic$SubtopicBuilder.class
 com/learnnow/common/security/ResendEmailClient.class
 com/learnnow/user/dto/AuthResponse.class

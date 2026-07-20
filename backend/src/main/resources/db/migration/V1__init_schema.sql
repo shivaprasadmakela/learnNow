@@ -38,7 +38,6 @@ CREATE TABLE users (
     avatar VARCHAR(255),
     role VARCHAR(255),
     bio VARCHAR(255),
-    date_of_birth DATE,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP(6) WITH TIME ZONE,
     updated_at TIMESTAMP(6) WITH TIME ZONE

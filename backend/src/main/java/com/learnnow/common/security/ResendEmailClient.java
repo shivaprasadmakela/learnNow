@@ -27,7 +27,7 @@ public class ResendEmailClient {
 
     public void sendVerificationEmail(String toEmail, String firstName, String verifyLink) {
         Map<String, Object> body = Map.of(
-                "from", fromAddress,
+                "from", "Learn Portal <" + fromAddress + ">",
                 "to", List.of(toEmail),
                 "subject", "Verify your learnNow account",
                 "html", buildVerificationHtml(firstName, verifyLink)

@@ -47,7 +47,8 @@ export default function App() {
         isLoggedIn,
         signOut,
         signUp,
-        signIn
+        signIn,
+        handleLoginSuccess
     } = useProfileDashboard();
     const [isExpanded, setIsExpanded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -392,6 +393,7 @@ export default function App() {
                             {activeView === 'VERIFY_EMAIL' && (
                                 <VerifyEmailPage
                                     changeView={handleViewChange}
+                                    onVerificationSuccess={handleLoginSuccess}
                                 />
                             )}
                         </div>

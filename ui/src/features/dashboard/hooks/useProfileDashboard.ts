@@ -127,7 +127,22 @@ export const useProfileDashboard = () => {
     }, [loadUserData, changeView]);
 
     // Sign up / sign in methods
-    const signUp = async (firstName: string, lastName: string, email: string, pass: string, dateOfBirth: string) => {
+    const getErrorMessage = async (response: Response, fallback: string): Promise<string> => {
+        try {
+            const data = await response.json();
+            return data.message || fallback;
+        } catch {
+            try {
+                const text = await response.text();
+                return text || fallback;
+            } catch {
+                return fallback;
+            }
+        }
+    };
+
+    // Sign up / sign in methods
+    const signUp = async (firstName: string, lastName: string, email: string, pass: string) => {
         setError(null);
         const response = await apiFetch('/api/auth/register', {
             method: 'POST',
@@ -136,13 +151,12 @@ export const useProfileDashboard = () => {
                 firstName,
                 lastName,
                 email,
-                password: pass,
-                dateOfBirth
+                password: pass
             })
         });
 
         if (!response.ok) {
-            const errText = await response.text().catch(() => 'Registration failed');
+            const errText = await getErrorMessage(response, 'Registration failed');
             setError(errText);
             throw new Error(errText);
         }
@@ -160,7 +174,7 @@ export const useProfileDashboard = () => {
         });
 
         if (!response.ok) {
-            const errText = await response.text().catch(() => 'Invalid email or password');
+            const errText = await getErrorMessage(response, 'Invalid email or password');
             setError(errText);
             throw new Error(errText);
         }
@@ -173,6 +187,13 @@ export const useProfileDashboard = () => {
         window.history.pushState(null, '', '/dashboard');
         return data;
     };
+
+    const handleLoginSuccess = useCallback((token: string, profile: UserProfile) => {
+        authClient.setToken(token);
+        setProfile(profile);
+        changeView('DASHBOARD');
+        window.history.pushState(null, '', '/dashboard');
+    }, [changeView]);
 
     const signOut = async () => {
         authClient.clearToken();
@@ -210,6 +231,7 @@ export const useProfileDashboard = () => {
         isLoggedIn: !!profile,
         signUp,
         signIn,
-        signOut
+        signOut,
+        handleLoginSuccess
     };
 };

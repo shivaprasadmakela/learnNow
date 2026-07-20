@@ -6,9 +6,10 @@ import styles from '../styles/VerifyEmailPage.module.css';
 
 interface VerifyEmailPageProps {
     changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
+    onVerificationSuccess: (token: string, profile: any) => void;
 }
 
-export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView }) => {
+export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView, onVerificationSuccess }) => {
     const { showToast } = useToast();
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
     const [email, setEmail] = useState('');
@@ -32,7 +33,12 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView }) 
                 });
 
                 if (response.ok) {
+                    const data = await response.json();
                     setStatus('success');
+                    showToast('Email verified successfully! Logging you in...', 'success');
+                    setTimeout(() => {
+                        onVerificationSuccess(data.token, data.profile);
+                    }, 1500);
                 } else {
                     setStatus('error');
                 }
@@ -93,10 +99,10 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView }) 
                         <CheckCircle2 className={styles.successIcon} size={54} />
                         <h2 className={styles.title}>Email verified!</h2>
                         <p className={styles.description}>
-                            Thank you for verifying your email. You can now continue and sign in to get started.
+                            Thank you for verifying your email. You are being logged in automatically...
                         </p>
                         <button className={styles.btn} onClick={() => changeView('LOGIN')}>
-                            Continue to Sign In
+                            Go to Login
                         </button>
                     </>
                 )}

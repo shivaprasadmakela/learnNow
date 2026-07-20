@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { MailCheck } from 'lucide-react';
 import { useToast } from '../../../shared/components/feedback/Toast';
 import styles from '../styles/LoginPage.module.css';
 
 interface LoginPageProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
-    signUp: (firstName: string, lastName: string, email: string, pass: string, dateOfBirth: string) => Promise<unknown>;
+    signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
     changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
 }
 
@@ -12,6 +13,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
     const { showToast } = useToast();
     const [isSignUp, setIsSignUp] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isRegisteredSuccess, setIsRegisteredSuccess] = useState(false);
 
     // Error and Success messages
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -26,11 +28,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
-
-    // Date of Birth
-    const [dobMonth, setDobMonth] = useState('January');
-    const [dobDay, setDobDay] = useState('');
-    const [dobYear, setDobYear] = useState('');
 
 
     // Form validations
@@ -103,35 +100,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
             setErrorMsg('Passwords do not match.');
             return;
         }
-        if (!dobDay.trim() || !dobYear.trim()) {
-            setErrorMsg('Full Date of Birth is required.');
-            return;
-        }
-
-        const dayNum = parseInt(dobDay, 10);
-        const yearNum = parseInt(dobYear, 10);
-        if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
-            setErrorMsg('Please enter a valid day for date of birth.');
-            return;
-        }
-        const currentYear = new Date().getFullYear();
-        if (isNaN(yearNum) || yearNum < 1900 || yearNum > currentYear) {
-            setErrorMsg('Please enter a valid year for date of birth.');
-            return;
-        }
-
         setLoading(true);
         try {
-            const monthMap: Record<string, string> = {
-                January: '01', February: '02', March: '03', April: '04', May: '05', June: '06',
-                July: '07', August: '08', September: '09', October: '10', November: '11', December: '12'
-            };
-            const monthStr = monthMap[dobMonth];
-            const dayStr = dobDay.padStart(2, '0');
-            const dateOfBirth = `${dobYear}-${monthStr}-${dayStr}`;
-
-            await signUp(firstName.trim(), lastName.trim(), email, password, dateOfBirth);
-            setSuccessMsg('Account created successfully! Check your email (or server log) to confirm your registration.');
+            await signUp(firstName.trim(), lastName.trim(), email, password);
+            setIsRegisteredSuccess(true);
 
             // Reset fields
             setFirstName('');
@@ -139,14 +111,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
             setEmail('');
             setPassword('');
             setPasswordConfirmation('');
-            setDobMonth('January');
-            setDobDay('');
-            setDobYear('');
-
-            // Switch view after successful registration message
-            setTimeout(() => {
-                setIsSignUp(false);
-            }, 3000);
         } catch (err: unknown) {
             console.error('Sign up error:', err);
             const message = err instanceof Error ? err.message : 'An error occurred during registration. Please try again.';
@@ -164,8 +128,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
 
     return (
         <div className={styles.authPageContainer}>
-            <div className={styles.authCard}>
-                <h2 className={styles.viewTitle}>{isSignUp ? 'Create account' : 'Sign in'}</h2>
+            {isRegisteredSuccess ? (
+                <div className={styles.successCardContent}>
+                    <MailCheck className={styles.successMailIcon} size={64} />
+                    <h2 className={styles.successHeading}>Verify your email</h2>
+                    <p className={styles.successDescription}>
+                        We have sent a verification link. Please check your inbox (or your local developer console log) to confirm your registration.
+                    </p>
+                    <button
+                        type="button"
+                        className={styles.successActionBtn}
+                        onClick={() => {
+                            setIsRegisteredSuccess(false);
+                            setIsSignUp(false);
+                        }}
+                    >
+                        Continue to Sign In
+                    </button>
+                </div>
+            ) : (
+                <div className={styles.authCard}>
+                    <h2 className={styles.viewTitle}>{isSignUp ? "Join the squad! Let's get building." : "Hey, welcome back!"}</h2>
 
 
 
@@ -231,7 +214,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
                                 Create account
                             </span>
                             <button type="submit" className={styles.submitBtn} disabled={loading}>
-                                {loading ? 'Signing in...' : 'Sign in'}
+                                {loading ? 'Signing in...' : "Let's go!"}
                             </button>
                         </div>
                     </form>
@@ -287,74 +270,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
                             />
                         </div>
 
-                        {/* Date of Birth Section */}
-                        <div className={styles.dobSection}>
-                            <label className={styles.dobLabel}>Date of birth</label>
-                            <div className={styles.dobGrid}>
-                                <div className={styles.selectWrapper}>
-                                    <select
-                                        className={styles.dobSelect}
-                                        value={dobMonth}
-                                        onChange={(e) => setDobMonth(e.target.value)}
-                                        disabled={loading}
-                                    >
-                                        <option value="January">January</option>
-                                        <option value="February">February</option>
-                                        <option value="March">March</option>
-                                        <option value="April">April</option>
-                                        <option value="May">May</option>
-                                        <option value="June">June</option>
-                                        <option value="July">July</option>
-                                        <option value="August">August</option>
-                                        <option value="September">September</option>
-                                        <option value="October">October</option>
-                                        <option value="November">November</option>
-                                        <option value="December">December</option>
-                                    </select>
-                                    <span className={styles.selectArrow}>▼</span>
-                                    <span className={styles.floatingSelectLabel}>Month *</span>
-                                </div>
-                                <div className={styles.dobInputWrapper}>
-                                    <input
-                                        type="text"
-                                        placeholder="Day *"
-                                        className={styles.dobInput}
-                                        value={dobDay}
-                                        onChange={(e) => setDobDay(e.target.value.replace(/\D/g, ''))}
-                                        maxLength={2}
-                                        disabled={loading}
-                                    />
-                                    <span className={styles.floatingInputLabel}>Day *</span>
-                                </div>
-                                <div className={styles.dobInputWrapper}>
-                                    <input
-                                        type="text"
-                                        placeholder="Year *"
-                                        className={styles.dobInput}
-                                        value={dobYear}
-                                        onChange={(e) => setDobYear(e.target.value.replace(/\D/g, ''))}
-                                        maxLength={4}
-                                        disabled={loading}
-                                    />
-                                    <span className={styles.floatingInputLabel}>Year *</span>
-                                </div>
-                            </div>
-                            <p className={styles.dobHint}>
-                                Your date of birth will only be used to determine eligibility to use the service.
-                            </p>
-                        </div>
+
 
                         <div className={styles.actionsRow}>
                             <span className={styles.blueLinkBold} onClick={toggleAuthMode}>
                                 Sign in
                             </span>
                             <button type="submit" className={styles.submitBtn} disabled={loading}>
-                                {loading ? 'Creating...' : 'Create account'}
+                                {loading ? 'Creating...' : 'Sign me up!'}
                             </button>
                         </div>
                     </form>
                 )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

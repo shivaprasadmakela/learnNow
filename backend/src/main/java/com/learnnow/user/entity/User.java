@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import java.time.Instant;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
@@ -28,8 +27,6 @@ public class User {
 
     @Column(nullable = false)
     private String passwordHash;
-
-    private LocalDate dateOfBirth;
 
     @Builder.Default
     private boolean emailVerified = false;
