@@ -1,5 +1,4 @@
 import React from 'react';
-import { Home, User, Compass } from 'lucide-react';
 import styles from './Navigation.module.css';
 
 interface SidebarProps {
@@ -31,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 onClick={() => changeView('HOME')}
                                 title="Home"
                             >
-                                <Home size={20} />
+                                <i className="fa-solid fa-house" style={{ fontSize: '1.1rem', width: '20px', textAlign: 'center' }} />
                                 <span className={styles.navLabelExpanded}>Home</span>
                             </div>
                             <div 
@@ -39,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 onClick={onSelectPaths}
                                 title="Paths"
                             >
-                                <Compass size={20} />
+                                <i className="fa-solid fa-dragon" style={{ fontSize: '1.1rem', width: '20px', textAlign: 'center' }} />
                                 <span className={styles.navLabelExpanded}>Paths</span>
                             </div>
                         </>
@@ -53,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 onClick={() => changeView('DASHBOARD')}
                                 title="Dashboard"
                             >
-                                <User size={20} />
+                                <i className="fa-solid fa-gauge-high" style={{ fontSize: '1.1rem', width: '20px', textAlign: 'center' }} />
                                 <span className={styles.navLabelExpanded}>Dashboard</span>
                             </div>
                             <div 
@@ -61,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 onClick={onSelectPaths}
                                 title="Paths"
                             >
-                                <Compass size={20} />
+                                <i className="fa-solid fa-dragon" style={{ fontSize: '1.1rem', width: '20px', textAlign: 'center' }} />
                                 <span className={styles.navLabelExpanded}>Paths</span>
                             </div>
                         </>
@@ -78,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 title="Home"
                             >
                                 <div className={`${styles.iconPill} ${(activeView === 'HOME' || activeView === 'COURSE_DETAIL') && !isPathsActive ? styles.iconPillActive : ''}`}>
-                                    <Home size={20} />
+                                    <i className="fa-solid fa-house" style={{ fontSize: '1.1rem' }} />
                                 </div>
                                 <span className={styles.navLabelCollapsed}>Home</span>
                             </div>
@@ -88,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 title="Paths"
                             >
                                 <div className={`${styles.iconPill} ${isPathsActive ? styles.iconPillActive : ''}`}>
-                                    <Compass size={20} />
+                                    <i className="fa-solid fa-dragon" style={{ fontSize: '1.1rem' }} />
                                 </div>
                                 <span className={styles.navLabelCollapsed}>Paths</span>
                             </div>
@@ -104,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 title="Dashboard"
                             >
                                 <div className={`${styles.iconPill} ${(activeView === 'DASHBOARD' || activeView === 'CERTIFICATE') && !isPathsActive ? styles.iconPillActive : ''}`}>
-                                    <User size={20} />
+                                    <i className="fa-solid fa-gauge-high" style={{ fontSize: '1.1rem' }} />
                                 </div>
                                 <span className={styles.navLabelCollapsed}>Dashboard</span>
                             </div>
@@ -114,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 title="Paths"
                             >
                                 <div className={`${styles.iconPill} ${isPathsActive ? styles.iconPillActive : ''}`}>
-                                    <Compass size={20} />
+                                    <i className="fa-solid fa-dragon" style={{ fontSize: '1.1rem' }} />
                                 </div>
                                 <span className={styles.navLabelCollapsed}>Paths</span>
                             </div>

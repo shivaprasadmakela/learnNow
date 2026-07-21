@@ -63,7 +63,7 @@ export const PathRoadmapPage: React.FC<PathRoadmapPageProps> = ({
                         {/* Left: Badge, Title, Details */}
                         <div className={styles.heroLeft}>
                             <div className={styles.heroBadge}>
-                                <span className={styles.heroBadgeIcon}>❋</span>
+                                <i className="fa-solid fa-dragon" style={{ marginRight: '6px' }} aria-hidden="true" />
                                 Path
                             </div>
                             <h1 className={styles.heroTitle}>{pathTitle}</h1>
@@ -87,12 +87,13 @@ export const PathRoadmapPage: React.FC<PathRoadmapPageProps> = ({
                             {progressPercent > 0 ? 'Continue' : 'Start'}
                         </button>
                         <div className={styles.progressBarContainer}>
-                            <div className={styles.progressTrack} title={`Your path progress: ${progressPercent}%`}>
+                            <div className={styles.progressTrack} title={`Overall Progress in this module: ${progressPercent}%`}>
                                 <div className={styles.progressFill} style={{ width: `${progressPercent}%` }}></div>
                             </div>
                         </div>
-                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>
-                            {progressPercent}% Complete
+                        <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                            <i className="fa-solid fa-chart-line" aria-hidden="true" />
+                            Overall Progress in this module: {progressPercent}%
                         </span>
                     </div>
                 </div>

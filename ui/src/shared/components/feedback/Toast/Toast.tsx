@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 import type { ToastItem, ToastType, ToastContextType } from './Toast.types';
 import styles from './Toast.module.css';
 
@@ -33,14 +32,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const getIcon = (type: ToastType) => {
         switch (type) {
             case 'success':
-                return <CheckCircle2 size={18} className={styles.iconSuccess} />;
+                return <i className={`fa-solid fa-circle-check ${styles.iconSuccess}`} style={{ fontSize: '1.1rem' }} />;
             case 'error':
-                return <XCircle size={18} className={styles.iconError} />;
+                return <i className={`fa-solid fa-circle-xmark ${styles.iconError}`} style={{ fontSize: '1.1rem' }} />;
             case 'warning':
-                return <AlertTriangle size={18} className={styles.iconWarning} />;
+                return <i className={`fa-solid fa-triangle-exclamation ${styles.iconWarning}`} style={{ fontSize: '1.1rem' }} />;
             case 'info':
             default:
-                return <Info size={18} className={styles.iconInfo} />;
+                return <i className={`fa-solid fa-circle-info ${styles.iconInfo}`} style={{ fontSize: '1.1rem' }} />;
         }
     };
 
@@ -59,7 +58,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         </span>
                         <p className={styles.toastMessage}>{toast.message}</p>
                         <button className={styles.closeBtn} aria-label="Close">
-                            <X size={14} />
+                            <i className="fa-solid fa-xmark" style={{ fontSize: '0.9rem' }} />
                         </button>
                     </div>
                 ))}

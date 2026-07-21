@@ -30,11 +30,12 @@ export interface LearningCardProps {
     className?: string;
 }
 
-const DefaultGridIcon: React.FC = () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
-    </svg>
-);
+const renderDefaultBadgeIcon = (label?: string) => {
+    if (label && label.toLowerCase().includes('path')) {
+        return <i className="fa-solid fa-dragon" aria-hidden="true" />;
+    }
+    return <i className="fa-solid fa-dove" aria-hidden="true" />;
+};
 
 export const LearningCard: React.FC<LearningCardProps> = ({
     layout = 'grid',
@@ -72,7 +73,7 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                     {badgeLabel && (
                         <div className={styles.badgePill}>
                             <span className={styles.badgeIcon}>
-                                {badgeIcon || <DefaultGridIcon />}
+                                {badgeIcon || renderDefaultBadgeIcon(badgeLabel)}
                             </span>
                             <span>{badgeLabel}</span>
                         </div>
@@ -140,7 +141,7 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                 {badgeLabel ? (
                     <div className={styles.badgePill}>
                         <span className={styles.badgeIcon}>
-                            {badgeIcon || <DefaultGridIcon />}
+                            {badgeIcon || renderDefaultBadgeIcon(badgeLabel)}
                         </span>
                         <span>{badgeLabel}</span>
                     </div>

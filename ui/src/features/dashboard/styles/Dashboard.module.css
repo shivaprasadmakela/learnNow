@@ -164,6 +164,22 @@
     gap: 32px;
 }
 
+/* Empty State Styling */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    background-color: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    color: var(--text-secondary);
+    width: 100%;
+    box-sizing: border-box;
+}
+
 /* Current Course Header Card */
 .currentCourseCard {
     background-color: var(--bg-primary);
@@ -453,8 +469,10 @@
 .streakFlameStack {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 4px;
 }
 
 .streakCanvas {
@@ -467,6 +485,7 @@
     font-weight: 500;
     line-height: 1.25;
     color: var(--text-secondary);
+    text-align: center;
 }
 
 .streakDivider {

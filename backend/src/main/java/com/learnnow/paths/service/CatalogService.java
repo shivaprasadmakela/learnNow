@@ -37,16 +37,7 @@ public class CatalogService {
                         path.getDescription(),
                         path.getCategory(),
                         path.getManagedBy(),
-                        path.getTopics().stream()
-                                .map(topic -> new TopicSummaryDto(
-                                        topic.getId(),
-                                        topic.getTitle(),
-                                        topic.getDescription(),
-                                        topic.getCategory(),
-                                        topic.getDuration(),
-                                        false
-                                ))
-                                .toList()
+                        List.of()
                 ))
                 .toList();
     }

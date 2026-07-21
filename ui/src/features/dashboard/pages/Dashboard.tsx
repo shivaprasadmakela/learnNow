@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { Play, Activity, Check } from 'lucide-react';
+import { Play, Check } from 'lucide-react';
 import type { UserProfile } from '../../../types';
 import { useDashboard } from '../hooks/useDashboard';
 import styles from '../styles/Dashboard.module.css';
 import owlPointer from '../../../assets/owl-pointer.png';
-import { StreakFlameCanvas } from '../components/StreakFlameCanvas';
 import { LearningCard } from '../../../shared/components/cards';
+import { StreakFlameIcon } from '../../../shared/components/StreakFlameIcon';
 
 interface DashboardProps {
     profile: UserProfile | null;
@@ -160,8 +160,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <div className={styles.activitiesList}>
                                 {recentTopics.length === 0 ? (
                                     <div className={styles.emptyState}>
-                                        <Activity size={24} style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-2)' }} />
-                                        <p>Visit or complete topics to see your recent topic progress here.</p>
+                                        <i className="fa-solid fa-seedling" style={{ fontSize: '2.2rem', color: 'var(--text-tertiary)', marginBottom: '14px' }} aria-hidden="true" />
+                                        <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: 1.5 }}>
+                                            Visit or complete topics to see your recent topic progress here.
+                                        </p>
                                     </div>
                                 ) : (
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
@@ -182,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             </div>
                         ) : (
                             <div className={styles.pathsSection}>
-                                <h3 className={styles.sectionTitle}>Your Learning Paths</h3>
+
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                     {paths.map((path) => (
                                         <LearningCard
@@ -207,9 +209,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {/* Weekly Streak Card */}
                     <div className={styles.streakCard}>
                         <div className={styles.streakInfo}>
-                            <span className={styles.streakBigNumber}>{currentStreak}</span>
+                            <span className={styles.streakBigNumber}>
+                                {String(currentStreak).split('').map((digit, idx) => (
+                                    <i key={idx} className={`fa-regular fa-${digit}`} aria-hidden="true" />
+                                ))}
+                            </span>
                             <div className={styles.streakFlameStack}>
-                                <StreakFlameCanvas width={56} height={56} className={styles.streakCanvas} />
+                                <StreakFlameIcon streak={currentStreak} size={56} className={styles.streakCanvas} />
                                 <div className={styles.streakSubLabel}>
                                     Current<br />streak
                                 </div>
@@ -225,15 +231,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 return (
                                     <div key={idx} className={styles.calendarDay}>
                                         <div
-                                            className={`${styles.dayIndicatorCircle} ${
-                                                day.completed
-                                                    ? styles.dayCircleActive
-                                                    : isToday
+                                            className={`${styles.dayIndicatorCircle} ${day.completed
+                                                ? styles.dayCircleActive
+                                                : isToday
                                                     ? styles.dayCircleToday
                                                     : day.isDotted
-                                                    ? styles.dayCircleDotted
-                                                    : ''
-                                            }`}
+                                                        ? styles.dayCircleDotted
+                                                        : ''
+                                                }`}
                                         >
                                             {day.completed && <Check size={12} strokeWidth={3} style={{ color: '#ffffff' }} />}
                                         </div>
@@ -330,19 +335,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <h3 className={styles.cardHeaderTitle} style={{ marginBottom: '16px' }}>Overall Progress</h3>
                         <div className={styles.progressStatsGrid}>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>🎓 Active Paths</span>
+                                <span className={styles.progressLabel}>
+                                    <i className="fa-solid fa-dragon" style={{ color: 'var(--text-primary)', marginRight: '8px' }} aria-hidden="true" />
+                                    Active Paths
+                                </span>
                                 <span className={styles.progressValue}>{totalPathsCount}</span>
                             </div>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>🏆 Completed Paths</span>
+                                <span className={styles.progressLabel}>
+                                    <i className="fa-solid fa-dragon" style={{ color: 'var(--tech-green)', marginRight: '8px' }} aria-hidden="true" />
+                                    Completed Paths
+                                </span>
                                 <span className={styles.progressValue}>{completedPathsCount}</span>
                             </div>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>📖 Total Topics</span>
+                                <span className={styles.progressLabel}>
+                                    <i className="fa-solid fa-dove" style={{ color: 'var(--text-primary)', marginRight: '8px' }} aria-hidden="true" />
+                                    Total Topics
+                                </span>
                                 <span className={styles.progressValue}>{totalTopicsCount}</span>
                             </div>
                             <div className={styles.progressRow}>
-                                <span className={styles.progressLabel}>✅ Completed Topics</span>
+                                <span className={styles.progressLabel}>
+                                    <i className="fa-solid fa-dove" style={{ color: 'var(--tech-green)', marginRight: '8px' }} aria-hidden="true" />
+                                    Completed Topics
+                                </span>
                                 <span className={styles.progressValue}>{completedTopicsCount}</span>
                             </div>
                         </div>

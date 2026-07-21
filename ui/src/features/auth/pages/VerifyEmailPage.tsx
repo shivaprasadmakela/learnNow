@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { apiFetch } from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/feedback/Toast';
@@ -14,8 +14,12 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView, on
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
     const [email, setEmail] = useState('');
     const [resending, setResending] = useState(false);
+    const verifiedRef = useRef(false);
 
     useEffect(() => {
+        if (verifiedRef.current) return;
+        verifiedRef.current = true;
+
         const queryParams = new URLSearchParams(window.location.search);
         const token = queryParams.get('token');
 
