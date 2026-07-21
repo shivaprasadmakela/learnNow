@@ -1,19 +1,25 @@
 /* ui/src/styles/themes/theme-dark.css */
-[data-theme="dark"] {
-  --bg-primary: var(--color-slate-800);
-  --bg-secondary: var(--color-slate-900);
-  --bg-tertiary: var(--color-slate-950);
-  --bg-dark-section: var(--color-slate-950);
+[data-theme="dark"],
+.dark-theme,
+:root.dark-theme {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #020617;
+  --bg-dark-section: #020617;
 
-  --text-primary: var(--color-slate-50);
-  --text-secondary: var(--color-slate-300);
-  --text-tertiary: var(--color-slate-400);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
 
-  --border-color: var(--color-slate-700);
-  --border-color-light: var(--color-slate-800);
+  --border-color: #334155;
+  --border-color-light: #1e293b;
 
-  --accent-primary: #99bdd5;
-  --accent-secondary: #005995;
-  --accent-blue-light: rgba(153, 189, 213, 0.25);
-  --accent-blue-text: #99bdd5;
+  --accent-primary: #38bdf8;
+  --accent-secondary: #0284c7;
+  --accent-blue-light: rgba(56, 189, 248, 0.2);
+  --accent-blue-text: #38bdf8;
+
+  --tech-blue: #38bdf8;
+  --tech-blue-hover: #0284c7;
+  --tech-blue-active: #0369a1;
 }
