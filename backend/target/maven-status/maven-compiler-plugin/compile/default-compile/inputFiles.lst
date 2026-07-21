@@ -14,6 +14,7 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/dto/response/RecentTopicActivity.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/dto/response/TopicProgressSummary.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/dto/response/WeeklyCalendarDay.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/dto/response/WeeklyLeaderboardEntry.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/entity/UserLearningDailyActivity.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/entity/UserLearningPreferences.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/entity/UserSubtopicProgress.java

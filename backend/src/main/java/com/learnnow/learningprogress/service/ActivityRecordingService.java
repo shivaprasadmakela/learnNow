@@ -38,21 +38,26 @@ public class ActivityRecordingService {
                 ));
 
         LocalDate localDate = LocalDate.now(userZone);
-        upsertDailyActivity(userId, localDate);
 
         // Update streak & check milestone bonus
         int newStreak = streakService.updateStreak(prefs, localDate);
         int milestoneBonus = streakService.getMilestoneBonus(newStreak);
 
         int pointsToAward = PointsConfig.TOPIC_COMPLETED_BONUS + milestoneBonus;
-        prefs.addPoints(pointsToAward);
-
-        // Check if all topics in this path are now complete → award path bonus
         if (isPathCompleted(userId, pathId)) {
-            prefs.addPoints(PointsConfig.PATH_COMPLETED_BONUS);
+            pointsToAward += PointsConfig.PATH_COMPLETED_BONUS;
         }
 
+        prefs.addPoints(pointsToAward);
         preferencesRepository.save(prefs);
+
+        upsertDailyActivity(userId, localDate, pointsToAward);
+    }
+
+    @Transactional
+    public void recordDailyPoints(String userId, ZoneId userZone, int points) {
+        LocalDate localDate = LocalDate.now(userZone);
+        upsertDailyActivity(userId, localDate, points);
     }
 
     private boolean isPathCompleted(String userId, Long pathId) {
@@ -70,7 +75,7 @@ public class ActivityRecordingService {
         return completedCount >= topics.size();
     }
 
-    private void upsertDailyActivity(String userId, LocalDate localDate) {
+    private void upsertDailyActivity(String userId, LocalDate localDate, int points) {
         UserLearningDailyActivity daily = dailyActivityRepository.findByUserIdAndActivityDate(userId, localDate)
                 .orElseGet(() -> UserLearningDailyActivity.builder()
                         .userId(userId)
@@ -79,6 +84,7 @@ public class ActivityRecordingService {
                         .build());
         daily.setLastActivityAt(Instant.now());
         daily.setQualifyingEventCount(daily.getQualifyingEventCount() + 1);
+        daily.addPoints(points);
         dailyActivityRepository.save(daily);
     }
 }

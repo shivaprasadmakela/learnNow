@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
-import { Flame, Trophy, Play, CheckCircle2, ChevronRight, Activity, BookOpen } from 'lucide-react';
+import { Play, Activity, Check } from 'lucide-react';
 import type { UserProfile } from '../../../types';
 import { useDashboard } from '../hooks/useDashboard';
 import styles from '../styles/Dashboard.module.css';
 import owlPointer from '../../../assets/owl-pointer.png';
+import { StreakFlameCanvas } from '../components/StreakFlameCanvas';
+import { LearningCard } from '../../../shared/components/cards';
 
 interface DashboardProps {
     profile: UserProfile | null;
@@ -12,6 +14,31 @@ interface DashboardProps {
     onSelectPath: (pathId: number) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
 }
+
+const getInitials = (name: string): string => {
+    if (!name) return 'L';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+};
+
+const getAvatarColorClass = (userId: string, cssStyles: Record<string, string>): string => {
+    const bgClasses = [
+        cssStyles.avatarBgRose,
+        cssStyles.avatarBgAmber,
+        cssStyles.avatarBgSky,
+        cssStyles.avatarBgEmerald,
+        cssStyles.avatarBgViolet
+    ];
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % bgClasses.length;
+    return bgClasses[index];
+};
 
 export const Dashboard: React.FC<DashboardProps> = ({
     profile,
@@ -48,7 +75,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
         );
     }
 
-    const { currentStreak, totalPoints, weeklyCalendar, recentTopics = [], paths, banner } = dashboardData;
+    const {
+        currentStreak,
+        weeklyCalendar,
+        recentTopics = [],
+        paths = [],
+        banner,
+        weeklyLeaderboard = []
+    } = dashboardData;
 
     // Grab stats count for summary grid
     const totalPathsCount = paths.length;
@@ -130,123 +164,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         <p>Visit or complete topics to see your recent topic progress here.</p>
                                     </div>
                                 ) : (
-                                    recentTopics.map((item) => (
-                                        <div key={item.topicId} className={styles.activityFeedItem} style={{
-                                            padding: 'var(--space-4)',
-                                            borderBottom: '1px solid var(--border-color)',
-                                            backgroundColor: 'var(--bg-secondary)',
-                                            borderRadius: 'var(--radius-md)',
-                                            marginBottom: 'var(--space-3)'
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
-                                                    <div style={{
-                                                        backgroundColor: item.completed ? 'rgba(34, 197, 94, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-                                                        color: item.completed ? 'var(--tech-green)' : 'var(--tech-blue)',
-                                                        borderRadius: '50%',
-                                                        padding: 'var(--space-2)',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <BookOpen size={16} />
-                                                    </div>
-                                                    <div>
-                                                        <h4 style={{ fontWeight: 600, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>
-                                                            {item.topicTitle}
-                                                        </h4>
-                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                            {item.pathTitle}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <span style={{
-                                                    fontSize: '0.8rem',
-                                                    fontWeight: 600,
-                                                    color: item.completed ? 'var(--tech-green)' : 'var(--tech-blue)',
-                                                    backgroundColor: item.completed ? 'rgba(34, 197, 94, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-                                                    padding: '4px 8px',
-                                                    borderRadius: '4px'
-                                                }}>
-                                                    {item.completed ? 'Completed' : `${item.progressPercentage}% Done`}
-                                                </span>
-                                            </div>
-
-                                            {/* Topic completion percentage bar */}
-                                            <div style={{
-                                                width: '100%',
-                                                height: '5px',
-                                                backgroundColor: 'var(--border-color)',
-                                                borderRadius: '3px',
-                                                overflow: 'hidden',
-                                                marginTop: '8px'
-                                            }}>
-                                                <div style={{
-                                                    width: `${item.progressPercentage}%`,
-                                                    height: '100%',
-                                                    backgroundColor: item.completed ? 'var(--tech-green)' : 'var(--tech-blue)',
-                                                    transition: 'width 0.3s ease'
-                                                }} />
-                                            </div>
-                                        </div>
-                                    ))
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                                        {recentTopics.map((item) => (
+                                            <LearningCard
+                                                key={item.topicId}
+                                                badgeLabel="Topic"
+                                                title={item.topicTitle}
+                                                description={item.pathTitle ? `Path: ${item.pathTitle}` : undefined}
+                                                progressPercentage={item.progressPercentage}
+                                                showProgress={true}
+                                                isCompleted={item.completed}
+                                                onClick={() => onSelectPath(item.topicId)}
+                                            />
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         ) : (
-                            <div className={styles.pathsContainer}>
-                                <div style={{ marginBottom: '20px' }}>
-                                    <h3 className={styles.cardHeaderTitle} style={{ fontSize: '1.25rem' }}>Learning Paths</h3>
-                                </div>
-                                <div className={styles.cardsGrid}>
+                            <div className={styles.pathsSection}>
+                                <h3 className={styles.sectionTitle}>Your Learning Paths</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                     {paths.map((path) => (
-                                        <div key={path.id} className={styles.previewCard}>
-                                            <div className={styles.cardTags}>
-                                                <span className={`${styles.cardTag} ${styles.tagPath}`}>
-                                                    Path
-                                                </span>
-                                                <span className={styles.progressBadge} style={{
-                                                    fontSize: '0.8rem',
-                                                    color: 'var(--tech-blue)',
-                                                    fontWeight: 600
-                                                }}>
-                                                    {path.progressPercentage}% Complete
-                                                </span>
-                                            </div>
-                                            <h3 className={styles.cardTitle}>{path.title}</h3>
-                                            <p className={styles.cardDesc}>{path.description}</p>
-                                            
-                                            {/* Progress Bar */}
-                                            <div style={{
-                                                width: '100%',
-                                                height: '6px',
-                                                backgroundColor: 'var(--border-color)',
-                                                borderRadius: 'var(--radius-sm)',
-                                                overflow: 'hidden',
-                                                marginTop: 'var(--space-4)',
-                                                marginBottom: 'var(--space-2)'
-                                            }}>
-                                                <div style={{
-                                                    width: `${path.progressPercentage}%`,
-                                                    height: '100%',
-                                                    backgroundColor: 'var(--tech-blue)',
-                                                    transition: 'width 0.3s ease'
-                                                }} />
-                                            </div>
-
-                                            <div className={styles.cardFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                    {path.completedTopicsCount} / {path.totalTopicsCount} Topics
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    className={styles.circleArrowBtn}
-                                                    title={`Explore ${path.title}`}
-                                                    onClick={() => onSelectPath(path.id)}
-                                                >
-                                                    <ChevronRight size={20} />
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <LearningCard
+                                            key={path.id}
+                                            badgeLabel={path.category || 'Path'}
+                                            title={path.title}
+                                            description={path.description}
+                                            footerText={`${path.completedTopicsCount} / ${path.totalTopicsCount} Topics`}
+                                            progressPercentage={path.progressPercentage}
+                                            showProgress={typeof path.progressPercentage === 'number' && path.progressPercentage > 0}
+                                            onClick={() => onSelectPath(path.id)}
+                                        />
                                     ))}
                                 </div>
                             </div>
@@ -254,46 +202,126 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                 </div>
 
-                {/* Right Column: Streak, Achievements & Progress Table */}
+                {/* Right Column: Streak, League & Progress Table */}
                 <div className={styles.rightCol}>
                     {/* Weekly Streak Card */}
                     <div className={styles.streakCard}>
                         <div className={styles.streakInfo}>
                             <span className={styles.streakBigNumber}>{currentStreak}</span>
-                            <div className={styles.streakLabelContainer}>
-                                <Flame className={styles.streakFlameIcon} size={24} style={{ color: 'var(--tech-orange)' }} />
-                                <span className={styles.streakSubLabel}>Current streak</span>
+                            <div className={styles.streakFlameStack}>
+                                <StreakFlameCanvas width={56} height={56} className={styles.streakCanvas} />
+                                <div className={styles.streakSubLabel}>
+                                    Current<br />streak
+                                </div>
                             </div>
                         </div>
 
+                        <div className={styles.streakDivider} />
+
                         <div className={styles.weekCalendar}>
-                            {weeklyCalendar.map((day, idx) => (
-                                <div key={idx} className={styles.calendarDay}>
-                                    <div className={`${styles.dayIndicatorCircle} ${day.completed ? styles.dayCircleActive : ''} ${day.isDotted ? styles.dayCircleDotted : ''}`}>
-                                        {day.completed ? (
-                                            <CheckCircle2 size={14} style={{ color: 'var(--tech-green)' }} />
-                                        ) : null}
+                            {weeklyCalendar.map((day, idx) => {
+                                const todayStr = new Date().toISOString().slice(0, 10);
+                                const isToday = day.date === todayStr;
+                                return (
+                                    <div key={idx} className={styles.calendarDay}>
+                                        <div
+                                            className={`${styles.dayIndicatorCircle} ${
+                                                day.completed
+                                                    ? styles.dayCircleActive
+                                                    : isToday
+                                                    ? styles.dayCircleToday
+                                                    : day.isDotted
+                                                    ? styles.dayCircleDotted
+                                                    : ''
+                                            }`}
+                                        >
+                                            {day.completed && <Check size={12} strokeWidth={3} style={{ color: '#ffffff' }} />}
+                                        </div>
+                                        <span className={`${styles.calendarDayLabel} ${isToday ? styles.calendarDayLabelToday : ''}`}>
+                                            {day.name}
+                                        </span>
                                     </div>
-                                    <span className={styles.calendarDayLabel}>{day.name}</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Points Achievements Card */}
-                    <div className={styles.achievementsCard}>
-                        <div className={styles.cardHeaderWithAction}>
-                            <h3 className={styles.cardHeaderTitle}>Points & Rank</h3>
-                            <Trophy size={20} style={{ color: 'var(--tech-yellow)' }} />
+                    {/* League Leaderboard Card */}
+                    <div className={styles.leagueCard}>
+                        <div className={styles.leagueHeader}>
+                            <h2 className={styles.leagueTitle}>League</h2>
+                            <div className={styles.infoIconWrapper}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className={styles.infoIconSvg}>
+                                    <circle cx="12" cy="12" r="9" />
+                                    <path d="M12 16v-4M12 8h.01" />
+                                </svg>
+                                <div className={styles.tooltipBubble}>Resets every Monday</div>
+                            </div>
                         </div>
 
-                        <div style={{ padding: 'var(--space-2) 0', textAlign: 'center' }}>
-                            <span style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--tech-yellow)' }}>
-                                {totalPoints}
-                            </span>
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                Total Points Earned
-                            </p>
+                        <div className={styles.leaderboardList}>
+                            {weeklyLeaderboard.map((entry) => {
+                                const initials = getInitials(entry.fullName);
+                                const avatarBgClass = getAvatarColorClass(entry.userId, styles);
+
+                                return (
+                                    <div
+                                        key={entry.userId}
+                                        className={`${styles.leaderboardRow} ${entry.isCurrentUser ? styles.currentUserRow : ''}`}
+                                    >
+                                        {entry.isCurrentUser && <span className={styles.activePillIndicator} />}
+
+                                        <div className={styles.rankMarkerCol}>
+                                            {entry.rank === 1 ? (
+                                                <div className={styles.rank1Badge}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.rank1Icon}>
+                                                        <path d="M2 6l4 4 6-8 6 8 4-4-2 13H4L2 6z" />
+                                                    </svg>
+                                                </div>
+                                            ) : entry.rank === 2 ? (
+                                                <div className={styles.rank2Badge}>
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={styles.rank2Icon}>
+                                                        <circle cx="12" cy="15" r="6" />
+                                                        <path d="M9 10L6 3M15 10l3-7" />
+                                                    </svg>
+                                                </div>
+                                            ) : (
+                                                <div className={styles.rankNumberText}>
+                                                    #{entry.rank}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className={`${styles.userAvatarInitials} ${avatarBgClass}`}>
+                                            {initials}
+                                        </div>
+
+                                        <div className={styles.userInfoCol}>
+                                            <div className={styles.userNameRow}>
+                                                <span className={styles.userNameText}>{entry.fullName}</span>
+                                                {entry.isCurrentUser && <span className={styles.youTag}>(You)</span>}
+                                            </div>
+                                            {entry.currentStreak > 0 ? (
+                                                <div className={styles.userStreakRow}>
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" className={styles.streakFlameSvg}>
+                                                        <path
+                                                            fill="currentColor"
+                                                            d="M12 2c1 3-2 4-2 7a3 3 0 006 0c1.5 1.5 2 3.5 2 5a6 6 0 11-12 0c0-4 3-5 3-8 0-1.5.7-3 3-4z"
+                                                        />
+                                                    </svg>
+                                                    <span>{entry.currentStreak}d streak</span>
+                                                </div>
+                                            ) : (
+                                                <div className={styles.noStreakText}>No active streak</div>
+                                            )}
+                                        </div>
+
+                                        <div className={styles.pointsPill}>
+                                            {entry.weeklyPoints} <span className={styles.pointsLabel}>pts</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 

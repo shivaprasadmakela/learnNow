@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { LayoutGrid, List, ArrowRight, Clock, Award, CheckCircle2 } from 'lucide-react';
+import { LayoutGrid, List, ArrowRight } from 'lucide-react';
 import { useToast } from '../../../shared/components/feedback/Toast';
 import styles from '../styles/PathRoadmap.module.css';
 import bunnyBrain from '../../../assets/bunny-brain.png';
+import { LearningCard } from '../../../shared/components/cards';
 
 export interface Topic {
     id: number;
@@ -123,69 +124,19 @@ export const PathRoadmapPage: React.FC<PathRoadmapPageProps> = ({
                     const topicPct = topic.isCompleted ? 100 : (topic.progressPercentage || 0);
 
                     return (
-                        <div
+                        <LearningCard
                             key={topic.id}
-                            className={`${styles.subtopicCard} ${viewMode === 'list' ? styles.subtopicCardList : ''}`}
+                            layout={viewMode}
+                            badgeLabel={topic.category || 'Course'}
+                            title={topic.title}
+                            description={viewMode === 'grid' ? topic.description : undefined}
+                            duration={topic.duration || '2 hours'}
+                            progressPercentage={topicPct}
+                            showProgress={topicPct > 0}
+                            isCompleted={topic.isCompleted}
                             onClick={() => handleTopicClick(topic.id, topic.title)}
-                            style={{ cursor: 'pointer' }}
-                        >
-                            {/* Left: badge + title (+ description in grid only) */}
-                            <div className={styles.subtopicCardMain}>
-                                <div className={styles.subtopicCardHeader}>
-                                    <span className={styles.subtopicBadge}>
-                                        <Award size={10} style={{ marginRight: '3px' }} />
-                                        {topic.category}
-                                    </span>
-                                    {topic.isCompleted ? (
-                                        <span className={styles.subtopicBadge} style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: 'var(--tech-green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <CheckCircle2 size={12} />
-                                            Completed
-                                        </span>
-                                    ) : (
-                                        <span className={styles.subtopicBadge} style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--tech-blue)' }}>
-                                            {topicPct}% Complete
-                                        </span>
-                                    )}
-                                </div>
-                                <h3 className={styles.subtopicTitle}>{topic.title}</h3>
-                                {viewMode === 'grid' && <p className={styles.subtopicDesc}>{topic.description}</p>}
-
-                                {/* Mini topic progress bar */}
-                                <div style={{
-                                    width: '100%',
-                                    height: '4px',
-                                    backgroundColor: 'var(--border-color)',
-                                    borderRadius: '2px',
-                                    marginTop: '12px',
-                                    overflow: 'hidden'
-                                }}>
-                                    <div style={{
-                                        width: `${topicPct}%`,
-                                        height: '100%',
-                                        backgroundColor: topicPct === 100 ? 'var(--tech-green)' : 'var(--tech-blue)',
-                                        transition: 'width 0.3s ease'
-                                    }} />
-                                </div>
-                            </div>
-
-                            {/* Right: duration + arrow */}
-                            <div className={styles.subtopicFooter}>
-                                <div className={styles.durationWrapper}>
-                                    <Clock size={12} />
-                                    <span>{topic.duration}</span>
-                                </div>
-                                <button
-                                    className={styles.exploreArrow}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleTopicClick(topic.id, topic.title);
-                                    }}
-                                    title="Explore Topic"
-                                >
-                                    <ArrowRight size={16} />
-                                </button>
-                            </div>
-                        </div>
+                            buttonTooltip={`Explore ${topic.title}`}
+                        />
                     );
                 })}
             </div>

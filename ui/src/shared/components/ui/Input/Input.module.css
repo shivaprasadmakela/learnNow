@@ -15,14 +15,16 @@
 
 .input {
     width: 100%;
-    padding: var(--space-2) var(--space-4);
+    height: 38px;
+    padding: 0 var(--space-4);
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     color: var(--text-primary);
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     outline: none;
+    box-sizing: border-box;
 }
 
 .input:focus {

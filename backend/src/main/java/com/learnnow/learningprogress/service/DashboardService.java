@@ -18,6 +18,7 @@ import com.learnnow.paths.repository.PathRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
@@ -132,10 +133,11 @@ public class DashboardService {
             preferencesRepository.save(prefs);
         }
 
-        // 5. Weekly Calendar Days (Last 7 local dates)
+        // 5. Weekly Calendar Days (Current week from Monday to Sunday)
+        LocalDate monday = today.with(DayOfWeek.MONDAY);
         List<LocalDate> calendarDates = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
-            calendarDates.add(today.minusDays(i));
+        for (int i = 0; i < 7; i++) {
+            calendarDates.add(monday.plusDays(i));
         }
 
         List<UserLearningDailyActivity> dailyActivities = dailyActivityRepository
@@ -153,10 +155,118 @@ public class DashboardService {
                 })
                 .toList();
 
-        // 6. Recent Topic Activity (last 4 topics with progress)
+        // 6. Weekly Leaderboard Calculation (Monday to Sunday)
+        LocalDate sunday = monday.plusDays(6);
+        List<UserLearningDailyActivity> weekActivities = dailyActivityRepository.findByActivityDateBetween(monday, sunday);
+
+        Map<String, Integer> weeklyPointsMap = weekActivities.stream()
+                .collect(Collectors.groupingBy(
+                        UserLearningDailyActivity::getUserId,
+                        Collectors.summingInt(UserLearningDailyActivity::getPointsEarned)
+                ));
+
+        Map<String, java.time.Instant> earliestActivityMap = weekActivities.stream()
+                .collect(Collectors.toMap(
+                        UserLearningDailyActivity::getUserId,
+                        UserLearningDailyActivity::getFirstActivityAt,
+                        (a, b) -> a.isBefore(b) ? a : b
+                ));
+
+        List<com.learnnow.user.entity.User> existingUsers = userRepository.findAll();
+        Map<String, com.learnnow.user.entity.User> userMap = existingUsers.stream()
+                .collect(Collectors.toMap(com.learnnow.user.entity.User::getId, u -> u, (a, b) -> a));
+
+        List<UserLearningPreferences> allPrefs = preferencesRepository.findAll();
+        Map<String, UserLearningPreferences> prefMap = allPrefs.stream()
+                .collect(Collectors.toMap(UserLearningPreferences::getUserId, p -> p, (a, b) -> a));
+
+        Set<String> allLeaderboardUserIds = new HashSet<>();
+        allLeaderboardUserIds.add(userId);
+        allLeaderboardUserIds.addAll(userMap.keySet());
+        allLeaderboardUserIds.addAll(prefMap.keySet());
+        allLeaderboardUserIds.addAll(weeklyPointsMap.keySet());
+
+        List<com.learnnow.user.entity.User> leaderboardUsers = allLeaderboardUserIds.stream()
+                .map(id -> userMap.getOrDefault(id, com.learnnow.user.entity.User.builder().id(id).fullName("Learner").build()))
+                .filter(user -> {
+                    boolean isCurrent = user.getId().equals(userId);
+                    UserLearningPreferences pref = prefMap.get(user.getId());
+                    int streak = pref != null ? pref.getCurrentStreak() : 0;
+                    int pts = weeklyPointsMap.getOrDefault(user.getId(), 0);
+                    if (pts == 0 && pref != null && pref.getTotalPoints() > 0) pts = pref.getTotalPoints();
+                    return streak > 0 || pts > 0 || isCurrent;
+                })
+                .sorted((u1, u2) -> {
+                    UserLearningPreferences pref1 = prefMap.get(u1.getId());
+                    UserLearningPreferences pref2 = prefMap.get(u2.getId());
+
+                    int p1 = weeklyPointsMap.getOrDefault(u1.getId(), 0);
+                    if (p1 == 0 && pref1 != null && pref1.getTotalPoints() > 0) p1 = pref1.getTotalPoints();
+
+                    int p2 = weeklyPointsMap.getOrDefault(u2.getId(), 0);
+                    if (p2 == 0 && pref2 != null && pref2.getTotalPoints() > 0) p2 = pref2.getTotalPoints();
+
+                    if (p2 != p1) return Integer.compare(p2, p1);
+
+                    int streak1 = pref1 != null ? pref1.getCurrentStreak() : 0;
+                    int streak2 = pref2 != null ? pref2.getCurrentStreak() : 0;
+                    if (streak2 != streak1) return Integer.compare(streak2, streak1);
+
+                    java.time.Instant e1 = earliestActivityMap.getOrDefault(u1.getId(), java.time.Instant.MAX);
+                    java.time.Instant e2 = earliestActivityMap.getOrDefault(u2.getId(), java.time.Instant.MAX);
+                    if (!e1.equals(e2)) return e1.compareTo(e2);
+
+                    return u1.getId().compareTo(u2.getId());
+                })
+                .toList();
+
+        List<WeeklyLeaderboardEntry> fullLeaderboard = new ArrayList<>();
+        int currentUserRank = 0;
+        int currentUserWeeklyPoints = 0;
+
+        for (int i = 0; i < leaderboardUsers.size(); i++) {
+            com.learnnow.user.entity.User user = leaderboardUsers.get(i);
+            int rank = i + 1;
+            String badge = rank == 1 ? "GOLD" : (rank == 2 ? "SILVER" : "NONE");
+            boolean isCurrent = user.getId().equals(userId);
+            int points = weeklyPointsMap.getOrDefault(user.getId(), 0);
+            UserLearningPreferences userPref = prefMap.get(user.getId());
+            if (points == 0 && userPref != null && userPref.getTotalPoints() > 0) {
+                // Fallback for legacy activity recorded before points_earned column migration
+                points = userPref.getTotalPoints();
+            }
+            int streak = userPref != null ? userPref.getCurrentStreak() : 0;
+
+            if (isCurrent) {
+                currentUserRank = rank;
+                currentUserWeeklyPoints = points;
+            }
+
+            String name = user.getFullName() != null && !user.getFullName().isBlank()
+                    ? user.getFullName()
+                    : (user.getFirstName() != null && !user.getFirstName().isBlank() ? user.getFirstName() : "Learner");
+
+            fullLeaderboard.add(new WeeklyLeaderboardEntry(
+                    user.getId(),
+                    name,
+                    user.getAvatar(),
+                    points,
+                    streak,
+                    rank,
+                    badge,
+                    isCurrent
+            ));
+        }
+
+        List<WeeklyLeaderboardEntry> topLeaderboard = fullLeaderboard.stream().limit(10).collect(Collectors.toList());
+        if (currentUserRank > 10 && currentUserRank <= fullLeaderboard.size()) {
+            topLeaderboard.add(fullLeaderboard.get(currentUserRank - 1));
+        }
+
+        // 7. Recent Topic Activity (last 4 topics with progress)
         List<RecentTopicActivity> recentTopics = buildRecentTopics(userTopicProgressList, allPaths, subtopicProgressByTopic);
 
-        // 7. Banner Selection
+        // 8. Banner Selection
         DashboardBanner banner = selectBanner(allPaths, userTopicProgressList);
 
         return new DashboardResponse(
@@ -167,7 +277,10 @@ public class DashboardService {
                 weeklyCalendar,
                 recentTopics,
                 pathSummaries,
-                banner
+                banner,
+                topLeaderboard,
+                currentUserRank,
+                currentUserWeeklyPoints
         );
     }
 
@@ -199,7 +312,7 @@ public class DashboardService {
                         UserTopicProgress::getCompletedAt,
                         Comparator.nullsLast(Comparator.reverseOrder())
                 ))
-                .limit(4)
+                .limit(5)
                 .map(tp -> {
                     Topic topic = topicMap.get(tp.getTopicId());
                     Path path = pathMap.get(tp.getPathId());

@@ -10,5 +10,8 @@ public record DashboardResponse(
     List<WeeklyCalendarDay> weeklyCalendar,
     List<RecentTopicActivity> recentTopics,
     List<PathProgressSummary> paths,
-    DashboardBanner banner
+    DashboardBanner banner,
+    List<WeeklyLeaderboardEntry> weeklyLeaderboard,
+    int currentUserRank,
+    int currentUserWeeklyPoints
 ) {}

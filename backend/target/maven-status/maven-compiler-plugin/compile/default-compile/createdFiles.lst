@@ -5,6 +5,7 @@ com/learnnow/user/dto/VerifyEmailRequest.class
 com/learnnow/paths/entity/Subtopic.class
 com/learnnow/learningprogress/dto/response/TopicProgressSummary.class
 com/learnnow/paths/dto/PathSummaryDto.class
+com/learnnow/learningprogress/dto/response/WeeklyLeaderboardEntry.class
 com/learnnow/learningprogress/repository/UserSubtopicProgressRepository.class
 com/learnnow/paths/repository/PathRepository.class
 com/learnnow/paths/entity/Topic$TopicBuilder.class

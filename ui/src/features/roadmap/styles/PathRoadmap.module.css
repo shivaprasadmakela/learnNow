@@ -79,7 +79,7 @@
 /* Outer wrapper — positions the notch pseudo-element */
 .heroBannerWrapper {
     position: relative;
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-1);
 }
 
 /* Solid Brand Blue card */

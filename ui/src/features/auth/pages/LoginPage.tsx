@@ -16,10 +16,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
     const [loading, setLoading] = useState(false);
     const [isRegisteredSuccess, setIsRegisteredSuccess] = useState(false);
 
-    // Error and Success messages
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
     // Form inputs state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -37,19 +33,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
 
     const handleSignInSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setErrorMsg(null);
-        setSuccessMsg(null);
 
         if (!email) {
-            setErrorMsg('Email is required.');
+            showToast('Email is required.', 'error');
             return;
         }
         if (!validateEmail(email)) {
-            setErrorMsg('Please enter a valid email address.');
+            showToast('Please enter a valid email address.', 'error');
             return;
         }
         if (!password) {
-            setErrorMsg('Password is required.');
+            showToast('Password is required.', 'error');
             return;
         }
 
@@ -59,7 +53,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
         } catch (err: unknown) {
             console.error('Sign in error:', err);
             const message = err instanceof Error ? err.message : 'An error occurred during sign in. Please check your credentials.';
-            setErrorMsg(message);
+            showToast(message, 'error');
         } finally {
             setLoading(false);
         }
@@ -67,35 +61,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
 
     const handleSignUpSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setErrorMsg(null);
-        setSuccessMsg(null);
 
         if (!firstName.trim()) {
-            setErrorMsg('First name is required.');
+            showToast('First name is required.', 'error');
             return;
         }
         if (!lastName.trim()) {
-            setErrorMsg('Last name is required.');
+            showToast('Last name is required.', 'error');
             return;
         }
         if (!email) {
-            setErrorMsg('Email is required.');
+            showToast('Email is required.', 'error');
             return;
         }
         if (!validateEmail(email)) {
-            setErrorMsg('Please enter a valid email address.');
+            showToast('Please enter a valid email address.', 'error');
             return;
         }
         if (!password) {
-            setErrorMsg('Password is required.');
+            showToast('Password is required.', 'error');
             return;
         }
         if (password.length < 6) {
-            setErrorMsg('Password must be at least 6 characters.');
+            showToast('Password must be at least 6 characters.', 'error');
             return;
         }
         if (password !== passwordConfirmation) {
-            setErrorMsg('Passwords do not match.');
+            showToast('Passwords do not match.', 'error');
             return;
         }
         setLoading(true);
@@ -111,7 +103,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
         } catch (err: unknown) {
             console.error('Sign up error:', err);
             const message = err instanceof Error ? err.message : 'An error occurred during registration. Please try again.';
-            setErrorMsg(message);
+            showToast(message, 'error');
         } finally {
             setLoading(false);
         }
@@ -119,8 +111,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
 
     const toggleAuthMode = () => {
         setIsSignUp(!isSignUp);
-        setErrorMsg(null);
-        setSuccessMsg(null);
     };
 
     return (
@@ -145,20 +135,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
             ) : (
                 <div className={styles.authCard}>
                     <h2 className={styles.viewTitle}>{isSignUp ? "Join the squad! Let's get building." : "Hey, welcome back!"}</h2>
-
-                    {errorMsg && (
-                        <div className={styles.formAlertError}>
-                            <span className={styles.alertIcon}>⚠️</span>
-                            <span className={styles.alertText}>{errorMsg}</span>
-                        </div>
-                    )}
-
-                    {successMsg && (
-                        <div className={styles.formAlertSuccess}>
-                            <span className={styles.alertIcon}>✅</span>
-                            <span className={styles.alertText}>{successMsg}</span>
-                        </div>
-                    )}
 
                     {!isSignUp ? (
                         <form onSubmit={handleSignInSubmit} className={styles.authForm}>

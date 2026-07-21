@@ -35,4 +35,12 @@ public class UserLearningDailyActivity {
     @Column(name = "qualifying_event_count", nullable = false)
     @Builder.Default
     private int qualifyingEventCount = 0;
+
+    @Column(name = "points_earned", nullable = false)
+    @Builder.Default
+    private int pointsEarned = 0;
+
+    public void addPoints(int points) {
+        this.pointsEarned += points;
+    }
 }

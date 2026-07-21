@@ -73,13 +73,13 @@
 }
 
 .md {
-    height: 48px;
-    padding: 0 var(--space-6);
-    font-size: 15px;
+    height: 38px;
+    padding: 0 var(--space-5);
+    font-size: 14px;
 }
 
 .lg {
-    height: 56px;
+    height: 46px;
     padding: 0 var(--space-8);
     font-size: 17px;
 }
@@ -100,6 +100,7 @@
     0% {
         transform: rotate(0deg);
     }
+
     100% {
         transform: rotate(360deg);
     }

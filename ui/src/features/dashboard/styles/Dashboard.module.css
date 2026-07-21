@@ -425,59 +425,62 @@
     margin: 0 auto;
 }
 
-/* Streak Card Layout */
+/* Streak Card Layout matching screenshot */
 .streakCard {
-    background-color: var(--bg-primary);
-    border: none;
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    box-shadow: none;
+    background-color: #ffffff;
+    border-radius: 24px;
+    padding: 24px 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #eef0f4;
     display: flex;
     flex-direction: column;
-    gap: 20px;
 }
 
 .streakInfo {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
 }
 
 .streakBigNumber {
-    font-size: 4rem;
-    font-weight: 800;
+    font-size: 5rem;
+    font-weight: 500;
     line-height: 1;
-    color: var(--text-primary);
-    letter-spacing: -0.05em;
+    color: #3c4043;
+    letter-spacing: -0.04em;
 }
 
-.streakLabelContainer {
+.streakFlameStack {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    gap: 2px;
 }
 
-.streakFlameIcon {
-    width: 24px;
-    height: 24px;
-    color: #ea580c;
-    margin-bottom: 2px;
+.streakCanvas {
+    width: 56px;
+    height: 56px;
 }
 
 .streakSubLabel {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.25;
+    color: #3c4043;
+}
+
+.streakDivider {
+    width: 100%;
+    height: 1px;
+    background-color: #e6e8ec;
+    margin: 20px 0;
 }
 
 .weekCalendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    border-top: 1px solid var(--border-color);
-    padding-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .calendarDay {
@@ -488,37 +491,43 @@
 }
 
 .dayIndicatorCircle {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    border: 1.5px solid var(--border-color);
+    border: 1.5px solid #80868b;
+    background-color: transparent;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--bg-primary);
     transition: all 0.2s ease;
 }
 
 .dayCircleActive {
-    border-color: #22c55e;
-    background-color: #e8f5e9;
-    color: #22c55e;
+    border: 2px solid #202124 !important;
+    background-color: #202124 !important;
+    color: #ffffff !important;
 }
 
 .dayCircleDotted {
-    border-style: dotted;
-    border-width: 2px;
+    border: 1.5px dashed #a0a6ac;
+    background-color: transparent;
 }
 
-.checkIcon {
-    width: 16px;
-    height: 16px;
+.dayCircleToday {
+    border: 2.5px solid #202124 !important;
+    background-color: transparent !important;
 }
 
 .calendarDayLabel {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #5f6368;
+}
+
+.calendarDayLabelToday {
+    font-weight: 700;
+    color: #202124;
 }
 
 /* Achievements Card Layout */
@@ -893,4 +902,268 @@
     /* Align to max 3 per row (3 * 360px + gaps fits perfectly in content width) */
     max-width: 100%;
     flex-shrink: 0;
+}
+
+/* Animated Canvas & Streak Section */
+.streakCanvas {
+    width: 82px;
+    height: 82px;
+    transition: transform 0.3s ease;
+}
+
+.streakCanvas:hover {
+    transform: scale(1.06);
+}
+
+/* Weekly League Card */
+.leagueCard {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+}
+
+.leagueHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.leagueTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: #0f172a;
+    margin: 0;
+}
+
+.infoIconWrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.infoIconSvg {
+    color: #94a3b8;
+    transition: color 0.15s ease;
+}
+
+.infoIconWrapper:hover .infoIconSvg {
+    color: #475569;
+}
+
+.tooltipBubble {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background-color: #1e293b;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.15s ease-out;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    z-index: 50;
+}
+
+.tooltipBubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+}
+
+.infoIconWrapper:hover .tooltipBubble {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.leaderboardList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.leaderboardRow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px 12px 12px;
+    border-radius: 12px;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.leaderboardRow:hover {
+    background-color: #f8fafc;
+}
+
+.currentUserRow {
+    background-color: rgba(26, 115, 232, 0.08) !important;
+}
+
+.activePillIndicator {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 9999px;
+    background-color: var(--tech-blue);
+}
+
+.rankMarkerCol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.rank1Badge {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--accent-yellow-light, #fef3c7);
+    background-color: #fffbeb;
+}
+
+.rank1Icon {
+    color: #d97706;
+}
+
+.rank2Badge {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.rank2Icon {
+    color: var(--text-secondary);
+}
+
+.rankNumberText {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.userAvatarInitials {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.avatarBgRose {
+    background-color: #f43f5e;
+}
+
+.avatarBgAmber {
+    background-color: #fbbf24;
+}
+
+.avatarBgSky {
+    background-color: #0ea5e9;
+}
+
+.avatarBgEmerald {
+    background-color: #10b981;
+}
+
+.avatarBgViolet {
+    background-color: #8b5cf6;
+}
+
+.userInfoCol {
+    min-width: 0;
+    flex: 1;
+}
+
+.userNameRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.userNameText {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.youTag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--tech-blue);
+}
+
+.userStreakRow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.streakFlameSvg {
+    color: #d97706;
+}
+
+.noStreakText {
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.pointsPill {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: #f1f5f9;
+    padding: 4px 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #334155;
+}
+
+.pointsLabel {
+    font-weight: 400;
+    color: #94a3b8;
 }

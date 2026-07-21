@@ -12,4 +12,6 @@ public interface UserLearningDailyActivityRepository extends JpaRepository<UserL
     Optional<UserLearningDailyActivity> findByUserIdAndActivityDate(String userId, LocalDate activityDate);
     
     List<UserLearningDailyActivity> findByUserIdAndActivityDateIn(String userId, List<LocalDate> dates);
+
+    List<UserLearningDailyActivity> findByActivityDateBetween(LocalDate startDate, LocalDate endDate);
 }

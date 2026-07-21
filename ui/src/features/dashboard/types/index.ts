@@ -45,6 +45,17 @@ export interface DashboardBanner {
     pathCategory: string;
 }
 
+export interface WeeklyLeaderboardEntry {
+    userId: string;
+    fullName: string;
+    avatar?: string;
+    weeklyPoints: number;
+    currentStreak: number;
+    rank: number;
+    badge: 'GOLD' | 'SILVER' | 'NONE';
+    isCurrentUser: boolean;
+}
+
 export interface DashboardResponse {
     currentStreak: number;
     longestStreak: number;
@@ -54,4 +65,7 @@ export interface DashboardResponse {
     recentTopics: RecentTopicActivity[];
     paths: PathProgressSummary[];
     banner: DashboardBanner;
+    weeklyLeaderboard?: WeeklyLeaderboardEntry[];
+    currentUserRank?: number;
+    currentUserWeeklyPoints?: number;
 }

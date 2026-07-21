@@ -107,6 +107,9 @@ public class ProgressService {
             prefs.addPoints(PointsConfig.SUBTOPIC_COMPLETED);
             preferencesRepository.save(prefs);
 
+            ZoneId userZone = ZoneId.of(prefs.getTimezone());
+            activityRecordingService.recordDailyPoints(userId, userZone, PointsConfig.SUBTOPIC_COMPLETED);
+
             // Check if all subtopics in this topic are now complete
             long totalSubtopics = topic.getSubtopics().size();
             long completedSubtopics = subtopicProgressRepository.countByUserIdAndTopicIdAndCompletedTrue(userId, topicId);

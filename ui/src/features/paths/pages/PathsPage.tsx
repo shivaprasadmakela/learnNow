@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Code2, Globe2 } from 'lucide-react';
+import { Code2, Globe2 } from 'lucide-react';
 import type { Course } from '../../../types';
 import styles from '../styles/PathsPage.module.css';
+import { LearningCard } from '../../../shared/components/cards';
 
 interface PathsPageProps {
     courses: Course[];
@@ -62,57 +63,17 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isL
                         <p>No learning paths are available for this category yet.</p>
                     </div>
                 ) : filteredPaths.map((path) => (
-                    <article
+                    <LearningCard
                         key={path.id}
-                        className={styles.previewCard}
-                    >
-                        <div className={styles.cardTags} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span className={styles.tagPathScreenshot}>
-                                <span className={styles.tagPathIcon} />
-                                Path
-                            </span>
-                            {isLoggedIn && typeof path.progressPercentage === 'number' && (
-                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--tech-blue)' }}>
-                                    {path.progressPercentage}% Complete
-                                </span>
-                            )}
-                        </div>
-                        <h3 className={styles.cardTitle}>{path.title}</h3>
-                        <p className={styles.cardDesc}>{path.description}</p>
-
-                        {isLoggedIn && typeof path.progressPercentage === 'number' && (
-                            <div style={{
-                                width: '100%',
-                                height: '4px',
-                                backgroundColor: 'var(--border-color)',
-                                borderRadius: '2px',
-                                marginTop: '12px',
-                                marginBottom: '12px',
-                                overflow: 'hidden'
-                            }}>
-                                <div style={{
-                                    width: `${path.progressPercentage}%`,
-                                    height: '100%',
-                                    backgroundColor: 'var(--tech-blue)',
-                                    transition: 'width 0.3s ease'
-                                }} />
-                            </div>
-                        )}
-
-                        <div className={styles.cardFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                {path.managedBy || 'Managed by Academy'}
-                            </span>
-                            <button
-                                type="button"
-                                className={styles.circleArrowBtnScreenshot} 
-                                title={isLoggedIn ? "Explore Path" : "Login to Enter Path"}
-                                onClick={() => onSelectPath(path.id)}
-                            >
-                                <ArrowRight size={20} aria-hidden="true" />
-                            </button>
-                        </div>
-                    </article>
+                        badgeLabel="Path"
+                        title={path.title}
+                        description={path.description}
+                        footerText={path.managedBy || 'Managed by Google Cloud'}
+                        progressPercentage={isLoggedIn && typeof path.progressPercentage === 'number' ? path.progressPercentage : undefined}
+                        showProgress={isLoggedIn && typeof path.progressPercentage === 'number' && path.progressPercentage > 0}
+                        onClick={() => onSelectPath(path.id)}
+                        buttonTooltip={isLoggedIn ? "Explore Path" : "Login to Enter Path"}
+                    />
                 ))}
             </div>
         </div>
