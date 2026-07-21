@@ -9,5 +9,6 @@ public record TopicDetailDto(
     String category,
     String duration,
     boolean isCompleted,
+    int progressPercentage,
     List<SubtopicDto> subtopics
 ) {}

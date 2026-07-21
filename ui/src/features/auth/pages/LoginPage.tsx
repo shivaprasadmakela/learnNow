@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MailCheck } from 'lucide-react';
 import { useToast } from '../../../shared/components/feedback/Toast';
+import { Button, Input, Checkbox } from '../../../shared/components';
 import styles from '../styles/LoginPage.module.css';
 
 interface LoginPageProps {
@@ -29,8 +30,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
     const [lastName, setLastName] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
 
-
-    // Form validations
     const validateEmail = (val: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(val);
@@ -71,7 +70,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
         setErrorMsg(null);
         setSuccessMsg(null);
 
-        // Validation checks
         if (!firstName.trim()) {
             setErrorMsg('First name is required.');
             return;
@@ -105,7 +103,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
             await signUp(firstName.trim(), lastName.trim(), email, password);
             setIsRegisteredSuccess(true);
 
-            // Reset fields
             setFirstName('');
             setLastName('');
             setEmail('');
@@ -135,153 +132,129 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
                     <p className={styles.successDescription}>
                         We have sent a verification link. Please check your inbox (or your local developer console log) to confirm your registration.
                     </p>
-                    <button
-                        type="button"
-                        className={styles.successActionBtn}
+                    <Button
+                        variant="primary"
                         onClick={() => {
                             setIsRegisteredSuccess(false);
                             setIsSignUp(false);
                         }}
                     >
                         Continue to Sign In
-                    </button>
+                    </Button>
                 </div>
             ) : (
                 <div className={styles.authCard}>
                     <h2 className={styles.viewTitle}>{isSignUp ? "Join the squad! Let's get building." : "Hey, welcome back!"}</h2>
 
+                    {errorMsg && (
+                        <div className={styles.formAlertError}>
+                            <span className={styles.alertIcon}>⚠️</span>
+                            <span className={styles.alertText}>{errorMsg}</span>
+                        </div>
+                    )}
 
+                    {successMsg && (
+                        <div className={styles.formAlertSuccess}>
+                            <span className={styles.alertIcon}>✅</span>
+                            <span className={styles.alertText}>{successMsg}</span>
+                        </div>
+                    )}
 
-                {errorMsg && (
-                    <div className={styles.formAlertError}>
-                        <span className={styles.alertIcon}>⚠️</span>
-                        <span className={styles.alertText}>{errorMsg}</span>
-                    </div>
-                )}
-
-                {successMsg && (
-                    <div className={styles.formAlertSuccess}>
-                        <span className={styles.alertIcon}>✅</span>
-                        <span className={styles.alertText}>{successMsg}</span>
-                    </div>
-                )}
-
-                {/* Main Auth Form */}
-                {!isSignUp ? (
-                    /* SIGN IN FORM */
-                    <form onSubmit={handleSignInSubmit} className={styles.authForm}>
-                        <div className={styles.inputContainer}>
-                            <input
+                    {!isSignUp ? (
+                        <form onSubmit={handleSignInSubmit} className={styles.authForm}>
+                            <Input
                                 type="email"
                                 placeholder="Email*"
-                                className={styles.outlineInput}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={loading}
                             />
-                        </div>
-                        <div className={styles.inputContainer}>
-                            <input
+                            <Input
                                 type="password"
                                 placeholder="Password*"
-                                className={styles.outlineInput}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={loading}
                             />
-                        </div>
 
-                        <div className={styles.formOptionsRow}>
-                            <label className={styles.checkboxLabel}>
-                                <input
-                                    type="checkbox"
+                            <div className={styles.formOptionsRow}>
+                                <Checkbox
+                                    label="Remember Me"
                                     checked={rememberMe}
                                     onChange={(e) => setRememberMe(e.target.checked)}
                                     disabled={loading}
                                 />
-                                <span>Remember Me</span>
-                            </label>
-                            <span
-                                className={styles.blueLink}
-                                onClick={() => showToast('Forgot password logic is coming soon!', 'info')}
-                            >
-                                Forgot password?
-                            </span>
-                        </div>
+                                <span
+                                    className={styles.blueLink}
+                                    onClick={() => showToast('Forgot password logic is coming soon!', 'info')}
+                                >
+                                    Forgot password?
+                                </span>
+                            </div>
 
-                        <div className={styles.actionsRow}>
-                            <span className={styles.blueLinkBold} onClick={toggleAuthMode}>
-                                Create account
-                            </span>
-                            <button type="submit" className={styles.submitBtn} disabled={loading}>
-                                {loading ? 'Signing in...' : "Let's go!"}
-                            </button>
-                        </div>
-                    </form>
-                ) : (
-                    /* CREATE ACCOUNT FORM */
-                    <form onSubmit={handleSignUpSubmit} className={styles.authForm}>
-                        <div className={styles.inputGrid}>
-                            <input
-                                type="text"
-                                placeholder="First name*"
-                                className={styles.outlineInput}
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                                disabled={loading}
-                            />
-                            <input
-                                type="text"
-                                placeholder="Last name*"
-                                className={styles.outlineInput}
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                                disabled={loading}
-                            />
-                        </div>
+                            <div className={styles.actionsRow}>
+                                <span className={styles.blueLinkBold} onClick={toggleAuthMode}>
+                                    Create account
+                                </span>
+                                <Button type="submit" variant="primary" isLoading={loading}>
+                                    Let's go!
+                                </Button>
+                            </div>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleSignUpSubmit} className={styles.authForm}>
+                            <div className={styles.inputGrid}>
+                                <Input
+                                    type="text"
+                                    placeholder="First name*"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
+                                    disabled={loading}
+                                />
+                                <Input
+                                    type="text"
+                                    placeholder="Last name*"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                    disabled={loading}
+                                />
+                            </div>
 
-                        <div className={styles.inputContainer}>
-                            <input
+                            <Input
                                 type="email"
                                 placeholder="Email*"
-                                className={styles.outlineInput}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={loading}
                             />
-                        </div>
 
-                        <div className={styles.inputGrid}>
-                            <input
-                                type="password"
-                                placeholder="Password*"
-                                className={styles.outlineInput}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={loading}
-                            />
-                            <input
-                                type="password"
-                                placeholder="Password confirmation*"
-                                className={styles.outlineInput}
-                                value={passwordConfirmation}
-                                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                                disabled={loading}
-                            />
-                        </div>
+                            <div className={styles.inputGrid}>
+                                <Input
+                                    type="password"
+                                    placeholder="Password*"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    disabled={loading}
+                                />
+                                <Input
+                                    type="password"
+                                    placeholder="Password confirmation*"
+                                    value={passwordConfirmation}
+                                    onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                    disabled={loading}
+                                />
+                            </div>
 
-
-
-                        <div className={styles.actionsRow}>
-                            <span className={styles.blueLinkBold} onClick={toggleAuthMode}>
-                                Sign in
-                            </span>
-                            <button type="submit" className={styles.submitBtn} disabled={loading}>
-                                {loading ? 'Creating...' : 'Sign me up!'}
-                            </button>
-                        </div>
-                    </form>
-                )}
+                            <div className={styles.actionsRow}>
+                                <span className={styles.blueLinkBold} onClick={toggleAuthMode}>
+                                    Sign in
+                                </span>
+                                <Button type="submit" variant="primary" isLoading={loading}>
+                                    Sign me up!
+                                </Button>
+                            </div>
+                        </form>
+                    )}
                 </div>
             )}
         </div>

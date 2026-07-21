@@ -20,6 +20,8 @@ interface HeaderProps {
     isLoggedIn: boolean;
     signOut: () => Promise<void>;
     onOpenSettings?: () => void;
+    points?: number;
+    streak?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -31,7 +33,9 @@ export const Header: React.FC<HeaderProps> = ({
     toggleTheme,
     isLoggedIn,
     signOut,
-    onOpenSettings
+    onOpenSettings,
+    points = 0,
+    streak = 0
 }) => {
     const { showToast } = useToast();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -75,15 +79,15 @@ export const Header: React.FC<HeaderProps> = ({
                 {isLoggedIn ? (
                     <div className={styles.loggedInContainer}>
                         {/* Points badge */}
-                        <div className={styles.pointsBadge} title="Points">
+                        <div className={styles.pointsBadge} title="Total Points">
                             <Star size={16} fill="#eab308" stroke="#ca8a04" />
-                            <span className={styles.badgeValue}>1656</span>
+                            <span className={styles.badgeValue}>{points}</span>
                         </div>
 
                         {/* Streak badge */}
                         <div className={styles.streakBadge} title="Current Streak">
                             <Flame size={16} fill="#f97316" stroke="#ea580c" />
-                            <span className={styles.badgeValue}>0</span>
+                            <span className={styles.badgeValue}>{streak}</span>
                         </div>
 
                         {/* Avatar button & menu container */}

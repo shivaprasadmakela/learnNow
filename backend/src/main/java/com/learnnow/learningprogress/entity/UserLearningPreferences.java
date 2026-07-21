@@ -48,4 +48,26 @@ public class UserLearningPreferences {
     protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
+
+    public void addPoints(int points) {
+        this.totalPoints += points;
+    }
+
+    public void updateStreak(LocalDate activityDate) {
+        if (this.lastActivityDate == null) {
+            this.currentStreak = 1;
+            this.longestStreak = Math.max(this.longestStreak, 1);
+            this.lastActivityDate = activityDate;
+        } else if (this.lastActivityDate.equals(activityDate)) {
+            // Same day, no-op
+        } else if (this.lastActivityDate.plusDays(1).equals(activityDate)) {
+            this.currentStreak += 1;
+            this.longestStreak = Math.max(this.longestStreak, this.currentStreak);
+            this.lastActivityDate = activityDate;
+        } else {
+            this.currentStreak = 1;
+            this.longestStreak = Math.max(this.longestStreak, 1);
+            this.lastActivityDate = activityDate;
+        }
+    }
 }

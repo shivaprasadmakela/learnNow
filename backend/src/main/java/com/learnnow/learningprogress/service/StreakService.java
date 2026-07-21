@@ -1,45 +1,26 @@
 package com.learnnow.learningprogress.service;
 
+import com.learnnow.learningprogress.config.PointsConfig;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
-import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 @Service
-@RequiredArgsConstructor
 public class StreakService {
 
-    private final UserLearningPreferencesRepository preferencesRepository;
+    public int updateStreak(UserLearningPreferences prefs, LocalDate activityDate) {
+        prefs.updateStreak(activityDate);
+        return prefs.getCurrentStreak();
+    }
 
-    @Transactional
-    public void updateStreak(String userId, LocalDate activityDate) {
-        UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
-                .orElseGet(() -> UserLearningPreferences.builder()
-                        .userId(userId)
-                        .build());
-
-        LocalDate lastActive = prefs.getLastActivityDate();
-
-        if (lastActive == null) {
-            prefs.setCurrentStreak(1);
-            prefs.setLongestStreak(Math.max(prefs.getLongestStreak(), 1));
-            prefs.setLastActivityDate(activityDate);
-        } else if (lastActive.equals(activityDate)) {
-            // Same day, do nothing
-        } else if (lastActive.plusDays(1).equals(activityDate)) {
-            // Consecutive day
-            prefs.setCurrentStreak(prefs.getCurrentStreak() + 1);
-            prefs.setLongestStreak(Math.max(prefs.getLongestStreak(), prefs.getCurrentStreak()));
-            prefs.setLastActivityDate(activityDate);
-        } else {
-            // Gap day(s), reset streak
-            prefs.setCurrentStreak(1);
-            prefs.setLongestStreak(Math.max(prefs.getLongestStreak(), 1));
-            prefs.setLastActivityDate(activityDate);
+    public int getMilestoneBonus(int currentStreak) {
+        if (currentStreak == 3) {
+            return PointsConfig.STREAK_BONUS_3_DAYS;
+        } else if (currentStreak == 7) {
+            return PointsConfig.STREAK_BONUS_7_DAYS;
+        } else if (currentStreak == 30) {
+            return PointsConfig.STREAK_BONUS_30_DAYS;
         }
-
-        preferencesRepository.save(prefs);
+        return 0;
     }
 }

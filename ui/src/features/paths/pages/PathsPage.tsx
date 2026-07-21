@@ -6,9 +6,10 @@ import styles from '../styles/PathsPage.module.css';
 interface PathsPageProps {
     courses: Course[];
     onSelectPath: (pathId: number) => void;
+    isLoggedIn?: boolean;
 }
 
-export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) => {
+export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isLoggedIn = false }) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
     const categories = useMemo(
@@ -33,7 +34,8 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) =
                     Shape <span>your</span> <span>future</span> self
                 </h1>
                 <p className={styles.pathsSubtitle}>
-                    Discover top-tier learning content and easy-to-follow courses to build your skills. Complete your path and showcase your achievements directly to hiring platforms.                </p>
+                    Discover top-tier learning content and easy-to-follow courses to build your skills. Complete your path and showcase your achievements directly to hiring platforms.
+                </p>
             </div>
 
             {/* Category Filters Row */}
@@ -64,14 +66,39 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) =
                         key={path.id}
                         className={styles.previewCard}
                     >
-                        <div className={styles.cardTags}>
+                        <div className={styles.cardTags} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span className={styles.tagPathScreenshot}>
                                 <span className={styles.tagPathIcon} />
                                 Path
                             </span>
+                            {isLoggedIn && typeof path.progressPercentage === 'number' && (
+                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--tech-blue)' }}>
+                                    {path.progressPercentage}% Complete
+                                </span>
+                            )}
                         </div>
                         <h3 className={styles.cardTitle}>{path.title}</h3>
                         <p className={styles.cardDesc}>{path.description}</p>
+
+                        {isLoggedIn && typeof path.progressPercentage === 'number' && (
+                            <div style={{
+                                width: '100%',
+                                height: '4px',
+                                backgroundColor: 'var(--border-color)',
+                                borderRadius: '2px',
+                                marginTop: '12px',
+                                marginBottom: '12px',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{
+                                    width: `${path.progressPercentage}%`,
+                                    height: '100%',
+                                    backgroundColor: 'var(--tech-blue)',
+                                    transition: 'width 0.3s ease'
+                                }} />
+                            </div>
+                        )}
+
                         <div className={styles.cardFooter} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                 {path.managedBy || 'Managed by Academy'}
@@ -79,7 +106,7 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath }) =
                             <button
                                 type="button"
                                 className={styles.circleArrowBtnScreenshot} 
-                                title="Explore Path"
+                                title={isLoggedIn ? "Explore Path" : "Login to Enter Path"}
                                 onClick={() => onSelectPath(path.id)}
                             >
                                 <ArrowRight size={20} aria-hidden="true" />

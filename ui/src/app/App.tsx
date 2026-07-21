@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Dashboard, useProfileDashboard, ProfileEditModal } from '../features/dashboard';
+import { Dashboard, useProfileDashboard, ProfileEditModal, fetchDashboard } from '../features/dashboard';
 import { PathsPage } from '../features/paths';
-import { fetchPaths, fetchTopicDetails } from '../shared/api';
+import { fetchPaths, fetchPublicPaths, fetchTopicDetails } from '../shared/api';
 import type { TopicDetails } from '../shared/api';
-import type { Topic } from '../features/roadmap';
+
 import { Home } from '../features/home';
 import { PathRoadmapPage, TopicStudyConsole } from '../features/roadmap';
 import { LoginPage, VerifyEmailPage } from '../features/auth';
@@ -12,19 +12,7 @@ import { useToast } from '../shared/components/feedback/Toast';
 import { useRecordActivity } from '../features/activity';
 import styles from './App.module.css';
 import type { Course } from '../types';
-
-const mockCourses: Course[] = [
-    {
-        id: 1,
-        title: "Java Backend Path",
-        description: "Learn core Java programming, object-oriented design patterns, collections framework, multithreading, and Spring Boot enterprise APIs.",
-        category: "Backend",
-        duration: "12 hours",
-        level: "Advanced",
-        imageUrl: "https://placeholder.co/ml",
-        topics: []
-    }
-];
+import { Trophy, Sparkles, X } from 'lucide-react';
 
 const slugify = (text: string) => {
     return text
@@ -51,6 +39,7 @@ export default function App() {
         signIn,
         handleLoginSuccess
     } = useProfileDashboard();
+
     const [isExpanded, setIsExpanded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -61,16 +50,95 @@ export default function App() {
     const [isStudyLoading, setIsStudyLoading] = useState(false);
     const [isStudyUpdating, setIsStudyUpdating] = useState(false);
 
-    const { recordTopicCompletion } = useRecordActivity();
+    // Gamification metrics
+    const [userStreak, setUserStreak] = useState<number>(0);
+    const [userPoints, setUserPoints] = useState<number>(0);
+
+    // Celebration modal state
+    const [celebratingPath, setCelebratingPath] = useState<Course | null>(null);
+
+    const { recordTopicCompletion, recordSubtopicCompletion } = useRecordActivity();
+
+    // Centralized user progress & metrics refresh
+    const refreshUserData = useCallback(async () => {
+        try {
+            if (isLoggedIn) {
+                const [fetchedPaths, dashboardData] = await Promise.all([
+                    fetchPaths(),
+                    fetchDashboard()
+                ]);
+
+                if (fetchedPaths) {
+                    const mapped: Course[] = fetchedPaths.map(p => {
+                        const summary = dashboardData?.paths?.find(dp => dp.id === p.id);
+                        return {
+                            id: p.id,
+                            title: p.title,
+                            description: p.description,
+                            category: p.category,
+                            duration: '10 hours',
+                            level: 'Intermediate',
+                            imageUrl: 'https://placeholder.co/ml',
+                            managedBy: p.managedBy,
+                            progressPercentage: summary ? summary.progressPercentage : 0,
+                            topics: summary && summary.topics && summary.topics.length > 0
+                                ? summary.topics.map(t => ({
+                                    id: t.id,
+                                    title: t.title,
+                                    description: t.description,
+                                    category: t.category,
+                                    duration: t.duration,
+                                    isCompleted: t.completed,
+                                    progressPercentage: t.progressPercentage
+                                }))
+                                : p.topics
+                        };
+                    });
+                    setCourses(mapped);
+                }
+
+                if (dashboardData) {
+                    setUserStreak(dashboardData.currentStreak);
+                    setUserPoints(dashboardData.totalPoints);
+                }
+            } else {
+                const publicPaths = await fetchPublicPaths();
+                if (publicPaths) {
+                    const mapped: Course[] = publicPaths.map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        description: p.description,
+                        category: p.category,
+                        duration: '10 hours',
+                        level: 'Intermediate',
+                        imageUrl: 'https://placeholder.co/ml',
+                        managedBy: p.managedBy,
+                        topics: p.topics
+                    }));
+                    setCourses(mapped);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to refresh user data", err);
+        }
+    }, [isLoggedIn]);
+
+    // Initial load and auth state change sync
+    useEffect(() => {
+        refreshUserData();
+    }, [refreshUserData]);
 
     const handleSelectTopic = useCallback(async (id: number) => {
+        if (!isLoggedIn) {
+            changeView('LOGIN');
+            return;
+        }
         try {
             setIsStudyLoading(true);
             const details = await fetchTopicDetails(id);
             setActiveTopic(details);
             setActiveTopicId(id);
 
-            // Find parent course slug dynamically
             const parentCourse = courses.find(c => c.topics?.some(s => s.id === id));
             const sub = parentCourse?.topics?.find(s => s.id === id);
             if (parentCourse && sub) {
@@ -86,7 +154,7 @@ export default function App() {
         } finally {
             setIsStudyLoading(false);
         }
-    }, [courses, changeView, showToast]);
+    }, [courses, changeView, showToast, isLoggedIn]);
 
     const handleToggleTopicComplete = async () => {
         if (!activeTopicId || !activeTopic) return;
@@ -95,29 +163,35 @@ export default function App() {
             const nextCompleted = !activeTopic.isCompleted;
             await recordTopicCompletion(activeTopicId, nextCompleted);
             
-            // Re-fetch progress to sync State
+            // Re-fetch topic details and refresh overall courses & user metrics
             const details = await fetchTopicDetails(activeTopicId);
             setActiveTopic(details);
-            
-            // Also update the course path state to refresh the roadmap checkboxes!
-            setCourses(prevCourses => {
-                return prevCourses.map(course => {
-                    if (course.topics) {
-                        const updatedTopics = course.topics.map(sub => {
-                            if (sub.id === activeTopicId) {
-                                return { ...sub, isCompleted: nextCompleted };
-                            }
-                            return sub;
-                        });
-                        return { ...course, topics: updatedTopics };
-                    }
-                    return course;
-                });
-            });
-            showToast(nextCompleted ? "Topic marked as completed!" : "Topic marked as incomplete.", "success");
+            await refreshUserData();
+
+            showToast(nextCompleted ? "Topic marked as completed! (+20 bonus points)" : "Topic marked as incomplete.", "success");
         } catch (err) {
             console.error("Failed to update topic status", err);
             showToast("Failed to update topic status", "error");
+        } finally {
+            setIsStudyUpdating(false);
+        }
+    };
+
+    const handleToggleSubtopicComplete = async (subtopicId: number, completed: boolean) => {
+        if (!activeTopicId || !activeTopic) return;
+        try {
+            setIsStudyUpdating(true);
+            await recordSubtopicCompletion(subtopicId, completed);
+            
+            // Re-fetch topic details and refresh overall courses & user metrics
+            const details = await fetchTopicDetails(activeTopicId);
+            setActiveTopic(details);
+            await refreshUserData();
+
+            showToast(completed ? "Section marked as read! (+5 points)" : "Section unmarked.", "success");
+        } catch (err) {
+            console.error("Failed to update subtopic status", err);
+            showToast("Failed to update section status", "error");
         } finally {
             setIsStudyUpdating(false);
         }
@@ -133,6 +207,7 @@ export default function App() {
         }
         return null;
     });
+
     const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths'>('activities');
     const [isPathsActive, setIsPathsActive] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -141,79 +216,12 @@ export default function App() {
         return false;
     });
 
-    // Fetch paths from backend
-    useEffect(() => {
-        const loadPaths = async () => {
-            try {
-                const fetched = await fetchPaths();
-                if (fetched && fetched.length > 0) {
-                    const mapped: Course[] = fetched.map(p => ({
-                        id: p.id,
-                        title: p.title,
-                        description: p.description,
-                        category: p.category,
-                        duration: '10 hours',
-                        level: 'Intermediate',
-                        imageUrl: 'https://placeholder.co/ml',
-                        managedBy: p.managedBy,
-                        topics: p.topics
-                    }));
-                    setCourses(mapped);
-
-                    // Dynamically resolve ID on initial mount refresh
-                    if (typeof window !== 'undefined') {
-                        const pathName = window.location.pathname;
-                        const parts = pathName.split('/').filter(Boolean);
-                        if (parts.length >= 2 && parts[0] === 'paths') {
-                            const pathSlug = parts[1];
-                            const javaCourse = mapped.find(c => {
-                                const slug = c.title.toLowerCase().includes('java') ? 'java-backend-path' : '';
-                                return slug === pathSlug;
-                            });
-                            
-                            if (javaCourse) {
-                                setSelectedPathId(javaCourse.id);
-                                
-                                if (parts.length === 3) {
-                                    const topicSlug = parts[2];
-                                    const matchingTopic = javaCourse.topics?.find(s => {
-                                        return slugify(s.title) === topicSlug;
-                                    });
-                                    if (matchingTopic) {
-                                        (async () => {
-                                            try {
-                                                setIsStudyLoading(true);
-                                                const details = await fetchTopicDetails(matchingTopic.id);
-                                                setActiveTopic(details);
-                                                setActiveTopicId(matchingTopic.id);
-                                            } catch (err) {
-                                                console.error("Failed to load topic details on refresh", err);
-                                            } finally {
-                                                setIsStudyLoading(false);
-                                            }
-                                        })();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    setCourses(mockCourses);
-                }
-            } catch (err) {
-                console.error("Failed to load paths from backend, falling back to static", err);
-                setCourses(mockCourses);
-            }
-        };
-        loadPaths();
-    }, []);
-
     // Force redirection based on auth state
     useEffect(() => {
         if (!isLoading) {
             if (isLoggedIn && (activeView === 'HOME' || activeView === 'LOGIN')) {
                 changeView('DASHBOARD');
-            } else if (!isLoggedIn && (activeView === 'DASHBOARD' || activeView === 'ROADMAP' || activeView === 'STUDY')) {
+            } else if (!isLoggedIn && (activeView === 'DASHBOARD' || activeView === 'STUDY')) {
                 changeView('LOGIN');
             }
         }
@@ -250,8 +258,7 @@ export default function App() {
             return;
         }
         setSelectedPathId(pathId);
-        // Map path ID to slug
-        const path = courses.find(c => c.id === pathId) || mockCourses.find(c => c.id === pathId);
+        const path = courses.find(c => c.id === pathId);
         const slug = path?.title.toLowerCase().includes('java') ? 'java-backend-path' : undefined;
         changeView('ROADMAP', slug);
         setIsPathsActive(true);
@@ -265,7 +272,12 @@ export default function App() {
             </div>
         );
     }
-    const selectedPath = courses.find(c => c.id === selectedPathId) || mockCourses.find(c => c.id === selectedPathId) || mockCourses[0];
+
+    const selectedPath = courses.find(c => c.id === selectedPathId) || courses[0];
+
+    const overallPathProgress = selectedPath?.topics && selectedPath.topics.length > 0
+        ? Math.round(selectedPath.topics.reduce((sum, t) => sum + (t.isCompleted ? 100 : (t.progressPercentage || 0)), 0) / selectedPath.topics.length)
+        : (selectedPath?.progressPercentage || 0);
 
     return (
         <div className={`${styles.appRoot} ${theme === 'dark' ? 'dark-theme' : ''}`}>
@@ -287,6 +299,8 @@ export default function App() {
                     isLoggedIn={isLoggedIn}
                     signOut={signOut}
                     onOpenSettings={() => setIsEditingProfile(true)}
+                    points={userPoints}
+                    streak={userStreak}
                 />
             )}
 
@@ -312,8 +326,10 @@ export default function App() {
                                 setActiveTopicId(null);
                                 setActiveTopic(null);
                                 changeView('ROADMAP', 'java-backend-path');
+                                refreshUserData();
                             }}
                             onToggleComplete={handleToggleTopicComplete}
+                            onToggleSubtopicComplete={handleToggleSubtopicComplete}
                             isUpdating={isStudyUpdating}
                         />
                     ) : null
@@ -340,7 +356,6 @@ export default function App() {
                             {activeView === 'HOME' && (
                                 <Home
                                     courses={courses}
-                                    progress={[]}
                                     onSelectCourse={() => {
                                         if (isLoggedIn) {
                                             changeView('DASHBOARD');
@@ -362,6 +377,10 @@ export default function App() {
                                     activeTab={dashboardTab}
                                     setActiveTab={setDashboardTab}
                                     onSelectPath={handleSelectPath}
+                                    onMetricsLoaded={(streak, points) => {
+                                        setUserStreak(streak);
+                                        setUserPoints(points);
+                                    }}
                                 />
                             )}
 
@@ -369,6 +388,7 @@ export default function App() {
                                 <PathsPage
                                     courses={courses}
                                     onSelectPath={handleSelectPath}
+                                    isLoggedIn={isLoggedIn}
                                 />
                             )}
 
@@ -377,13 +397,9 @@ export default function App() {
                                     pathTitle={selectedPath?.title || "Java Backend Developer Path"}
                                     managedBy="learnNow"
                                     activitiesCount={selectedPath?.topics?.length || 0}
-                                    lastUpdated="2 days ago"
+                                    lastUpdated="Recently"
                                     topics={selectedPath?.topics || []}
-                                    progressPercent={
-                                        selectedPath?.topics && selectedPath.topics.length > 0
-                                            ? Math.round((selectedPath.topics.filter((s: Topic) => s.isCompleted).length / selectedPath.topics.length) * 100)
-                                            : 0
-                                    }
+                                    progressPercent={overallPathProgress}
                                     onSelectTopic={handleSelectTopic}
                                 />
                             )}
@@ -419,6 +435,81 @@ export default function App() {
                     onSaveProfile={saveProfile}
                     onClose={() => setIsEditingProfile(false)}
                 />
+            )}
+
+            {/* Path Completion Celebration Modal */}
+            {celebratingPath && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    backdropFilter: 'blur(4px)'
+                }}>
+                    <div style={{
+                        backgroundColor: 'var(--bg-secondary, #1e293b)',
+                        color: 'var(--text-primary, #f8fafc)',
+                        padding: '36px',
+                        borderRadius: '16px',
+                        textAlign: 'center',
+                        maxWidth: '440px',
+                        width: '90%',
+                        position: 'relative',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(234, 179, 8, 0.3)'
+                    }}>
+                        <button
+                            onClick={() => setCelebratingPath(null)}
+                            style={{
+                                position: 'absolute',
+                                top: '16px',
+                                right: '16px',
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <X size={20} />
+                        </button>
+                        <div style={{
+                            fontSize: '3rem',
+                            marginBottom: '16px',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            <Sparkles size={40} style={{ color: 'var(--tech-yellow, #eab308)' }} />
+                            <Trophy size={48} style={{ color: 'var(--tech-yellow, #eab308)' }} />
+                            <Sparkles size={40} style={{ color: 'var(--tech-yellow, #eab308)' }} />
+                        </div>
+                        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 12px 0' }}>
+                            Path Completed!
+                        </h2>
+                        <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: '0 0 20px 0' }}>
+                            Congratulations! You finished all topics in <strong>{celebratingPath.title}</strong> and earned <strong>+100 bonus points</strong>!
+                        </p>
+                        <button
+                            onClick={() => setCelebratingPath(null)}
+                            style={{
+                                backgroundColor: 'var(--tech-blue, #3b82f6)',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '12px 28px',
+                                borderRadius: '8px',
+                                fontWeight: 700,
+                                fontSize: '1rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Awesome!
+                        </button>
+                    </div>
+                </div>
             )}
 
             {/* Study Loading Spinner Overlay */}

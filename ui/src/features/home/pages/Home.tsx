@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Course, UserProgress } from '../../../types';
+import type { Course } from '../../../types';
 import Hero from '../components/Hero';
 import CatalogBlock from '../components/CatalogBlock';
 import Community from '../components/Community';
@@ -8,7 +8,6 @@ import styles from '../styles/Home.module.css';
 
 interface HomeProps {
     courses: Course[];
-    progress: UserProgress[];
     onSelectCourse: (id: number) => void;
     searchQuery: string;
     setSearchQuery: (val: string) => void;
@@ -18,7 +17,6 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({
     courses,
-    progress,
     onSelectCourse,
     searchQuery,
     setSearchQuery,
@@ -29,9 +27,7 @@ export const Home: React.FC<HomeProps> = ({
 
     const getCourseProgress = (courseId: number): number => {
         const course = courses.find(c => c.id === courseId);
-        if (!course || course.id !== 1) return 0;
-        const completedCount = progress.filter(p => p.completed).length;
-        return Math.min(Math.round((completedCount / 8) * 100), 100);
+        return course?.progressPercentage || 0;
     };
 
     const filteredCourses = courses.filter(course => {

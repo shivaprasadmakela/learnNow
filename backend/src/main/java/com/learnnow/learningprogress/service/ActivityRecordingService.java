@@ -1,57 +1,73 @@
 package com.learnnow.learningprogress.service;
 
-import com.learnnow.learningprogress.entity.LearningActivityEvent;
+import com.learnnow.learningprogress.config.PointsConfig;
 import com.learnnow.learningprogress.entity.UserLearningDailyActivity;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
-import com.learnnow.learningprogress.repository.LearningActivityEventRepository;
+import com.learnnow.learningprogress.entity.UserTopicProgress;
+import com.learnnow.learningprogress.enums.ProgressStatus;
 import com.learnnow.learningprogress.repository.UserLearningDailyActivityRepository;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
+import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
+import com.learnnow.paths.entity.Path;
+import com.learnnow.paths.entity.Topic;
+import com.learnnow.paths.repository.PathRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.UUID;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ActivityRecordingService {
 
-    private final LearningActivityEventRepository eventRepository;
     private final UserLearningDailyActivityRepository dailyActivityRepository;
     private final UserLearningPreferencesRepository preferencesRepository;
+    private final UserTopicProgressRepository topicProgressRepository;
+    private final PathRepository pathRepository;
     private final StreakService streakService;
 
     @Transactional
-    public void recordTopicCompletion(String userId, Long pathId, Long topicId,
-                                      UUID clientEventId, ZoneId userZone) {
+    public void recordTopicCompletion(String userId, Long pathId, Long topicId, ZoneId userZone) {
 
-        if (eventRepository.existsByEventId(clientEventId)) {
-            return; // idempotent no-op
-        }
-
-        preferencesRepository.findByUserId(userId).orElseGet(() -> preferencesRepository.save(
-                UserLearningPreferences.builder().userId(userId).timezone(userZone.getId()).build()
-        ));
-
-        int points = 10;
-        LearningActivityEvent event = LearningActivityEvent.builder()
-                .eventId(clientEventId)
-                .userId(userId)
-                .pathId(pathId)
-                .topicId(topicId)
-                .eventType(com.learnnow.learningprogress.enums.ActivityEventType.TOPIC_COMPLETED)
-                .pointsAwarded(points)
-                .occurredAt(Instant.now())
-                .build();
-        eventRepository.save(event);
+        UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
+                .orElseGet(() -> preferencesRepository.save(
+                        UserLearningPreferences.builder().userId(userId).timezone(userZone.getId()).build()
+                ));
 
         LocalDate localDate = LocalDate.now(userZone);
         upsertDailyActivity(userId, localDate);
-        streakService.updateStreak(userId, localDate);
 
-        preferencesRepository.addPoints(userId, points);
+        // Update streak & check milestone bonus
+        int newStreak = streakService.updateStreak(prefs, localDate);
+        int milestoneBonus = streakService.getMilestoneBonus(newStreak);
+
+        int pointsToAward = PointsConfig.TOPIC_COMPLETED_BONUS + milestoneBonus;
+        prefs.addPoints(pointsToAward);
+
+        // Check if all topics in this path are now complete → award path bonus
+        if (isPathCompleted(userId, pathId)) {
+            prefs.addPoints(PointsConfig.PATH_COMPLETED_BONUS);
+        }
+
+        preferencesRepository.save(prefs);
+    }
+
+    private boolean isPathCompleted(String userId, Long pathId) {
+        Path path = pathRepository.findById(pathId).orElse(null);
+        if (path == null) return false;
+
+        List<Topic> topics = path.getTopics();
+        if (topics.isEmpty()) return false;
+
+        List<UserTopicProgress> progressList = topicProgressRepository.findByUserIdAndPathId(userId, pathId);
+        long completedCount = progressList.stream()
+                .filter(p -> p.getStatus() == ProgressStatus.COMPLETED)
+                .count();
+
+        return completedCount >= topics.size();
     }
 
     private void upsertDailyActivity(String userId, LocalDate localDate) {

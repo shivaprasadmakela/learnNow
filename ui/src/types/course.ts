@@ -9,14 +9,6 @@ export interface Course {
     level: string;
     imageUrl: string;
     managedBy?: string;
+    progressPercentage?: number;
     topics?: Topic[];
-}
-
-export interface UserProgress {
-    id: number;
-    username: string;
-    lessonId: number;
-    completed: boolean;
-    quizScore: number | null;
-    completedAt: string;
 }

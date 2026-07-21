@@ -25,6 +25,12 @@ export const fetchPaths = async (): Promise<PathData[]> => {
     return response.json();
 };
 
+export const fetchPublicPaths = async (): Promise<PathData[]> => {
+    const response = await fetch('/api/catalog/paths');
+    if (!response.ok) throw new Error('Failed to fetch catalog paths');
+    return response.json();
+};
+
 export interface SubtopicData {
     id: number;
     title: string;
@@ -40,19 +46,12 @@ export interface TopicDetails {
     category: string;
     duration: string;
     isCompleted: boolean;
+    progressPercentage: number;
     subtopics: SubtopicData[];
 }
 
 export const fetchTopicDetails = async (id: number): Promise<TopicDetails> => {
     const response = await apiFetch(`/api/topics/${id}`);
     if (!response.ok) throw new Error('Failed to fetch topic details');
-    return response.json();
-};
-
-export const toggleTopicComplete = async (id: number): Promise<TopicDetails> => {
-    const response = await apiFetch(`/api/topics/${id}/toggle-complete`, {
-        method: 'PUT'
-    });
-    if (!response.ok) throw new Error('Failed to toggle topic completion');
     return response.json();
 };

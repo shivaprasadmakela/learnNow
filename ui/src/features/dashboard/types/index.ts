@@ -1,12 +1,3 @@
-export interface UserProfile {
-    id: string;
-    username: string;
-    fullName: string;
-    avatar: string;
-    role: string;
-    bio: string;
-}
-
 export interface WeeklyCalendarDay {
     name: string;
     date: string;
@@ -14,13 +5,14 @@ export interface WeeklyCalendarDay {
     isDotted: boolean;
 }
 
-export interface ActivityFeedItem {
-    id: string;
-    eventType: string;
-    pointsAwarded: number;
-    occurredAt: string;
-    pathTitle?: string;
-    topicTitle?: string;
+export interface RecentTopicActivity {
+    topicId: number;
+    topicTitle: string;
+    pathId: number;
+    pathTitle: string;
+    progressPercentage: number;
+    completed: boolean;
+    lastActivityAt: string;
 }
 
 export interface TopicProgressSummary {
@@ -59,7 +51,7 @@ export interface DashboardResponse {
     totalPoints: number;
     timezone: string;
     weeklyCalendar: WeeklyCalendarDay[];
-    activities: ActivityFeedItem[];
+    recentTopics: RecentTopicActivity[];
     paths: PathProgressSummary[];
     banner: DashboardBanner;
 }

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Flame, Trophy, Play, CheckCircle2, ChevronRight, Activity, BookOpen } from 'lucide-react';
-import type { UserProfile } from '../types';
+import type { UserProfile } from '../../../types';
 import { useDashboard } from '../hooks/useDashboard';
 import styles from '../styles/Dashboard.module.css';
 import owlPointer from '../../../assets/owl-pointer.png';
@@ -10,15 +10,23 @@ interface DashboardProps {
     activeTab?: 'activities' | 'paths';
     setActiveTab?: (tab: 'activities' | 'paths') => void;
     onSelectPath: (pathId: number) => void;
+    onMetricsLoaded?: (streak: number, points: number) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
     profile,
     activeTab = 'activities',
     setActiveTab,
-    onSelectPath
+    onSelectPath,
+    onMetricsLoaded
 }) => {
     const { dashboardData, isLoading, error } = useDashboard();
+
+    useEffect(() => {
+        if (dashboardData && onMetricsLoaded) {
+            onMetricsLoaded(dashboardData.currentStreak, dashboardData.totalPoints);
+        }
+    }, [dashboardData, onMetricsLoaded]);
 
     if (isLoading) {
         return (
@@ -40,21 +48,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         );
     }
 
-    const { currentStreak, totalPoints, weeklyCalendar, activities, paths, banner } = dashboardData;
+    const { currentStreak, totalPoints, weeklyCalendar, recentTopics = [], paths, banner } = dashboardData;
 
     // Grab stats count for summary grid
     const totalPathsCount = paths.length;
     const completedPathsCount = paths.filter(p => p.progressPercentage === 100).length;
     const completedTopicsCount = paths.reduce((sum, p) => sum + p.completedTopicsCount, 0);
     const totalTopicsCount = paths.reduce((sum, p) => sum + p.totalTopicsCount, 0);
-
-    const getHumanReadableActivity = (act: any) => {
-        const type = act.eventType;
-        if (type === 'TOPIC_COMPLETED') {
-            return `Finished learning topic "${act.topicTitle}"`;
-        }
-        return 'Completed a learning topic';
-    };
 
     return (
         <div className={styles.container}>
@@ -85,15 +85,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             </span>
                             <h2 className={styles.courseCardTitle}>{banner.pathTitle}</h2>
                             <p className={styles.courseCardDesc}>{banner.pathDescription}</p>
-                            <button
-                                type="button"
-                                className={styles.startButton}
-                                onClick={() => banner.pathId && onSelectPath(banner.pathId)}
-                                disabled={!banner.pathId}
-                            >
-                                <Play size={16} className={styles.playIcon} fill="currentColor" />
-                                <span>{banner.type === 'FEATURED' ? 'Start' : 'Review'}</span>
-                            </button>
+                            {(() => {
+                                const bannerPath = paths.find(p => p.id === banner.pathId);
+                                const isPathStarted = bannerPath ? (bannerPath.progressPercentage > 0 || bannerPath.completedTopicsCount > 0) : false;
+                                const buttonLabel = isPathStarted || banner.type === 'REVIEW' ? 'Continue' : 'Start';
+                                return (
+                                    <button
+                                        type="button"
+                                        className={styles.startButton}
+                                        onClick={() => banner.pathId && onSelectPath(banner.pathId)}
+                                        disabled={!banner.pathId}
+                                    >
+                                        <Play size={16} className={styles.playIcon} fill="currentColor" />
+                                        <span>{buttonLabel}</span>
+                                    </button>
+                                );
+                            })()}
                         </div>
                     </div>
 
@@ -117,56 +124,70 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div className={styles.tabContent}>
                         {activeTab === 'activities' ? (
                             <div className={styles.activitiesList}>
-                                {activities.length === 0 ? (
+                                {recentTopics.length === 0 ? (
                                     <div className={styles.emptyState}>
                                         <Activity size={24} style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-2)' }} />
-                                        <p>Complete a topic to see your learning activity here.</p>
+                                        <p>Visit or complete topics to see your recent topic progress here.</p>
                                     </div>
                                 ) : (
-                                    activities.map((act) => (
-                                        <div key={act.id} className={styles.activityFeedItem} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
+                                    recentTopics.map((item) => (
+                                        <div key={item.topicId} className={styles.activityFeedItem} style={{
                                             padding: 'var(--space-4)',
                                             borderBottom: '1px solid var(--border-color)',
                                             backgroundColor: 'var(--bg-secondary)',
                                             borderRadius: 'var(--radius-md)',
                                             marginBottom: 'var(--space-3)'
                                         }}>
-                                            <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
-                                                <div style={{
-                                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                                    color: 'var(--tech-blue)',
-                                                    borderRadius: '50%',
-                                                    padding: 'var(--space-2)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <BookOpen size={16} />
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+                                                    <div style={{
+                                                        backgroundColor: item.completed ? 'rgba(34, 197, 94, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                                                        color: item.completed ? 'var(--tech-green)' : 'var(--tech-blue)',
+                                                        borderRadius: '50%',
+                                                        padding: 'var(--space-2)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}>
+                                                        <BookOpen size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 style={{ fontWeight: 600, fontSize: '0.95rem', margin: 0, color: 'var(--text-primary)' }}>
+                                                            {item.topicTitle}
+                                                        </h4>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                            {item.pathTitle}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p style={{ fontWeight: 500, fontSize: '0.95rem', margin: 0 }}>
-                                                        {getHumanReadableActivity(act)}
-                                                    </p>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                        {new Date(act.occurredAt).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            {act.pointsAwarded > 0 && (
                                                 <span style={{
-                                                    fontSize: '0.85rem',
+                                                    fontSize: '0.8rem',
                                                     fontWeight: 600,
-                                                    color: 'var(--tech-yellow)',
-                                                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
-                                                    padding: 'var(--space-1) var(--space-2)',
-                                                    borderRadius: 'var(--radius-sm)'
+                                                    color: item.completed ? 'var(--tech-green)' : 'var(--tech-blue)',
+                                                    backgroundColor: item.completed ? 'rgba(34, 197, 94, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                                                    padding: '4px 8px',
+                                                    borderRadius: '4px'
                                                 }}>
-                                                    +{act.pointsAwarded} pts
+                                                    {item.completed ? 'Completed' : `${item.progressPercentage}% Done`}
                                                 </span>
-                                            )}
+                                            </div>
+
+                                            {/* Topic completion percentage bar */}
+                                            <div style={{
+                                                width: '100%',
+                                                height: '5px',
+                                                backgroundColor: 'var(--border-color)',
+                                                borderRadius: '3px',
+                                                overflow: 'hidden',
+                                                marginTop: '8px'
+                                            }}>
+                                                <div style={{
+                                                    width: `${item.progressPercentage}%`,
+                                                    height: '100%',
+                                                    backgroundColor: item.completed ? 'var(--tech-green)' : 'var(--tech-blue)',
+                                                    transition: 'width 0.3s ease'
+                                                }} />
+                                            </div>
                                         </div>
                                     ))
                                 )}

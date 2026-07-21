@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2 } from 'lucide-react';
 import type { TopicDetails, SubtopicData } from '../../../shared/api/profile.api';
 import styles from '../styles/TopicStudyConsole.module.css';
 
@@ -7,6 +7,7 @@ interface TopicStudyConsoleProps {
     topic: TopicDetails;
     onClose: () => void;
     onToggleComplete: () => Promise<void>;
+    onToggleSubtopicComplete?: (subtopicId: number, completed: boolean) => Promise<void>;
     isUpdating: boolean;
 }
 
@@ -14,12 +15,18 @@ export function TopicStudyConsole({
     topic, 
     onClose, 
     onToggleComplete, 
+    onToggleSubtopicComplete,
     isUpdating
 }: TopicStudyConsoleProps) {
     const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
+
+    const completedSubtopicsCount = subtopics.filter(s => s.isCompleted).length;
+    const computedPercentage = topic.isCompleted ? 100 : (
+        subtopics.length > 0 ? Math.round((completedSubtopicsCount / subtopics.length) * 100) : (topic.progressPercentage || 0)
+    );
 
     const handleSubtopicChange = (index: number) => {
         if (index >= 0 && index < subtopics.length) {
@@ -36,6 +43,12 @@ export function TopicStudyConsole({
     const handlePrev = () => {
         if (activeSubtopicIndex > 0) {
             handleSubtopicChange(activeSubtopicIndex - 1);
+        }
+    };
+
+    const handleSubtopicReadToggle = async (subtopicId: number, currentlyCompleted: boolean) => {
+        if (onToggleSubtopicComplete) {
+            await onToggleSubtopicComplete(subtopicId, !currentlyCompleted);
         }
     };
 
@@ -156,12 +169,12 @@ export function TopicStudyConsole({
 
                 <div className={styles.headerCenter}>
                     <span className={styles.progressText}>
-                        Section {activeSubtopicIndex + 1} of {subtopics.length}
+                        Topic Progress: {computedPercentage}% ({completedSubtopicsCount}/{subtopics.length} sections)
                     </span>
                     <div className={styles.progressBarBg}>
                         <div 
                             className={styles.progressBarFill} 
-                            style={{ width: `${subtopics.length > 0 ? ((activeSubtopicIndex + 1) / subtopics.length) * 100 : 0}%` }}
+                            style={{ width: `${computedPercentage}%` }}
                         />
                     </div>
                 </div>
@@ -189,8 +202,14 @@ export function TopicStudyConsole({
                                         width: '100%'
                                     }}
                                 >
-                                    <span className={styles.tocIndex}>{idx + 1}</span>
-                                    <span className={styles.tocName}>{sec.title}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {sec.isCompleted ? (
+                                            <CheckCircle2 size={14} style={{ color: 'var(--tech-green)' }} />
+                                        ) : (
+                                            <span className={styles.tocIndex}>{idx + 1}</span>
+                                        )}
+                                        <span className={styles.tocName}>{sec.title}</span>
+                                    </div>
                                 </button>
                             </li>
                         ))}
@@ -204,6 +223,38 @@ export function TopicStudyConsole({
                             <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
                             <div className={styles.articleBody}>
                                 {renderContent(activeSubtopic.content)}
+                            </div>
+
+                            {/* Subtopic Explicit Mark as Completed Action */}
+                            <div style={{
+                                marginTop: '32px',
+                                paddingTop: '20px',
+                                borderTop: '1px solid var(--border-color)',
+                                display: 'flex',
+                                justifyContent: 'flex-end'
+                            }}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSubtopicReadToggle(activeSubtopic.id, !!activeSubtopic.isCompleted)}
+                                    disabled={isUpdating}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        border: activeSubtopic.isCompleted ? '1px solid var(--tech-green)' : '1px solid var(--tech-blue)',
+                                        backgroundColor: activeSubtopic.isCompleted ? 'rgba(34, 197, 94, 0.1)' : 'var(--tech-blue)',
+                                        color: activeSubtopic.isCompleted ? 'var(--tech-green)' : '#ffffff',
+                                        fontWeight: 600,
+                                        fontSize: '0.9rem',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <CheckCircle2 size={16} />
+                                    {activeSubtopic.isCompleted ? 'Completed (+5 pts)' : 'Mark section as read (+5 pts)'}
+                                </button>
                             </div>
                         </article>
                     ) : (
@@ -236,7 +287,7 @@ export function TopicStudyConsole({
                             Topic Completed!
                         </>
                     ) : (
-                        "Mark Topic as Completed"
+                        "Mark Entire Topic as Completed"
                     )}
                 </button>
 

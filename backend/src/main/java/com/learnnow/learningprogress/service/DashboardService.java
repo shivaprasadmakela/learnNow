@@ -1,24 +1,23 @@
 package com.learnnow.learningprogress.service;
 
+import com.learnnow.user.repository.UserRepository;
+import com.learnnow.learningprogress.config.PointsConfig;
 import com.learnnow.learningprogress.dto.response.*;
-import com.learnnow.learningprogress.entity.LearningActivityEvent;
 import com.learnnow.learningprogress.entity.UserLearningDailyActivity;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
+import com.learnnow.learningprogress.entity.UserSubtopicProgress;
 import com.learnnow.learningprogress.entity.UserTopicProgress;
 import com.learnnow.learningprogress.enums.ProgressStatus;
-import com.learnnow.learningprogress.repository.LearningActivityEventRepository;
 import com.learnnow.learningprogress.repository.UserLearningDailyActivityRepository;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
+import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
 import com.learnnow.paths.entity.Path;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
-import com.learnnow.paths.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
@@ -30,13 +29,13 @@ import java.util.stream.Collectors;
 public class DashboardService {
 
     private final PathRepository pathRepository;
-    private final TopicRepository topicRepository;
-    private final LearningActivityEventRepository eventRepository;
     private final UserLearningDailyActivityRepository dailyActivityRepository;
     private final UserLearningPreferencesRepository preferencesRepository;
     private final UserTopicProgressRepository topicProgressRepository;
+    private final UserSubtopicProgressRepository subtopicProgressRepository;
+    private final UserRepository userRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DashboardResponse buildDashboard(String userId) {
         // 1. Get user learning preferences
         UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
@@ -48,70 +47,39 @@ public class DashboardService {
         ZoneId userZone = ZoneId.of(prefs.getTimezone());
         LocalDate today = LocalDate.now(userZone);
 
-        // 2. Weekly Calendar Days (Last 7 local dates: [today - 6, ..., today])
-        List<LocalDate> calendarDates = new ArrayList<>();
-        for (int i = 6; i >= 0; i--) {
-            calendarDates.add(today.minusDays(i));
-        }
+        // 2. Build subtopic progress lookup
+        List<UserSubtopicProgress> allSubtopicProgress = subtopicProgressRepository.findByUserId(userId);
+        Map<Long, List<UserSubtopicProgress>> subtopicProgressByTopic = allSubtopicProgress.stream()
+                .collect(Collectors.groupingBy(UserSubtopicProgress::getTopicId));
 
-        List<UserLearningDailyActivity> dailyActivities = dailyActivityRepository
-                .findByUserIdAndActivityDateIn(userId, calendarDates);
-        Map<LocalDate, UserLearningDailyActivity> dailyMap = dailyActivities.stream()
-                .collect(Collectors.toMap(UserLearningDailyActivity::getActivityDate, d -> d));
+        long completedSubtopicsCount = allSubtopicProgress.stream().filter(UserSubtopicProgress::isCompleted).count();
 
-        List<WeeklyCalendarDay> weeklyCalendar = calendarDates.stream()
-                .map(date -> {
-                    String name = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
-                    UserLearningDailyActivity act = dailyMap.get(date);
-                    boolean completed = act != null && act.getQualifyingEventCount() > 0;
-                    boolean isDotted = !completed;
-                    return new WeeklyCalendarDay(name, date, completed, isDotted);
-                })
-                .toList();
-
-        // 3. Activity Feed Items (Join titles in memory)
-        List<LearningActivityEvent> events = eventRepository
-                .findByUserIdOrderByOccurredAtDesc(userId, PageRequest.of(0, 10));
-
-        Map<Long, String> pathTitles = pathRepository.findAll().stream()
-                .collect(Collectors.toMap(Path::getId, Path::getTitle, (a, b) -> a));
-        Map<Long, String> topicTitles = topicRepository.findAll().stream()
-                .collect(Collectors.toMap(Topic::getId, Topic::getTitle, (a, b) -> a));
-        List<ActivityFeedItem> activities = events.stream()
-                .map(ev -> new ActivityFeedItem(
-                        ev.getId().toString(),
-                        ev.getEventType().name(),
-                        ev.getPointsAwarded(),
-                        ev.getOccurredAt(),
-                        ev.getPathId() != null ? pathTitles.get(ev.getPathId()) : null,
-                        ev.getTopicId() != null ? topicTitles.get(ev.getTopicId()) : null
-                ))
-                .toList();
-
-        // 4. Path Progress Summary
+        // 3. Path Progress Summary
         List<Path> allPaths = pathRepository.findAll();
         List<UserTopicProgress> userTopicProgressList = topicProgressRepository.findByUserId(userId);
         Map<Long, UserTopicProgress> topicProgressMap = userTopicProgressList.stream()
                 .collect(Collectors.toMap(UserTopicProgress::getTopicId, t -> t));
 
+        int totalCompletedTopics = 0;
         List<PathProgressSummary> pathSummaries = new ArrayList<>();
         for (Path path : allPaths) {
             List<Topic> topics = path.getTopics();
             List<TopicProgressSummary> topicSummaries = new ArrayList<>();
             int completedTopicsCount = 0;
             int totalTopicsCount = topics.size();
-            int totalPathProgressPoints = 0;
+            int totalProgressPoints = 0;
 
             for (Topic topic : topics) {
                 UserTopicProgress topicProgress = topicProgressMap.get(topic.getId());
                 boolean isCompleted = topicProgress != null && topicProgress.getStatus() == ProgressStatus.COMPLETED;
                 if (isCompleted) {
                     completedTopicsCount++;
+                    totalCompletedTopics++;
                 }
 
-                int progressPercentage = isCompleted ? 100 : 0;
-
-                totalPathProgressPoints += progressPercentage;
+                // Calculate topic percentage from subtopic completion
+                int progressPercentage = calculateTopicPercentage(topic, subtopicProgressByTopic, isCompleted);
+                totalProgressPoints += progressPercentage;
 
                 topicSummaries.add(new TopicProgressSummary(
                         topic.getId(),
@@ -126,7 +94,7 @@ public class DashboardService {
 
             int pathProgressPercentage = 0;
             if (totalTopicsCount > 0) {
-                pathProgressPercentage = totalPathProgressPoints / totalTopicsCount;
+                pathProgressPercentage = totalProgressPoints / totalTopicsCount;
             }
 
             pathSummaries.add(new PathProgressSummary(
@@ -142,7 +110,53 @@ public class DashboardService {
             ));
         }
 
-        // 5. Banner Selection Logic
+        // 4. Dynamic Metric Self-Healing: Sync points & streak with completed items if DB preferences lagged
+        final int finalCompletedTopics = totalCompletedTopics;
+        final boolean hasActivityToday = completedSubtopicsCount > 0 || finalCompletedTopics > 0;
+        int calculatedPoints = (int) (completedSubtopicsCount * PointsConfig.SUBTOPIC_COMPLETED) + (finalCompletedTopics * PointsConfig.TOPIC_COMPLETED_BONUS);
+        boolean prefsChanged = false;
+
+        if (prefs.getTotalPoints() < calculatedPoints) {
+            prefs.setTotalPoints(calculatedPoints);
+            prefsChanged = true;
+        }
+
+        if (hasActivityToday && prefs.getCurrentStreak() == 0) {
+            prefs.setCurrentStreak(1);
+            prefs.setLongestStreak(Math.max(prefs.getLongestStreak(), 1));
+            prefs.setLastActivityDate(today);
+            prefsChanged = true;
+        }
+
+        if (prefsChanged && userRepository.existsById(userId)) {
+            preferencesRepository.save(prefs);
+        }
+
+        // 5. Weekly Calendar Days (Last 7 local dates)
+        List<LocalDate> calendarDates = new ArrayList<>();
+        for (int i = 6; i >= 0; i--) {
+            calendarDates.add(today.minusDays(i));
+        }
+
+        List<UserLearningDailyActivity> dailyActivities = dailyActivityRepository
+                .findByUserIdAndActivityDateIn(userId, calendarDates);
+        Map<LocalDate, UserLearningDailyActivity> dailyMap = dailyActivities.stream()
+                .collect(Collectors.toMap(UserLearningDailyActivity::getActivityDate, d -> d));
+
+        List<WeeklyCalendarDay> weeklyCalendar = calendarDates.stream()
+                .map(date -> {
+                    String name = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+                    UserLearningDailyActivity act = dailyMap.get(date);
+                    boolean isDayCompleted = (act != null && act.getQualifyingEventCount() > 0) || (date.equals(today) && hasActivityToday);
+                    boolean isDotted = !isDayCompleted;
+                    return new WeeklyCalendarDay(name, date, isDayCompleted, isDotted);
+                })
+                .toList();
+
+        // 6. Recent Topic Activity (last 4 topics with progress)
+        List<RecentTopicActivity> recentTopics = buildRecentTopics(userTopicProgressList, allPaths, subtopicProgressByTopic);
+
+        // 7. Banner Selection
         DashboardBanner banner = selectBanner(allPaths, userTopicProgressList);
 
         return new DashboardResponse(
@@ -151,10 +165,62 @@ public class DashboardService {
                 prefs.getTotalPoints(),
                 prefs.getTimezone(),
                 weeklyCalendar,
-                activities,
+                recentTopics,
                 pathSummaries,
                 banner
         );
+    }
+
+    private int calculateTopicPercentage(Topic topic, Map<Long, List<UserSubtopicProgress>> subtopicProgressByTopic, boolean isTopicCompleted) {
+        if (isTopicCompleted) return 100;
+
+        int totalSubtopics = topic.getSubtopics() != null ? topic.getSubtopics().size() : 0;
+        if (totalSubtopics == 0) return 0;
+
+        List<UserSubtopicProgress> subProgress = subtopicProgressByTopic.getOrDefault(topic.getId(), List.of());
+        long completedSubtopics = subProgress.stream().filter(UserSubtopicProgress::isCompleted).count();
+
+        return (int) ((completedSubtopics * 100) / totalSubtopics);
+    }
+
+    private List<RecentTopicActivity> buildRecentTopics(
+            List<UserTopicProgress> progressList,
+            List<Path> allPaths,
+            Map<Long, List<UserSubtopicProgress>> subtopicProgressByTopic) {
+
+        Map<Long, Path> pathMap = allPaths.stream()
+                .collect(Collectors.toMap(Path::getId, p -> p));
+        Map<Long, Topic> topicMap = allPaths.stream()
+                .flatMap(p -> p.getTopics().stream())
+                .collect(Collectors.toMap(Topic::getId, t -> t, (a, b) -> a));
+
+        return progressList.stream()
+                .sorted(Comparator.comparing(
+                        UserTopicProgress::getCompletedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
+                .limit(4)
+                .map(tp -> {
+                    Topic topic = topicMap.get(tp.getTopicId());
+                    Path path = pathMap.get(tp.getPathId());
+                    boolean isCompleted = tp.getStatus() == ProgressStatus.COMPLETED;
+
+                    int progressPercentage = 0;
+                    if (topic != null) {
+                        progressPercentage = calculateTopicPercentage(topic, subtopicProgressByTopic, isCompleted);
+                    }
+
+                    return new RecentTopicActivity(
+                            tp.getTopicId(),
+                            topic != null ? topic.getTitle() : "Unknown Topic",
+                            tp.getPathId(),
+                            path != null ? path.getTitle() : "Unknown Path",
+                            progressPercentage,
+                            isCompleted,
+                            tp.getCompletedAt()
+                    );
+                })
+                .toList();
     }
 
     private DashboardBanner selectBanner(List<Path> allPaths, List<UserTopicProgress> progressList) {
@@ -162,13 +228,11 @@ public class DashboardService {
             return new DashboardBanner("FEATURED", null, "No Paths Available", "Add paths to get started.", "General");
         }
 
-        // If no progress made, feature the first path
         if (progressList.isEmpty()) {
             Path featured = allPaths.get(0);
             return new DashboardBanner("FEATURED", featured.getId(), featured.getTitle(), featured.getDescription(), featured.getCategory());
         }
 
-        // Review the path containing the latest completed topic.
         UserTopicProgress completedProgress = progressList.stream()
                 .filter(p -> p.getStatus() == ProgressStatus.COMPLETED)
                 .max(Comparator.comparing(UserTopicProgress::getCompletedAt, Comparator.nullsFirst(Comparator.naturalOrder())))
@@ -184,7 +248,6 @@ public class DashboardService {
             }
         }
 
-        // featured path default
         Path featured = allPaths.get(0);
         return new DashboardBanner("FEATURED", featured.getId(), featured.getTitle(), featured.getDescription(), featured.getCategory());
     }

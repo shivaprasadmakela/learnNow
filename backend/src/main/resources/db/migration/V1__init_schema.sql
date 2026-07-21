@@ -64,31 +64,29 @@ CREATE TABLE user_learning_preferences (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 7. Create learning_activity_events table
-CREATE TABLE learning_activity_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_id UUID NOT NULL UNIQUE,
-    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    path_id BIGINT REFERENCES paths(id) ON DELETE RESTRICT,
-    topic_id BIGINT REFERENCES topics(id) ON DELETE RESTRICT,
-    event_type VARCHAR(32) NOT NULL,
-    points_awarded INT NOT NULL DEFAULT 0,
-    occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_events_user_time ON learning_activity_events (user_id, occurred_at DESC);
-CREATE INDEX idx_events_user_topic_time ON learning_activity_events (user_id, topic_id, occurred_at DESC);
-
--- 8. Create user_topic_progress table
+-- 7. Create user_topic_progress table
 CREATE TABLE user_topic_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     topic_id BIGINT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
     path_id BIGINT NOT NULL REFERENCES paths(id) ON DELETE CASCADE,
-    status VARCHAR(16) NOT NULL DEFAULT 'NOT_STARTED', -- NOT_STARTED, IN_PROGRESS, COMPLETED
+    status VARCHAR(16) NOT NULL DEFAULT 'NOT_STARTED',
     completed_at TIMESTAMPTZ,
     UNIQUE (user_id, topic_id)
 );
 CREATE INDEX idx_topic_progress_user_path ON user_topic_progress (user_id, path_id);
+
+-- 8. Create user_subtopic_progress table
+CREATE TABLE user_subtopic_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subtopic_id BIGINT NOT NULL REFERENCES subtopics(id) ON DELETE CASCADE,
+    topic_id BIGINT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    completed_at TIMESTAMPTZ,
+    UNIQUE (user_id, subtopic_id)
+);
+CREATE INDEX idx_subtopic_progress_user_topic ON user_subtopic_progress (user_id, topic_id);
 
 -- 9. Create user_learning_daily_activity table
 CREATE TABLE user_learning_daily_activity (

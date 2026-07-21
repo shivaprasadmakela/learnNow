@@ -8,7 +8,7 @@ public record DashboardResponse(
     int totalPoints,
     String timezone,
     List<WeeklyCalendarDay> weeklyCalendar,
-    List<ActivityFeedItem> activities,
+    List<RecentTopicActivity> recentTopics,
     List<PathProgressSummary> paths,
     DashboardBanner banner
 ) {}
