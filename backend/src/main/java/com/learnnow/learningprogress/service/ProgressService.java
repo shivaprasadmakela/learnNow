@@ -19,12 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ProgressService {
 
     private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Kolkata");
+    private static final int MAX_TOPIC_PROGRESS_RECORDS_PER_USER = 10;
 
     private final TopicRepository topicRepository;
     private final SubtopicRepository subtopicRepository;
@@ -51,7 +54,7 @@ public class ProgressService {
         if (!completed) {
             progress.setStatus(ProgressStatus.NOT_STARTED);
             progress.setCompletedAt(null);
-            topicProgressRepository.save(progress);
+            saveTopicProgressAndPrune(progress);
             return;
         }
 
@@ -61,7 +64,7 @@ public class ProgressService {
 
         progress.setStatus(ProgressStatus.COMPLETED);
         progress.setCompletedAt(Instant.now());
-        topicProgressRepository.save(progress);
+        saveTopicProgressAndPrune(progress);
 
         ZoneId userZone = preferencesRepository.findByUserId(userId)
                 .map(preferences -> ZoneId.of(preferences.getTimezone()))
@@ -127,9 +130,26 @@ public class ProgressService {
                                 .build());
                 if (topicProgress.getStatus() == ProgressStatus.NOT_STARTED) {
                     topicProgress.setStatus(ProgressStatus.IN_PROGRESS);
-                    topicProgressRepository.save(topicProgress);
+                    saveTopicProgressAndPrune(topicProgress);
                 }
             }
+        }
+    }
+
+    public void saveTopicProgressAndPrune(UserTopicProgress progress) {
+        topicProgressRepository.save(progress);
+
+        List<UserTopicProgress> userProgress = topicProgressRepository.findByUserId(progress.getUserId());
+        if (userProgress.size() > MAX_TOPIC_PROGRESS_RECORDS_PER_USER) {
+            int toRemoveCount = userProgress.size() - MAX_TOPIC_PROGRESS_RECORDS_PER_USER;
+            List<UserTopicProgress> sortedOldestFirst = userProgress.stream()
+                    .sorted(Comparator.comparing(
+                            UserTopicProgress::getCompletedAt,
+                            Comparator.nullsFirst(Comparator.naturalOrder())
+                    ))
+                    .toList();
+            List<UserTopicProgress> excessToPrune = sortedOldestFirst.subList(0, toRemoveCount);
+            topicProgressRepository.deleteAll(excessToPrune);
         }
     }
 }

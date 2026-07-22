@@ -56,7 +56,13 @@ public class ActivityRecordingService {
 
     @Transactional
     public void recordDailyPoints(String userId, ZoneId userZone, int points) {
+        UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
+                .orElseGet(() -> preferencesRepository.save(
+                        UserLearningPreferences.builder().userId(userId).timezone(userZone.getId()).build()
+                ));
         LocalDate localDate = LocalDate.now(userZone);
+        streakService.updateStreak(prefs, localDate);
+        preferencesRepository.save(prefs);
         upsertDailyActivity(userId, localDate, points);
     }
 

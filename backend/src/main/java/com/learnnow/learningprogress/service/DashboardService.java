@@ -111,9 +111,8 @@ public class DashboardService {
             ));
         }
 
-        // 4. Dynamic Metric Self-Healing: Sync points & streak with completed items if DB preferences lagged
+        // 4. Dynamic Metric Self-Healing: Sync points with completed items if DB preferences lagged
         final int finalCompletedTopics = totalCompletedTopics;
-        final boolean hasActivityToday = completedSubtopicsCount > 0 || finalCompletedTopics > 0;
         int calculatedPoints = (int) (completedSubtopicsCount * PointsConfig.SUBTOPIC_COMPLETED) + (finalCompletedTopics * PointsConfig.TOPIC_COMPLETED_BONUS);
         boolean prefsChanged = false;
 
@@ -122,11 +121,12 @@ public class DashboardService {
             prefsChanged = true;
         }
 
-        if (hasActivityToday && prefs.getCurrentStreak() == 0) {
-            prefs.setCurrentStreak(1);
-            prefs.setLongestStreak(Math.max(prefs.getLongestStreak(), 1));
-            prefs.setLastActivityDate(today);
-            prefsChanged = true;
+        // Streak Expiration: If last activity date is before yesterday, active streak has expired
+        if (prefs.getLastActivityDate() != null && prefs.getLastActivityDate().isBefore(today.minusDays(1))) {
+            if (prefs.getCurrentStreak() != 0) {
+                prefs.setCurrentStreak(0);
+                prefsChanged = true;
+            }
         }
 
         if (prefsChanged && userRepository.existsById(userId)) {
@@ -149,7 +149,7 @@ public class DashboardService {
                 .map(date -> {
                     String name = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
                     UserLearningDailyActivity act = dailyMap.get(date);
-                    boolean isDayCompleted = (act != null && act.getQualifyingEventCount() > 0) || (date.equals(today) && hasActivityToday);
+                    boolean isDayCompleted = act != null && act.getQualifyingEventCount() > 0;
                     boolean isDotted = !isDayCompleted;
                     return new WeeklyCalendarDay(name, date, isDayCompleted, isDotted);
                 })
