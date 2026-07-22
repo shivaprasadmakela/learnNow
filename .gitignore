@@ -1,1 +1,39 @@
-AI_RULES/
+# Agent documentation (local only)
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+docs/
+
+# Backend (Maven / Java / Spring Boot)
+backend/target/
+backend/src/main/resources/application-local.properties
+
+# Frontend (Node / Vite / React)
+ui/node_modules/
+ui/dist/
+ui/dist-ssr/
+ui/*.local
+ui/.env
+ui/.env.*
+
+# Logs
+*.log
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE & OS files
+.idea/
+*.iml
+*.iws
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
