@@ -1,4 +1,4 @@
-import type { Topic } from '../features/roadmap';
+import type { Topic } from '../features/topics';
 
 export interface PathData {
     id: number;

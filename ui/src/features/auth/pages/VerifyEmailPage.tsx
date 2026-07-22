@@ -5,7 +5,7 @@ import { useToast } from '../../../shared/components/feedback/Toast';
 import styles from '../styles/VerifyEmailPage.module.css';
 
 interface VerifyEmailPageProps {
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
     onVerificationSuccess: (token: string, profile: any) => void;
 }
 

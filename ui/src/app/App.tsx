@@ -5,7 +5,7 @@ import { fetchPaths, fetchPublicPaths, fetchTopicDetails } from '../shared/api';
 import type { TopicDetails } from '../shared/api';
 
 import { Home } from '../features/home';
-import { PathRoadmapPage, TopicStudyConsole } from '../features/roadmap';
+import { TopicsPage, TopicStudyConsole } from '../features/topics';
 import { LoginPage, VerifyEmailPage } from '../features/auth';
 import { Header, Sidebar, Breadcrumb } from '../shared/components';
 import { useToast } from '../shared/components/feedback/Toast';
@@ -227,18 +227,18 @@ export default function App() {
         }
     }, [isLoggedIn, activeView, isLoading, changeView]);
 
-    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => {
-        if (view === 'ROADMAP') {
+    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => {
+        if (view === 'TOPICS') {
             changeView(view, 'java-backend-path');
         } else {
             changeView(view);
         }
-        if (view === 'PATHS' || view === 'ROADMAP') {
+        if (view === 'PATHS' || view === 'TOPICS') {
             setIsPathsActive(true);
         } else {
             setIsPathsActive(false);
         }
-        if (view !== 'ROADMAP') {
+        if (view !== 'TOPICS') {
             setSelectedPathId(null);
         }
         if (view === 'DASHBOARD') {
@@ -260,7 +260,7 @@ export default function App() {
         setSelectedPathId(pathId);
         const path = courses.find(c => c.id === pathId);
         const slug = path?.title.toLowerCase().includes('java') ? 'java-backend-path' : undefined;
-        changeView('ROADMAP', slug);
+        changeView('TOPICS', slug);
         setIsPathsActive(true);
     };
 
@@ -325,7 +325,7 @@ export default function App() {
                             onClose={() => {
                                 setActiveTopicId(null);
                                 setActiveTopic(null);
-                                changeView('ROADMAP', 'java-backend-path');
+                                changeView('TOPICS', 'java-backend-path');
                                 refreshUserData();
                             }}
                             onToggleComplete={handleToggleTopicComplete}
@@ -336,11 +336,11 @@ export default function App() {
                 ) : (
                     <main className={styles.mainContent}>
                         {/* Top Breadcrumb Bar */}
-                        {(activeView === 'PATHS' || activeView === 'ROADMAP') && (
+                        {(activeView === 'PATHS' || activeView === 'TOPICS') && (
                             <Breadcrumb
                                 crumbs={[
                                     { onClick: () => handleViewChange(isLoggedIn ? 'DASHBOARD' : 'HOME') },
-                                    ...(activeView === 'ROADMAP'
+                                    ...(activeView === 'TOPICS'
                                         ? [
                                             { label: 'Paths', onClick: handleSelectPaths },
                                             { label: selectedPath?.title || 'Java Backend Developer Path' },
@@ -392,8 +392,8 @@ export default function App() {
                                 />
                             )}
 
-                            {activeView === 'ROADMAP' && (
-                                <PathRoadmapPage
+                            {activeView === 'TOPICS' && (
+                                <TopicsPage
                                     pathTitle={selectedPath?.title || "Java Backend Developer Path"}
                                     managedBy="learnNow"
                                     activitiesCount={selectedPath?.topics?.length || 0}

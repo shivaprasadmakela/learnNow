@@ -12,7 +12,7 @@ interface HomeProps {
     searchQuery: string;
     setSearchQuery: (val: string) => void;
     isLoggedIn: boolean;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
 }
 
 export const Home: React.FC<HomeProps> = ({

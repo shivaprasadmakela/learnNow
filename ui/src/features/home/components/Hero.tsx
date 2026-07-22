@@ -5,7 +5,7 @@ import styles from '../styles/Home.module.css';
 
 interface HeroProps {
     isLoggedIn: boolean;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP') => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ isLoggedIn, changeView }) => {

@@ -1,0 +1,1 @@
+export { RecentTopicsList } from './RecentTopicsList';

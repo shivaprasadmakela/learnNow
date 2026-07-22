@@ -1,0 +1,1 @@
+export { TopicStudyConsole } from './TopicStudyConsole';

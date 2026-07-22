@@ -4,7 +4,7 @@ import * as api from '../../../shared/api';
 import { authClient } from '../../../shared/api/authClient';
 import { apiFetch } from '../../../shared/api/client';
 
-export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'ROADMAP' | 'STUDY' | 'VERIFY_EMAIL';
+export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS' | 'STUDY' | 'VERIFY_EMAIL';
 
 export const useProfileDashboard = () => {
     const [activeView, setActiveView] = useState<ViewState>(() => {
@@ -20,7 +20,7 @@ export const useProfileDashboard = () => {
             } else if (parts.length === 1 && parts[0] === 'paths') {
                 return 'PATHS';
             } else if (parts.length === 2 && parts[0] === 'paths') {
-                return 'ROADMAP';
+                return 'TOPICS';
             } else if (parts.length === 3 && parts[0] === 'paths') {
                 return 'STUDY';
             }
@@ -74,7 +74,7 @@ export const useProfileDashboard = () => {
         } else if (parts.length === 1 && parts[0] === 'paths') {
             setActiveView('PATHS');
         } else if (parts.length === 2 && parts[0] === 'paths') {
-            setActiveView('ROADMAP');
+            setActiveView('TOPICS');
         } else if (parts.length === 3 && parts[0] === 'paths') {
             setActiveView('STUDY');
         } else {
@@ -92,7 +92,7 @@ export const useProfileDashboard = () => {
             window.history.pushState(null, '', `/verify-email${slug ? '?token=' + slug : ''}`);
         } else if (view === 'PATHS') {
             window.history.pushState(null, '', '/paths');
-        } else if (view === 'ROADMAP') {
+        } else if (view === 'TOPICS') {
             window.history.pushState(null, '', `/paths/${slug || 'java-backend-path'}`);
         } else if (view === 'STUDY') {
             window.history.pushState(null, '', `/paths/${slug || 'java-backend-path'}/${subtopicSlug || ''}`);

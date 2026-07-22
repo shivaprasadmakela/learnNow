@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { Code2, Globe2 } from 'lucide-react';
 import type { Course } from '../../../types';
 import styles from '../styles/PathsPage.module.css';
-import { LearningCard } from '../../../shared/components/cards';
+import { CategoryFilterPills } from '../components/CategoryFilterPills';
+import { PathsGrid } from '../components/PathsGrid';
 
-interface PathsPageProps {
+export interface PathsPageProps {
     courses: Course[];
     onSelectPath: (pathId: number) => void;
     isLoggedIn?: boolean;
@@ -23,13 +23,8 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isL
         return path.category === selectedCategory;
     });
 
-    const getCategoryIcon = (category: string) => category === 'Backend'
-        ? <Code2 size={20} aria-hidden="true" />
-        : <Globe2 size={20} aria-hidden="true" />;
-
     return (
         <div className={styles.container}>
-
             <div className={styles.pathsHeader}>
                 <h1 className={styles.pathsTitle}>
                     Shape <span>your</span> <span>future</span> self
@@ -39,43 +34,19 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isL
                 </p>
             </div>
 
-            {/* Category Filters Row */}
-            <div className={styles.categoriesRow} style={{ justifyContent: 'center', marginBottom: '32px' }}>
-                {categories.map((cat) => (
-                    <button
-                        key={cat}
-                        type="button"
-                        className={`${styles.categoryItem} ${selectedCategory === cat ? styles.categoryItemActive : ''}`}
-                        onClick={() => setSelectedCategory(cat)}
-                    >
-                        <div className={styles.categoryIcon}>
-                            {getCategoryIcon(cat)}
-                        </div>
-                        <span className={styles.categoryLabel}>{cat}</span>
-                    </button>
-                ))}
-            </div>
+            <CategoryFilterPills
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+            />
 
-            {/* Dynamic Cards Grid */}
-            <div className={styles.pathsCardsGrid}>
-                {filteredPaths.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <p>No learning paths are available for this category yet.</p>
-                    </div>
-                ) : filteredPaths.map((path) => (
-                    <LearningCard
-                        key={path.id}
-                        badgeLabel="Path"
-                        title={path.title}
-                        description={path.description}
-                        footerText={path.managedBy || 'Managed by Google Cloud'}
-                        progressPercentage={isLoggedIn && typeof path.progressPercentage === 'number' ? path.progressPercentage : undefined}
-                        showProgress={isLoggedIn && typeof path.progressPercentage === 'number' && path.progressPercentage > 0}
-                        onClick={() => onSelectPath(path.id)}
-                        buttonTooltip={isLoggedIn ? "Explore Path" : "Login to Enter Path"}
-                    />
-                ))}
-            </div>
+            <PathsGrid
+                paths={filteredPaths}
+                onSelectPath={onSelectPath}
+                isLoggedIn={isLoggedIn}
+            />
         </div>
     );
 };
+
+export default PathsPage;

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Home } from 'lucide-react';
 import styles from './Breadcrumb.module.css';
 
 export interface BreadcrumbItem {
@@ -23,6 +22,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ crumbs, rightSlot }) => 
                 {crumbs.map((crumb, index) => {
                     const isFirst = index === 0;
                     const isLast = index === crumbs.length - 1;
+                    const defaultHomeIcon = <i className="fa-solid fa-house" style={{ fontSize: '0.9rem' }} aria-hidden="true" />;
 
                     return (
                         <React.Fragment key={index}>
@@ -45,12 +45,12 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ crumbs, rightSlot }) => 
                                     tabIndex={0}
                                     onKeyDown={(e) => e.key === 'Enter' && crumb.onClick?.()}
                                 >
-                                    {crumb.label ?? <Home size={15} />}
+                                    {crumb.label ?? defaultHomeIcon}
                                 </span>
                             ) : (
                                 /* Non-clickable, non-active crumb */
                                 <span className={styles.breadcrumbText}>
-                                    {crumb.label ?? <Home size={15} />}
+                                    {crumb.label ?? defaultHomeIcon}
                                 </span>
                             )}
                         </React.Fragment>

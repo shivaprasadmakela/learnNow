@@ -1,0 +1,112 @@
+/* Streak Card Layout */
+.streakCard {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 24px 28px;
+    box-shadow: var(--shadow-sm, 0 1px 3px 0 rgba(0, 0, 0, 0.05));
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.streakInfo {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.streakBigNumber {
+    font-size: 4.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+    letter-spacing: -0.04em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.streakFlameStack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 4px;
+}
+
+.streakCanvas {
+    width: 56px;
+    height: 56px;
+}
+
+.streakSubLabel {
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.streakDivider {
+    width: 100%;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 20px 0;
+}
+
+.weekCalendar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.calendarDay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.dayIndicatorCircle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-tertiary);
+    background-color: transparent;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.dayCircleActive {
+    border: 2px solid var(--text-primary) !important;
+    background-color: var(--text-primary) !important;
+    color: var(--bg-primary) !important;
+}
+
+.dayCircleDotted {
+    border: 1.5px dashed var(--text-tertiary) !important;
+    background-color: transparent !important;
+}
+
+.dayCircleToday {
+    border: 2.5px solid var(--text-primary) !important;
+    background-color: transparent !important;
+}
+
+.calendarDayLabel {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.calendarDayLabelToday {
+    font-weight: 700;
+    color: var(--text-primary);
+}

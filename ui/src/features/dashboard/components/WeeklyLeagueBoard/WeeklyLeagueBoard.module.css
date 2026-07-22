@@ -1,0 +1,281 @@
+/* Weekly League Card */
+.leagueCard {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm, 0 1px 3px 0 rgba(0, 0, 0, 0.05));
+    margin-bottom: 24px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.leagueHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.leagueTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.infoIconWrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.infoIconSvg {
+    color: var(--text-tertiary);
+    transition: color 0.15s ease;
+}
+
+.infoIconWrapper:hover .infoIconSvg {
+    color: var(--text-secondary);
+}
+
+.tooltipBubble {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.15s ease-out;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    z-index: 50;
+}
+
+.tooltipBubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: var(--border-color) transparent transparent transparent;
+}
+
+.infoIconWrapper:hover .tooltipBubble {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.leaderboardList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 324px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.leaderboardList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.leaderboardList::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.leaderboardList::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 9999px;
+}
+
+.leaderboardList::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-tertiary);
+}
+
+.leaderboardRow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px 12px 12px;
+    border-radius: 12px;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.leaderboardRow:hover {
+    background-color: var(--bg-primary);
+}
+
+.currentUserRow {
+    background-color: rgba(26, 115, 232, 0.08) !important;
+}
+
+.activePillIndicator {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 9999px;
+    background-color: var(--tech-blue);
+}
+
+.rankMarkerCol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.rank1Badge {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--accent-yellow-light, #fef3c7);
+    background-color: #fffbeb;
+}
+
+:global(.dark-theme) .rank1Badge {
+    background-color: rgba(217, 119, 6, 0.2);
+    border-color: #d97706;
+}
+
+.rank1Icon {
+    color: #d97706;
+}
+
+.rank2Badge {
+    display: flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.rank2Icon {
+    color: var(--text-secondary);
+}
+
+.rankNumberText {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.userAvatarInitials {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.avatarBgRose {
+    background-color: #f43f5e;
+}
+
+.avatarBgAmber {
+    background-color: #fbbf24;
+}
+
+.avatarBgSky {
+    background-color: #0ea5e9;
+}
+
+.avatarBgEmerald {
+    background-color: #10b981;
+}
+
+.avatarBgViolet {
+    background-color: #8b5cf6;
+}
+
+.userInfoCol {
+    min-width: 0;
+    flex: 1;
+}
+
+.userNameRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.userNameText {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.youTag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--tech-blue);
+}
+
+.userStreakRow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.streakFlameSvg {
+    color: #d97706;
+}
+
+.noStreakText {
+    margin-top: 2px;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.pointsPill {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: var(--bg-primary);
+    padding: 4px 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.pointsLabel {
+    font-weight: 400;
+    color: var(--text-tertiary);
+}
