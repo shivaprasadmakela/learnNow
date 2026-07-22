@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../../../shared/components';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Rocket } from 'lucide-react';
 import styles from '../styles/Home.module.css';
 
 interface FinalCTAProps {
@@ -9,14 +9,13 @@ interface FinalCTAProps {
     changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
 }
 
-export const FinalCTA: React.FC<FinalCTAProps> = ({ 
-    onSelectCourse, 
-    isLoggedIn, 
-    changeView 
+export const FinalCTA: React.FC<FinalCTAProps> = ({
+    isLoggedIn,
+    changeView
 }) => {
     const handleStart = () => {
         if (isLoggedIn) {
-            onSelectCourse(1);
+            changeView('DASHBOARD');
         } else {
             changeView('LOGIN');
         }
@@ -26,26 +25,16 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
         <section className={styles.bottomBannerSection}>
             <div className={styles.bottomBannerGlow} />
             <div className={styles.bottomLogoG}>
-                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="url(#techGradCTA)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="16 18 22 12 16 6" />
-                    <polyline points="8 6 2 12 8 18" />
-                    <line x1="14" y1="4" x2="10" y2="20" />
-                    <defs>
-                        <linearGradient id="techGradCTA" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#005995" />
-                            <stop offset="100%" stopColor="#99bdd5" />
-                        </linearGradient>
-                    </defs>
-                </svg>
+                <Rocket size={32} style={{ color: 'var(--tech-blue)' }} />
             </div>
-            <h2 className={styles.bottomTitle}>Start Building Your Future Today</h2>
+            <h2 className={styles.bottomTitle}>Start Building Your Developer Future Today</h2>
             <p className={styles.bottomDesc}>
-                Explore interactive courses, practice with quizzes, revise important concepts,
-                and continuously improve your software engineering skills.
+                Explore interactive courses, complete daily topic progress, track your streak analytics,
+                and continuously level up your software engineering craft.
             </p>
             <div className={styles.heroButtons}>
                 <Button variant="primary" size="lg" onClick={handleStart}>
-                    Start Learning
+                    {isLoggedIn ? 'Go to Dashboard' : 'Get Started Now'}
                 </Button>
                 <button
                     className={styles.heroSecondaryBtn}
@@ -57,4 +46,5 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
         </section>
     );
 };
+
 export default FinalCTA;
