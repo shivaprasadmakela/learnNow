@@ -27,7 +27,7 @@ public class Path {
     
     private String managedBy;
 
-    @OneToMany(mappedBy = "path", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "path", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Builder.Default
     private java.util.List<Topic> topics = new java.util.ArrayList<>();
 }

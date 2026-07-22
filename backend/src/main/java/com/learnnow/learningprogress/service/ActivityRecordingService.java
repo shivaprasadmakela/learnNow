@@ -39,6 +39,8 @@ public class ActivityRecordingService {
 
         LocalDate localDate = LocalDate.now(userZone);
 
+        expireStreakIfStale(prefs, localDate);
+
         // Update streak & check milestone bonus
         int newStreak = streakService.updateStreak(prefs, localDate);
         int milestoneBonus = streakService.getMilestoneBonus(newStreak);
@@ -61,6 +63,7 @@ public class ActivityRecordingService {
                         UserLearningPreferences.builder().userId(userId).timezone(userZone.getId()).build()
                 ));
         LocalDate localDate = LocalDate.now(userZone);
+        expireStreakIfStale(prefs, localDate);
         streakService.updateStreak(prefs, localDate);
         preferencesRepository.save(prefs);
         upsertDailyActivity(userId, localDate, points);
@@ -92,5 +95,17 @@ public class ActivityRecordingService {
         daily.setQualifyingEventCount(daily.getQualifyingEventCount() + 1);
         daily.addPoints(points);
         dailyActivityRepository.save(daily);
+    }
+    /**
+     * If the user's last activity was before yesterday, their active streak has expired.
+     * Reset it to 0 so the next activity starts fresh from 1.
+     * This must happen on the write path — never on a read (dashboard GET).
+     */
+    private void expireStreakIfStale(UserLearningPreferences prefs, LocalDate today) {
+        if (prefs.getLastActivityDate() != null
+                && prefs.getLastActivityDate().isBefore(today.minusDays(1))
+                && prefs.getCurrentStreak() != 0) {
+            prefs.setCurrentStreak(0);
+        }
     }
 }

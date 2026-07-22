@@ -17,20 +17,49 @@ public class GlobalExceptionHandler {
         this.messageSource = messageSource;
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(NotFoundException ex) {
+        String resolved = resolve(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("code", ex.getMessage(), "message", resolved));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, String>> handleConflict(ConflictException ex) {
+        String resolved = resolve(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("code", ex.getMessage(), "message", resolved));
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(ValidationException ex) {
+        String resolved = resolve(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(Map.of("code", ex.getMessage(), "message", resolved));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         String key = ex.getMessage();
-        String resolvedMsg = messageSource.getMessage(key, null, key, LocaleContextHolder.getLocale());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", resolvedMsg));
+        String resolved = resolve(key);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("code", key != null ? key : "unknown_error", "message", resolved));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
-        String resolvedMsg = messageSource.getMessage("unknown_error", null, "An unexpected error occurred. Please try again.", LocaleContextHolder.getLocale());
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", resolvedMsg));
+        String resolved = resolve("unknown_error");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("code", "unknown_error", "message", resolved));
+    }
+
+    private String resolve(String key) {
+        return messageSource.getMessage(
+                key != null ? key : "unknown_error",
+                null,
+                key != null ? key : "An unexpected error occurred.",
+                LocaleContextHolder.getLocale()
+        );
     }
 }
+

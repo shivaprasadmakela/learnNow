@@ -9,6 +9,7 @@ import com.learnnow.learningprogress.exception.TopicNotFoundException;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
+import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.paths.entity.Subtopic;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.SubtopicRepository;
@@ -19,15 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Comparator;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ProgressService {
 
     private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Kolkata");
-    private static final int MAX_TOPIC_PROGRESS_RECORDS_PER_USER = 10;
 
     private final TopicRepository topicRepository;
     private final SubtopicRepository subtopicRepository;
@@ -54,7 +52,7 @@ public class ProgressService {
         if (!completed) {
             progress.setStatus(ProgressStatus.NOT_STARTED);
             progress.setCompletedAt(null);
-            saveTopicProgressAndPrune(progress);
+            topicProgressRepository.save(progress);
             return;
         }
 
@@ -64,7 +62,7 @@ public class ProgressService {
 
         progress.setStatus(ProgressStatus.COMPLETED);
         progress.setCompletedAt(Instant.now());
-        saveTopicProgressAndPrune(progress);
+        topicProgressRepository.save(progress);
 
         ZoneId userZone = preferencesRepository.findByUserId(userId)
                 .map(preferences -> ZoneId.of(preferences.getTimezone()))
@@ -79,7 +77,7 @@ public class ProgressService {
     @Transactional
     public void markSubtopicComplete(String userId, Long subtopicId, boolean completed) {
         Subtopic subtopic = subtopicRepository.findById(subtopicId)
-                .orElseThrow(() -> new RuntimeException("subtopic_not_found"));
+                .orElseThrow(() -> new NotFoundException("subtopic_not_found"));
 
         Topic topic = subtopic.getTopic();
         Long topicId = topic.getId();
@@ -130,26 +128,10 @@ public class ProgressService {
                                 .build());
                 if (topicProgress.getStatus() == ProgressStatus.NOT_STARTED) {
                     topicProgress.setStatus(ProgressStatus.IN_PROGRESS);
-                    saveTopicProgressAndPrune(topicProgress);
+                    topicProgressRepository.save(topicProgress);
                 }
             }
         }
     }
 
-    public void saveTopicProgressAndPrune(UserTopicProgress progress) {
-        topicProgressRepository.save(progress);
-
-        List<UserTopicProgress> userProgress = topicProgressRepository.findByUserId(progress.getUserId());
-        if (userProgress.size() > MAX_TOPIC_PROGRESS_RECORDS_PER_USER) {
-            int toRemoveCount = userProgress.size() - MAX_TOPIC_PROGRESS_RECORDS_PER_USER;
-            List<UserTopicProgress> sortedOldestFirst = userProgress.stream()
-                    .sorted(Comparator.comparing(
-                            UserTopicProgress::getCompletedAt,
-                            Comparator.nullsFirst(Comparator.naturalOrder())
-                    ))
-                    .toList();
-            List<UserTopicProgress> excessToPrune = sortedOldestFirst.subList(0, toRemoveCount);
-            topicProgressRepository.deleteAll(excessToPrune);
-        }
-    }
 }

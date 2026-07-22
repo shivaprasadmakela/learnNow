@@ -1,7 +1,10 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/BackendApplication.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/config/SecurityConfig.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/config/WebConfig.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/ConflictException.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/GlobalExceptionHandler.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/NotFoundException.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/ValidationException.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/security/JwtConfig.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/security/ResendEmailClient.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/security/TokenService.java

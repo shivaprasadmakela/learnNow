@@ -96,6 +96,8 @@ CREATE TABLE user_learning_daily_activity (
     first_activity_at TIMESTAMPTZ NOT NULL,
     last_activity_at TIMESTAMPTZ NOT NULL,
     qualifying_event_count INT NOT NULL DEFAULT 0,
+    points_earned INTEGER NOT NULL DEFAULT 0,
     UNIQUE (user_id, activity_date)
 );
 CREATE INDEX idx_daily_activity_user_date ON user_learning_daily_activity (user_id, activity_date DESC);
+

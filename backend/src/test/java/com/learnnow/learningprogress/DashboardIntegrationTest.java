@@ -6,6 +6,7 @@ import com.learnnow.learningprogress.dto.response.DashboardResponse;
 import com.learnnow.learningprogress.dto.response.WeeklyCalendarDay;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
+import com.learnnow.learningprogress.service.ActivityRecordingService;
 import com.learnnow.learningprogress.service.DashboardService;
 import com.learnnow.learningprogress.service.ProgressService;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ public class DashboardIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ActivityRecordingService activityRecordingService;
 
     @Autowired
     private UserLearningPreferencesRepository preferencesRepository;
@@ -116,7 +120,7 @@ public class DashboardIntegrationTest {
     }
 
     @Test
-    public void testStaleStreakResetsToZero() {
+    public void testStaleStreakResetsToZeroOnNextActivity() {
         String testUserId = "USER_STALE_STREAK_ID";
         if (userRepository.findById(testUserId).isEmpty()) {
             userRepository.save(User.builder()
@@ -127,7 +131,7 @@ public class DashboardIntegrationTest {
                     .build());
         }
 
-        // Save preferences with last activity date 3 days ago and a streak of 5
+        // Set up stale streak: last activity 3 days ago, current streak = 5
         UserLearningPreferences prefs = UserLearningPreferences.builder()
                 .userId(testUserId)
                 .currentStreak(5)
@@ -136,67 +140,14 @@ public class DashboardIntegrationTest {
                 .build();
         preferencesRepository.save(prefs);
 
-        DashboardResponse response = dashboardService.buildDashboard(testUserId);
-        assertEquals(0, response.currentStreak(), "Stale streak (last activity > 1 day ago) should reset to 0 when opening dashboard!");
-    }
+        // Trigger a write-path activity today — this is what expires the stale streak
+        java.time.ZoneId zone = java.time.ZoneId.of("Asia/Kolkata");
+        activityRecordingService.recordDailyPoints(testUserId, zone, 10);
 
-    @Autowired
-    private com.learnnow.learningprogress.repository.UserTopicProgressRepository topicProgressRepository;
-
-    @Autowired
-    private com.learnnow.paths.repository.TopicRepository topicRepository;
-
-    @Autowired
-    private com.learnnow.paths.repository.PathRepository pathRepository;
-
-    @Test
-    public void testTopicProgressPrunesToTenRecordsMax() {
-        String testUserId = "USER_TOPIC_PRUNING_TEST_ID";
-        if (userRepository.findById(testUserId).isEmpty()) {
-            userRepository.save(User.builder()
-                    .id(testUserId)
-                    .email("topic_pruning_test@example.com")
-                    .passwordHash("hashedpass")
-                    .fullName("Topic Pruning Tester")
-                    .build());
-        }
-
-        // Clean up previous topic progress for this user
-        var existingProgress = topicProgressRepository.findByUserId(testUserId);
-        if (!existingProgress.isEmpty()) {
-            topicProgressRepository.deleteAll(existingProgress);
-        }
-
-        com.learnnow.paths.entity.Path path = pathRepository.findAll().stream().findFirst().orElse(null);
-        assertNotNull(path);
-
-        // Ensure topics exist in database for foreign key constraint
-        for (long topicId = 1L; topicId <= 12L; topicId++) {
-            if (topicRepository.findById(topicId).isEmpty()) {
-                topicRepository.save(com.learnnow.paths.entity.Topic.builder()
-                        .id(topicId)
-                        .title("Test Topic " + topicId)
-                        .description("Desc")
-                        .category("Topic")
-                        .duration("1 hour")
-                        .path(path)
-                        .build());
-            }
-        }
-
-        // Add 12 topic progress entries for different topic IDs using saveTopicProgressAndPrune
-        for (long topicId = 1L; topicId <= 12L; topicId++) {
-            com.learnnow.learningprogress.entity.UserTopicProgress progress = com.learnnow.learningprogress.entity.UserTopicProgress.builder()
-                    .userId(testUserId)
-                    .topicId(topicId)
-                    .pathId(path.getId())
-                    .status(com.learnnow.learningprogress.enums.ProgressStatus.COMPLETED)
-                    .completedAt(java.time.Instant.now().minusSeconds((13 - topicId) * 100))
-                    .build();
-            progressService.saveTopicProgressAndPrune(progress);
-        }
-
-        var userProgressInDb = topicProgressRepository.findByUserId(testUserId);
-        assertEquals(10, userProgressInDb.size(), "User topic progress in DB should be capped at max 10 records per user! Got: " + userProgressInDb.size());
+        // After the write, the streak should have been reset to 1 (expired then restarted)
+        UserLearningPreferences updated = preferencesRepository.findByUserId(testUserId).orElseThrow();
+        assertEquals(1, updated.getCurrentStreak(),
+                "Stale streak should be expired to 0, then restarted at 1 after new activity!");
     }
 }
+

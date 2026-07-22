@@ -1,12 +1,6 @@
 package com.learnnow.paths.controller;
 
-import com.learnnow.paths.dto.PathSummaryDto;
-import com.learnnow.paths.dto.SubtopicDto;
-import com.learnnow.paths.dto.TopicSummaryDto;
-import com.learnnow.paths.entity.Path;
-import com.learnnow.paths.entity.Topic;
-import com.learnnow.paths.repository.PathRepository;
-import com.learnnow.paths.repository.TopicRepository;
+import com.learnnow.paths.service.CatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,25 +16,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CatalogController {
 
-    private final PathRepository pathRepository;
-    private final TopicRepository topicRepository;
+    private final CatalogService catalogService;
 
     /**
      * List all paths with their topic summaries (no user progress data).
      */
     @GetMapping("/paths")
-    public ResponseEntity<List<PathSummaryDto>> getAllPaths() {
-        List<PathSummaryDto> paths = pathRepository.findAll().stream()
-                .map(path -> new PathSummaryDto(
-                        path.getId(),
-                        path.getTitle(),
-                        path.getDescription(),
-                        path.getCategory(),
-                        path.getManagedBy(),
-                        List.of()
-                ))
-                .toList();
-        return ResponseEntity.ok(paths);
+    public ResponseEntity<List<?>> getAllPaths() {
+        return ResponseEntity.ok(catalogService.getAllPaths());
     }
 
     /**
@@ -48,33 +31,8 @@ public class CatalogController {
      */
     @GetMapping("/paths/{pathId}")
     public ResponseEntity<CatalogPathDetail> getPathDetail(@PathVariable Long pathId) {
-        return pathRepository.findById(pathId)
-                .map(path -> {
-                    List<CatalogTopicDetail> topics = path.getTopics().stream()
-                            .map(topic -> {
-                                List<CatalogSubtopicTitle> subtopicTitles = topic.getSubtopics().stream()
-                                        .map(st -> new CatalogSubtopicTitle(st.getId(), st.getTitle(), st.getOrderIndex()))
-                                        .toList();
-                                return new CatalogTopicDetail(
-                                        topic.getId(),
-                                        topic.getTitle(),
-                                        topic.getDescription(),
-                                        topic.getCategory(),
-                                        topic.getDuration(),
-                                        subtopicTitles
-                                );
-                            })
-                            .toList();
-
-                    return ResponseEntity.ok(new CatalogPathDetail(
-                            path.getId(),
-                            path.getTitle(),
-                            path.getDescription(),
-                            path.getCategory(),
-                            path.getManagedBy(),
-                            topics
-                    ));
-                })
+        return catalogService.getPathCatalogDetail(pathId)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 

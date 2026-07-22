@@ -5,6 +5,9 @@ import com.learnnow.learningprogress.entity.UserTopicProgress;
 import com.learnnow.learningprogress.enums.ProgressStatus;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
+import com.learnnow.paths.controller.CatalogController.CatalogPathDetail;
+import com.learnnow.paths.controller.CatalogController.CatalogSubtopicTitle;
+import com.learnnow.paths.controller.CatalogController.CatalogTopicDetail;
 import com.learnnow.paths.dto.PathSummaryDto;
 import com.learnnow.paths.dto.SubtopicDto;
 import com.learnnow.paths.dto.TopicDetailDto;
@@ -40,6 +43,36 @@ public class CatalogService {
                         List.of()
                 ))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CatalogPathDetail> getPathCatalogDetail(Long pathId) {
+        return pathRepository.findById(pathId)
+                .map(path -> {
+                    List<CatalogTopicDetail> topics = path.getTopics().stream()
+                            .map(topic -> {
+                                List<CatalogSubtopicTitle> subtopicTitles = topic.getSubtopics().stream()
+                                        .map(st -> new CatalogSubtopicTitle(st.getId(), st.getTitle(), st.getOrderIndex()))
+                                        .toList();
+                                return new CatalogTopicDetail(
+                                        topic.getId(),
+                                        topic.getTitle(),
+                                        topic.getDescription(),
+                                        topic.getCategory(),
+                                        topic.getDuration(),
+                                        subtopicTitles
+                                );
+                            })
+                            .toList();
+                    return new CatalogPathDetail(
+                            path.getId(),
+                            path.getTitle(),
+                            path.getDescription(),
+                            path.getCategory(),
+                            path.getManagedBy(),
+                            topics
+                    );
+                });
     }
 
     @Transactional(readOnly = true)
@@ -88,3 +121,4 @@ public class CatalogService {
                 });
     }
 }
+
