@@ -9,7 +9,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     changeView,
     isLoggedIn,
     isPathsActive,
-    onSelectPaths
+    onSelectPaths,
+    profile
 }) => {
     const isPrimaryActive = isLoggedIn
         ? (activeView === 'DASHBOARD' || activeView === 'CERTIFICATE') && !isPathsActive
@@ -39,6 +40,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     isExpanded={isExpanded}
                     onClick={onSelectPaths}
                 />
+
+                {profile?.role === 'ADMIN' && (
+                    <SidebarNavItem
+                        iconClass="fa-solid fa-shield-halved"
+                        label="Admin"
+                        isActive={activeView === 'ADMIN'}
+                        isExpanded={isExpanded}
+                        onClick={() => changeView('ADMIN')}
+                    />
+                )}
             </nav>
         </aside>
     );

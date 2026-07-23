@@ -4,9 +4,21 @@ import * as api from '../../../shared/api';
 import { authClient } from '../../../shared/api/authClient';
 import { apiFetch } from '../../../shared/api/client';
 
-export type ViewState = 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS' | 'STUDY' | 'VERIFY_EMAIL';
+export type ViewState = 
+    | 'HOME' 
+    | 'DASHBOARD' 
+    | 'LOGIN' 
+    | 'PATHS' 
+    | 'TOPICS' 
+    | 'STUDY' 
+    | 'VERIFY_EMAIL' 
+    | 'ADMIN' 
+    | 'ADMIN_CREATE_PATH' 
+    | 'ADMIN_EDIT_PATH';
 
 export const useProfileDashboard = () => {
+    const [editingPathId, setEditingPathId] = useState<string | null>(null);
+
     const [activeView, setActiveView] = useState<ViewState>(() => {
         if (typeof window !== 'undefined') {
             const path = window.location.pathname;
@@ -23,6 +35,12 @@ export const useProfileDashboard = () => {
                 return 'TOPICS';
             } else if (parts.length === 3 && parts[0] === 'paths') {
                 return 'STUDY';
+            } else if (parts.length === 1 && parts[0] === 'iamAdmin') {
+                return 'ADMIN';
+            } else if (parts.length === 2 && parts[0] === 'iamAdmin' && parts[1] === 'create-path') {
+                return 'ADMIN_CREATE_PATH';
+            } else if (parts.length === 3 && parts[0] === 'iamAdmin' && parts[1] === 'paths') {
+                return 'ADMIN_EDIT_PATH';
             }
         }
         return 'HOME';
@@ -77,6 +95,13 @@ export const useProfileDashboard = () => {
             setActiveView('TOPICS');
         } else if (parts.length === 3 && parts[0] === 'paths') {
             setActiveView('STUDY');
+        } else if (parts.length === 1 && parts[0] === 'iamAdmin') {
+            setActiveView('ADMIN');
+        } else if (parts.length === 2 && parts[0] === 'iamAdmin' && parts[1] === 'create-path') {
+            setActiveView('ADMIN_CREATE_PATH');
+        } else if (parts.length === 3 && parts[0] === 'iamAdmin' && parts[1] === 'paths') {
+            setEditingPathId(parts[2]);
+            setActiveView('ADMIN_EDIT_PATH');
         } else {
             setActiveView('HOME');
         }
@@ -96,6 +121,13 @@ export const useProfileDashboard = () => {
             window.history.pushState(null, '', `/paths/${slug || 'java-backend-path'}`);
         } else if (view === 'STUDY') {
             window.history.pushState(null, '', `/paths/${slug || 'java-backend-path'}/${subtopicSlug || ''}`);
+        } else if (view === 'ADMIN') {
+            window.history.pushState(null, '', '/iamAdmin');
+        } else if (view === 'ADMIN_CREATE_PATH') {
+            window.history.pushState(null, '', '/iamAdmin/create-path');
+        } else if (view === 'ADMIN_EDIT_PATH') {
+            if (slug) setEditingPathId(slug);
+            window.history.pushState(null, '', `/iamAdmin/paths/${slug || ''}`);
         } else {
             window.history.pushState(null, '', '/');
         }
@@ -103,7 +135,6 @@ export const useProfileDashboard = () => {
     }, []);
 
     useEffect(() => {
-        // Apply theme attributes
         document.documentElement.setAttribute('data-theme', theme);
         window.addEventListener('popstate', handlePathChange);
         return () => {
@@ -111,7 +142,6 @@ export const useProfileDashboard = () => {
         };
     }, [handlePathChange, theme]);
 
-    // Session initialization check on mount
     useEffect(() => {
         const token = authClient.getToken();
         if (token) {
@@ -126,7 +156,6 @@ export const useProfileDashboard = () => {
         }
     }, [loadUserData, changeView]);
 
-    // Sign up / sign in methods
     const getErrorMessage = async (response: Response, fallback: string): Promise<string> => {
         try {
             const data = await response.json();
@@ -141,7 +170,6 @@ export const useProfileDashboard = () => {
         }
     };
 
-    // Sign up / sign in methods
     const signUp = async (firstName: string, lastName: string, email: string, pass: string) => {
         setError(null);
         const response = await apiFetch('/api/auth/register', {
@@ -222,6 +250,8 @@ export const useProfileDashboard = () => {
     return {
         activeView,
         changeView,
+        editingPathId,
+        setEditingPathId,
         profile,
         isLoading,
         error,

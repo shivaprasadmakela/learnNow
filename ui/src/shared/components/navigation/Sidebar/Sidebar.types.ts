@@ -1,8 +1,11 @@
+import type { UserProfile } from '../../../../types';
+
 export interface SidebarProps {
     isExpanded: boolean;
     activeView: string;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
+    changeView: (view: any) => void;
     isLoggedIn: boolean;
     isPathsActive: boolean;
     onSelectPaths: () => void;
+    profile?: UserProfile | null;
 }

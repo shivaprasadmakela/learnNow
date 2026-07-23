@@ -1,0 +1,65 @@
+.publishBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 24px;
+}
+
+.statusGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.badgeDraft {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background-color: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.badgePublished {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background-color: rgba(34, 197, 94, 0.15);
+    color: var(--tech-green);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.versionTag {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+
+.actionGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btnSecondary {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btnPrimary {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--tech-blue);
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}

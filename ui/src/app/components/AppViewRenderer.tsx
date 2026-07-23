@@ -1,14 +1,16 @@
 import React from 'react';
 import { Home } from '../../features/home';
 import { Dashboard } from '../../features/dashboard';
-import { LoginPage } from '../../features/auth';
+import { LoginPage, VerifyEmailPage } from '../../features/auth';
 import { PathsPage } from '../../features/paths';
 import { TopicsPage } from '../../features/topics';
+import { AdminDashboard, ConfigurationEditor } from '../../features/iam-admin';
 import styles from '../App.module.css';
 import type { Course, UserProfile } from '../../types';
 
 interface AppViewRendererProps {
     activeView: string;
+    editingPathId?: string | null;
     isLoggedIn: boolean;
     profile: UserProfile | null;
     courses: Course[];
@@ -20,11 +22,14 @@ interface AppViewRendererProps {
     handleSelectPath: (pathId: number) => void;
     handleSelectTopic: (topicId: number) => void;
     handleViewChange: (view: any) => void;
-    changeView: (view: any) => void;
+    changeView: (view: any, slug?: string) => void;
+    handleLoginSuccess: (token: string, profile: UserProfile) => void;
+    refreshUserData: () => void;
 }
 
 export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     activeView,
+    editingPathId,
     isLoggedIn,
     profile,
     courses,
@@ -36,11 +41,13 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     handleSelectPath,
     handleSelectTopic,
     handleViewChange,
-    changeView
+    changeView,
+    handleLoginSuccess,
+    refreshUserData
 }) => {
     return (
         <div className={
-            activeView === 'HOME' || activeView === 'LOGIN'
+            activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL'
                 ? styles.pageContentFull
                 : activeView === 'DASHBOARD'
                     ? styles.pageContentDashboard
@@ -81,6 +88,13 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                 />
             )}
 
+            {activeView === 'VERIFY_EMAIL' && (
+                <VerifyEmailPage
+                    changeView={changeView}
+                    onVerificationSuccess={handleLoginSuccess}
+                />
+            )}
+
             {activeView === 'PATHS' && (
                 <PathsPage
                     courses={courses}
@@ -91,11 +105,29 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
 
             {activeView === 'TOPICS' && (
                 <TopicsPage
-                    pathTitle={selectedPath?.title || 'Java Backend Developer Path'}
+                    pathTitle={selectedPath?.title || 'Learning Path'}
                     managedBy={selectedPath?.managedBy || 'learnNow'}
                     topics={selectedPath?.topics || []}
                     progressPercent={selectedPath?.progressPercentage || 0}
                     onSelectTopic={handleSelectTopic}
+                />
+            )}
+
+            {activeView === 'ADMIN' && (
+                <AdminDashboard
+                    onNavigateCreate={() => changeView('ADMIN_CREATE_PATH')}
+                    onNavigateEdit={(pathId) => changeView('ADMIN_EDIT_PATH', pathId)}
+                />
+            )}
+
+            {(activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH') && (
+                <ConfigurationEditor
+                    pathId={activeView === 'ADMIN_EDIT_PATH' ? editingPathId : null}
+                    onSaveSuccess={() => {
+                        refreshUserData();
+                        changeView('ADMIN');
+                    }}
+                    onCancel={() => changeView('ADMIN')}
                 />
             )}
         </div>

@@ -20,6 +20,7 @@ export const LearningCard: React.FC<LearningCardProps> = ({
     isCompleted = false,
     onClick,
     buttonTooltip = 'Explore',
+    badgeVariant,
     className = ''
 }) => {
     const pct = isCompleted ? 100 : Math.min(100, Math.max(0, progressPercentage || 0));
@@ -42,7 +43,7 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                 onKeyDown={handleKeyDown}
             >
                 <div className={styles.listLeftContent}>
-                    <CardBadge label={badgeLabel} icon={badgeIcon} />
+                    <CardBadge label={badgeLabel} icon={badgeIcon} isCompleted={isCompleted} variant={badgeVariant} />
                     <h3 className={styles.listTitle}>{title}</h3>
                 </div>
 
@@ -69,7 +70,7 @@ export const LearningCard: React.FC<LearningCardProps> = ({
             onKeyDown={handleKeyDown}
         >
             <div className={styles.cardTopRow}>
-                <CardBadge label={badgeLabel} icon={badgeIcon} />
+                <CardBadge label={badgeLabel} icon={badgeIcon} isCompleted={isCompleted} variant={badgeVariant} />
                 {isCompleted && <CardCompletedBadge />}
             </div>
 

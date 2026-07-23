@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useProfileDashboard, ProfileEditModal } from '../features/dashboard';
-import { TopicStudyConsole } from '../features/topics';
+import { StudyConsole } from '../features/topics';
 import { Header, Sidebar, Breadcrumb } from '../shared/components';
 import { useToast } from '../shared/components/feedback/Toast';
 import styles from './App.module.css';
@@ -14,6 +14,7 @@ export default function App() {
     const {
         activeView,
         changeView,
+        editingPathId,
         profile,
         isLoading,
         error,
@@ -23,7 +24,8 @@ export default function App() {
         isLoggedIn,
         signOut,
         signIn,
-        signUp
+        signUp,
+        handleLoginSuccess
     } = useProfileDashboard();
 
     const [isExpanded, setIsExpanded] = useState(false);
@@ -145,7 +147,7 @@ export default function App() {
 
             <div className={activeView === 'STUDY' ? styles.appLayoutStudy : styles.appLayout}>
                 {/* Sidebar */}
-                {activeView !== 'LOGIN' && activeView !== 'STUDY' && (
+                {activeView !== 'LOGIN' && activeView !== 'VERIFY_EMAIL' && activeView !== 'STUDY' && (
                     <Sidebar
                         isExpanded={isExpanded}
                         activeView={activeView}
@@ -153,13 +155,14 @@ export default function App() {
                         isLoggedIn={isLoggedIn}
                         isPathsActive={isPathsActive}
                         onSelectPaths={handleSelectPaths}
+                        profile={profile}
                     />
                 )}
 
                 {/* Main Content View Switcher */}
                 {activeView === 'STUDY' ? (
                     activeTopic ? (
-                        <TopicStudyConsole
+                        <StudyConsole
                             topic={activeTopic}
                             onClose={() => {
                                 clearTopicSession();
@@ -190,6 +193,7 @@ export default function App() {
 
                         <AppViewRenderer
                             activeView={activeView}
+                            editingPathId={editingPathId}
                             isLoggedIn={isLoggedIn}
                             profile={profile}
                             courses={courses}
@@ -202,6 +206,8 @@ export default function App() {
                             handleSelectTopic={handleSelectTopic}
                             handleViewChange={handleViewChange}
                             changeView={changeView}
+                            handleLoginSuccess={handleLoginSuccess}
+                            refreshUserData={refreshUserData}
                         />
                     </main>
                 )}

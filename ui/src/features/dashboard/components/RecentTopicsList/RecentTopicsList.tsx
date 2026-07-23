@@ -1,6 +1,7 @@
 import React from 'react';
-import styles from '../../styles/Dashboard.module.css';
+import { Activity } from 'lucide-react';
 import { LearningCard } from '../../../../shared/components/cards';
+import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import type { RecentTopicActivity } from '../../types';
 
 interface RecentTopicsListProps {
@@ -11,12 +12,11 @@ interface RecentTopicsListProps {
 export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, onSelectTopic }) => {
     if (topics.length === 0) {
         return (
-            <div className={styles.emptyState}>
-                <i className="fa-solid fa-seedling" style={{ fontSize: '2.2rem', color: 'var(--text-tertiary)', marginBottom: '14px' }} aria-hidden="true" />
-                <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: 1.5 }}>
-                    Visit or complete topics to see your recent topic progress here.
-                </p>
-            </div>
+            <EmptyState
+                icon={Activity}
+                title="No Recent Activity"
+                description="Start exploring learning paths and studying topics to track your progress here."
+            />
         );
     }
 

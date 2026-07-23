@@ -24,6 +24,8 @@ export interface LearningCardProps {
     onClick?: () => void;
     /** Optional action button title/tooltip */
     buttonTooltip?: string;
+    /** Optional badge color variant ('normal' | 'green' | 'orange') */
+    badgeVariant?: 'normal' | 'green' | 'orange';
     /** Optional extra className */
     className?: string;
 }

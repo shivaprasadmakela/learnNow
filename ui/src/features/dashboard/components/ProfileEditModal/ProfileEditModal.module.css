@@ -7,7 +7,8 @@
     background-color: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    z-index: 10000; /* Ensure overlay floats on top of everything, including header */
+    z-index: 10000;
+    /* Ensure overlay floats on top of everything, including header */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -81,6 +82,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -91,6 +93,7 @@
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

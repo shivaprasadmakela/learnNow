@@ -40,6 +40,30 @@
     color: var(--text-primary, #1e293b);
 }
 
+.badgePillGreen {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 12px;
+    background-color: rgba(34, 197, 94, 0.12);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--tech-green, #16a34a);
+}
+
+.badgePillOrange {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 12px;
+    background-color: rgba(245, 158, 11, 0.12);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #d97706;
+}
+
 .badgeIcon {
     display: flex;
     align-items: center;

@@ -876,13 +876,17 @@
 }
 
 .pathsCardsGrid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 24px;
-    /* Consistent gap */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
     width: 100%;
     margin-top: 24px;
+}
+
+@media (min-width: 1200px) {
+    .pathsCardsGrid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 .emptyState {
@@ -890,11 +894,4 @@
     padding: var(--space-8);
     color: var(--text-secondary);
     text-align: center;
-}
-
-.pathsCardsGrid .previewCard {
-    width: 360px;
-    /* Align to max 3 per row (3 * 360px + gaps fits perfectly in content width) */
-    max-width: 100%;
-    flex-shrink: 0;
 }

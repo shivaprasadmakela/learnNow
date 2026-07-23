@@ -1,4 +1,5 @@
 export interface HeaderUserProfile {
+    id?: string;
     fullName: string;
     avatar: string;
     role: string;

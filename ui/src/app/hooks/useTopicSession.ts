@@ -26,14 +26,14 @@ export const useTopicSession = ({
     showToast,
     refreshUserData
 }: UseTopicSessionOptions) => {
-    const [activeTopicId, setActiveTopicId] = useState<number | null>(null);
+    const [activeTopicId, setActiveTopicId] = useState<any | null>(null);
     const [activeTopic, setActiveTopic] = useState<TopicDetails | null>(null);
     const [isStudyLoading, setIsStudyLoading] = useState(false);
     const [isStudyUpdating, setIsStudyUpdating] = useState(false);
 
     const { recordTopicCompletion, recordSubtopicCompletion } = useRecordActivity();
 
-    const handleSelectTopic = useCallback(async (id: number) => {
+    const handleSelectTopic = useCallback(async (id: any) => {
         if (!isLoggedIn) {
             changeView('LOGIN');
             return;
@@ -81,7 +81,7 @@ export const useTopicSession = ({
         }
     };
 
-    const handleToggleSubtopicComplete = async (subtopicId: number, completed: boolean) => {
+    const handleToggleSubtopicComplete = async (subtopicId: string | number, completed: boolean) => {
         if (!activeTopicId || !activeTopic) return;
         try {
             setIsStudyUpdating(true);

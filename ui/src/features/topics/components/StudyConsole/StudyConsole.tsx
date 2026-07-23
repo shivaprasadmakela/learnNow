@@ -1,29 +1,32 @@
 import { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2 } from 'lucide-react';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
-import styles from './TopicStudyConsole.module.css';
+import styles from './StudyConsole.module.css';
 
-interface TopicStudyConsoleProps {
+interface StudyConsoleProps {
     topic: TopicDetails;
     onClose: () => void;
     onToggleComplete: () => Promise<void>;
-    onToggleSubtopicComplete?: (subtopicId: number, completed: boolean) => Promise<void>;
+    onToggleSubtopicComplete?: (subtopicId: string, completed: boolean) => Promise<void>;
     isUpdating: boolean;
 }
 
-export function TopicStudyConsole({ 
+export function StudyConsole({ 
     topic, 
     onClose, 
     onToggleComplete, 
     onToggleSubtopicComplete,
     isUpdating
-}: TopicStudyConsoleProps) {
+}: StudyConsoleProps) {
     const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
 
     const completedSubtopicsCount = subtopics.filter((s: SubtopicData) => s.isCompleted).length;
+    const allSubtopicsCompleted = subtopics.length > 0 && subtopics.every((s: SubtopicData) => s.isCompleted);
+    const isCompleteDisabled = isUpdating || (!topic.isCompleted && !allSubtopicsCompleted);
+
     const computedPercentage = topic.isCompleted ? 100 : (
         subtopics.length > 0 ? Math.round((completedSubtopicsCount / subtopics.length) * 100) : (topic.progressPercentage || 0)
     );
@@ -46,7 +49,7 @@ export function TopicStudyConsole({
         }
     };
 
-    const handleSubtopicReadToggle = async (subtopicId: number, currentlyCompleted: boolean) => {
+    const handleSubtopicReadToggle = async (subtopicId: any, currentlyCompleted: boolean) => {
         if (onToggleSubtopicComplete) {
             await onToggleSubtopicComplete(subtopicId, !currentlyCompleted);
         }
@@ -279,7 +282,12 @@ export function TopicStudyConsole({
                 <button
                     className={`${styles.completeBtn} ${topic.isCompleted ? styles.completeBtnActive : ''}`}
                     onClick={onToggleComplete}
-                    disabled={isUpdating}
+                    disabled={isCompleteDisabled}
+                    title={
+                        !topic.isCompleted && !allSubtopicsCompleted
+                            ? `Complete all ${subtopics.length} sections to enable topic completion (${completedSubtopicsCount}/${subtopics.length} done)`
+                            : undefined
+                    }
                 >
                     {topic.isCompleted ? (
                         <>
@@ -287,7 +295,7 @@ export function TopicStudyConsole({
                             Topic Completed!
                         </>
                     ) : (
-                        "Mark Entire Topic as Completed"
+                        `Mark Entire Topic as Completed (${completedSubtopicsCount}/${subtopics.length})`
                     )}
                 </button>
 

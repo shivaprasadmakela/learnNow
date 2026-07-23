@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../../../../feedback/Toast';
+import { Avatar } from '../../../../ui/Avatar';
 import styles from '../../../Navigation.module.css';
 import type { ProfileMenuProps } from './ProfileMenu.types';
 
@@ -34,14 +35,14 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 title="Profile settings"
             >
-                <span className={styles.avatarEmoji}>{profile?.avatar || '👨‍💻'}</span>
+                <Avatar avatar={profile?.avatar} size={32} />
             </button>
 
             {showProfileMenu && (
                 <div className={styles.profileDropdown}>
                     <div className={styles.profileDropdownHeader}>
                         <div className={styles.dropdownAvatarCircle}>
-                            <span className={styles.dropdownAvatarEmoji}>{profile?.avatar || '👨‍💻'}</span>
+                            <Avatar avatar={profile?.avatar} size={48} />
                         </div>
                         <div className={styles.headerInfo}>
                             <h4 className={styles.profileName}>{profile?.fullName || 'Learner'}</h4>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../../../../types';
 import { Button, Input } from '../../../../shared/components';
+import { AvatarPicker } from './components/AvatarPicker';
 import styles from './ProfileEditModal.module.css';
 
 interface ProfileEditModalProps {
@@ -15,7 +16,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     onClose
 }) => {
     const [fullName, setFullName] = useState<string>(profile?.fullName || 'Alex Learner');
-    const [avatar, setAvatar] = useState<string>(profile?.avatar || '👨‍💻');
+    const [avatar, setAvatar] = useState<string>(profile?.avatar || profile?.id || 'learnnow');
     const [role, setRole] = useState<string>(profile?.role || 'Junior Fullstack Engineer');
     const [bio, setBio] = useState<string>(profile?.bio || 'Learning React & Spring Boot.');
 
@@ -28,12 +29,13 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         <div className={styles.modalOverlay} onClick={onClose}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <h3 className={styles.formTitle}>Edit Profile Settings</h3>
+
+                <AvatarPicker
+                    avatar={avatar}
+                    onChangeAvatar={setAvatar}
+                />
+
                 <div className={styles.formRow}>
-                    <Input
-                        label="Avatar (Emoji)"
-                        value={avatar}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAvatar(e.target.value)}
-                    />
                     <Input
                         label="Full Name (Printed on Certificate)"
                         value={fullName}

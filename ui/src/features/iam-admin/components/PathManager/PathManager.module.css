@@ -1,0 +1,48 @@
+.pathGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.pathCard {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pathCard:hover {
+    border-color: var(--tech-blue);
+    transform: translateY(-2px);
+}
+
+.pathCardSelected {
+    border-color: var(--tech-blue);
+    background-color: rgba(99, 102, 241, 0.05);
+}
+
+.createCard {
+    background-color: var(--bg-primary);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.createCard:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
