@@ -11,6 +11,7 @@ import com.learnnow.learningprogress.repository.UserLearningDailyActivityReposit
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
+import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
@@ -39,7 +40,6 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public DashboardResponse buildDashboard(String userId) {
-        // 1. Get user learning preferences
         UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
                 .orElseGet(() -> UserLearningPreferences.builder()
                         .userId(userId)
@@ -49,20 +49,15 @@ public class DashboardService {
         ZoneId userZone = ZoneId.of(prefs.getTimezone());
         LocalDate today = LocalDate.now(userZone);
 
-        // 2. Build subtopic progress lookup
         List<UserSubtopicProgress> allSubtopicProgress = subtopicProgressRepository.findByUserId(userId);
-        Map<Long, List<UserSubtopicProgress>> subtopicProgressByTopic = allSubtopicProgress.stream()
+        Map<UUID, List<UserSubtopicProgress>> subtopicProgressByTopic = allSubtopicProgress.stream()
                 .collect(Collectors.groupingBy(UserSubtopicProgress::getTopicId));
 
-        long completedSubtopicsCount = allSubtopicProgress.stream().filter(UserSubtopicProgress::isCompleted).count();
-
-        // 3. Path Progress Summary
-        List<Path> allPaths = pathRepository.findAllWithTopics();
+        List<Path> allPaths = pathRepository.findAllWithTopicsByStatus(ContentStatus.PUBLISHED);
         List<UserTopicProgress> userTopicProgressList = topicProgressRepository.findByUserId(userId);
-        Map<Long, UserTopicProgress> topicProgressMap = userTopicProgressList.stream()
+        Map<UUID, UserTopicProgress> topicProgressMap = userTopicProgressList.stream()
                 .collect(Collectors.toMap(UserTopicProgress::getTopicId, t -> t));
 
-        int totalCompletedTopics = 0;
         List<PathProgressSummary> pathSummaries = new ArrayList<>();
         for (Path path : allPaths) {
             List<Topic> topics = path.getTopics();
@@ -76,10 +71,8 @@ public class DashboardService {
                 boolean isCompleted = topicProgress != null && topicProgress.getStatus() == ProgressStatus.COMPLETED;
                 if (isCompleted) {
                     completedTopicsCount++;
-                    totalCompletedTopics++;
                 }
 
-                // Calculate topic percentage from subtopic completion
                 int progressPercentage = calculateTopicPercentage(topic, subtopicProgressByTopic, isCompleted);
                 totalProgressPoints += progressPercentage;
 
@@ -112,7 +105,6 @@ public class DashboardService {
             ));
         }
 
-        // 5. Weekly Calendar Days (Current week from Monday to Sunday)
         LocalDate monday = today.with(DayOfWeek.MONDAY);
         List<LocalDate> calendarDates = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
@@ -134,21 +126,17 @@ public class DashboardService {
                 })
                 .toList();
 
-        // 6. Weekly Leaderboard — aggregate query instead of full table load
         LocalDate sunday = monday.plusDays(6);
 
-        // One SQL aggregate: SUM(points_earned) per user for this week
         List<WeeklyPointsRow> weeklyRows = dailyActivityRepository.sumWeeklyPointsByUser(monday, sunday);
         Map<String, Integer> weeklyPointsMap = weeklyRows.stream()
                 .collect(Collectors.toMap(WeeklyPointsRow::getUserId, WeeklyPointsRow::getTotalPoints));
         Map<String, java.time.Instant> earliestActivityMap = weeklyRows.stream()
                 .collect(Collectors.toMap(WeeklyPointsRow::getUserId, WeeklyPointsRow::getEarliestActivity));
 
-        // Collect the set of user IDs that matter: current user + anyone who has week activity
         Set<String> leaderboardUserIds = new HashSet<>(weeklyPointsMap.keySet());
         leaderboardUserIds.add(userId);
 
-        // Only load the specific users we need
         Map<String, User> userMap = userRepository.findAllById(leaderboardUserIds).stream()
                 .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
         Map<String, UserLearningPreferences> prefMap = preferencesRepository.findAllByUserIdIn(leaderboardUserIds).stream()
@@ -221,10 +209,8 @@ public class DashboardService {
             topLeaderboard.add(fullLeaderboard.get(currentUserRank - 1));
         }
 
-        // 7. Recent Topic Activity (last 4 topics with progress)
         List<RecentTopicActivity> recentTopics = buildRecentTopics(userTopicProgressList, allPaths, subtopicProgressByTopic);
 
-        // 8. Banner Selection
         DashboardBanner banner = selectBanner(allPaths, userTopicProgressList);
 
         return new DashboardResponse(
@@ -242,7 +228,7 @@ public class DashboardService {
         );
     }
 
-    private int calculateTopicPercentage(Topic topic, Map<Long, List<UserSubtopicProgress>> subtopicProgressByTopic, boolean isTopicCompleted) {
+    private int calculateTopicPercentage(Topic topic, Map<UUID, List<UserSubtopicProgress>> subtopicProgressByTopic, boolean isTopicCompleted) {
         if (isTopicCompleted) return 100;
 
         int totalSubtopics = topic.getSubtopics() != null ? topic.getSubtopics().size() : 0;
@@ -257,11 +243,11 @@ public class DashboardService {
     private List<RecentTopicActivity> buildRecentTopics(
             List<UserTopicProgress> progressList,
             List<Path> allPaths,
-            Map<Long, List<UserSubtopicProgress>> subtopicProgressByTopic) {
+            Map<UUID, List<UserSubtopicProgress>> subtopicProgressByTopic) {
 
-        Map<Long, Path> pathMap = allPaths.stream()
+        Map<UUID, Path> pathMap = allPaths.stream()
                 .collect(Collectors.toMap(Path::getId, p -> p));
-        Map<Long, Topic> topicMap = allPaths.stream()
+        Map<UUID, Topic> topicMap = allPaths.stream()
                 .flatMap(p -> p.getTopics().stream())
                 .collect(Collectors.toMap(Topic::getId, t -> t, (a, b) -> a));
 

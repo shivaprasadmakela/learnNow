@@ -19,14 +19,21 @@ public class TokenService {
     }
 
     public String generateToken(String userId, String email) {
+        return generateToken(userId, email, "USER");
+    }
+
+    public String generateToken(String userId, String email, String role) {
         Instant now = Instant.now();
         JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();
+        String userRole = role != null ? role.toUpperCase() : "USER";
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("learnnow")
                 .issuedAt(now)
                 .expiresAt(now.plus(7, ChronoUnit.DAYS))
                 .subject(userId)
                 .claim("email", email)
+                .claim("role", userRole)
+                .claim("scope", userRole)
                 .build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
     }

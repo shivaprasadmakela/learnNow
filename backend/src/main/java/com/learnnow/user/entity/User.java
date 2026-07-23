@@ -32,7 +32,10 @@ public class User {
     private boolean emailVerified = false;
 
     private String avatar;
-    private String role;
+
+    @Builder.Default
+    private String role = "USER";
+
     private String bio;
 
     @Builder.Default

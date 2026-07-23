@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,7 @@ public class ActivityRecordingService {
     private final StreakService streakService;
 
     @Transactional
-    public void recordTopicCompletion(String userId, Long pathId, Long topicId, ZoneId userZone) {
+    public void recordTopicCompletion(String userId, UUID pathId, UUID topicId, ZoneId userZone) {
 
         UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
                 .orElseGet(() -> preferencesRepository.save(
@@ -41,7 +42,6 @@ public class ActivityRecordingService {
 
         expireStreakIfStale(prefs, localDate);
 
-        // Update streak & check milestone bonus
         int newStreak = streakService.updateStreak(prefs, localDate);
         int milestoneBonus = streakService.getMilestoneBonus(newStreak);
 
@@ -69,7 +69,7 @@ public class ActivityRecordingService {
         upsertDailyActivity(userId, localDate, points);
     }
 
-    private boolean isPathCompleted(String userId, Long pathId) {
+    private boolean isPathCompleted(String userId, UUID pathId) {
         Path path = pathRepository.findById(pathId).orElse(null);
         if (path == null) return false;
 
@@ -96,11 +96,7 @@ public class ActivityRecordingService {
         daily.addPoints(points);
         dailyActivityRepository.save(daily);
     }
-    /**
-     * If the user's last activity was before yesterday, their active streak has expired.
-     * Reset it to 0 so the next activity starts fresh from 1.
-     * This must happen on the write path — never on a read (dashboard GET).
-     */
+
     private void expireStreakIfStale(UserLearningPreferences prefs, LocalDate today) {
         if (prefs.getLastActivityDate() != null
                 && prefs.getLastActivityDate().isBefore(today.minusDays(1))

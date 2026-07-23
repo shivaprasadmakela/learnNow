@@ -3,11 +3,12 @@ package com.learnnow.paths.dto;
 import java.util.List;
 import java.util.UUID;
 
-public record PathSummaryDto(
+public record AdminTopicRequest(
     UUID id,
     String title,
     String description,
     String category,
-    String managedBy,
-    List<TopicSummaryDto> topics
+    String duration,
+    String status,
+    List<AdminSubtopicRequest> subtopics
 ) {}

@@ -6,6 +6,8 @@ import com.learnnow.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 public class UserService {
 
@@ -18,14 +20,11 @@ public class UserService {
     public UserDto getOrCreateUser(String id, String email) {
         User user = userRepository.findById(id)
                 .orElseGet(() -> {
-                    // Create default user if none exists
                     User newUser = User.builder()
                             .id(id)
                             .email(email)
                             .fullName(email != null && email.contains("@") ? email.split("@")[0] : "New Learner")
-                            .avatar("👨‍💻")
-                            .role("Fullstack Developer Apprentice")
-                            .bio("Learning React & Spring Boot on Bugfix Academy!")
+                            .avatar(UUID.randomUUID().toString())
                             .passwordHash("")
                             .build();
                     return userRepository.save(newUser);
@@ -47,9 +46,9 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found for id: " + id));
 
         user.setFullName(dto.fullName());
-        user.setAvatar(dto.avatar());
-        user.setRole(dto.role());
-        user.setBio(dto.bio());
+        if (dto.avatar() != null) user.setAvatar(dto.avatar());
+        if (dto.role() != null) user.setRole(dto.role());
+        if (dto.bio() != null) user.setBio(dto.bio());
 
         User updated = userRepository.save(user);
         return new UserDto(

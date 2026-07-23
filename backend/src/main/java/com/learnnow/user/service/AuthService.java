@@ -29,10 +29,10 @@ public class AuthService {
     private String appBaseUrl;
 
     public AuthService(UserRepository userRepository,
-                       EmailVerificationTokenRepository tokenRepository,
-                       PasswordEncoder passwordEncoder,
-                       ResendEmailClient emailClient,
-                       TokenService tokenService) {
+                        EmailVerificationTokenRepository tokenRepository,
+                        PasswordEncoder passwordEncoder,
+                        ResendEmailClient emailClient,
+                        TokenService tokenService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -56,10 +56,8 @@ public class AuthService {
                 .lastName(req.lastName())
                 .fullName(fullName)
                 .passwordHash(passwordEncoder.encode(req.password()))
+                .avatar(UUID.randomUUID().toString())
                 .emailVerified(false)
-                .avatar("👨‍💻")
-                .role("Fullstack Developer Apprentice")
-                .bio("Learning React & Spring Boot on learnNow!")
                 .build();
 
         userRepository.save(user);
@@ -77,7 +75,6 @@ public class AuthService {
         tokenRepository.save(token);
 
         String link = appBaseUrl + "/verify-email?token=" + rawToken;
-        // In local development we will print the link to standard output so developers can access it without a Resend account key!
         System.out.println("==================================================");
         System.out.println("VERIFICATION LINK FOR " + user.getEmail() + ":");
         System.out.println(link);
@@ -97,8 +94,8 @@ public class AuthService {
 
         if (token.isUsed()) {
             if (user.isEmailVerified()) {
-                String jwt = tokenService.generateToken(user.getId(), user.getEmail());
-                UserDto profile = new UserDto(user.getId(), user.getEmail(), user.getFullName(), user.getAvatar(), user.getRole(), user.getBio());
+                String jwt = tokenService.generateToken(user.getId(), user.getEmail(), user.getRole());
+                UserDto profile = buildUserDto(user);
                 return new AuthResponse(jwt, profile);
             }
             throw new RuntimeException("token_already_used");
@@ -113,8 +110,8 @@ public class AuthService {
         token.setUsed(true);
         tokenRepository.save(token);
 
-        String jwt = tokenService.generateToken(user.getId(), user.getEmail());
-        UserDto profile = new UserDto(user.getId(), user.getEmail(), user.getFullName(), user.getAvatar(), user.getRole(), user.getBio());
+        String jwt = tokenService.generateToken(user.getId(), user.getEmail(), user.getRole());
+        UserDto profile = buildUserDto(user);
         return new AuthResponse(jwt, profile);
     }
 
@@ -127,7 +124,6 @@ public class AuthService {
             throw new RuntimeException("email_already_verified");
         }
 
-        // Invalidate old tokens
         tokenRepository.deleteByUserId(user.getId());
 
         issueVerificationToken(user);
@@ -145,8 +141,14 @@ public class AuthService {
             throw new RuntimeException("email_not_verified");
         }
 
-        String token = tokenService.generateToken(user.getId(), user.getEmail());
-        UserDto profile = new UserDto(
+        String token = tokenService.generateToken(user.getId(), user.getEmail(), user.getRole());
+        UserDto profile = buildUserDto(user);
+
+        return new AuthResponse(token, profile);
+    }
+
+    private UserDto buildUserDto(User user) {
+        return new UserDto(
                 user.getId(),
                 user.getEmail(),
                 user.getFullName(),
@@ -154,8 +156,6 @@ public class AuthService {
                 user.getRole(),
                 user.getBio()
         );
-
-        return new AuthResponse(token, profile);
     }
 
     private String generateSecureToken() {

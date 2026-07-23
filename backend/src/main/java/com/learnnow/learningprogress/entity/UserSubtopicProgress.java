@@ -23,10 +23,10 @@ public class UserSubtopicProgress {
     private String userId;
 
     @Column(name = "subtopic_id", nullable = false)
-    private Long subtopicId;
+    private UUID subtopicId;
 
     @Column(name = "topic_id", nullable = false)
-    private Long topicId;
+    private UUID topicId;
 
     @Column(nullable = false)
     @Builder.Default
@@ -34,4 +34,11 @@ public class UserSubtopicProgress {
 
     @Column(name = "completed_at")
     private Instant completedAt;
+
+    @Column(name = "content_version_answered")
+    private Integer contentVersionAnswered;
+
+    @Column(name = "first_attempt_correct")
+    @Builder.Default
+    private Boolean firstAttemptCorrect = true;
 }

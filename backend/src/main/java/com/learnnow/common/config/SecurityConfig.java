@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/paths/**", "/api/catalog/**").permitAll()
                 .requestMatchers("/api/auth/**", "/error").permitAll()
+                .requestMatchers("/api/admin/**").hasAnyAuthority("SCOPE_ADMIN", "ROLE_ADMIN", "ADMIN")
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

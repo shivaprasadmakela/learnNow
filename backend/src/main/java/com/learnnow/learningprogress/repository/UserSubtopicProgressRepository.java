@@ -8,11 +8,11 @@ import java.util.UUID;
 
 public interface UserSubtopicProgressRepository extends JpaRepository<UserSubtopicProgress, UUID> {
 
-    Optional<UserSubtopicProgress> findByUserIdAndSubtopicId(String userId, Long subtopicId);
+    Optional<UserSubtopicProgress> findByUserIdAndSubtopicId(String userId, UUID subtopicId);
 
-    List<UserSubtopicProgress> findByUserIdAndTopicId(String userId, Long topicId);
+    List<UserSubtopicProgress> findByUserIdAndTopicId(String userId, UUID topicId);
 
     List<UserSubtopicProgress> findByUserId(String userId);
 
-    long countByUserIdAndTopicIdAndCompletedTrue(String userId, Long topicId);
+    long countByUserIdAndTopicIdAndCompletedTrue(String userId, UUID topicId);
 }

@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "paths")
@@ -15,8 +18,8 @@ import lombok.Builder;
 public class Path {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String title;
 
@@ -27,7 +30,11 @@ public class Path {
     
     private String managedBy;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ContentStatus status = ContentStatus.PUBLISHED;
+
     @OneToMany(mappedBy = "path", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Builder.Default
-    private java.util.List<Topic> topics = new java.util.ArrayList<>();
+    private List<Topic> topics = new ArrayList<>();
 }

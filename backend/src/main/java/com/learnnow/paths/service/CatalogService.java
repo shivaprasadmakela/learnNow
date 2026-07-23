@@ -1,7 +1,6 @@
 package com.learnnow.paths.service;
 
 import com.learnnow.learningprogress.entity.UserSubtopicProgress;
-import com.learnnow.learningprogress.entity.UserTopicProgress;
 import com.learnnow.learningprogress.enums.ProgressStatus;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
@@ -11,7 +10,7 @@ import com.learnnow.paths.controller.CatalogController.CatalogTopicDetail;
 import com.learnnow.paths.dto.PathSummaryDto;
 import com.learnnow.paths.dto.SubtopicDto;
 import com.learnnow.paths.dto.TopicDetailDto;
-import com.learnnow.paths.dto.TopicSummaryDto;
+import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.repository.PathRepository;
 import com.learnnow.paths.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,7 +33,7 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public List<PathSummaryDto> getAllPaths() {
-        return pathRepository.findAll().stream()
+        return pathRepository.findByStatus(ContentStatus.PUBLISHED).stream()
                 .map(path -> new PathSummaryDto(
                         path.getId(),
                         path.getTitle(),
@@ -46,12 +46,15 @@ public class CatalogService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<CatalogPathDetail> getPathCatalogDetail(Long pathId) {
+    public Optional<CatalogPathDetail> getPathCatalogDetail(UUID pathId) {
         return pathRepository.findById(pathId)
+                .filter(path -> path.getStatus() == ContentStatus.PUBLISHED)
                 .map(path -> {
                     List<CatalogTopicDetail> topics = path.getTopics().stream()
+                            .filter(t -> t.getStatus() == ContentStatus.PUBLISHED)
                             .map(topic -> {
                                 List<CatalogSubtopicTitle> subtopicTitles = topic.getSubtopics().stream()
+                                        .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
                                         .map(st -> new CatalogSubtopicTitle(st.getId(), st.getTitle(), st.getOrderIndex()))
                                         .toList();
                                 return new CatalogTopicDetail(
@@ -76,23 +79,23 @@ public class CatalogService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<TopicDetailDto> getTopicDetails(Long id, String userId) {
-        return topicRepository.findByIdWithSubtopics(id)
+    public Optional<TopicDetailDto> getTopicDetails(UUID id, String userId) {
+        return topicRepository.findByIdAndStatusWithSubtopics(id, ContentStatus.PUBLISHED)
                 .map(topic -> {
                     boolean topicCompleted = topicProgressRepository.findByUserIdAndTopicId(userId, id)
                             .map(tp -> tp.getStatus() == ProgressStatus.COMPLETED)
                             .orElse(false);
 
-                    // Build subtopic completion lookup
                     List<UserSubtopicProgress> subProgressList = subtopicProgressRepository
                             .findByUserIdAndTopicId(userId, id);
-                    Map<Long, Boolean> subtopicCompletionMap = subProgressList.stream()
+                    Map<UUID, Boolean> subtopicCompletionMap = subProgressList.stream()
                             .collect(Collectors.toMap(
                                     UserSubtopicProgress::getSubtopicId,
                                     UserSubtopicProgress::isCompleted
                             ));
 
                     List<SubtopicDto> subtopics = topic.getSubtopics().stream()
+                            .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
                             .map(st -> new SubtopicDto(
                                     st.getId(),
                                     st.getTitle(),
@@ -102,7 +105,6 @@ public class CatalogService {
                             ))
                             .toList();
 
-                    // Calculate progress percentage
                     int totalSubtopics = subtopics.size();
                     long completedSubtopics = subtopics.stream().filter(SubtopicDto::isCompleted).count();
                     int progressPercentage = topicCompleted ? 100 :
@@ -121,4 +123,3 @@ public class CatalogService {
                 });
     }
 }
-

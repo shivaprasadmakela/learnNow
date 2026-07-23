@@ -1,9 +1,10 @@
 package com.learnnow.learningprogress.dto.response;
 
 import java.util.List;
+import java.util.UUID;
 
 public record PathProgressSummary(
-    Long id,
+    UUID id,
     String title,
     String description,
     String category,

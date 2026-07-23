@@ -2,10 +2,10 @@ package com.learnnow.paths.dto;
 
 import java.util.UUID;
 
-public record SubtopicDto(
+public record AdminSubtopicRequest(
     UUID id,
     String title,
     String content,
     int orderIndex,
-    boolean isCompleted
+    String status
 ) {}

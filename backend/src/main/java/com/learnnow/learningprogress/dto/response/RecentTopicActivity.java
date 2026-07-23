@@ -1,11 +1,12 @@
 package com.learnnow.learningprogress.dto.response;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public record RecentTopicActivity(
-    Long topicId,
+    UUID topicId,
     String topicTitle,
-    Long pathId,
+    UUID pathId,
     String pathTitle,
     int progressPercentage,
     boolean completed,

@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class ProgressService {
      * Explicitly mark a topic as completed/uncompleted (manual toggle by user).
      */
     @Transactional
-    public void setTopicCompletion(String userId, Long topicId, boolean completed) {
+    public void setTopicCompletion(String userId, UUID topicId, boolean completed) {
         Topic topic = topicRepository.findById(topicId)
                 .orElseThrow(TopicNotFoundException::new);
 
@@ -75,14 +76,13 @@ public class ProgressService {
      * auto-complete the parent topic (triggering streak + points + activity recording).
      */
     @Transactional
-    public void markSubtopicComplete(String userId, Long subtopicId, boolean completed) {
+    public void markSubtopicComplete(String userId, UUID subtopicId, boolean completed) {
         Subtopic subtopic = subtopicRepository.findById(subtopicId)
                 .orElseThrow(() -> new NotFoundException("subtopic_not_found"));
 
         Topic topic = subtopic.getTopic();
-        Long topicId = topic.getId();
+        UUID topicId = topic.getId();
 
-        // Upsert subtopic progress
         UserSubtopicProgress subProgress = subtopicProgressRepository
                 .findByUserIdAndSubtopicId(userId, subtopicId)
                 .orElseGet(() -> UserSubtopicProgress.builder()
@@ -92,15 +92,15 @@ public class ProgressService {
                         .build());
 
         if (completed && subProgress.isCompleted()) {
-            return; // already completed, no-op
+            return;
         }
 
         subProgress.setCompleted(completed);
         subProgress.setCompletedAt(completed ? Instant.now() : null);
+        subProgress.setContentVersionAnswered(subtopic.getVersion());
         subtopicProgressRepository.save(subProgress);
 
         if (completed) {
-            // Award subtopic points directly on entity
             UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
                     .orElseGet(() -> UserLearningPreferences.builder()
                             .userId(userId)
@@ -111,15 +111,12 @@ public class ProgressService {
             ZoneId userZone = ZoneId.of(prefs.getTimezone());
             activityRecordingService.recordDailyPoints(userId, userZone, PointsConfig.SUBTOPIC_COMPLETED);
 
-            // Check if all subtopics in this topic are now complete
             long totalSubtopics = topic.getSubtopics().size();
             long completedSubtopics = subtopicProgressRepository.countByUserIdAndTopicIdAndCompletedTrue(userId, topicId);
 
             if (totalSubtopics > 0 && completedSubtopics >= totalSubtopics) {
-                // Auto-complete the parent topic
                 setTopicCompletion(userId, topicId, true);
             } else {
-                // Mark topic as IN_PROGRESS if not already
                 UserTopicProgress topicProgress = topicProgressRepository.findByUserIdAndTopicId(userId, topicId)
                         .orElseGet(() -> UserTopicProgress.builder()
                                 .userId(userId)
@@ -133,5 +130,4 @@ public class ProgressService {
             }
         }
     }
-
 }

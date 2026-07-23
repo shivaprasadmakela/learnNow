@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/me")
@@ -27,7 +28,7 @@ public class MeController {
     @PutMapping("/topics/{topicId}/completion")
     public ResponseEntity<Void> setTopicCompletion(
             @AuthenticationPrincipal Jwt jwt,
-            @PathVariable Long topicId,
+            @PathVariable UUID topicId,
             @RequestBody SetTopicCompletionRequest request) {
         String userId = jwt.getSubject();
         progressService.setTopicCompletion(userId, topicId, request.completed());
@@ -37,7 +38,7 @@ public class MeController {
     @PutMapping("/subtopics/{subtopicId}/completion")
     public ResponseEntity<Void> setSubtopicCompletion(
             @AuthenticationPrincipal Jwt jwt,
-            @PathVariable Long subtopicId,
+            @PathVariable UUID subtopicId,
             @RequestParam(defaultValue = "true") boolean completed) {
         String userId = jwt.getSubject();
         progressService.markSubtopicComplete(userId, subtopicId, completed);

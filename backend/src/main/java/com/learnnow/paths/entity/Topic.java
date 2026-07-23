@@ -3,7 +3,7 @@ package com.learnnow.paths.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -17,8 +17,8 @@ import java.util.ArrayList;
 public class Topic {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String title;
 
@@ -29,7 +29,9 @@ public class Topic {
     
     private String duration;
 
-
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ContentStatus status = ContentStatus.PUBLISHED;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "path_id")

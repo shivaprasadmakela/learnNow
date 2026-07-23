@@ -3,6 +3,7 @@ package com.learnnow.paths.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.UUID;
 
 @Entity
 @Table(name = "subtopics")
@@ -14,8 +15,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class Subtopic {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String title;
 
@@ -23,6 +24,13 @@ public class Subtopic {
     private String content;
 
     private int orderIndex;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ContentStatus status = ContentStatus.PUBLISHED;
+
+    @Builder.Default
+    private int version = 1;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "topic_id")

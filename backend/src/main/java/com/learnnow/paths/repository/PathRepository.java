@@ -1,19 +1,19 @@
 package com.learnnow.paths.repository;
 
+import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.UUID;
 
-public interface PathRepository extends JpaRepository<Path, Long> {
+public interface PathRepository extends JpaRepository<Path, UUID> {
 
-    List<Path> findByCategoryIgnoreCase(String category);
+    List<Path> findByStatus(ContentStatus status);
 
-    /**
-     * Load all paths with their topics in one query (LEFT JOIN FETCH).
-     * Use this anywhere that needs Path.topics to avoid N+1 on a LAZY association.
-     */
-    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics ORDER BY p.id")
-    List<Path> findAllWithTopics();
+    List<Path> findByCategoryIgnoreCaseAndStatus(String category, ContentStatus status);
+
+    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t WHERE p.status = :status")
+    List<Path> findAllWithTopicsByStatus(@Param("status") ContentStatus status);
 }
-

@@ -24,10 +24,10 @@ public class UserTopicProgress {
     private String userId;
 
     @Column(name = "topic_id", nullable = false)
-    private Long topicId;
+    private UUID topicId;
 
     @Column(name = "path_id", nullable = false)
-    private Long pathId;
+    private UUID pathId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)

@@ -1,7 +1,9 @@
 package com.learnnow.learningprogress.dto.response;
 
+import java.util.UUID;
+
 public record TopicProgressSummary(
-    Long id,
+    UUID id,
     String title,
     String description,
     String category,

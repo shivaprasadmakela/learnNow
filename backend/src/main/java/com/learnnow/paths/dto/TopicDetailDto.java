@@ -1,9 +1,10 @@
 package com.learnnow.paths.dto;
 
 import java.util.List;
+import java.util.UUID;
 
 public record TopicDetailDto(
-    Long id,
+    UUID id,
     String title,
     String description,
     String category,
