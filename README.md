@@ -79,8 +79,3 @@ To terminate all background processes binding ports `8080` and `5173`:
 
 ## 🤝 Contributing Guide
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our coding standards, branch conventions, and layout structures when introducing new modules or fixing bugs.
-
----
-
-## 📚 References
-*   [Owl Stickers Pack Reference](https://www.flaticon.com/stickers-pack/owl-2)
