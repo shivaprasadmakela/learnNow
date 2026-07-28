@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from '../../pages/TopicsPage/TopicsPage.module.css';
-import bunnyBrain from '../../../../assets/bunny-brain.png';
 import type { TopicHeroBannerProps } from './TopicHeroBanner.types';
 
 export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
@@ -14,7 +13,7 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
     return (
         <div className={styles.heroBannerWrapper}>
             <div className={styles.heroBanner}>
-                {/* Top content: left info + right illustration */}
+                {/* Top content: left info */}
                 <div className={styles.heroTopContent}>
                     {/* Left: Badge, Title, Details */}
                     <div className={styles.heroLeft}>
@@ -29,11 +28,6 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
                             <span className={styles.metaDetail}>Last updated {lastUpdated}</span>
                         </div>
                     </div>
-
-                    {/* Right: Bunny brain learning illustration */}
-                    <div className={styles.heroRight}>
-                        <img src={bunnyBrain} className={styles.bunnyBrainImg} alt="Learning Path Illustration" />
-                    </div>
                 </div>
 
                 {/* Bottom CTA + Progress */}
@@ -47,7 +41,7 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
                             <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
                         </div>
                     </div>
-                    <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                    <span className={styles.overallProgressBadge}>
                         <i className="fa-solid fa-chart-line" aria-hidden="true" />
                         Overall Progress in this module: {progressPercent}%
                     </span>

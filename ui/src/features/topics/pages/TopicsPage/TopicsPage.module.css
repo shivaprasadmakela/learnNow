@@ -94,19 +94,41 @@
     overflow: hidden;
     position: relative;
     z-index: 0;
+    clip-path: polygon(0% 0%,
+            52% 0%,
+            54% 0.3%,
+            55.5% 1%,
+            57% 2.5%,
+            58.5% 5%,
+            60% 8.5%,
+            61.5% 12.8%,
+            63% 17.5%,
+            64.5% 22.2%,
+            66% 26.5%,
+            67.5% 29.5%,
+            69% 31.2%,
+            71% 31.8%,
+            74% 32%,
+            82% 32%,
+            84% 32.1%,
+            86% 32.3%,
+            88% 32.8%,
+            90% 33.6%,
+            92% 34.8%,
+            94% 36.6%,
+            95.5% 38.4%,
+            97% 40.8%,
+            98.2% 43.8%,
+            99.1% 47.2%,
+            99.7% 51.5%,
+            100% 56%,
+            100% 100%,
+            0% 100%);
 }
 
-/* Step notch — same color as page background, sits over bottom-right */
+/* Step notch — legacy placeholder */
 .heroBannerNotch {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 40%;
-    height: 38%;
-    background-color: var(--bg-primary);
-    border-top-left-radius: 18px;
-    pointer-events: none;
-    z-index: 1;
+    display: none;
 }
 
 /* Row 1: left content + right illustration */
@@ -123,6 +145,7 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    max-width: 48%;
     min-width: 0;
 }
 
@@ -241,6 +264,21 @@
     background-color: rgba(255, 255, 255, 0.85);
     border-radius: 4px;
     transition: width var(--transition-normal);
+}
+
+.overallProgressBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    padding: 6px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Overview Layout */
