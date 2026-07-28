@@ -42,19 +42,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
                 <button
                     type="button"
+                    className={styles.createBtn}
                     onClick={onNavigateCreate}
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 18px',
-                        backgroundColor: 'var(--tech-blue)',
-                        color: '#ffffff',
-                        fontWeight: 600,
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer'
-                    }}
                 >
                     <Plus size={18} /> Create Course
                 </button>
@@ -73,7 +62,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onAction={onNavigateCreate}
                 />
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px', marginTop: '24px' }}>
+                <div className={styles.pathGrid}>
                     {paths.map(path => {
                         const isPublished = path.status === 'PUBLISHED';
                         return (
@@ -81,7 +70,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 key={path.id}
                                 badgeLabel={path.category || 'Backend'}
                                 badgeVariant={isPublished ? 'green' : 'orange'}
-                                badgeIcon={isPublished ? <i className="fa-solid fa-hands-clapping" aria-hidden="true" /> : undefined}
+                                isCompleted={isPublished}
                                 title={path.title}
                                 description={path.description}
                                 footerText={`${path.topics?.length || 0} Topics`}

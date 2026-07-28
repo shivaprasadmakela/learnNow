@@ -1,0 +1,101 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+}
+
+/* Empty state */
+.emptyPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    min-height: 300px;
+    background: var(--bg-card);
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    color: var(--text-tertiary);
+    padding: 32px;
+    text-align: center;
+}
+
+.emptyIcon { color: var(--border-color); }
+
+.emptyText {
+    font-size: 0.88rem;
+    max-width: 240px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Editor */
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.sectionLabel {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.inputField {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.inputField:focus {
+    outline: none;
+    border-color: var(--tech-blue);
+}
+
+.contentTextarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.84rem;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 380px;
+    line-height: 1.6;
+    transition: border-color 0.15s;
+}
+
+.contentTextarea:focus {
+    outline: none;
+    border-color: var(--tech-blue);
+}

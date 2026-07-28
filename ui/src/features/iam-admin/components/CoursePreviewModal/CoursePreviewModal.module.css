@@ -1,0 +1,324 @@
+/* ─── Trigger Button ─────────────────────────────────────────── */
+.triggerBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.triggerBtn:hover {
+    background: rgba(26, 115, 232, 0.08);
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+/* ─── Overlay ────────────────────────────────────────────────── */
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: overlayIn 0.18s ease;
+}
+
+@keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ─── Modal Shell ────────────────────────────────────────────── */
+.modal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1100px;
+    height: 85vh;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.35);
+    animation: modalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+    from { transform: scale(0.97) translateY(12px); opacity: 0.5; }
+    to   { transform: scale(1) translateY(0);       opacity: 1; }
+}
+
+/* ─── Modal Header ───────────────────────────────────────────── */
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.modalTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.titleIcon { color: var(--tech-blue); flex-shrink: 0; }
+
+.closeBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.12s, color 0.12s;
+}
+
+.closeBtn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ─── Study Layout ───────────────────────────────────────────── */
+.consoleView {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ─── TOC Sidebar ────────────────────────────────────────────── */
+.toc {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 16px;
+}
+
+.tocLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 18px 20px 8px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.tocGroup { display: flex; flex-direction: column; margin-bottom: 4px; }
+
+.tocGroupTitle {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-primary);
+    padding: 12px 20px 4px;
+    margin: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.tocList { list-style: none; margin: 0; padding: 0; }
+
+.tocItem {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: inherit;
+    line-height: 1.4;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.tocItem:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.tocItemActive {
+    background: var(--bg-tertiary);
+    border-left-color: var(--tech-blue);
+    color: var(--tech-blue);
+    font-weight: 600;
+}
+
+.tocNum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.tocItemActive .tocNum {
+    background: var(--tech-blue);
+    color: #fff;
+}
+
+.tocCheck {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--tech-blue);
+}
+
+/* ─── Reading Pane ───────────────────────────────────────────── */
+.readingPane {
+    flex: 1;
+    overflow-y: auto;
+    padding: 3rem 4rem;
+    background: var(--bg-tertiary);
+}
+
+.article {
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.articleTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.articleBody {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+}
+
+/* ─── Markdown ───────────────────────────────────────────────── */
+.textBlock { margin-bottom: 1.5rem; }
+.paragraph { margin: 0 0 1.25rem; }
+.emptyContent { color: var(--text-tertiary); font-style: italic; }
+
+.h2 { font-size: 1.55rem; font-weight: 600; color: var(--text-primary); margin: 2rem 0 1rem; }
+.h3 { font-size: 1.3rem;  font-weight: 600; color: var(--text-primary); margin: 1.75rem 0 0.75rem; }
+.h4 { font-size: 1.1rem;  font-weight: 600; color: var(--text-primary); margin: 1.5rem 0 0.6rem; }
+
+.list { padding-left: 1.5rem; margin: 0 0 1.25rem; }
+.list li { margin-bottom: 0.5rem; }
+
+.codeBlock {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.9rem;
+    position: relative;
+}
+
+.codeBlock code { color: var(--text-primary); }
+
+.codeLang {
+    position: absolute;
+    top: 6px;
+    right: 12px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* ─── Footer Nav ─────────────────────────────────────────────── */
+.consoleFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+    height: 64px;
+}
+
+.navBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.6rem 1.2rem;
+    background: var(--bg-tertiary);
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.navBtn:hover:not(:disabled) { background: var(--border-color); }
+.navBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.navProgress {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+/* ─── Empty State ────────────────────────────────────────────── */
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
