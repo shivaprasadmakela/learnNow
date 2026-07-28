@@ -128,12 +128,14 @@ public class ContentAuthoringService {
 
         if (request.topics() != null) {
             java.util.List<Topic> topics = new java.util.ArrayList<>();
+            int tIdx = 1;
             for (AdminPathDto.AdminTopicDto topicReq : request.topics()) {
                 Topic topic = Topic.builder()
                         .title(topicReq.title())
                         .description(topicReq.description())
                         .category(topicReq.category() != null ? topicReq.category() : "Topic")
                         .duration(topicReq.duration() != null ? topicReq.duration() : "1 hour")
+                        .orderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++)
                         .status(parseStatus(topicReq.status()))
                         .path(path)
                         .build();
@@ -173,25 +175,30 @@ public class ContentAuthoringService {
     }
 
     private AdminPathDto toAdminPathDto(Path path) {
-        List<AdminPathDto.AdminTopicDto> topics = path.getTopics().stream().map(t -> {
-            List<AdminPathDto.AdminSubtopicDto> subtopics = t.getSubtopics().stream().map(st -> new AdminPathDto.AdminSubtopicDto(
-                    st.getId(),
-                    st.getTitle(),
-                    st.getContent(),
-                    st.getOrderIndex(),
-                    st.getStatus() != null ? st.getStatus().name() : "DRAFT"
-            )).toList();
+        List<AdminPathDto.AdminTopicDto> topics = path.getTopics().stream()
+                .sorted(java.util.Comparator.comparingInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
+                .map(t -> {
+                    List<AdminPathDto.AdminSubtopicDto> subtopics = t.getSubtopics().stream()
+                            .sorted(java.util.Comparator.comparingInt(st -> st.getOrderIndex()))
+                            .map(st -> new AdminPathDto.AdminSubtopicDto(
+                                    st.getId(),
+                                    st.getTitle(),
+                                    st.getContent(),
+                                    st.getOrderIndex(),
+                                    st.getStatus() != null ? st.getStatus().name() : "DRAFT"
+                            )).toList();
 
-            return new AdminPathDto.AdminTopicDto(
-                    t.getId(),
-                    t.getTitle(),
-                    t.getDescription(),
-                    t.getCategory(),
-                    t.getDuration(),
-                    t.getStatus() != null ? t.getStatus().name() : "DRAFT",
-                    subtopics
-            );
-        }).toList();
+                    return new AdminPathDto.AdminTopicDto(
+                            t.getId(),
+                            t.getTitle(),
+                            t.getDescription(),
+                            t.getCategory(),
+                            t.getDuration(),
+                            t.getOrderIndex() != null ? t.getOrderIndex() : 1,
+                            t.getStatus() != null ? t.getStatus().name() : "DRAFT",
+                            subtopics
+                    );
+                }).toList();
 
         return new AdminPathDto(
                 path.getId(),

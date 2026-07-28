@@ -35,6 +35,7 @@ public class Path {
     private ContentStatus status = ContentStatus.PUBLISHED;
 
     @OneToMany(mappedBy = "path", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OrderBy("orderIndex ASC")
     @Builder.Default
     private List<Topic> topics = new ArrayList<>();
 }

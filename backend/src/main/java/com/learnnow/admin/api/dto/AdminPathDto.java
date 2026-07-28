@@ -18,6 +18,7 @@ public record AdminPathDto(
         String description,
         String category,
         String duration,
+        int orderIndex,
         String status,
         List<AdminSubtopicDto> subtopics
     ) {}

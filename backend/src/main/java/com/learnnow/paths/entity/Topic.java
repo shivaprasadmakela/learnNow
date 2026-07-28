@@ -29,6 +29,10 @@ public class Topic {
     
     private String duration;
 
+    @Column(name = "order_index")
+    @Builder.Default
+    private Integer orderIndex = 1;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ContentStatus status = ContentStatus.PUBLISHED;
