@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, Eye, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import styles from './CoursePreviewModal.module.css';
-import type { AdminTopicData } from '../../api/admin.api';
+import type { AdminTopicData, QuizQuestionDto } from '../../api/admin.api';
+import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
 
 interface CoursePreviewModalProps {
     title: string;
@@ -15,6 +16,7 @@ interface SubtopicEntry {
     subtopicIdx: number;
     subtopicTitle: string;
     content: string;
+    questions?: QuizQuestionDto[];
 }
 
 function flattenSubtopics(topics: AdminTopicData[]): SubtopicEntry[] {
@@ -27,6 +29,7 @@ function flattenSubtopics(topics: AdminTopicData[]): SubtopicEntry[] {
                 subtopicIdx: sIdx,
                 subtopicTitle: sub.title,
                 content: sub.content,
+                questions: sub.questions,
             });
         });
     });
@@ -164,6 +167,26 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ title, m
                                             <h1 className={styles.articleTitle}>{active.subtopicTitle}</h1>
                                             <div className={styles.articleBody}>
                                                 {renderContent(active.content)}
+                                                {active.questions && active.questions.length > 0 && (
+                                                    <div style={{ marginTop: '24px' }}>
+                                                        <ContentRenderer
+                                                            blocks={[{
+                                                                id: `preview-quiz-${active.subtopicIdx}`,
+                                                                orderIndex: 1,
+                                                                type: 'quiz',
+                                                                questions: active.questions.map((q, idx) => ({
+                                                                    id: q.id || `q-${idx}`,
+                                                                    kind: q.kind,
+                                                                    prompt: q.prompt,
+                                                                    options: q.options,
+                                                                    correctAnswer: q.correctAnswer,
+                                                                    explanation: q.explanation,
+                                                                    points: q.points,
+                                                                })),
+                                                            }]}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         </article>
                                     ) : (

@@ -32,6 +32,12 @@ export interface UseConfigurationEditorReturn {
     handleAddSubtopic: (topicIndex: number) => void;
     handleRemoveSubtopic: (topicIndex: number, subtopicIndex: number) => void;
     handleUpdateSubtopic: (topicIndex: number, subtopicIndex: number, field: keyof AdminSubtopicData, value: string) => void;
+    handleAddQuestion: (topicIndex: number, subtopicIndex: number) => void;
+    handleRemoveQuestion: (topicIndex: number, subtopicIndex: number, questionIndex: number) => void;
+    handleUpdateQuestion: (topicIndex: number, subtopicIndex: number, questionIndex: number, field: keyof import('../../api/admin.api').QuizQuestionDto, value: any) => void;
+    handleAddOption: (topicIndex: number, subtopicIndex: number, questionIndex: number) => void;
+    handleRemoveOption: (topicIndex: number, subtopicIndex: number, questionIndex: number, optionIndex: number) => void;
+    handleUpdateOption: (topicIndex: number, subtopicIndex: number, questionIndex: number, optionIndex: number, value: string) => void;
     handleSaveDraft: () => Promise<void>;
     handlePublish: () => Promise<void>;
 }
@@ -150,7 +156,7 @@ export const useConfigurationEditor = (
         topicIndex: number,
         subtopicIndex: number,
         field: keyof AdminSubtopicData,
-        value: string,
+        value: any,
     ) => {
         setTopics(prev => {
             const topic = prev[topicIndex];
@@ -158,6 +164,118 @@ export const useConfigurationEditor = (
             updatedSubtopics[subtopicIndex] = { ...updatedSubtopics[subtopicIndex], [field]: value };
             const updated = [...prev];
             updated[topicIndex] = { ...topic, subtopics: updatedSubtopics };
+            return updated;
+        });
+    }, []);
+
+    const handleAddQuestion = useCallback((topicIndex: number, subtopicIndex: number) => {
+        setTopics(prev => {
+            const topic = prev[topicIndex];
+            const subtopics = [...topic.subtopics];
+            const targetSub = subtopics[subtopicIndex];
+            const questions = targetSub.questions || [];
+            const newQ: import('../../api/admin.api').QuizQuestionDto = {
+                kind: 'mcq',
+                prompt: 'Enter question prompt here...',
+                options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                correctAnswer: 'Option A',
+                explanation: 'Explanation for why Option A is correct.',
+                points: 5,
+            };
+            subtopics[subtopicIndex] = { ...targetSub, questions: [...questions, newQ] };
+            const updated = [...prev];
+            updated[topicIndex] = { ...topic, subtopics };
+            return updated;
+        });
+    }, []);
+
+    const handleRemoveQuestion = useCallback((topicIndex: number, subtopicIndex: number, questionIndex: number) => {
+        setTopics(prev => {
+            const topic = prev[topicIndex];
+            const subtopics = [...topic.subtopics];
+            const targetSub = subtopics[subtopicIndex];
+            const questions = (targetSub.questions || []).filter((_, i) => i !== questionIndex);
+            subtopics[subtopicIndex] = { ...targetSub, questions };
+            const updated = [...prev];
+            updated[topicIndex] = { ...topic, subtopics };
+            return updated;
+        });
+    }, []);
+
+    const handleUpdateQuestion = useCallback((
+        topicIndex: number,
+        subtopicIndex: number,
+        questionIndex: number,
+        field: keyof import('../../api/admin.api').QuizQuestionDto,
+        value: any,
+    ) => {
+        setTopics(prev => {
+            const topic = prev[topicIndex];
+            const subtopics = [...topic.subtopics];
+            const targetSub = subtopics[subtopicIndex];
+            const questions = [...(targetSub.questions || [])];
+            questions[questionIndex] = { ...questions[questionIndex], [field]: value };
+            subtopics[subtopicIndex] = { ...targetSub, questions };
+            const updated = [...prev];
+            updated[topicIndex] = { ...topic, subtopics };
+            return updated;
+        });
+    }, []);
+
+    const handleAddOption = useCallback((topicIndex: number, subtopicIndex: number, questionIndex: number) => {
+        setTopics(prev => {
+            const topic = prev[topicIndex];
+            const subtopics = [...topic.subtopics];
+            const targetSub = subtopics[subtopicIndex];
+            const questions = [...(targetSub.questions || [])];
+            const q = questions[questionIndex];
+            const options = [...(q.options || []), `Option ${q.options ? q.options.length + 1 : 1}`];
+            questions[questionIndex] = { ...q, options };
+            subtopics[subtopicIndex] = { ...targetSub, questions };
+            const updated = [...prev];
+            updated[topicIndex] = { ...topic, subtopics };
+            return updated;
+        });
+    }, []);
+
+    const handleRemoveOption = useCallback((topicIndex: number, subtopicIndex: number, questionIndex: number, optionIndex: number) => {
+        setTopics(prev => {
+            const topic = prev[topicIndex];
+            const subtopics = [...topic.subtopics];
+            const targetSub = subtopics[subtopicIndex];
+            const questions = [...(targetSub.questions || [])];
+            const q = questions[questionIndex];
+            const options = (q.options || []).filter((_, i) => i !== optionIndex);
+            const correctAnswer = q.correctAnswer === q.options[optionIndex] ? (options[0] || '') : q.correctAnswer;
+            questions[questionIndex] = { ...q, options, correctAnswer };
+            subtopics[subtopicIndex] = { ...targetSub, questions };
+            const updated = [...prev];
+            updated[topicIndex] = { ...topic, subtopics };
+            return updated;
+        });
+    }, []);
+
+    const handleUpdateOption = useCallback((
+        topicIndex: number,
+        subtopicIndex: number,
+        questionIndex: number,
+        optionIndex: number,
+        value: string
+    ) => {
+        setTopics(prev => {
+            const topic = prev[topicIndex];
+            const subtopics = [...topic.subtopics];
+            const targetSub = subtopics[subtopicIndex];
+            const questions = [...(targetSub.questions || [])];
+            const q = questions[questionIndex];
+            const options = [...(q.options || [])];
+            const oldVal = options[optionIndex];
+            options[optionIndex] = value;
+            const correctAnswer = q.correctAnswer === oldVal ? value : q.correctAnswer;
+            questions[questionIndex] = { ...q, options, correctAnswer };
+            subtopics[subtopicIndex] = { ...targetSub, questions };
+            const updated = [...prev];
+            updated[topicIndex] = { ...topic, subtopics };
             return updated;
         });
     }, []);
@@ -222,6 +340,8 @@ export const useConfigurationEditor = (
         activeSubtopicIndex, setActiveSubtopicIndex,
         handleAddTopic, handleRemoveTopic, handleUpdateTopic,
         handleAddSubtopic, handleRemoveSubtopic, handleUpdateSubtopic,
+        handleAddQuestion, handleRemoveQuestion, handleUpdateQuestion,
+        handleAddOption, handleRemoveOption, handleUpdateOption,
         handleSaveDraft, handlePublish,
     };
 };

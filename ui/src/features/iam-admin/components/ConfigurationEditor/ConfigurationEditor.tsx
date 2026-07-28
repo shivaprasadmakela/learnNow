@@ -25,6 +25,8 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
         activeSubtopicIndex, setActiveSubtopicIndex,
         handleAddTopic, handleRemoveTopic, handleUpdateTopic,
         handleAddSubtopic, handleRemoveSubtopic, handleUpdateSubtopic,
+        handleAddQuestion, handleRemoveQuestion, handleUpdateQuestion,
+        handleAddOption, handleRemoveOption, handleUpdateOption,
         handleSaveDraft, handlePublish,
     } = useConfigurationEditor(pathId, onSaveSuccess);
 
@@ -115,6 +117,12 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
                         onSubtopicContentChange={(tIdx, sIdx, value) =>
                             handleUpdateSubtopic(tIdx, sIdx, 'content', value)
                         }
+                        onAddQuestion={handleAddQuestion}
+                        onRemoveQuestion={handleRemoveQuestion}
+                        onUpdateQuestion={handleUpdateQuestion}
+                        onAddOption={handleAddOption}
+                        onRemoveOption={handleRemoveOption}
+                        onUpdateOption={handleUpdateOption}
                     />
                 </div>
             </div>

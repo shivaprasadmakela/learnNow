@@ -4,6 +4,7 @@
     flex-direction: column;
     height: calc(100vh - 72px);
     max-height: calc(100vh - 72px);
+    width: 100%;
     gap: 0;
     background: var(--bg-primary);
     overflow: hidden;

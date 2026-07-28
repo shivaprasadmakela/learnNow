@@ -28,6 +28,17 @@ public record AdminPathDto(
         String title,
         String content,
         int orderIndex,
-        String status
+        String status,
+        List<AdminQuizQuestionDto> questions
+    ) {}
+
+    public record AdminQuizQuestionDto(
+        UUID id,
+        String kind,
+        String prompt,
+        List<String> options,
+        String correctAnswer,
+        String explanation,
+        int points
     ) {}
 }

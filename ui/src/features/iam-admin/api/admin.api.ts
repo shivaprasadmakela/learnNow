@@ -1,11 +1,22 @@
 import { apiFetch } from '../../../shared/api/client';
 
+export interface QuizQuestionDto {
+    id?: string;
+    kind: 'mcq' | 'true_false' | 'fill_blank';
+    prompt: string;
+    options: string[];
+    correctAnswer: string;
+    explanation?: string;
+    points?: number;
+}
+
 export interface AdminSubtopicData {
     id?: string;
     title: string;
     content: string;
     orderIndex: number;
     status: 'DRAFT' | 'PUBLISHED';
+    questions?: QuizQuestionDto[];
 }
 
 export interface AdminTopicData {

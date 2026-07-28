@@ -99,3 +99,168 @@
     outline: none;
     border-color: var(--tech-blue);
 }
+
+/* ─── MCQ Quiz Section ───────────────────────────────────────── */
+.quizSection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.quizSectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.quizSectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.addQuestionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--tech-blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.addQuestionBtn:hover {
+    background: #1558b0;
+}
+
+.noQuestionsBox {
+    padding: 16px;
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.questionList {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.questionCard {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.questionCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.questionBadge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--tech-blue);
+    background: rgba(26, 115, 232, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.subLabel {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.optionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.optionRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.optionRowCorrect {
+    border-color: var(--tech-green);
+    background: rgba(34, 197, 94, 0.04);
+}
+
+.optionInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 0.84rem;
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+.correctCheckIcon {
+    color: var(--tech-green);
+}
+
+.addOptionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--tech-blue);
+    background: none;
+    border: none;
+    cursor: pointer;
+    align-self: flex-start;
+}
+
+.addOptionBtn:hover {
+    text-decoration: underline;
+}
+
+.removeBtn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.12s, background 0.12s;
+}
+
+.removeBtn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}

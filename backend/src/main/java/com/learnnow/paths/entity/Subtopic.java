@@ -36,4 +36,8 @@ public class Subtopic {
     @JoinColumn(name = "topic_id")
     @JsonIgnore
     private Topic topic;
+
+    @OneToMany(mappedBy = "subtopic", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<com.learnnow.admin.persistence.ContentBlock> blocks = new java.util.ArrayList<>();
 }

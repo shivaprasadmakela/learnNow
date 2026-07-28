@@ -50,7 +50,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
 
     return (
         <div className={
-            activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL'
+            activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH'
                 ? styles.pageContentFull
                 : activeView === 'DASHBOARD'
                     ? styles.pageContentDashboard

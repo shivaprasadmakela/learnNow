@@ -151,6 +151,37 @@ public class ContentAuthoringService {
                                 .status(parseStatus(stReq.status()))
                                 .topic(topic)
                                 .build();
+
+                        if (stReq.questions() != null && !stReq.questions().isEmpty()) {
+                            com.learnnow.admin.persistence.ContentBlock block = com.learnnow.admin.persistence.ContentBlock.builder()
+                                    .subtopic(subtopic)
+                                    .type("quiz")
+                                    .orderIndex(1)
+                                    .build();
+
+                            java.util.List<com.learnnow.admin.persistence.QuizQuestion> questions = new java.util.ArrayList<>();
+                            for (AdminPathDto.AdminQuizQuestionDto qReq : stReq.questions()) {
+                                String optionsJson = "[]";
+                                if (qReq.options() != null) {
+                                    try {
+                                        optionsJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(qReq.options());
+                                    } catch (Exception ignored) {}
+                                }
+                                com.learnnow.admin.persistence.QuizQuestion q = com.learnnow.admin.persistence.QuizQuestion.builder()
+                                        .block(block)
+                                        .kind(qReq.kind() != null ? qReq.kind() : "mcq")
+                                        .prompt(qReq.prompt())
+                                        .options(optionsJson)
+                                        .correctAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "")
+                                        .explanation(qReq.explanation())
+                                        .points(qReq.points() > 0 ? qReq.points() : 5)
+                                        .build();
+                                questions.add(q);
+                            }
+                            block.setQuestions(questions);
+                            subtopic.getBlocks().add(block);
+                        }
+
                         subtopics.add(subtopic);
                     }
                     topic.setSubtopics(subtopics);
@@ -180,13 +211,40 @@ public class ContentAuthoringService {
                 .map(t -> {
                     List<AdminPathDto.AdminSubtopicDto> subtopics = t.getSubtopics().stream()
                             .sorted(java.util.Comparator.comparingInt(st -> st.getOrderIndex()))
-                            .map(st -> new AdminPathDto.AdminSubtopicDto(
-                                    st.getId(),
-                                    st.getTitle(),
-                                    st.getContent(),
-                                    st.getOrderIndex(),
-                                    st.getStatus() != null ? st.getStatus().name() : "DRAFT"
-                            )).toList();
+                            .map(st -> {
+                                List<AdminPathDto.AdminQuizQuestionDto> questions = st.getBlocks() != null ? st.getBlocks().stream()
+                                        .filter(b -> "quiz".equalsIgnoreCase(b.getType()) && b.getQuestions() != null)
+                                        .flatMap(b -> b.getQuestions().stream())
+                                        .map(q -> {
+                                            List<String> optsList = List.of();
+                                            if (q.getOptions() != null) {
+                                                try {
+                                                    optsList = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                                                            q.getOptions(),
+                                                            new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
+                                                    );
+                                                } catch (Exception ignored) {}
+                                            }
+                                            return new AdminPathDto.AdminQuizQuestionDto(
+                                                    q.getId(),
+                                                    q.getKind(),
+                                                    q.getPrompt(),
+                                                    optsList,
+                                                    q.getCorrectAnswer(),
+                                                    q.getExplanation(),
+                                                    q.getPoints()
+                                            );
+                                        }).toList() : List.of();
+
+                                return new AdminPathDto.AdminSubtopicDto(
+                                        st.getId(),
+                                        st.getTitle(),
+                                        st.getContent(),
+                                        st.getOrderIndex(),
+                                        st.getStatus() != null ? st.getStatus().name() : "DRAFT",
+                                        questions
+                                );
+                            }).toList();
 
                     return new AdminPathDto.AdminTopicDto(
                             t.getId(),
