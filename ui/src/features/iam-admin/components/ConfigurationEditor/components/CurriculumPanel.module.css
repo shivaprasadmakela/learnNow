@@ -148,6 +148,14 @@
     transition: background 0.12s, border-color 0.12s;
 }
 
+.subtopicIndex {
+    font-weight: 700;
+    color: var(--tech-blue);
+    font-size: 0.8rem;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
 .subtopicItem:hover {
     background: rgba(26, 115, 232, 0.06);
 }

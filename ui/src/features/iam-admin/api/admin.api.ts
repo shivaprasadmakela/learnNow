@@ -14,6 +14,7 @@ export interface AdminTopicData {
     description: string;
     category: string;
     duration: string;
+    orderIndex?: number;
     status: 'DRAFT' | 'PUBLISHED';
     subtopics: AdminSubtopicData[];
 }

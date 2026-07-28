@@ -28,6 +28,30 @@
     margin-bottom: 12px;
 }
 
+.badgeGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pathPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background-color: rgba(26, 115, 232, 0.08);
+    border: 1px solid rgba(26, 115, 232, 0.2);
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: var(--tech-blue, #1a73e8);
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .badgePill {
     display: inline-flex;
     align-items: center;
@@ -128,6 +152,16 @@
     margin: 0 0 8px 0;
     letter-spacing: -0.015em;
     font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.titleIcon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--tech-blue, #1a73e8);
+    flex-shrink: 0;
 }
 
 .cardDescription {

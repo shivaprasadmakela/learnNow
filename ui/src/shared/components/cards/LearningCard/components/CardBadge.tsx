@@ -9,8 +9,9 @@ interface CardBadgeProps {
 }
 
 const renderDefaultBadgeIcon = (label?: string) => {
-    if (label && label.toLowerCase().includes('topic')) {
-        return <i className="fa-solid fa-layer-group" aria-hidden="true" />;
+    const l = (label || '').toLowerCase();
+    if (l.includes('topic') || l.includes('course') || l.includes('lab')) {
+        return <i className="fa-solid fa-dove" aria-hidden="true" />;
     }
     return <i className="fa-solid fa-dragon" aria-hidden="true" />;
 };

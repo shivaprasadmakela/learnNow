@@ -16,6 +16,11 @@ interface CurriculumPanelProps {
     onRemoveSubtopic: (topicIdx: number, subtopicIdx: number) => void;
 }
 
+const cleanSubtopicTitle = (title?: string) => {
+    if (!title) return 'New Subtopic';
+    return title.replace(/^\d+[\.\)]\s*/, '').replace(/^\d+\.\d+\s*/, '');
+};
+
 export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
     topics,
     activeTopicIndex,
@@ -77,13 +82,15 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
                         <ul className={styles.subtopicList}>
                             {topic.subtopics?.map((sub, sIdx) => {
                                 const isActive = activeTopicIndex === tIdx && activeSubtopicIndex === sIdx;
+                                const displayTitle = cleanSubtopicTitle(sub.title);
                                 return (
                                     <li
                                         key={sIdx}
                                         className={`${styles.subtopicItem} ${isActive ? styles.subtopicItemActive : ''}`}
                                         onClick={() => onSelectSubtopic(tIdx, sIdx)}
                                     >
-                                        <span className={styles.subtopicLabel}>{sub.title || `Subtopic ${sIdx + 1}`}</span>
+                                        <span className={styles.subtopicIndex}>{sIdx + 1}.</span>
+                                        <span className={styles.subtopicLabel}>{displayTitle}</span>
                                         <button
                                             type="button"
                                             className={styles.iconBtnDanger}

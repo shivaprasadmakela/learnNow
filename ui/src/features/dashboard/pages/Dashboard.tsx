@@ -81,7 +81,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     <div className={styles.tabContent}>
                         {activeTab === 'activities' ? (
-                            <RecentTopicsList topics={recentTopics} onSelectTopic={onSelectPath} />
+                            <RecentTopicsList topics={recentTopics} paths={paths} onSelectTopic={onSelectPath} />
                         ) : (
                             <PathsOverview paths={paths} onSelectPath={onSelectPath} />
                         )}

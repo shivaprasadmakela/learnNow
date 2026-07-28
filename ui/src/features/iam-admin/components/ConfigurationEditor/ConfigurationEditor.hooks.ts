@@ -71,15 +71,29 @@ export const useConfigurationEditor = (
             });
     }, [pathId, showToast]);
 
+    // Warn user before reloading/leaving while in Configuration Editor
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes in your course configuration. Are you sure you want to leave?';
+            return e.returnValue;
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
     const handleAddTopic = useCallback(() => {
         const newTopic: AdminTopicData = {
             title: `New Topic ${topics.length + 1}`,
             description: 'Topic overview and learning goals.',
             category: 'Topic',
             duration: '2 hours',
+            orderIndex: topics.length + 1,
             status: 'DRAFT',
             subtopics: [{
-                title: '1. Introduction & Overview',
+                title: 'Introduction & Overview',
                 content: '### Section Overview\n\nAdd section content and details here.',
                 orderIndex: 1,
                 status: 'DRAFT',
@@ -93,7 +107,7 @@ export const useConfigurationEditor = (
     const handleRemoveTopic = useCallback((index: number) => {
         setTopics(prev => prev.filter((_item: AdminTopicData, i: number) => i !== index));
         setActiveTopicIndex(ai => Math.min(ai, Math.max(0, topics.length - 2)));
-    }, []);
+    }, [topics]);
 
     const handleUpdateTopic = useCallback((index: number, field: keyof AdminTopicData, value: string) => {
         setTopics(prev => {
@@ -108,8 +122,8 @@ export const useConfigurationEditor = (
             const topic = prev[topicIndex];
             const subtopics = topic.subtopics || [];
             const newSubtopic: AdminSubtopicData = {
-                title: `${subtopics.length + 1}. New Subtopic`,
-                content: '### New Section\n\nEnter subtopic body content here.',
+                title: 'New Subtopic',
+                content: '### Section Overview\n\nEnter subtopic body content here.',
                 orderIndex: subtopics.length + 1,
                 status: 'DRAFT',
             };
@@ -155,7 +169,14 @@ export const useConfigurationEditor = (
         category,
         managedBy,
         status: overrideStatus,
-        topics,
+        topics: topics.map((t, idx) => ({
+            ...t,
+            orderIndex: t.orderIndex && t.orderIndex > 0 ? t.orderIndex : idx + 1,
+            subtopics: (t.subtopics || []).map((st, stIdx) => ({
+                ...st,
+                orderIndex: st.orderIndex && st.orderIndex > 0 ? st.orderIndex : stIdx + 1,
+            })),
+        })),
     });
 
     const handleSaveDraft = useCallback(async () => {

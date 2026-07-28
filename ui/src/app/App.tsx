@@ -17,7 +17,6 @@ export default function App() {
         editingPathId,
         profile,
         isLoading,
-        error,
         theme,
         toggleTheme,
         saveProfile,
@@ -49,15 +48,10 @@ export default function App() {
         refreshUserData
     });
 
-    const [selectedPathId, setSelectedPathId] = useState<number | null>(() => {
-        if (typeof window !== 'undefined') {
-            const parts = window.location.pathname.split('/').filter(Boolean);
-            if (parts.length >= 2 && parts[0] === 'paths' && parts[1] === 'java-backend-path') {
-                return 1;
-            }
-        }
-        return null;
-    });
+    const slugify = (text: string) =>
+        text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+    const [selectedPathId, setSelectedPathId] = useState<number | null>(null);
 
     const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths'>('activities');
     const [isPathsActive, setIsPathsActive] = useState(() => {
@@ -68,6 +62,24 @@ export default function App() {
     });
 
     const [celebratingPath] = useState(null);
+
+    // Resolve selectedPathId dynamically from URL whenever courses load or route changes
+    useEffect(() => {
+        if (typeof window === 'undefined' || courses.length === 0) return;
+        const parts = window.location.pathname.split('/').filter(Boolean);
+        if (parts.length >= 2 && parts[0] === 'paths') {
+            const pathSlug = parts[1];
+            const matchedPath = courses.find(c => {
+                const s = slugify(c.title);
+                const normC = c.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const normS = pathSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return s === pathSlug || String(c.id) === pathSlug || normC === normS || normC.includes(normS);
+            });
+            if (matchedPath) {
+                setSelectedPathId(matchedPath.id);
+            }
+        }
+    }, [courses]);
 
     // Auth redirection effect
     useEffect(() => {
@@ -82,7 +94,8 @@ export default function App() {
 
     const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => {
         if (view === 'TOPICS') {
-            changeView(view, 'java-backend-path');
+            const path = courses.find(c => c.id === selectedPathId) || courses[0];
+            changeView(view, path ? slugify(path.title) : 'path');
         } else {
             changeView(view);
         }
@@ -104,7 +117,7 @@ export default function App() {
         }
         setSelectedPathId(pathId);
         const path = courses.find(c => c.id === pathId);
-        const slug = path?.title.toLowerCase().includes('java') ? 'java-backend-path' : undefined;
+        const slug = path ? slugify(path.title) : 'path';
         changeView('TOPICS', slug);
         setIsPathsActive(true);
     };
@@ -118,16 +131,10 @@ export default function App() {
         );
     }
 
-    const selectedPath = courses.find(c => c.id === selectedPathId) || courses[0];
+    const selectedPath = (selectedPathId ? courses.find(c => c.id === selectedPathId) : null) || courses[0];
 
     return (
         <div className={`${styles.appRoot} ${theme === 'dark' ? 'dark-theme' : ''}`}>
-            {error && (
-                <div className={styles.errorBanner}>
-                    <p>⚠️ {error}. Please ensure the Spring Boot server is running on port 8080.</p>
-                </div>
-            )}
-
             {/* Global Sticky Top Header */}
             {activeView !== 'STUDY' && (
                 <Header
@@ -173,7 +180,12 @@ export default function App() {
                             onToggleSubtopicComplete={handleToggleSubtopicComplete}
                             isUpdating={isStudyUpdating}
                         />
-                    ) : null
+                    ) : (
+                        <div className={styles.loadingScreen}>
+                            <div className={styles.spinner} />
+                            <p>Loading Study Console...</p>
+                        </div>
+                    )
                 ) : (
                     <main className={styles.mainContent}>
                         {(activeView === 'PATHS' || activeView === 'TOPICS') && (

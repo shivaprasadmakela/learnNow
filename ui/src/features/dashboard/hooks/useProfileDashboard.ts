@@ -17,7 +17,15 @@ export type ViewState =
     | 'ADMIN_EDIT_PATH';
 
 export const useProfileDashboard = () => {
-    const [editingPathId, setEditingPathId] = useState<string | null>(null);
+    const [editingPathId, setEditingPathId] = useState<string | null>(() => {
+        if (typeof window !== 'undefined') {
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            if (parts.length === 3 && parts[0] === 'iamAdmin' && parts[1] === 'paths') {
+                return parts[2];
+            }
+        }
+        return null;
+    });
 
     const [activeView, setActiveView] = useState<ViewState>(() => {
         if (typeof window !== 'undefined') {

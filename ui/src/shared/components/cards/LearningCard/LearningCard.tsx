@@ -21,6 +21,9 @@ export const LearningCard: React.FC<LearningCardProps> = ({
     onClick,
     buttonTooltip = 'Explore',
     badgeVariant,
+    pathTitle,
+    pathIcon,
+    titleIcon,
     className = ''
 }) => {
     const pct = isCompleted ? 100 : Math.min(100, Math.max(0, progressPercentage || 0));
@@ -43,8 +46,24 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                 onKeyDown={handleKeyDown}
             >
                 <div className={styles.listLeftContent}>
-                    <CardBadge label={badgeLabel} icon={badgeIcon} isCompleted={isCompleted} variant={badgeVariant} />
-                    <h3 className={styles.listTitle}>{title}</h3>
+                    <div className={styles.badgeGroup}>
+                        {pathTitle && (
+                            <CardBadge
+                                label={pathTitle}
+                                icon={pathIcon || <i className="fa-solid fa-dragon" aria-hidden="true" />}
+                            />
+                        )}
+                        <CardBadge
+                            label={badgeLabel}
+                            icon={badgeIcon}
+                            isCompleted={isCompleted}
+                            variant={badgeVariant}
+                        />
+                    </div>
+                    <h3 className={styles.listTitle}>
+                        {titleIcon && <span className={styles.titleIcon}>{titleIcon}</span>}
+                        <span>{title}</span>
+                    </h3>
                 </div>
 
                 <div className={styles.listRightContent}>
@@ -70,12 +89,28 @@ export const LearningCard: React.FC<LearningCardProps> = ({
             onKeyDown={handleKeyDown}
         >
             <div className={styles.cardTopRow}>
-                <CardBadge label={badgeLabel} icon={badgeIcon} isCompleted={isCompleted} variant={badgeVariant} />
+                <div className={styles.badgeGroup}>
+                    {pathTitle && (
+                        <CardBadge
+                            label={pathTitle}
+                            icon={pathIcon || <i className="fa-solid fa-dragon" aria-hidden="true" />}
+                        />
+                    )}
+                    <CardBadge
+                        label={badgeLabel}
+                        icon={badgeIcon}
+                        isCompleted={isCompleted}
+                        variant={badgeVariant}
+                    />
+                </div>
                 {isCompleted && <CardCompletedBadge />}
             </div>
 
             <div className={styles.cardMainContent}>
-                <h3 className={styles.cardTitle}>{title}</h3>
+                <h3 className={styles.cardTitle}>
+                    {titleIcon && <span className={styles.titleIcon}>{titleIcon}</span>}
+                    <span>{title}</span>
+                </h3>
                 {description && <p className={styles.cardDescription}>{description}</p>}
             </div>
 

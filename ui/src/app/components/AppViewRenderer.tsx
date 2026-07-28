@@ -5,6 +5,7 @@ import { LoginPage, VerifyEmailPage } from '../../features/auth';
 import { PathsPage } from '../../features/paths';
 import { TopicsPage } from '../../features/topics';
 import { AdminDashboard, ConfigurationEditor } from '../../features/iam-admin';
+import { UnauthorizedAccess } from '../../shared/components/ui/UnauthorizedAccess';
 import styles from '../App.module.css';
 import type { Course, UserProfile } from '../../types';
 
@@ -45,6 +46,8 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     handleLoginSuccess,
     refreshUserData
 }) => {
+    const isAdmin = isLoggedIn && profile?.role?.toUpperCase() === 'ADMIN';
+
     return (
         <div className={
             activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL'
@@ -114,21 +117,29 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
             )}
 
             {activeView === 'ADMIN' && (
-                <AdminDashboard
-                    onNavigateCreate={() => changeView('ADMIN_CREATE_PATH')}
-                    onNavigateEdit={(pathId) => changeView('ADMIN_EDIT_PATH', pathId)}
-                />
+                isAdmin ? (
+                    <AdminDashboard
+                        onNavigateCreate={() => changeView('ADMIN_CREATE_PATH')}
+                        onNavigateEdit={(pathId) => changeView('ADMIN_EDIT_PATH', pathId)}
+                    />
+                ) : (
+                    <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
+                )
             )}
 
             {(activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH') && (
-                <ConfigurationEditor
-                    pathId={activeView === 'ADMIN_EDIT_PATH' ? editingPathId : null}
-                    onSaveSuccess={() => {
-                        refreshUserData();
-                        changeView('ADMIN');
-                    }}
-                    onCancel={() => changeView('ADMIN')}
-                />
+                isAdmin ? (
+                    <ConfigurationEditor
+                        pathId={activeView === 'ADMIN_EDIT_PATH' ? editingPathId : null}
+                        onSaveSuccess={() => {
+                            refreshUserData();
+                            changeView('ADMIN');
+                        }}
+                        onCancel={() => changeView('ADMIN')}
+                    />
+                ) : (
+                    <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
+                )
             )}
         </div>
     );

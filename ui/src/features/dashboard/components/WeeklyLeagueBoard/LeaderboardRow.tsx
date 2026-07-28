@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './WeeklyLeagueBoard.module.css';
+import { Avatar } from '../../../../shared/components/ui/Avatar';
 import type { WeeklyLeaderboardEntry } from '../../types';
 
 interface LeaderboardRowProps {
@@ -57,9 +58,15 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ entry }) => {
                 )}
             </div>
 
-            <div className={`${styles.userAvatarInitials} ${avatarBgClass}`}>
-                {initials}
-            </div>
+            {entry.avatar ? (
+                <div className={styles.userAvatarWrapper}>
+                    <Avatar avatar={entry.avatar} seed={entry.fullName || entry.userId} size={36} />
+                </div>
+            ) : (
+                <div className={`${styles.userAvatarInitials} ${avatarBgClass}`}>
+                    {initials}
+                </div>
+            )}
 
             <div className={styles.userInfoCol}>
                 <div className={styles.userNameRow}>

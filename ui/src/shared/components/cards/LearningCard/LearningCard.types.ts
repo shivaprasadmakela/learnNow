@@ -26,6 +26,12 @@ export interface LearningCardProps {
     buttonTooltip?: string;
     /** Optional badge color variant ('normal' | 'green' | 'orange') */
     badgeVariant?: 'normal' | 'green' | 'orange';
+    /** Optional parent path title e.g. "Java Backend Developer Path" */
+    pathTitle?: string;
+    /** Optional parent path icon */
+    pathIcon?: React.ReactNode;
+    /** Optional title icon e.g. BookOpen icon */
+    titleIcon?: React.ReactNode;
     /** Optional extra className */
     className?: string;
 }

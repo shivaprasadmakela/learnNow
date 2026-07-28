@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { fetchTopicDetails } from '../../shared/api';
 import type { TopicDetails } from '../../shared/api';
 import { useRecordActivity } from '../../features/activity';
@@ -47,11 +47,11 @@ export const useTopicSession = ({
             const parentCourse = courses.find(c => c.topics?.some(s => s.id === id));
             const sub = parentCourse?.topics?.find(s => s.id === id);
             if (parentCourse && sub) {
-                const pathSlug = parentCourse.title.toLowerCase().includes('java') ? 'java-backend-path' : 'path';
+                const pathSlug = slugify(parentCourse.title);
                 const topicSlug = slugify(sub.title);
                 changeView('STUDY', pathSlug, topicSlug);
             } else {
-                changeView('STUDY', 'java-backend-path', slugify(details.title));
+                changeView('STUDY', 'path', slugify(details.title));
             }
         } catch (err) {
             console.error("Failed to load topic details", err);
@@ -60,6 +60,55 @@ export const useTopicSession = ({
             setIsStudyLoading(false);
         }
     }, [courses, changeView, showToast, isLoggedIn]);
+
+    // Auto-restore topic session when URL matches /paths/:pathSlug/:topicSlug and activeTopic is null
+    useEffect(() => {
+        if (!isLoggedIn || activeTopic || isStudyLoading) return;
+        if (typeof window === 'undefined') return;
+
+        const path = window.location.pathname;
+        const parts = path.split('/').filter(Boolean);
+        if (parts.length >= 3 && parts[0] === 'paths') {
+            const topicSlug = parts[2];
+            if (!topicSlug) return;
+
+            let foundTopicId: number | null = null;
+            const normSlug = topicSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            for (const course of courses) {
+                if (course.topics) {
+                    const match = course.topics.find(t => {
+                        const tSlug = slugify(t.title);
+                        const normTitle = t.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        return (
+                            tSlug === topicSlug ||
+                            normTitle === normSlug ||
+                            normTitle.includes(normSlug) ||
+                            normSlug.includes(normTitle) ||
+                            String(t.id) === topicSlug
+                        );
+                    });
+                    if (match) {
+                        foundTopicId = match.id;
+                        break;
+                    }
+                }
+            }
+
+            if (foundTopicId !== null) {
+                handleSelectTopic(foundTopicId);
+            } else if (courses.length > 0) {
+                const matchedCourse = courses.find(c =>
+                    c.title.toLowerCase().includes('java') ||
+                    slugify(c.title).includes(parts[1]?.toLowerCase() || '')
+                ) || courses[0];
+                const fallbackTopic = matchedCourse?.topics?.[0] || courses[0]?.topics?.[0];
+                if (fallbackTopic) {
+                    handleSelectTopic(fallbackTopic.id);
+                }
+            }
+        }
+    }, [isLoggedIn, activeTopic, courses, isStudyLoading, handleSelectTopic]);
 
     const handleToggleTopicComplete = async () => {
         if (!activeTopicId || !activeTopic) return;

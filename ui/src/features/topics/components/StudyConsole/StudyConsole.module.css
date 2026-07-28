@@ -390,6 +390,16 @@
     background: var(--tech-blue-hover);
 }
 
+.completeBtn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
 .completeBtnActive {
     background: var(--tech-green);
     color: var(--text-light);
