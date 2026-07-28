@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Trash2, BookOpen, Layers } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import styles from './CurriculumPanel.module.css';
 import type { AdminTopicData } from '../../../api/admin.api';
 
@@ -35,7 +35,10 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
 }) => (
     <section className={styles.panel}>
         <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>Curriculum</h3>
+            <h3 className={styles.panelTitle}>
+                <i className="fa-solid fa-dove" style={{ marginRight: '8px' }} aria-hidden="true" />
+                Curriculum
+            </h3>
             <button type="button" className={styles.addTopicBtn} onClick={onAddTopic}>
                 <Plus size={14} /> Topic
             </button>
@@ -43,7 +46,7 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
 
         {topics.length === 0 ? (
             <div className={styles.emptyState}>
-                <Layers size={32} className={styles.emptyIcon} />
+                <i className="fa-solid fa-dove" style={{ fontSize: '2rem', color: 'var(--text-tertiary)' }} aria-hidden="true" />
                 <p>No topics yet. Click <strong>+ Topic</strong> to start.</p>
             </div>
         ) : (
@@ -51,7 +54,7 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
                 {topics.map((topic, tIdx) => (
                     <li key={tIdx} className={styles.topicItem}>
                         <div className={styles.topicRow}>
-                            <BookOpen size={14} className={styles.topicIcon} />
+                            <i className="fa-solid fa-dove" style={{ marginRight: '6px', fontSize: '0.85rem', color: 'var(--tech-blue)' }} aria-hidden="true" />
                             <input
                                 type="text"
                                 className={styles.topicTitleInput}

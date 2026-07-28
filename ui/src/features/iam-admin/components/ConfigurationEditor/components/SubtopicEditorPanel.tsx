@@ -33,6 +33,7 @@ export const SubtopicEditorPanel: React.FC<SubtopicEditorPanelProps> = ({
         <div className={styles.panel}>
             <div className={styles.sectionHeader}>
                 <span className={styles.sectionLabel}>
+                    <i className="fa-solid fa-dove" style={{ marginRight: '6px', fontSize: '0.85rem', color: 'var(--tech-blue)' }} aria-hidden="true" />
                     {currentTopic?.title} › Subtopic {activeSubtopicIndex + 1}
                 </span>
             </div>

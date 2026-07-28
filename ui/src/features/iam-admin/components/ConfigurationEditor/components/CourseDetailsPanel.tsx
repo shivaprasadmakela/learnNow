@@ -23,7 +23,10 @@ export const CourseDetailsPanel: React.FC<CourseDetailsPanelProps> = ({
     onManagedByChange,
 }) => (
     <section className={styles.panel}>
-        <h3 className={styles.panelTitle}>Course Details</h3>
+        <h3 className={styles.panelTitle}>
+            <i className="fa-solid fa-dragon" style={{ marginRight: '8px' }} aria-hidden="true" />
+            Course Details
+        </h3>
 
         <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="course-title">Course Title</label>
