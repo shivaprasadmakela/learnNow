@@ -301,7 +301,10 @@ export const useConfigurationEditor = (
         if (!title.trim()) { showToast('Please enter a course title', 'error'); return; }
         setIsSaving(true);
         try {
-            await saveAdminPath(buildPayload('DRAFT'));
+            const saved = await saveAdminPath(buildPayload('DRAFT'));
+            if (saved && saved.topics) {
+                setTopics(saved.topics);
+            }
             showToast('Course saved as DRAFT successfully!', 'success');
             onSaveSuccess();
         } catch {
@@ -317,6 +320,9 @@ export const useConfigurationEditor = (
         setIsSaving(true);
         try {
             const saved = await saveAdminPath(buildPayload('PUBLISHED'));
+            if (saved && saved.topics) {
+                setTopics(saved.topics);
+            }
             if (saved.id) await publishAdminPath(saved.id);
             showToast('Course PUBLISHED successfully!', 'success');
             onSaveSuccess();

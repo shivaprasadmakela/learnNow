@@ -96,13 +96,41 @@ public class CatalogService {
 
                     List<SubtopicDto> subtopics = topic.getSubtopics().stream()
                             .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
-                            .map(st -> new SubtopicDto(
-                                    st.getId(),
-                                    st.getTitle(),
-                                    st.getContent(),
-                                    st.getOrderIndex(),
-                                    subtopicCompletionMap.getOrDefault(st.getId(), false)
-                            ))
+                            .map(st -> {
+                                List<SubtopicDto.QuizQuestionDto> questions = st.getBlocks() != null ? st.getBlocks().stream()
+                                        .filter(b -> "quiz".equalsIgnoreCase(b.getType()) && b.getQuestions() != null)
+                                        .flatMap(b -> b.getQuestions().stream())
+                                        .map(q -> {
+                                            List<String> optsList = List.of();
+                                            if (q.getOptions() != null) {
+                                                try {
+                                                    optsList = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                                                            q.getOptions(),
+                                                            new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
+                                                    );
+                                                } catch (Exception ignored) {}
+                                            }
+                                            return new SubtopicDto.QuizQuestionDto(
+                                                    q.getId(),
+                                                    q.getKind(),
+                                                    q.getPrompt(),
+                                                    optsList,
+                                                    q.getCorrectAnswer(),
+                                                    q.getExplanation(),
+                                                    q.getPoints()
+                                            );
+                                        })
+                                        .toList() : List.of();
+
+                                return new SubtopicDto(
+                                        st.getId(),
+                                        st.getTitle(),
+                                        st.getContent(),
+                                        st.getOrderIndex(),
+                                        subtopicCompletionMap.getOrDefault(st.getId(), false),
+                                        questions
+                                );
+                            })
                             .toList();
 
                     int totalSubtopics = subtopics.size();

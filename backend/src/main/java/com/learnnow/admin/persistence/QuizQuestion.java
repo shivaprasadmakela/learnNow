@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "quiz_questions")
 @Data
@@ -25,6 +28,7 @@ public class QuizQuestion {
     private String prompt;
 
     @Column(columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String options; // JSON string array of options
 
     @Column(name = "correct_answer", columnDefinition = "TEXT", nullable = false)
