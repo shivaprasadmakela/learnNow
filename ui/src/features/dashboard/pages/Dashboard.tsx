@@ -15,6 +15,7 @@ export interface DashboardProps {
     activeTab?: 'activities' | 'paths';
     setActiveTab?: (tab: 'activities' | 'paths') => void;
     onSelectPath: (pathId: number) => void;
+    onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
 }
 
@@ -23,6 +24,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     activeTab = 'activities',
     setActiveTab,
     onSelectPath,
+    onSelectRecentTopic,
     onMetricsLoaded
 }) => {
     const { dashboardData, isLoading, error } = useDashboard();
@@ -81,7 +83,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     <div className={styles.tabContent}>
                         {activeTab === 'activities' ? (
-                            <RecentTopicsList topics={recentTopics} paths={paths} onSelectTopic={onSelectPath} />
+                            <RecentTopicsList
+                                topics={recentTopics}
+                                paths={paths}
+                                onSelectTopic={(topicId, pathId) => {
+                                    if (onSelectRecentTopic) {
+                                        onSelectRecentTopic(topicId, pathId);
+                                    } else if (pathId) {
+                                        onSelectPath(pathId);
+                                    }
+                                }}
+                            />
                         ) : (
                             <PathsOverview paths={paths} onSelectPath={onSelectPath} />
                         )}

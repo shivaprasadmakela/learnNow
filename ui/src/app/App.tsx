@@ -122,6 +122,25 @@ export default function App() {
         setIsPathsActive(true);
     };
 
+    const handleSelectRecentTopic = (topicId: number, pathId?: number) => {
+        if (!isLoggedIn) {
+            changeView('LOGIN');
+            return;
+        }
+        let targetPath = pathId ? courses.find(c => c.id === pathId) : null;
+        if (!targetPath) {
+            targetPath = courses.find(c => c.topics?.some((t: any) => t.id === topicId)) || courses[0];
+        }
+
+        if (targetPath) {
+            setSelectedPathId(targetPath.id);
+            const slug = slugify(targetPath.title);
+            changeView('TOPICS', slug);
+            setIsPathsActive(true);
+            handleSelectTopic(topicId);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className={styles.loadingScreen}>
@@ -216,6 +235,7 @@ export default function App() {
                             signUp={signUp}
                             handleSelectPath={handleSelectPath}
                             handleSelectTopic={handleSelectTopic}
+                            onSelectRecentTopic={handleSelectRecentTopic}
                             handleViewChange={handleViewChange}
                             changeView={changeView}
                             handleLoginSuccess={handleLoginSuccess}

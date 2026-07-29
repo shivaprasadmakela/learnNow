@@ -31,12 +31,23 @@ export const fetchPublicPaths = async (): Promise<PathData[]> => {
     return response.json();
 };
 
+export interface QuizQuestionDto {
+    id?: string;
+    kind: 'mcq' | 'true_false' | 'fill_blank';
+    prompt: string;
+    options: string[];
+    correctAnswer: string;
+    explanation?: string;
+    points?: number;
+}
+
 export interface SubtopicData {
-    id: number;
+    id: number | string;
     title: string;
     content: string;
     orderIndex: number;
     isCompleted?: boolean;
+    questions?: QuizQuestionDto[];
 }
 
 export interface TopicDetails {

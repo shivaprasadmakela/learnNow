@@ -22,6 +22,7 @@ interface AppViewRendererProps {
     signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
     handleSelectPath: (pathId: number) => void;
     handleSelectTopic: (topicId: number) => void;
+    onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
     handleViewChange: (view: any) => void;
     changeView: (view: any, slug?: string) => void;
     handleLoginSuccess: (token: string, profile: UserProfile) => void;
@@ -41,6 +42,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     signUp,
     handleSelectPath,
     handleSelectTopic,
+    onSelectRecentTopic,
     handleViewChange,
     changeView,
     handleLoginSuccess,
@@ -78,6 +80,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                 <Dashboard
                     profile={profile}
                     onSelectPath={handleSelectPath}
+                    onSelectRecentTopic={onSelectRecentTopic}
                     activeTab={dashboardTab}
                     setActiveTab={setDashboardTab}
                 />

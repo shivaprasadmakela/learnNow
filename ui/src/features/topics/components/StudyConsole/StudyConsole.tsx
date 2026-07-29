@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2 } from 'lucide-react';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
+import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
 import styles from './StudyConsole.module.css';
 
 interface StudyConsoleProps {
@@ -226,6 +227,26 @@ export function StudyConsole({
                             <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
                             <div className={styles.articleBody}>
                                 {renderContent(activeSubtopic.content)}
+                                {activeSubtopic.questions && activeSubtopic.questions.length > 0 && (
+                                    <div style={{ marginTop: '32px' }}>
+                                        <ContentRenderer
+                                            blocks={[{
+                                                id: `quiz-${activeSubtopic.id || activeSubtopicIndex}`,
+                                                orderIndex: 1,
+                                                type: 'quiz',
+                                                questions: activeSubtopic.questions.map((q, qIdx) => ({
+                                                    id: q.id || `q-${qIdx}`,
+                                                    kind: q.kind || 'mcq',
+                                                    prompt: q.prompt,
+                                                    options: q.options,
+                                                    correctAnswer: q.correctAnswer,
+                                                    explanation: q.explanation,
+                                                    points: q.points,
+                                                })),
+                                            }]}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Subtopic Explicit Mark as Completed Action */}

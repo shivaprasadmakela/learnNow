@@ -7,7 +7,7 @@ import type { RecentTopicActivity, PathProgressSummary } from '../../types';
 interface RecentTopicsListProps {
     topics: RecentTopicActivity[];
     paths?: PathProgressSummary[];
-    onSelectTopic: (topicId: number) => void;
+    onSelectTopic: (topicId: number, pathId?: number) => void;
 }
 
 export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, paths, onSelectTopic }) => {
@@ -25,12 +25,17 @@ export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, path
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
             {topics.map((item) => {
                 let topicDesc: string | undefined = undefined;
+                let matchedPathId: number | undefined = item.pathId;
+
                 if (paths) {
                     for (const p of paths) {
                         const matchedTopic = p.topics?.find(t => t.id === item.topicId);
-                        if (matchedTopic?.description) {
-                            topicDesc = matchedTopic.description;
-                            break;
+                        if (matchedTopic) {
+                            if (!matchedPathId) matchedPathId = p.id;
+                            if (matchedTopic.description) {
+                                topicDesc = matchedTopic.description;
+                                break;
+                            }
                         }
                     }
                 }
@@ -45,7 +50,7 @@ export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, path
                         progressPercentage={item.progressPercentage}
                         showProgress={true}
                         isCompleted={item.completed}
-                        onClick={() => onSelectTopic(item.topicId)}
+                        onClick={() => onSelectTopic(item.topicId, matchedPathId)}
                     />
                 );
             })}
