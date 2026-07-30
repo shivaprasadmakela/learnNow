@@ -73,3 +73,62 @@ export const publishAdminPath = async (id: string): Promise<AdminPathData> => {
     if (!res.ok) throw new Error('Failed to publish path');
     return res.json();
 };
+
+export interface ImportResultDto {
+    pathId: string;
+    pathTitle: string;
+    topicsCreated: number;
+    subtopicsCreated: number;
+    questionsCreated: number;
+    status: string;
+    mode: 'CREATED' | 'APPENDED';
+}
+
+export interface ImportConflictItemDto {
+    level: 'PATH' | 'TOPIC' | 'SUBTOPIC';
+    entityName: string;
+    existingId?: string;
+    message: string;
+}
+
+export interface ImportValidationResultDto {
+    hasConflicts: boolean;
+    conflicts: ImportConflictItemDto[];
+}
+
+export interface ImportCoursePayload {
+    pathId?: string | null;
+    title?: string;
+    description?: string;
+    category?: string;
+    managedBy?: string;
+    conflictStrategy?: 'FAIL_ON_CONFLICT' | 'OVERWRITE' | 'SKIP_EXISTING' | 'KEEP_BOTH';
+    topics: unknown[];
+}
+
+export const validateImportConflicts = async (payload: ImportCoursePayload): Promise<ImportValidationResultDto> => {
+    const res = await apiFetch('/api/admin/paths/import/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        throw new Error('Failed to validate course conflicts');
+    }
+    return res.json();
+};
+
+export const importCourse = async (payload: ImportCoursePayload): Promise<ImportResultDto> => {
+    const res = await apiFetch('/api/admin/paths/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to import course JSON');
+    }
+    return res.json();
+};
+
+

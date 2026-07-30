@@ -1,12 +1,12 @@
 package com.learnnow.admin.api;
 
-import com.learnnow.admin.api.dto.AdminPathDto;
-import com.learnnow.admin.api.dto.CreatePathRequest;
+import com.learnnow.admin.api.dto.*;
 import com.learnnow.admin.application.ContentAuthoringService;
 import com.learnnow.admin.application.PublishService;
 import com.learnnow.paths.entity.Path;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +36,18 @@ public class AdminPathController {
     @PostMapping
     public ResponseEntity<AdminPathDto> savePath(@RequestBody AdminPathDto dto) {
         return ResponseEntity.ok(authoringService.saveOrUpdatePath(dto));
+    }
+
+    @PostMapping("/import/validate")
+    public ResponseEntity<ImportValidationResultDto> validateImport(@RequestBody ImportCourseRequest request) {
+        ImportValidationResultDto result = authoringService.validateImportConflicts(request);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<ImportResultDto> importCourse(@Valid @RequestBody ImportCourseRequest request) {
+        ImportResultDto result = authoringService.importCourse(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PutMapping("/{id}")

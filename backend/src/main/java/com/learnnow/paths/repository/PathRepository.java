@@ -14,6 +14,8 @@ public interface PathRepository extends JpaRepository<Path, UUID> {
 
     List<Path> findByCategoryIgnoreCaseAndStatus(String category, ContentStatus status);
 
+    java.util.Optional<Path> findByTitleIgnoreCase(String title);
+
     @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t WHERE p.status = :status")
     List<Path> findAllWithTopicsByStatus(@Param("status") ContentStatus status);
 }

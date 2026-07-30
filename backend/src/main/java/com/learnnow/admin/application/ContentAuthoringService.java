@@ -196,6 +196,265 @@ public class ContentAuthoringService {
         return toAdminPathDto(saved);
     }
 
+    @Transactional(readOnly = true)
+    public ImportValidationResultDto validateImportConflicts(ImportCourseRequest request) {
+        List<ImportConflictItemDto> conflicts = new java.util.ArrayList<>();
+
+        if (request.pathId() == null) {
+            // CREATE mode: check if path with same title exists
+            if (request.title() != null && !request.title().isBlank()) {
+                pathRepository.findByTitleIgnoreCase(request.title().trim()).ifPresent(p -> {
+                    conflicts.add(new ImportConflictItemDto(
+                            "PATH",
+                            p.getTitle(),
+                            p.getId(),
+                            "A learning path titled '" + p.getTitle() + "' already exists."
+                    ));
+                });
+            }
+        } else {
+            // APPEND mode: check existing topics in target path
+            Path existingPath = pathRepository.findById(request.pathId()).orElse(null);
+            if (existingPath != null && request.topics() != null) {
+                for (ImportCourseRequest.ImportTopicRequest tReq : request.topics()) {
+                    if (tReq.title() == null || tReq.title().isBlank()) continue;
+                    String tTitle = tReq.title().trim();
+
+                    existingPath.getTopics().stream()
+                            .filter(t -> t.getTitle() != null && t.getTitle().equalsIgnoreCase(tTitle))
+                            .findFirst()
+                            .ifPresent(existingTopic -> {
+                                conflicts.add(new ImportConflictItemDto(
+                                        "TOPIC",
+                                        existingTopic.getTitle(),
+                                        existingTopic.getId(),
+                                        "Topic '" + existingTopic.getTitle() + "' already exists in path '" + existingPath.getTitle() + "'."
+                                ));
+
+                                if (tReq.subtopics() != null) {
+                                    for (ImportCourseRequest.ImportSubtopicRequest stReq : tReq.subtopics()) {
+                                        if (stReq.title() == null || stReq.title().isBlank()) continue;
+                                        String stTitle = stReq.title().trim();
+
+                                        existingTopic.getSubtopics().stream()
+                                                .filter(st -> st.getTitle() != null && st.getTitle().equalsIgnoreCase(stTitle))
+                                                .findFirst()
+                                                .ifPresent(existingSub -> {
+                                                    conflicts.add(new ImportConflictItemDto(
+                                                            "SUBTOPIC",
+                                                            existingSub.getTitle(),
+                                                            existingSub.getId(),
+                                                            "Subtopic '" + existingSub.getTitle() + "' already exists in topic '" + existingTopic.getTitle() + "'."
+                                                    ));
+                                                });
+                                    }
+                                }
+                            });
+                }
+            }
+        }
+
+        return new ImportValidationResultDto(!conflicts.isEmpty(), conflicts);
+    }
+
+    @Transactional
+    public ImportResultDto importCourse(ImportCourseRequest request) {
+        String strategy = request.conflictStrategy() != null && !request.conflictStrategy().isBlank()
+                ? request.conflictStrategy().toUpperCase()
+                : "FAIL_ON_CONFLICT";
+
+        // Pre-check for conflicts if default strategy or explicitly requested
+        if ("FAIL_ON_CONFLICT".equals(strategy)) {
+            ImportValidationResultDto validation = validateImportConflicts(request);
+            if (validation.hasConflicts()) {
+                String firstMsg = validation.conflicts().get(0).message();
+                throw new com.learnnow.common.exception.ConflictException(firstMsg);
+            }
+        }
+
+        if (request.pathId() == null && strategy.equals("FAIL_ON_CONFLICT")) {
+            if (request.title() == null || request.title().isBlank()) {
+                throw new com.learnnow.common.exception.ValidationException("title is required when creating a new course");
+            }
+            if (request.description() == null || request.description().isBlank()) {
+                throw new com.learnnow.common.exception.ValidationException("description is required when creating a new course");
+            }
+        }
+
+        boolean isAppend = request.pathId() != null;
+        Path path;
+        int startOrderIndex;
+
+        if (isAppend) {
+            path = pathRepository.findById(request.pathId())
+                    .orElseThrow(() -> new com.learnnow.common.exception.NotFoundException("path_not_found"));
+            startOrderIndex = path.getTopics().stream()
+                    .mapToInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0)
+                    .max()
+                    .orElse(0) + 1;
+        } else {
+            java.util.Optional<Path> existingPathOpt = (request.title() != null && !request.title().isBlank())
+                    ? pathRepository.findByTitleIgnoreCase(request.title().trim())
+                    : java.util.Optional.empty();
+
+            if (existingPathOpt.isPresent() && "OVERWRITE".equals(strategy)) {
+                path = existingPathOpt.get();
+                if (request.description() != null) path.setDescription(request.description());
+                if (request.category() != null) path.setCategory(request.category());
+                startOrderIndex = path.getTopics().stream()
+                        .mapToInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0)
+                        .max()
+                        .orElse(0) + 1;
+            } else {
+                String finalTitle = request.title() != null ? request.title() : "Untitled Course";
+                if (existingPathOpt.isPresent() && "KEEP_BOTH".equals(strategy)) {
+                    finalTitle = finalTitle + " (Imported)";
+                }
+
+                path = Path.builder()
+                        .title(finalTitle)
+                        .description(request.description() != null ? request.description() : "")
+                        .category(request.category() != null ? request.category() : "Backend")
+                        .managedBy(request.managedBy() != null ? request.managedBy() : "learnNow")
+                        .status(ContentStatus.DRAFT)
+                        .build();
+                startOrderIndex = 1;
+            }
+        }
+
+        int topicCount = 0;
+        int subtopicCount = 0;
+        int questionCount = 0;
+
+        if (request.topics() != null) {
+            int tIdx = startOrderIndex;
+            for (ImportCourseRequest.ImportTopicRequest tReq : request.topics()) {
+                if (tReq.title() == null || tReq.title().isBlank()) continue;
+                final String origTTitle = tReq.title().trim();
+                String tTitle = origTTitle;
+
+                java.util.Optional<Topic> existingTopicOpt = path.getTopics().stream()
+                        .filter(t -> t.getTitle() != null && t.getTitle().equalsIgnoreCase(origTTitle))
+                        .findFirst();
+
+                if (existingTopicOpt.isPresent()) {
+                    if ("SKIP_EXISTING".equals(strategy)) {
+                        continue;
+                    }
+                    if ("KEEP_BOTH".equals(strategy)) {
+                        tTitle = tTitle + " (Imported)";
+                    }
+                }
+
+                Topic topic;
+                if (existingTopicOpt.isPresent() && "OVERWRITE".equals(strategy)) {
+                    topic = existingTopicOpt.get();
+                    if (tReq.description() != null) topic.setDescription(tReq.description());
+                    if (tReq.duration() != null) topic.setDuration(tReq.duration());
+                } else {
+                    topicCount++;
+                    topic = Topic.builder()
+                            .title(tTitle)
+                            .description(tReq.description())
+                            .category(tReq.category() != null ? tReq.category() : "course")
+                            .duration(tReq.duration() != null ? tReq.duration() : "1 hour")
+                            .orderIndex(tIdx++)
+                            .status(ContentStatus.DRAFT)
+                            .path(path)
+                            .build();
+                    path.getTopics().add(topic);
+                }
+
+                if (tReq.subtopics() != null) {
+                    int stIdx = topic.getSubtopics().stream()
+                            .mapToInt(Subtopic::getOrderIndex)
+                            .max().orElse(0) + 1;
+
+                    for (ImportCourseRequest.ImportSubtopicRequest stReq : tReq.subtopics()) {
+                        if (stReq.title() == null || stReq.title().isBlank()) continue;
+                        final String origStTitle = stReq.title().trim();
+                        String stTitle = origStTitle;
+
+                        java.util.Optional<Subtopic> existingSubOpt = topic.getSubtopics().stream()
+                                .filter(st -> st.getTitle() != null && st.getTitle().equalsIgnoreCase(origStTitle))
+                                .findFirst();
+
+                        if (existingSubOpt.isPresent()) {
+                            if ("SKIP_EXISTING".equals(strategy)) {
+                                continue;
+                            }
+                            if ("KEEP_BOTH".equals(strategy)) {
+                                stTitle = stTitle + " (Imported)";
+                            }
+                        }
+
+                        Subtopic subtopic;
+                        if (existingSubOpt.isPresent() && "OVERWRITE".equals(strategy)) {
+                            subtopic = existingSubOpt.get();
+                            subtopic.setContent(stReq.content());
+                            subtopic.getBlocks().clear();
+                        } else {
+                            subtopicCount++;
+                            subtopic = Subtopic.builder()
+                                    .title(stTitle)
+                                    .content(stReq.content())
+                                    .orderIndex(stIdx++)
+                                    .status(ContentStatus.DRAFT)
+                                    .version(1)
+                                    .topic(topic)
+                                    .build();
+                            topic.getSubtopics().add(subtopic);
+                        }
+
+                        if (stReq.questions() != null && !stReq.questions().isEmpty()) {
+                            ContentBlock block = ContentBlock.builder()
+                                    .subtopic(subtopic)
+                                    .type("quiz")
+                                    .orderIndex(1)
+                                    .build();
+
+                            List<QuizQuestion> questions = new java.util.ArrayList<>();
+                            for (ImportCourseRequest.ImportQuestionRequest qReq : stReq.questions()) {
+                                questionCount++;
+                                String optionsJson = "[]";
+                                if (qReq.options() != null) {
+                                    try {
+                                        optionsJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(qReq.options());
+                                    } catch (Exception ignored) {}
+                                }
+                                QuizQuestion q = QuizQuestion.builder()
+                                        .block(block)
+                                        .kind(qReq.kind() != null ? qReq.kind() : "mcq")
+                                        .prompt(qReq.prompt())
+                                        .options(optionsJson)
+                                        .correctAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "")
+                                        .explanation(qReq.explanation())
+                                        .points(qReq.points() > 0 ? qReq.points() : 5)
+                                        .build();
+                                questions.add(q);
+                            }
+                            block.setQuestions(questions);
+                            subtopic.getBlocks().add(block);
+                        }
+                    }
+                }
+            }
+        }
+
+        Path saved = pathRepository.save(path);
+
+        return new ImportResultDto(
+                saved.getId(),
+                saved.getTitle(),
+                topicCount,
+                subtopicCount,
+                questionCount,
+                saved.getStatus().name(),
+                isAppend ? "APPENDED" : "CREATED"
+        );
+    }
+
+
     private ContentStatus parseStatus(String status) {
         if (status == null) return ContentStatus.DRAFT;
         try {

@@ -9,6 +9,10 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/api/dto/CreateQuizQuestionRequest.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/api/dto/CreateSubtopicRequest.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/api/dto/CreateTopicRequest.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/api/dto/ImportConflictItemDto.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/api/dto/ImportCourseRequest.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/api/dto/ImportResultDto.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/api/dto/ImportValidationResultDto.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/application/ContentAuthoringService.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/application/PublishService.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/domain/ContentValidationPolicy.java
