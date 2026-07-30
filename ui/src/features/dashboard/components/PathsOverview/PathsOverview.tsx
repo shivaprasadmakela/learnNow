@@ -25,7 +25,7 @@ export const PathsOverview: React.FC<PathsOverviewProps> = ({ paths, onSelectPat
             {paths.map((path) => (
                 <LearningCard
                     key={path.id}
-                    badgeLabel={path.category || 'Path'}
+                    badgeLabel="Path"
                     title={path.title}
                     description={path.description}
                     footerText={`${path.completedTopicsCount} / ${path.totalTopicsCount} Topics`}

@@ -16,7 +16,7 @@ export const BookmarkedTopicsList: React.FC<BookmarkedTopicsListProps> = ({
     onSelectRecentTopic,
     onSelectPath
 }) => {
-    const { bookmarks, isLoading } = useBookmarks();
+    const { bookmarks, isLoading, toggleBookmark } = useBookmarks();
 
     if (isLoading) {
         return (
@@ -66,11 +66,12 @@ export const BookmarkedTopicsList: React.FC<BookmarkedTopicsListProps> = ({
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {bookmarkedTopics.map(({ topic, pathTitle, pathId }) => (
+            {bookmarkedTopics.map(({ topic, pathId }) => (
                 <LearningCard
                     key={topic.id}
-                    pathTitle={pathTitle}
-                    badgeLabel="Bookmarked"
+                    badgeLabel="Topic"
+                    isBookmarked={true}
+                    onToggleBookmark={() => toggleBookmark(topic.id)}
                     title={topic.title}
                     description={topic.description}
                     progressPercentage={topic.progressPercentage}

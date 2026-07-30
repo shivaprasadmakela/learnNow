@@ -51,9 +51,7 @@ public class ProgressService {
                         .build());
 
         if (!completed) {
-            progress.setStatus(ProgressStatus.NOT_STARTED);
-            progress.setCompletedAt(null);
-            topicProgressRepository.save(progress);
+            // One-way completion: unmarking is disallowed to prevent point duplication
             return;
         }
 

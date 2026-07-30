@@ -16,7 +16,7 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
     return (
         <button
             type="button"
-            className={`${styles.bookmarkBtn} ${isBookmarked ? styles.bookmarkBtnActive : ''}`}
+            className={`${styles.bookmarkBtn} ${!showLabel ? styles.iconOnly : ''} ${isBookmarked ? styles.bookmarkBtnActive : ''}`}
             onClick={(e) => {
                 e.stopPropagation();
                 onToggle();

@@ -21,7 +21,7 @@ export const PathsGrid: React.FC<PathsGridProps> = ({ paths, onSelectPath, isLog
             {paths.map((path) => (
                 <LearningCard
                     key={path.id}
-                    badgeLabel={path.category || 'Path'}
+                    badgeLabel="Path"
                     title={path.title}
                     description={path.description}
                     footerText={path.managedBy || 'learnNow'}

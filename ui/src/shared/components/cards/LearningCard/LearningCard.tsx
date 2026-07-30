@@ -6,6 +6,7 @@ import { CardProgressBar } from './components/CardProgressBar';
 import { CardActionArrow } from './components/CardActionArrow';
 import { CardDurationMeta } from './components/CardDurationMeta';
 import { CardCompletedBadge } from './components/CardCompletedBadge';
+import { BookmarkButton } from '../../../../features/notes';
 
 export const LearningCard: React.FC<LearningCardProps> = ({
     layout = 'grid',
@@ -21,9 +22,9 @@ export const LearningCard: React.FC<LearningCardProps> = ({
     onClick,
     buttonTooltip = 'Explore',
     badgeVariant,
-    pathTitle,
-    pathIcon,
     titleIcon,
+    isBookmarked,
+    onToggleBookmark,
     className = ''
 }) => {
     const pct = isCompleted ? 100 : Math.min(100, Math.max(0, progressPercentage || 0));
@@ -47,12 +48,6 @@ export const LearningCard: React.FC<LearningCardProps> = ({
             >
                 <div className={styles.listLeftContent}>
                     <div className={styles.badgeGroup}>
-                        {pathTitle && (
-                            <CardBadge
-                                label={pathTitle}
-                                icon={pathIcon || <i className="fa-solid fa-dragon" aria-hidden="true" />}
-                            />
-                        )}
                         <CardBadge
                             label={badgeLabel}
                             icon={badgeIcon}
@@ -72,6 +67,13 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                     ) : (
                         <div className={styles.listMetaRow}>
                             <CardDurationMeta duration={duration} footerText={footerText} />
+                            {onToggleBookmark && (
+                                <BookmarkButton
+                                    isBookmarked={Boolean(isBookmarked)}
+                                    onToggle={onToggleBookmark}
+                                    showLabel={false}
+                                />
+                            )}
                             <CardActionArrow tooltip={buttonTooltip} onClick={onClick} />
                         </div>
                     )}
@@ -90,12 +92,6 @@ export const LearningCard: React.FC<LearningCardProps> = ({
         >
             <div className={styles.cardTopRow}>
                 <div className={styles.badgeGroup}>
-                    {pathTitle && (
-                        <CardBadge
-                            label={pathTitle}
-                            icon={pathIcon || <i className="fa-solid fa-dragon" aria-hidden="true" />}
-                        />
-                    )}
                     <CardBadge
                         label={badgeLabel}
                         icon={badgeIcon}
@@ -103,7 +99,16 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                         variant={badgeVariant}
                     />
                 </div>
-                {isCompleted && <CardCompletedBadge />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {onToggleBookmark && (
+                        <BookmarkButton
+                            isBookmarked={Boolean(isBookmarked)}
+                            onToggle={onToggleBookmark}
+                            showLabel={false}
+                        />
+                    )}
+                    {isCompleted && <CardCompletedBadge />}
+                </div>
             </div>
 
             <div className={styles.cardMainContent}>

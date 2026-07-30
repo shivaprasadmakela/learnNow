@@ -130,3 +130,44 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
 }
+
+.steppedNavRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 16px;
+}
+
+.stepIndicator {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+.steppedNavBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.steppedNavBtn:hover:not(:disabled) {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+.steppedNavBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+

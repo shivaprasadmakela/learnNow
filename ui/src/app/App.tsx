@@ -35,6 +35,7 @@ export default function App() {
     const { courses, userStreak, userPoints, refreshUserData } = useUserData(isLoggedIn);
     const {
         activeTopic,
+        isStudyLoading,
         isStudyUpdating,
         handleSelectTopic,
         handleToggleTopicComplete,
@@ -187,7 +188,7 @@ export default function App() {
 
                 {/* Main Content View Switcher */}
                 {activeView === 'STUDY' ? (
-                    activeTopic ? (
+                    activeTopic && !isStudyLoading ? (
                         <StudyConsole
                             topic={activeTopic}
                             onClose={() => {

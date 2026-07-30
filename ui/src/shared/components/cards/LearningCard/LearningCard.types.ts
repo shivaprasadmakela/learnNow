@@ -32,6 +32,9 @@ export interface LearningCardProps {
     pathIcon?: React.ReactNode;
     /** Optional title icon e.g. BookOpen icon */
     titleIcon?: React.ReactNode;
+    /** Optional bookmark props */
+    isBookmarked?: boolean;
+    onToggleBookmark?: () => void;
     /** Optional extra className */
     className?: string;
 }

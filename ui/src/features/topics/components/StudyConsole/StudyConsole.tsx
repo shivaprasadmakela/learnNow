@@ -22,6 +22,7 @@ export function StudyConsole({
 }: StudyConsoleProps) {
     const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
+    const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(true);
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
@@ -31,7 +32,7 @@ export function StudyConsole({
 
     const completedSubtopicsCount = subtopics.filter((s: SubtopicData) => s.isCompleted).length;
     const allSubtopicsCompleted = subtopics.length > 0 && subtopics.every((s: SubtopicData) => s.isCompleted);
-    const isCompleteDisabled = isUpdating || (!topic.isCompleted && !allSubtopicsCompleted);
+    const isTopicCompleteDisabled = isUpdating || topic.isCompleted || !allSubtopicsCompleted;
 
     const computedPercentage = topic.isCompleted ? 100 : (
         subtopics.length > 0 ? Math.round((completedSubtopicsCount / subtopics.length) * 100) : (topic.progressPercentage || 0)
@@ -56,9 +57,17 @@ export function StudyConsole({
     };
 
     const handleSubtopicReadToggle = async (subtopicId: any, currentlyCompleted: boolean) => {
+        // One-way completion lock: once marked completed, unmarking is forbidden
+        if (currentlyCompleted) return;
         if (onToggleSubtopicComplete) {
-            await onToggleSubtopicComplete(subtopicId, !currentlyCompleted);
+            await onToggleSubtopicComplete(subtopicId, true);
         }
+    };
+
+    const handleTopicCompleteToggle = async () => {
+        // One-way completion lock: once topic completed, unmarking is forbidden
+        if (topic.isCompleted) return;
+        await onToggleComplete();
     };
 
     // Custom markdown formatter for structured articles
@@ -256,6 +265,7 @@ export function StudyConsole({
                                     {activeSubtopic.questions && activeSubtopic.questions.length > 0 && (
                                         <div style={{ marginTop: '32px' }}>
                                             <ContentRenderer
+                                                isSubtopicCompleted={Boolean(activeSubtopic.isCompleted)}
                                                 blocks={[{
                                                     id: `quiz-${activeSubtopic.id || activeSubtopicIndex}`,
                                                     orderIndex: 1,
@@ -270,6 +280,7 @@ export function StudyConsole({
                                                         points: q.points,
                                                     })),
                                                 }]}
+                                                onAllQuizzesAnsweredChange={setIsActiveSubtopicQuizzesAnswered}
                                             />
                                         </div>
                                     )}
@@ -286,7 +297,14 @@ export function StudyConsole({
                                     <button
                                         type="button"
                                         onClick={() => handleSubtopicReadToggle(activeSubtopic.id, !!activeSubtopic.isCompleted)}
-                                        disabled={isUpdating}
+                                        disabled={isUpdating || Boolean(activeSubtopic.isCompleted) || !isActiveSubtopicQuizzesAnswered}
+                                        title={
+                                            activeSubtopic.isCompleted
+                                                ? 'Section already completed'
+                                                : !isActiveSubtopicQuizzesAnswered
+                                                    ? 'Answer all MCQs in this section first'
+                                                    : 'Mark section as read (+5 pts)'
+                                        }
                                         style={{
                                             display: 'inline-flex',
                                             alignItems: 'center',
@@ -298,7 +316,8 @@ export function StudyConsole({
                                             color: activeSubtopic.isCompleted ? 'var(--tech-green)' : '#ffffff',
                                             fontWeight: 600,
                                             fontSize: '0.9rem',
-                                            cursor: 'pointer',
+                                            cursor: (activeSubtopic.isCompleted || !isActiveSubtopicQuizzesAnswered) ? 'not-allowed' : 'pointer',
+                                            opacity: (!activeSubtopic.isCompleted && !isActiveSubtopicQuizzesAnswered) ? 0.6 : 1,
                                             transition: 'all 0.2s ease'
                                         }}
                                     >
@@ -340,12 +359,14 @@ export function StudyConsole({
 
                 <button
                     className={`${styles.completeBtn} ${topic.isCompleted ? styles.completeBtnActive : ''}`}
-                    onClick={onToggleComplete}
-                    disabled={isCompleteDisabled}
+                    onClick={handleTopicCompleteToggle}
+                    disabled={isTopicCompleteDisabled}
                     title={
-                        !topic.isCompleted && !allSubtopicsCompleted
-                            ? `Complete all ${subtopics.length} sections to enable topic completion (${completedSubtopicsCount}/${subtopics.length} done)`
-                            : undefined
+                        topic.isCompleted
+                            ? 'Topic completed'
+                            : !allSubtopicsCompleted
+                                ? `Complete all ${subtopics.length} sections to enable topic completion (${completedSubtopicsCount}/${subtopics.length} done)`
+                                : undefined
                     }
                 >
                     {topic.isCompleted ? (

@@ -42,6 +42,11 @@ export const SubtopicNotesPanel: React.FC<SubtopicNotesPanelProps> = ({
                 <div className={styles.notesPanelTitle}>
                     <FileText size={16} style={{ color: 'var(--tech-blue)' }} />
                     <span>Subtopic Notes</span>
+                    {isLoading && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
+                            <Loader2 size={12} className="animate-spin" /> Loading...
+                        </span>
+                    )}
                 </div>
 
                 <button
@@ -55,45 +60,38 @@ export const SubtopicNotesPanel: React.FC<SubtopicNotesPanelProps> = ({
             </div>
 
             <div className={styles.notesPanelBody}>
-                {isLoading ? (
-                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                        Loading notes...
-                    </div>
-                ) : (
-                    <>
-                        <textarea
-                            ref={textareaRef}
-                            className={styles.plainTextarea}
-                            value={content}
-                            onChange={(e) => onChange(e.target.value)}
-                            placeholder="Type your notes, reminders, or code snippets for this section..."
-                        />
-                        <div className={styles.notesPanelFooter}>
-                            <span className={styles.statusText}>
-                                {saveStatus === 'saving' && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--tech-blue)' }}>
-                                        <Loader2 size={12} className="animate-spin" /> Saving...
-                                    </span>
-                                )}
-                                {saveStatus === 'saved' && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--tech-green)' }}>
-                                        <Check size={12} /> Saved
-                                    </span>
-                                )}
+                <textarea
+                    ref={textareaRef}
+                    className={styles.plainTextarea}
+                    value={content}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={isLoading ? 'Loading section notes...' : 'Type your notes, reminders, or code snippets for this section...'}
+                    disabled={isLoading}
+                />
+                <div className={styles.notesPanelFooter}>
+                    <span className={styles.statusText}>
+                        {saveStatus === 'saving' && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--tech-blue)' }}>
+                                <Loader2 size={12} className="animate-spin" /> Saving...
                             </span>
+                        )}
+                        {saveStatus === 'saved' && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--tech-green)' }}>
+                                <Check size={12} /> Saved
+                            </span>
+                        )}
+                    </span>
 
-                            <button
-                                type="button"
-                                className={styles.saveNoteBtn}
-                                onClick={onSave}
-                                disabled={saveStatus === 'saving'}
-                            >
-                                <Save size={14} />
-                                <span>Save Note</span>
-                            </button>
-                        </div>
-                    </>
-                )}
+                    <button
+                        type="button"
+                        className={styles.saveNoteBtn}
+                        onClick={onSave}
+                        disabled={isLoading || saveStatus === 'saving'}
+                    >
+                        <Save size={14} />
+                        <span>Save Note</span>
+                    </button>
+                </div>
             </div>
         </aside>
     );

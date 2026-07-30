@@ -2,6 +2,7 @@ import React from 'react';
 import { Activity } from 'lucide-react';
 import { LearningCard } from '../../../../shared/components/cards';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
+import { useBookmarks } from '../../../notes';
 import type { RecentTopicActivity, PathProgressSummary } from '../../types';
 
 interface RecentTopicsListProps {
@@ -11,6 +12,8 @@ interface RecentTopicsListProps {
 }
 
 export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, paths, onSelectTopic }) => {
+    const { isBookmarked, toggleBookmark } = useBookmarks();
+
     if (topics.length === 0) {
         return (
             <EmptyState
@@ -40,16 +43,19 @@ export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, path
                     }
                 }
 
+                const bookmarked = isBookmarked(item.topicId);
+
                 return (
                     <LearningCard
                         key={item.topicId}
-                        pathTitle={item.pathTitle}
                         badgeLabel="Topic"
                         title={item.topicTitle}
                         description={topicDesc}
                         progressPercentage={item.progressPercentage}
                         showProgress={true}
                         isCompleted={item.completed}
+                        isBookmarked={bookmarked}
+                        onToggleBookmark={() => toggleBookmark(item.topicId)}
                         onClick={() => onSelectTopic(item.topicId, matchedPathId)}
                     />
                 );

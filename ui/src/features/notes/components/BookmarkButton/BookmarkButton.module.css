@@ -35,3 +35,9 @@
 .bookmarkBtn:active .bookmarkIcon {
     transform: scale(1.2);
 }
+
+.iconOnly {
+    padding: 6px;
+    border-radius: 6px;
+}
+

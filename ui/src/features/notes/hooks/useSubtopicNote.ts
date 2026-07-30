@@ -51,9 +51,9 @@ export function useSubtopicNote(subtopicId?: string | number) {
         };
     }, [idString]);
 
-    // Save action
+    // Manual Save action (only executed when user explicitly clicks Save button)
     const performSave = useCallback(async (textToSave: string) => {
-        if (!idString || textToSave === lastSavedContent.current) return;
+        if (!idString) return;
         setSaveStatus('saving');
         try {
             await saveSubtopicNote(idString, textToSave);
@@ -64,21 +64,9 @@ export function useSubtopicNote(subtopicId?: string | number) {
         }
     }, [idString]);
 
-    // 1.5s debounced auto-save effect
-    useEffect(() => {
-        if (isFirstRender.current || isLoading || !idString) return;
-        if (content === lastSavedContent.current) return;
-
-        const timer = setTimeout(() => {
-            performSave(content);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [content, isLoading, idString, performSave]);
-
     const handleChange = (newContent: string) => {
         setContent(newContent);
-        if (saveStatus === 'saved') setSaveStatus('idle');
+        if (saveStatus === 'saved' || saveStatus === 'error') setSaveStatus('idle');
     };
 
     return {
