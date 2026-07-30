@@ -49,6 +49,15 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/service/DashboardService.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/service/ProgressService.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/service/StreakService.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/api/NotesController.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/api/dto/BookmarkResponse.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/api/dto/NoteRequest.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/api/dto/NoteResponse.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/application/NotesService.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/persistence/SubtopicNote.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/persistence/SubtopicNoteRepository.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/persistence/TopicBookmark.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/persistence/TopicBookmarkRepository.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/config/DatabaseSeeder.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/controller/CatalogController.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/controller/PathController.java

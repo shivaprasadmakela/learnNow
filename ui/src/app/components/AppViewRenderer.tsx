@@ -16,8 +16,8 @@ interface AppViewRendererProps {
     profile: UserProfile | null;
     courses: Course[];
     selectedPath: Course;
-    dashboardTab: 'activities' | 'paths';
-    setDashboardTab: (tab: 'activities' | 'paths') => void;
+    dashboardTab: 'activities' | 'paths' | 'bookmarks';
+    setDashboardTab: (tab: 'activities' | 'paths' | 'bookmarks') => void;
     signIn: (email: string, pass: string) => Promise<unknown>;
     signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
     handleSelectPath: (pathId: number) => void;

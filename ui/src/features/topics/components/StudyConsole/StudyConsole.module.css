@@ -203,22 +203,75 @@
     flex: 1;
     background: var(--bg-tertiary);
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 3rem 4rem;
+    position: relative;
 }
 
 .article {
+    flex: 1;
     max-width: 800px;
     margin: 0 auto;
 }
 
-.sectionTitle {
-    font-size: 2.2rem;
-    font-weight: 700;
-    margin-bottom: 2rem;
-    color: var(--text-primary);
+.contentFlexLayout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.subtopicHeaderRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
-    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.subtopicHeaderRow .sectionTitle {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.subtopicNotesBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.subtopicNotesBtn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.subtopicNotesBtnActive {
+    border-color: var(--tech-blue);
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--tech-blue);
+}
+
+.subtopicNoteDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tech-green);
 }
 
 .articleBody {

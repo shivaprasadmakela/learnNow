@@ -19,6 +19,13 @@ export const DashboardTabs: React.FC<DashboardTabsProps> = ({ activeTab, setActi
             >
                 Learning Paths
             </button>
+            <button
+                type="button"
+                className={`${styles.tabLink} ${activeTab === 'bookmarks' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab && setActiveTab('bookmarks')}
+            >
+                Bookmarks
+            </button>
         </div>
     );
 };

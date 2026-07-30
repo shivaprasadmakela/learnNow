@@ -16,6 +16,7 @@ CREATE TABLE topics (
     description VARCHAR(1000),
     duration VARCHAR(255),
     category VARCHAR(255),
+    order_index INTEGER NOT NULL DEFAULT 1,
     status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED'
 );
 
@@ -128,3 +129,25 @@ CREATE TABLE user_learning_daily_activity (
     UNIQUE (user_id, activity_date)
 );
 CREATE INDEX idx_daily_activity_user_date ON user_learning_daily_activity (user_id, activity_date DESC);
+
+-- 12. Create subtopic_notes table
+CREATE TABLE subtopic_notes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subtopic_id UUID NOT NULL REFERENCES subtopics(id) ON DELETE CASCADE,
+    content TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, subtopic_id)
+);
+CREATE INDEX idx_subtopic_notes_user ON subtopic_notes (user_id);
+
+-- 13. Create topic_bookmarks table
+CREATE TABLE topic_bookmarks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    topic_id UUID NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, topic_id)
+);
+CREATE INDEX idx_topic_bookmarks_user ON topic_bookmarks (user_id);

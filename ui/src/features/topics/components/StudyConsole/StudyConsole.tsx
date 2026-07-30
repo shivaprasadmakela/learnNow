@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText } from 'lucide-react';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
+import { useSubtopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
 import styles from './StudyConsole.module.css';
 
 interface StudyConsoleProps {
@@ -20,9 +21,13 @@ export function StudyConsole({
     isUpdating
 }: StudyConsoleProps) {
     const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
+    const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
+
+    const { isBookmarked, toggleBookmark } = useBookmarks();
+    const { content: noteContent, setContent: setNoteContent, saveStatus: noteSaveStatus, isLoading: isNoteLoading, saveNow } = useSubtopicNote(activeSubtopic?.id);
 
     const completedSubtopicsCount = subtopics.filter((s: SubtopicData) => s.isCompleted).length;
     const allSubtopicsCompleted = subtopics.length > 0 && subtopics.every((s: SubtopicData) => s.isCompleted);
@@ -160,7 +165,14 @@ export function StudyConsole({
                 <div className={styles.headerLeft}>
                     <BookOpen className={styles.headerIcon} />
                     <div>
-                        <h2 className={styles.subtopicTitle}>{topic.title}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <h2 className={styles.subtopicTitle}>{topic.title}</h2>
+                            <BookmarkButton
+                                isBookmarked={isBookmarked(topic.id)}
+                                onToggle={() => toggleBookmark(topic.id)}
+                                showLabel={false}
+                            />
+                        </div>
                         <div className={styles.metaRow}>
                             <span className={styles.categoryBadge}>{topic.category}</span>
                             <span className={styles.durationRow}>
@@ -223,64 +235,90 @@ export function StudyConsole({
                 {/* Main reading content pane */}
                 <main className={styles.contentPane}>
                     {activeSubtopic ? (
-                        <article className={styles.article}>
-                            <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
-                            <div className={styles.articleBody}>
-                                {renderContent(activeSubtopic.content)}
-                                {activeSubtopic.questions && activeSubtopic.questions.length > 0 && (
-                                    <div style={{ marginTop: '32px' }}>
-                                        <ContentRenderer
-                                            blocks={[{
-                                                id: `quiz-${activeSubtopic.id || activeSubtopicIndex}`,
-                                                orderIndex: 1,
-                                                type: 'quiz',
-                                                questions: activeSubtopic.questions.map((q, qIdx) => ({
-                                                    id: q.id || `q-${qIdx}`,
-                                                    kind: q.kind || 'mcq',
-                                                    prompt: q.prompt,
-                                                    options: q.options,
-                                                    correctAnswer: q.correctAnswer,
-                                                    explanation: q.explanation,
-                                                    points: q.points,
-                                                })),
-                                            }]}
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                        <div className={isNotesDrawerOpen ? styles.contentFlexLayout : ''}>
+                            <article className={styles.article}>
+                                <div className={styles.subtopicHeaderRow}>
+                                    <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
+                                    <button
+                                        type="button"
+                                        className={`${styles.subtopicNotesBtn} ${isNotesDrawerOpen ? styles.subtopicNotesBtnActive : ''}`}
+                                        onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}
+                                        title="Toggle Subtopic Notes"
+                                    >
+                                        <FileText size={15} />
+                                        <span>Notes</span>
+                                        {Boolean(noteContent.trim()) && <span className={styles.subtopicNoteDot} />}
+                                    </button>
+                                </div>
 
-                            {/* Subtopic Explicit Mark as Completed Action */}
-                            <div style={{
-                                marginTop: '32px',
-                                paddingTop: '20px',
-                                borderTop: '1px solid var(--border-color)',
-                                display: 'flex',
-                                justifyContent: 'flex-end'
-                            }}>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSubtopicReadToggle(activeSubtopic.id, !!activeSubtopic.isCompleted)}
-                                    disabled={isUpdating}
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        padding: '10px 20px',
-                                        borderRadius: '8px',
-                                        border: activeSubtopic.isCompleted ? '1px solid var(--tech-green)' : '1px solid var(--tech-blue)',
-                                        backgroundColor: activeSubtopic.isCompleted ? 'rgba(34, 197, 94, 0.1)' : 'var(--tech-blue)',
-                                        color: activeSubtopic.isCompleted ? 'var(--tech-green)' : '#ffffff',
-                                        fontWeight: 600,
-                                        fontSize: '0.9rem',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                >
-                                    <CheckCircle2 size={16} />
-                                    {activeSubtopic.isCompleted ? 'Completed (+5 pts)' : 'Mark section as read (+5 pts)'}
-                                </button>
-                            </div>
-                        </article>
+                                <div className={styles.articleBody}>
+                                    {renderContent(activeSubtopic.content)}
+                                    {activeSubtopic.questions && activeSubtopic.questions.length > 0 && (
+                                        <div style={{ marginTop: '32px' }}>
+                                            <ContentRenderer
+                                                blocks={[{
+                                                    id: `quiz-${activeSubtopic.id || activeSubtopicIndex}`,
+                                                    orderIndex: 1,
+                                                    type: 'quiz',
+                                                    questions: activeSubtopic.questions.map((q, qIdx) => ({
+                                                        id: q.id || `q-${qIdx}`,
+                                                        kind: q.kind || 'mcq',
+                                                        prompt: q.prompt,
+                                                        options: q.options,
+                                                        correctAnswer: q.correctAnswer,
+                                                        explanation: q.explanation,
+                                                        points: q.points,
+                                                    })),
+                                                }]}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Subtopic Explicit Mark as Completed Action */}
+                                <div style={{
+                                    marginTop: '32px',
+                                    paddingTop: '20px',
+                                    borderTop: '1px solid var(--border-color)',
+                                    display: 'flex',
+                                    justifyContent: 'flex-end'
+                                }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSubtopicReadToggle(activeSubtopic.id, !!activeSubtopic.isCompleted)}
+                                        disabled={isUpdating}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 20px',
+                                            borderRadius: '8px',
+                                            border: activeSubtopic.isCompleted ? '1px solid var(--tech-green)' : '1px solid var(--tech-blue)',
+                                            backgroundColor: activeSubtopic.isCompleted ? 'rgba(34, 197, 94, 0.1)' : 'var(--tech-blue)',
+                                            color: activeSubtopic.isCompleted ? 'var(--tech-green)' : '#ffffff',
+                                            fontWeight: 600,
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        <CheckCircle2 size={16} />
+                                        {activeSubtopic.isCompleted ? 'Completed (+5 pts)' : 'Mark section as read (+5 pts)'}
+                                    </button>
+                                </div>
+                            </article>
+
+                            {/* In-pane corner slider Subtopic Notes Panel */}
+                            <SubtopicNotesPanel
+                                isOpen={isNotesDrawerOpen}
+                                content={noteContent}
+                                onChange={setNoteContent}
+                                onSave={saveNow}
+                                onClose={() => setIsNotesDrawerOpen(false)}
+                                saveStatus={noteSaveStatus}
+                                isLoading={isNoteLoading}
+                            />
+                        </div>
                     ) : (
                         <div className={styles.emptyState}>
                             <p>No content sections loaded for this topic.</p>

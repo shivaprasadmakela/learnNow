@@ -53,7 +53,7 @@ export default function App() {
 
     const [selectedPathId, setSelectedPathId] = useState<number | null>(null);
 
-    const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths'>('activities');
+    const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths' | 'bookmarks'>('activities');
     const [isPathsActive, setIsPathsActive] = useState(() => {
         if (typeof window !== 'undefined') {
             return window.location.pathname.split('/').filter(Boolean)[0] === 'paths';

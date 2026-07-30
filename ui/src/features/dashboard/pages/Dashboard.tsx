@@ -6,14 +6,15 @@ import { DashboardHeader, WelcomeGreeting } from '../components/DashboardHeader'
 import { DashboardTabs } from '../components/DashboardTabs';
 import { RecentTopicsList } from '../components/RecentTopicsList';
 import { PathsOverview } from '../components/PathsOverview';
+import { BookmarkedTopicsList } from '../components/BookmarkedTopicsList';
 import { StreakCalendar } from '../components/StreakCalendar';
 import { WeeklyLeagueBoard } from '../components/WeeklyLeagueBoard';
 import { OverallProgress } from '../components/OverallProgress';
 
 export interface DashboardProps {
     profile: UserProfile | null;
-    activeTab?: 'activities' | 'paths';
-    setActiveTab?: (tab: 'activities' | 'paths') => void;
+    activeTab?: 'activities' | 'paths' | 'bookmarks';
+    setActiveTab?: (tab: 'activities' | 'paths' | 'bookmarks') => void;
     onSelectPath: (pathId: number) => void;
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
@@ -82,7 +83,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
                     <div className={styles.tabContent}>
-                        {activeTab === 'activities' ? (
+                        {activeTab === 'activities' && (
                             <RecentTopicsList
                                 topics={recentTopics}
                                 paths={paths}
@@ -94,8 +95,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     }
                                 }}
                             />
-                        ) : (
+                        )}
+                        {activeTab === 'paths' && (
                             <PathsOverview paths={paths} onSelectPath={onSelectPath} />
+                        )}
+                        {activeTab === 'bookmarks' && (
+                            <BookmarkedTopicsList
+                                paths={paths}
+                                onSelectRecentTopic={onSelectRecentTopic}
+                                onSelectPath={onSelectPath}
+                            />
                         )}
                     </div>
                 </div>
