@@ -4,6 +4,13 @@ import com.learnnow.user.dto.*;
 import com.learnnow.user.entity.*;
 import com.learnnow.user.repository.*;
 import com.learnnow.common.security.*;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.learnnow.common.exception.ValidationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.UUID;
 
 @Service
@@ -27,6 +35,9 @@ public class AuthService {
 
     @Value("${app.base-url:http://localhost:5173}")
     private String appBaseUrl;
+
+    @Value("${app.google.client-id:}")
+    private String googleClientId;
 
     public AuthService(UserRepository userRepository,
                         EmailVerificationTokenRepository tokenRepository,
@@ -124,9 +135,92 @@ public class AuthService {
         issueVerificationToken(user);
     }
 
+    @Transactional
+    public AuthResponse googleLogin(GoogleAuthRequest req) {
+        GoogleIdToken.Payload payload = verifyGoogleIdToken(req.idToken());
+        String email = payload.getEmail();
+        String googleSub = payload.getSubject();
+        String givenName = (String) payload.get("given_name");
+        String familyName = (String) payload.get("family_name");
+        String name = (String) payload.get("name");
+        String picture = (String) payload.get("picture");
+
+        if (email == null || email.isBlank()) {
+            throw new ValidationException("google_token_invalid_email");
+        }
+
+        User user = userRepository.findByGoogleSub(googleSub)
+                .orElseGet(() -> userRepository.findByEmailIgnoreCase(email).orElse(null));
+
+        if (user != null) {
+            if (user.getGoogleSub() == null) {
+                user.setGoogleSub(googleSub);
+            }
+            if (!user.isEmailVerified()) {
+                user.setEmailVerified(true);
+            }
+            if (user.getAvatar() == null && picture != null) {
+                user.setAvatar(picture);
+            }
+            userRepository.save(user);
+        } else {
+            String userId = UUID.randomUUID().toString();
+            String firstName = givenName != null ? givenName : (name != null ? name : "Learner");
+            String lastName = familyName != null ? familyName : "";
+            String fullName = name != null ? name : (firstName + " " + lastName).trim();
+
+            user = User.builder()
+                    .id(userId)
+                    .email(email.toLowerCase())
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .fullName(fullName)
+                    .passwordHash(null)
+                    .googleSub(googleSub)
+                    .emailVerified(true)
+                    .avatar(picture != null ? picture : UUID.randomUUID().toString())
+                    .role("USER")
+                    .build();
+
+            userRepository.save(user);
+        }
+
+        String jwt = tokenService.generateToken(user.getId(), user.getEmail(), user.getRole());
+        UserDto profile = buildUserDto(user);
+        return new AuthResponse(jwt, profile);
+    }
+
+    private GoogleIdToken.Payload verifyGoogleIdToken(String idTokenString) {
+        try {
+            HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
+            JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+
+            GoogleIdTokenVerifier.Builder verifierBuilder = new GoogleIdTokenVerifier.Builder(transport, jsonFactory);
+            if (googleClientId != null && !googleClientId.isBlank()) {
+                verifierBuilder.setAudience(Collections.singletonList(googleClientId));
+            }
+
+            GoogleIdTokenVerifier verifier = verifierBuilder.build();
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            if (idToken != null) {
+                return idToken.getPayload();
+            } else {
+                throw new ValidationException("invalid_google_token");
+            }
+        } catch (ValidationException ve) {
+            throw ve;
+        } catch (Exception e) {
+            throw new ValidationException("google_auth_failed: " + e.getMessage());
+        }
+    }
+
     public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmailIgnoreCase(req.email())
                 .orElseThrow(() -> new RuntimeException("user_credentials_mismatched"));
+
+        if (user.getPasswordHash() == null) {
+            throw new ValidationException("account_registered_with_google");
+        }
 
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             throw new RuntimeException("user_credentials_mismatched");

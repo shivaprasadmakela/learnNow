@@ -25,8 +25,11 @@ public class User {
     private String lastName;
     private String fullName;
 
-    @Column(nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
+
+    @Column(name = "google_sub", unique = true)
+    private String googleSub;
 
     @Builder.Default
     private boolean emailVerified = false;

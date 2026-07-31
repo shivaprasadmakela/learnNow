@@ -21,6 +21,7 @@ interface AppViewRendererProps {
     setDashboardTab: (tab: 'activities' | 'paths' | 'bookmarks') => void;
     signIn: (email: string, pass: string) => Promise<unknown>;
     signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
+    signInWithGoogle?: (idToken: string) => Promise<unknown>;
     handleSelectPath: (pathId: number) => void;
     handleSelectTopic: (topicId: number) => void;
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
@@ -41,6 +42,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     setDashboardTab,
     signIn,
     signUp,
+    signInWithGoogle,
     handleSelectPath,
     handleSelectTopic,
     onSelectRecentTopic,
@@ -91,6 +93,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                 <LoginPage
                     signIn={signIn}
                     signUp={signUp}
+                    signInWithGoogle={signInWithGoogle}
                     changeView={changeView}
                 />
             )}

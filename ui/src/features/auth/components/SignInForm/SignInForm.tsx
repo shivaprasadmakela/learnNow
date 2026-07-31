@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, Input, Checkbox } from '../../../../shared/components';
+import { GoogleLoginButton } from '../GoogleLoginButton';
 import styles from '../../styles/LoginPage.module.css';
 
 interface SignInFormProps {
@@ -13,6 +14,8 @@ interface SignInFormProps {
     onSubmit: (e: React.FormEvent) => void;
     onToggleAuthMode: () => void;
     onForgotPassword: () => void;
+    onGoogleSuccess?: (idToken: string) => void;
+    onGoogleError?: (error: unknown) => void;
 }
 
 export const SignInForm: React.FC<SignInFormProps> = ({
@@ -25,10 +28,22 @@ export const SignInForm: React.FC<SignInFormProps> = ({
     loading,
     onSubmit,
     onToggleAuthMode,
-    onForgotPassword
+    onForgotPassword,
+    onGoogleSuccess,
+    onGoogleError
 }) => {
     return (
         <form onSubmit={onSubmit} className={styles.authForm}>
+            {onGoogleSuccess && (
+                <>
+                    <GoogleLoginButton onSuccess={onGoogleSuccess} onError={onGoogleError} />
+                    <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', width: '100%' }}>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }} />
+                        <span style={{ padding: '0 12px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>OR</span>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }} />
+                    </div>
+                </>
+            )}
             <Input
                 type="email"
                 placeholder="Email*"
