@@ -151,3 +151,17 @@ CREATE TABLE topic_bookmarks (
     UNIQUE (user_id, topic_id)
 );
 CREATE INDEX idx_topic_bookmarks_user ON topic_bookmarks (user_id);
+
+-- 14. Create shared_snippets table
+CREATE TABLE shared_snippets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    short_id VARCHAR(12) NOT NULL UNIQUE,
+    code_hash VARCHAR(64) NOT NULL UNIQUE,
+    language VARCHAR(30) NOT NULL,
+    code TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_accessed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_shared_snippets_short_id ON shared_snippets (short_id);
+CREATE INDEX idx_shared_snippets_code_hash ON shared_snippets (code_hash);
+

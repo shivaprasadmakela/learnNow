@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { createAvatar } from '@dicebear/core';
-import { adventurer } from '@dicebear/collection';
+import { lorelei } from '@dicebear/collection';
 import type { AvatarProps } from './Avatar.types';
 
 export const Avatar: React.FC<AvatarProps> = ({
@@ -12,7 +12,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     const avatarSvg = useMemo(() => {
         try {
             const avatarSeed = avatar || seed || 'learnnow';
-            return createAvatar(adventurer, { seed: avatarSeed }).toString();
+            return createAvatar(lorelei, { seed: avatarSeed }).toString();
         } catch (e) {
             console.error('Failed to create avatar', e);
             return '';

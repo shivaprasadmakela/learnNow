@@ -29,6 +29,12 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/security/JwtConfig.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/security/ResendEmailClient.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/security/TokenService.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/compiler/api/CompilerSnippetController.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/compiler/api/dto/ShareSnippetRequest.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/compiler/api/dto/SharedSnippetResponse.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/compiler/application/CompilerSnippetService.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/compiler/persistence/SharedSnippet.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/compiler/persistence/SharedSnippetRepository.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/config/PointsConfig.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/controller/MeController.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/learningprogress/dto/request/SetTopicCompletionRequest.java

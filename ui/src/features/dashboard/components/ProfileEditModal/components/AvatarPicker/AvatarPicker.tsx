@@ -25,7 +25,7 @@ export const AvatarPicker: React.FC<AvatarPickerProps> = ({
                 <div className={styles.previewLeft}>
                     <Avatar avatar={avatar} size={56} />
                     <div>
-                        <strong style={{ display: 'block', color: 'var(--text-primary)' }}>Adventurer Avatar</strong>
+                        <strong style={{ display: 'block', color: 'var(--text-primary)' }}>Lorelei Avatar</strong>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
                             Click randomize to generate a new character
                         </span>

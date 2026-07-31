@@ -40,6 +40,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     isExpanded={isExpanded}
                     onClick={onSelectPaths}
                 />
+                <SidebarNavItem
+                    iconClass="fa-solid fa-code"
+                    label="Compiler"
+                    isActive={activeView === 'COMPILER'}
+                    isExpanded={isExpanded}
+                    onClick={() => changeView('COMPILER')}
+                />
 
                 {profile?.role === 'ADMIN' && (
                     <SidebarNavItem

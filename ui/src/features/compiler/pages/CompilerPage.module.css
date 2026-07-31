@@ -1,0 +1,22 @@
+.pageLayout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: calc(100vh - 64px);
+    background: var(--bg-tertiary, #0f172a);
+    overflow: hidden;
+}
+
+.splitEditorOutput {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex: 1;
+    overflow: hidden;
+}
+
+@media (max-width: 900px) {
+    .splitEditorOutput {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+}

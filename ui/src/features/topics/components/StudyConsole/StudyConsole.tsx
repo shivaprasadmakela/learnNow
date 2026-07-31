@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText } from 'lucide-react';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
+import { CodePlayground } from '../../../../shared/components/code-playground';
 import { useSubtopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
 import styles from './StudyConsole.module.css';
 
@@ -23,6 +24,7 @@ export function StudyConsole({
     const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
     const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(true);
+    const [activePlaygrounds, setActivePlaygrounds] = useState<Record<number, boolean>>({});
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
@@ -57,7 +59,6 @@ export function StudyConsole({
     };
 
     const handleSubtopicReadToggle = async (subtopicId: string | number, currentlyCompleted: boolean) => {
-        // One-way completion lock: once marked completed, unmarking is forbidden
         if (currentlyCompleted) return;
         if (onToggleSubtopicComplete) {
             await onToggleSubtopicComplete(subtopicId, true);
@@ -65,26 +66,58 @@ export function StudyConsole({
     };
 
     const handleTopicCompleteToggle = async () => {
-        // One-way completion lock: once topic completed, unmarking is forbidden
         if (topic.isCompleted) return;
         await onToggleComplete();
     };
 
-    // Custom markdown formatter for structured articles
+    const togglePlayground = (index: number) => {
+        setActivePlaygrounds(prev => ({ ...prev, [index]: !prev[index] }));
+    };
+
     const renderContent = (content: string) => {
         if (!content) return null;
         const parts = content.split(/```/);
         return parts.map((part, index) => {
             if (index % 2 === 1) {
-                // Code block formatting
                 const lines = part.split('\n');
-                const lang = lines[0].trim();
+                const lang = lines[0].trim() || 'javascript';
                 const code = lines.slice(1).join('\n').trim();
+                const isOpen = Boolean(activePlaygrounds[index]);
+
                 return (
-                    <pre key={index} className={styles.codeBlock}>
-                        {lang && <span className={styles.codeLang}>{lang}</span>}
-                        <code>{code}</code>
-                    </pre>
+                    <div key={index} style={{ margin: '16px 0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>
+                                Code Snippet ({lang})
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => togglePlayground(index)}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--tech-blue)',
+                                    background: isOpen ? 'var(--tech-blue)' : 'transparent',
+                                    color: isOpen ? '#ffffff' : 'var(--tech-blue)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                {isOpen ? 'Hide Playground' : '⚡ Try in Playground'}
+                            </button>
+                        </div>
+
+                        {isOpen ? (
+                            <CodePlayground initialCode={code} language={lang} />
+                        ) : (
+                            <pre className={styles.codeBlock}>
+                                {lang && <span className={styles.codeLang}>{lang}</span>}
+                                <code>{code}</code>
+                            </pre>
+                        )}
+                    </div>
                 );
             } else {
                 // Formatting simple markdown annotations

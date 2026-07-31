@@ -26,7 +26,7 @@ public class ContentBlock {
     private int orderIndex;
 
     @Column(nullable = false, length = 20)
-    private String type; // "markdown" | "quiz" | "callout"
+    private String type; // "markdown" | "quiz" | "callout" | "code"
 
     @Column(columnDefinition = "TEXT")
     private String body;

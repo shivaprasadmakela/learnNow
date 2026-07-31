@@ -65,7 +65,28 @@ export const SubtopicEditorPanel: React.FC<SubtopicEditorPanelProps> = ({
             </div>
 
             <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="subtopic-content">Markdown Content</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label className={styles.label} htmlFor="subtopic-content" style={{ margin: 0 }}>Markdown Content</label>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const template = `\n\`\`\`javascript\n// Interactive Code Playground Snippet\nfunction solution() {\n    console.log("Hello from Code Playground!");\n}\nsolution();\n\`\`\`\n`;
+                            onSubtopicContentChange(activeTopicIndex, activeSubtopicIndex, (currentSubtopic.content || '') + template);
+                        }}
+                        style={{
+                            padding: '3px 8px',
+                            fontSize: '0.75rem',
+                            borderRadius: '4px',
+                            background: 'rgba(56, 189, 248, 0.1)',
+                            border: '1px solid var(--tech-blue)',
+                            color: 'var(--tech-blue)',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                        }}
+                    >
+                        + Insert Code Playground Snippet
+                    </button>
+                </div>
                 <textarea
                     id="subtopic-content"
                     className={styles.contentTextarea}

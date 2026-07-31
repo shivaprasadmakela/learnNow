@@ -12,6 +12,7 @@ export type ViewState =
     | 'TOPICS' 
     | 'STUDY' 
     | 'VERIFY_EMAIL' 
+    | 'COMPILER'
     | 'ADMIN' 
     | 'ADMIN_CREATE_PATH' 
     | 'ADMIN_EDIT_PATH'
@@ -38,6 +39,8 @@ export const useProfileDashboard = () => {
                 return 'LOGIN';
             } else if (parts.length === 1 && parts[0] === 'verify-email') {
                 return 'VERIFY_EMAIL';
+            } else if (parts.length >= 1 && parts[0] === 'compiler') {
+                return 'COMPILER';
             } else if (parts.length === 1 && parts[0] === 'paths') {
                 return 'PATHS';
             } else if (parts.length === 2 && parts[0] === 'paths') {
@@ -128,6 +131,8 @@ export const useProfileDashboard = () => {
             window.history.pushState(null, '', '/login');
         } else if (view === 'VERIFY_EMAIL') {
             window.history.pushState(null, '', `/verify-email${slug ? '?token=' + slug : ''}`);
+        } else if (view === 'COMPILER') {
+            window.history.pushState(null, '', `/compiler/${slug || 'javascript'}`);
         } else if (view === 'PATHS') {
             window.history.pushState(null, '', '/paths');
         } else if (view === 'TOPICS') {

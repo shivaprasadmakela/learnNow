@@ -24,7 +24,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/paths/**", "/api/catalog/**").permitAll()
-                .requestMatchers("/api/auth/**", "/error").permitAll()
+                .requestMatchers("/api/auth/**", "/api/compiler/snippets/**", "/error").permitAll()
                 .requestMatchers("/api/admin/**").hasAnyAuthority("SCOPE_ADMIN", "ROLE_ADMIN", "ADMIN")
                 .anyRequest().authenticated()
             )

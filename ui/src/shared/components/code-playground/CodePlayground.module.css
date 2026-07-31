@@ -1,0 +1,78 @@
+.playgroundCard {
+    display: flex;
+    flex-direction: column;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.playgroundHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: #090d16;
+    border-bottom: 1px solid #1e293b;
+}
+
+.playgroundTitle {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.runBtn {
+    background: #2563eb;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
+.runBtn:hover {
+    background: #1d4ed8;
+}
+
+.splitBody {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 320px;
+    overflow: hidden;
+}
+
+.editorBox {
+    height: 100%;
+    overflow: hidden;
+}
+
+.outputBox {
+    height: 100%;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .splitBody {
+        grid-template-columns: 1fr;
+        height: 500px;
+    }
+}

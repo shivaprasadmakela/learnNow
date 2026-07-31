@@ -5,6 +5,7 @@ import { LoginPage, VerifyEmailPage } from '../../features/auth';
 import { PathsPage } from '../../features/paths';
 import { TopicsPage } from '../../features/topics';
 import { AdminDashboard, ConfigurationEditor, CourseImporter } from '../../features/iam-admin';
+import { CompilerPage } from '../../features/compiler';
 import { UnauthorizedAccess } from '../../shared/components/ui/UnauthorizedAccess';
 import styles from '../App.module.css';
 import type { Course, UserProfile } from '../../types';
@@ -52,7 +53,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
 
     return (
         <div className={
-            activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
+            activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'COMPILER' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
                 ? styles.pageContentFull
                 : activeView === 'DASHBOARD'
                     ? styles.pageContentDashboard
@@ -100,6 +101,8 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                     onVerificationSuccess={handleLoginSuccess}
                 />
             )}
+
+            {activeView === 'COMPILER' && <CompilerPage />}
 
             {activeView === 'PATHS' && (
                 <PathsPage
