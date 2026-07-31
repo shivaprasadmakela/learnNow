@@ -9,7 +9,7 @@ interface StudyConsoleProps {
     topic: TopicDetails;
     onClose: () => void;
     onToggleComplete: () => Promise<void>;
-    onToggleSubtopicComplete?: (subtopicId: string, completed: boolean) => Promise<void>;
+    onToggleSubtopicComplete?: (subtopicId: string | number, completed: boolean) => Promise<void>;
     isUpdating: boolean;
 }
 
@@ -56,7 +56,7 @@ export function StudyConsole({
         }
     };
 
-    const handleSubtopicReadToggle = async (subtopicId: any, currentlyCompleted: boolean) => {
+    const handleSubtopicReadToggle = async (subtopicId: string | number, currentlyCompleted: boolean) => {
         // One-way completion lock: once marked completed, unmarking is forbidden
         if (currentlyCompleted) return;
         if (onToggleSubtopicComplete) {

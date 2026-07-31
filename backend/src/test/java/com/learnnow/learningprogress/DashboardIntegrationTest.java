@@ -6,6 +6,7 @@ import com.learnnow.learningprogress.dto.response.DashboardResponse;
 import com.learnnow.learningprogress.dto.response.WeeklyCalendarDay;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
+import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.service.ActivityRecordingService;
 import com.learnnow.learningprogress.service.DashboardService;
 import com.learnnow.learningprogress.service.ProgressService;
@@ -56,6 +57,9 @@ public class DashboardIntegrationTest {
 
     @Autowired
     private SubtopicRepository subtopicRepository;
+
+    @Autowired
+    private UserSubtopicProgressRepository userSubtopicProgressRepository;
 
     private UUID samplePathId;
     private UUID sampleTopicId1;
@@ -109,12 +113,32 @@ public class DashboardIntegrationTest {
             Path p = existingPaths.get(0);
             samplePathId = p.getId();
             List<Topic> topics = topicRepository.findAll();
-            List<Subtopic> subtopics = subtopicRepository.findAll();
-            if (!topics.isEmpty()) {
-                sampleTopicId1 = topics.get(0).getId();
-                sampleTopicId2 = topics.size() > 1 ? topics.get(1).getId() : sampleTopicId1;
+            if (topics.isEmpty()) {
+                Topic topic1 = topicRepository.save(Topic.builder()
+                        .path(p)
+                        .title("Topic 1")
+                        .description("Topic 1 Desc")
+                        .category("course")
+                        .duration("1 hour")
+                        .status(ContentStatus.PUBLISHED)
+                        .build());
+                topics = List.of(topic1);
             }
-            if (!subtopics.isEmpty()) {
+            sampleTopicId1 = topics.get(0).getId();
+            sampleTopicId2 = topics.size() > 1 ? topics.get(1).getId() : sampleTopicId1;
+
+            List<Subtopic> subtopics = subtopicRepository.findAll();
+            if (subtopics.isEmpty()) {
+                Subtopic subtopic1 = subtopicRepository.save(Subtopic.builder()
+                        .topic(topics.get(0))
+                        .title("Subtopic 1")
+                        .content("Content 1")
+                        .orderIndex(1)
+                        .status(ContentStatus.PUBLISHED)
+                        .version(1)
+                        .build());
+                sampleSubtopicId1 = subtopic1.getId();
+            } else {
                 sampleSubtopicId1 = subtopics.get(0).getId();
             }
         }
@@ -186,11 +210,15 @@ public class DashboardIntegrationTest {
         }
 
         if (sampleSubtopicId1 != null) {
+            userSubtopicProgressRepository.findAll().stream()
+                    .filter(sp -> sp.getUserId().equals(testUserId))
+                    .forEach(sp -> userSubtopicProgressRepository.delete(sp));
+            preferencesRepository.findByUserId(testUserId).ifPresent(preferencesRepository::delete);
             progressService.markSubtopicComplete(testUserId, sampleSubtopicId1, true);
         }
 
         DashboardResponse response = dashboardService.buildDashboard(testUserId);
-        String todayStr = LocalDate.now().toString();
+        String todayStr = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Kolkata")).toString();
 
         WeeklyCalendarDay todayCalendarDay = response.weeklyCalendar().stream()
                 .filter(day -> day.date().toString().equals(todayStr))

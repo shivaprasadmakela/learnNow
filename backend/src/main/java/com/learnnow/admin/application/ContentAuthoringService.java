@@ -21,6 +21,7 @@ public class ContentAuthoringService {
     private final SubtopicRepository subtopicRepository;
     private final ContentBlockRepository contentBlockRepository;
     private final QuizQuestionRepository quizQuestionRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Transactional
     public Path createPath(CreatePathRequest request) {
@@ -164,7 +165,7 @@ public class ContentAuthoringService {
                                 String optionsJson = "[]";
                                 if (qReq.options() != null) {
                                     try {
-                                        optionsJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(qReq.options());
+                                        optionsJson = objectMapper.writeValueAsString(qReq.options());
                                     } catch (Exception ignored) {}
                                 }
                                 com.learnnow.admin.persistence.QuizQuestion q = com.learnnow.admin.persistence.QuizQuestion.builder()
@@ -419,7 +420,7 @@ public class ContentAuthoringService {
                                 String optionsJson = "[]";
                                 if (qReq.options() != null) {
                                     try {
-                                        optionsJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(qReq.options());
+                                        optionsJson = objectMapper.writeValueAsString(qReq.options());
                                     } catch (Exception ignored) {}
                                 }
                                 QuizQuestion q = QuizQuestion.builder()
@@ -478,7 +479,7 @@ public class ContentAuthoringService {
                                             List<String> optsList = List.of();
                                             if (q.getOptions() != null) {
                                                 try {
-                                                    optsList = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                                                    optsList = objectMapper.readValue(
                                                             q.getOptions(),
                                                             new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
                                                     );

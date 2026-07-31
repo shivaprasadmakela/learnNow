@@ -11,10 +11,12 @@ const slugify = (text: string) => {
         .replace(/(^-|-$)+/g, '');
 };
 
+import type { ViewState } from '../../features/dashboard/hooks/useProfileDashboard';
+
 interface UseTopicSessionOptions {
     isLoggedIn: boolean;
     courses: Course[];
-    changeView: (view: any, pathSlug?: string, topicSlug?: string) => void;
+    changeView: (view: ViewState, pathSlug?: string, topicSlug?: string) => void;
     showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
     refreshUserData: () => Promise<void>;
 }
@@ -26,14 +28,14 @@ export const useTopicSession = ({
     showToast,
     refreshUserData
 }: UseTopicSessionOptions) => {
-    const [activeTopicId, setActiveTopicId] = useState<any | null>(null);
+    const [activeTopicId, setActiveTopicId] = useState<string | number | null>(null);
     const [activeTopic, setActiveTopic] = useState<TopicDetails | null>(null);
     const [isStudyLoading, setIsStudyLoading] = useState(false);
     const [isStudyUpdating, setIsStudyUpdating] = useState(false);
 
     const { recordTopicCompletion, recordSubtopicCompletion } = useRecordActivity();
 
-    const handleSelectTopic = useCallback(async (id: any) => {
+    const handleSelectTopic = useCallback(async (id: string | number) => {
         if (!isLoggedIn) {
             changeView('LOGIN');
             return;

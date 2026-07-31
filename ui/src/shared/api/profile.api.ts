@@ -61,7 +61,7 @@ export interface TopicDetails {
     subtopics: SubtopicData[];
 }
 
-export const fetchTopicDetails = async (id: number): Promise<TopicDetails> => {
+export const fetchTopicDetails = async (id: string | number): Promise<TopicDetails> => {
     const response = await apiFetch(`/api/topics/${id}`);
     if (!response.ok) throw new Error('Failed to fetch topic details');
     return response.json();

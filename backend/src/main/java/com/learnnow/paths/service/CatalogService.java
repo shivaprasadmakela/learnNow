@@ -30,6 +30,7 @@ public class CatalogService {
     private final TopicRepository topicRepository;
     private final UserTopicProgressRepository topicProgressRepository;
     private final UserSubtopicProgressRepository subtopicProgressRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public List<PathSummaryDto> getAllPaths() {
@@ -104,7 +105,7 @@ public class CatalogService {
                                             List<String> optsList = List.of();
                                             if (q.getOptions() != null) {
                                                 try {
-                                                    optsList = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                                                    optsList = objectMapper.readValue(
                                                             q.getOptions(),
                                                             new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
                                                     );

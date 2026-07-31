@@ -34,12 +34,12 @@ public class AdminPathController {
     }
 
     @PostMapping
-    public ResponseEntity<AdminPathDto> savePath(@RequestBody AdminPathDto dto) {
+    public ResponseEntity<AdminPathDto> savePath(@Valid @RequestBody AdminPathDto dto) {
         return ResponseEntity.ok(authoringService.saveOrUpdatePath(dto));
     }
 
     @PostMapping("/import/validate")
-    public ResponseEntity<ImportValidationResultDto> validateImport(@RequestBody ImportCourseRequest request) {
+    public ResponseEntity<ImportValidationResultDto> validateImport(@Valid @RequestBody ImportCourseRequest request) {
         ImportValidationResultDto result = authoringService.validateImportConflicts(request);
         return ResponseEntity.ok(result);
     }
@@ -51,7 +51,7 @@ public class AdminPathController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AdminPathDto> updatePath(@PathVariable UUID id, @RequestBody AdminPathDto dto) {
+    public ResponseEntity<AdminPathDto> updatePath(@PathVariable UUID id, @Valid @RequestBody AdminPathDto dto) {
         AdminPathDto toSave = new AdminPathDto(
                 id,
                 dto.title(),

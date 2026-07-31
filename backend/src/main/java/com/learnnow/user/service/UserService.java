@@ -47,7 +47,6 @@ public class UserService {
 
         user.setFullName(dto.fullName());
         if (dto.avatar() != null) user.setAvatar(dto.avatar());
-        if (dto.role() != null) user.setRole(dto.role());
         if (dto.bio() != null) user.setBio(dto.bio());
 
         User updated = userRepository.save(user);

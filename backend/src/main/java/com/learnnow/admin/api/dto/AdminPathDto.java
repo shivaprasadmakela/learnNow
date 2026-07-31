@@ -1,11 +1,12 @@
 package com.learnnow.admin.api.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.UUID;
 
 public record AdminPathDto(
     UUID id,
-    String title,
+    @NotBlank(message = "Title is required") String title,
     String description,
     String category,
     String managedBy,

@@ -75,11 +75,6 @@ public class AuthService {
         tokenRepository.save(token);
 
         String link = appBaseUrl + "/verify-email?token=" + rawToken;
-        System.out.println("==================================================");
-        System.out.println("VERIFICATION LINK FOR " + user.getEmail() + ":");
-        System.out.println(link);
-        System.out.println("==================================================");
-
         emailClient.sendVerificationEmail(user.getEmail(), user.getFirstName(), link);
     }
 
