@@ -1,6 +1,6 @@
 package com.learnnow.user.controller;
 
-import com.learnnow.user.dto.UserDto;
+import com.learnnow.user.dto.*;
 import com.learnnow.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,8 +25,8 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<UserDto> updateProfile(@AuthenticationPrincipal Jwt jwt, @RequestBody UserDto userDto) {
+    public ResponseEntity<UserDto> updateProfile(@AuthenticationPrincipal Jwt jwt, @jakarta.validation.Valid @RequestBody UpdateProfileRequest req) {
         String id = jwt.getSubject();
-        return ResponseEntity.ok(userService.updateUser(id, userDto));
+        return ResponseEntity.ok(userService.updateUser(id, req));
     }
 }

@@ -1,6 +1,6 @@
 package com.learnnow.user.service;
 
-import com.learnnow.user.dto.UserDto;
+import com.learnnow.user.dto.*;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -41,13 +41,15 @@ public class UserService {
     }
 
     @Transactional
-    public UserDto updateUser(String id, UserDto dto) {
+    public UserDto updateUser(String id, UpdateProfileRequest req) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found for id: " + id));
 
-        user.setFullName(dto.fullName());
-        if (dto.avatar() != null) user.setAvatar(dto.avatar());
-        if (dto.bio() != null) user.setBio(dto.bio());
+        if (req.fullName() != null && !req.fullName().isBlank()) {
+            user.setFullName(req.fullName());
+        }
+        if (req.avatar() != null) user.setAvatar(req.avatar());
+        if (req.bio() != null) user.setBio(req.bio());
 
         User updated = userRepository.save(user);
         return new UserDto(

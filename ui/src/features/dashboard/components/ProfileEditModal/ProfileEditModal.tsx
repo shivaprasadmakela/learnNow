@@ -6,7 +6,7 @@ import styles from './ProfileEditModal.module.css';
 
 interface ProfileEditModalProps {
     profile: UserProfile | null;
-    onSaveProfile: (fullName: string, avatar: string, role: string, bio: string) => void;
+    onSaveProfile: (fullName: string, avatar: string, bio: string) => void;
     onClose: () => void;
 }
 
@@ -17,11 +17,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 }) => {
     const [fullName, setFullName] = useState<string>(profile?.fullName || 'Alex Learner');
     const [avatar, setAvatar] = useState<string>(profile?.avatar || profile?.id || 'learnnow');
-    const [role, setRole] = useState<string>(profile?.role || 'Junior Fullstack Engineer');
     const [bio, setBio] = useState<string>(profile?.bio || 'Learning React & Spring Boot.');
 
     const handleSave = () => {
-        onSaveProfile(fullName, avatar, role, bio);
+        onSaveProfile(fullName, avatar, bio);
         onClose();
     };
 
@@ -42,11 +41,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
                     />
                 </div>
-                <Input
-                    label="Current Role"
-                    value={role}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRole(e.target.value)}
-                />
                 <div className={styles.textareaContainer}>
                     <label className={styles.textareaLabel}>Bio</label>
                     <textarea
