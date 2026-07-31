@@ -281,14 +281,13 @@ export const useProfileDashboard = () => {
         changeView('HOME');
     };
 
-    const saveProfile = async (fullName: string, avatar: string, role: string, bio: string) => {
+    const saveProfile = async (fullName: string, avatar: string, bio: string) => {
         if (!profile) return;
         try {
             const updated = await api.updateProfile({
                 ...profile,
                 fullName,
                 avatar,
-                role,
                 bio
             });
             setProfile(updated);

@@ -7,13 +7,17 @@ export const fetchProfile = async (): Promise<UserProfile> => {
     return response.json();
 };
 
-export const updateProfile = async (profile: UserProfile): Promise<UserProfile> => {
+export const updateProfile = async (profile: Partial<UserProfile> & { fullName: string }): Promise<UserProfile> => {
     const response = await apiFetch('/api/user', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(profile)
+        body: JSON.stringify({
+            fullName: profile.fullName,
+            avatar: profile.avatar,
+            bio: profile.bio
+        })
     });
     if (!response.ok) throw new Error('Failed to update profile');
     return response.json();
