@@ -24,6 +24,7 @@ export default function App() {
         signOut,
         signIn,
         signUp,
+        signInWithGoogle,
         handleLoginSuccess
     } = useProfileDashboard();
 
@@ -234,6 +235,7 @@ export default function App() {
                             setDashboardTab={setDashboardTab}
                             signIn={signIn}
                             signUp={signUp}
+                            signInWithGoogle={signInWithGoogle}
                             handleSelectPath={handleSelectPath}
                             handleSelectTopic={handleSelectTopic}
                             onSelectRecentTopic={handleSelectRecentTopic}

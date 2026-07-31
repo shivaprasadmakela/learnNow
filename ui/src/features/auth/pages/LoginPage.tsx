@@ -8,11 +8,22 @@ import { RegistrationSuccess } from '../components/RegistrationSuccess';
 export interface LoginPageProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
     signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
+    signInWithGoogle?: (idToken: string) => Promise<unknown>;
     changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp, signInWithGoogle }) => {
     const form = useAuthForm({ signIn, signUp });
+
+    const handleGoogleSuccess = async (idToken: string) => {
+        if (!signInWithGoogle) return;
+        try {
+            await signInWithGoogle(idToken);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Google login failed';
+            form.showToast(msg, 'error');
+        }
+    };
 
     return (
         <div className={styles.authPageContainer}>
@@ -41,6 +52,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp }) => {
                             onSubmit={form.handleSignInSubmit}
                             onToggleAuthMode={form.toggleAuthMode}
                             onForgotPassword={() => form.showToast('Forgot password logic is coming soon!', 'info')}
+                            onGoogleSuccess={signInWithGoogle ? handleGoogleSuccess : undefined}
+                            onGoogleError={(err) => {
+                                const msg = err instanceof Error ? err.message : 'Google authentication failed';
+                                form.showToast(msg, 'error');
+                            }}
                         />
                     ) : (
                         <SignUpForm

@@ -63,16 +63,25 @@ export const useProfileDashboard = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return 'dark';
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('app_theme');
+            if (saved === 'light' || saved === 'dark') {
+                return saved;
+            }
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                return 'dark';
+            }
         }
         return 'light';
     });
 
-    // Toggle theme
+    // Toggle theme with localStorage persistence
     const toggleTheme = useCallback(() => {
         const nextTheme = theme === 'light' ? 'dark' : 'light';
         setTheme(nextTheme);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('app_theme', nextTheme);
+        }
         document.documentElement.setAttribute('data-theme', nextTheme);
     }, [theme]);
 
@@ -236,6 +245,29 @@ export const useProfileDashboard = () => {
         return data;
     };
 
+    const signInWithGoogle = async (idToken: string) => {
+        setError(null);
+        const response = await apiFetch('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+        });
+
+        if (!response.ok) {
+            const errText = await getErrorMessage(response, 'Google authentication failed');
+            setError(errText);
+            throw new Error(errText);
+        }
+
+        const data = await response.json();
+        authClient.setToken(data.token);
+        setProfile(data.profile);
+
+        changeView('DASHBOARD');
+        window.history.pushState(null, '', '/dashboard');
+        return data;
+    };
+
     const handleLoginSuccess = useCallback((token: string, profile: UserProfile) => {
         authClient.setToken(token);
         setProfile(profile);
@@ -281,6 +313,7 @@ export const useProfileDashboard = () => {
         isLoggedIn: !!profile,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
         handleLoginSuccess
     };
