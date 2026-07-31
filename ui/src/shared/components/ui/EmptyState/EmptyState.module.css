@@ -5,8 +5,8 @@
     justify-content: center;
     text-align: center;
     padding: 60px 24px;
-    background: var(--bg-card, #ffffff);
-    border: 1px dashed var(--border-color, #e2e8f0);
+    background: var(--bg-card);
+    border: 1px dashed var(--border-color);
     border-radius: 16px;
     margin: 24px 0;
     width: 100%;
@@ -16,8 +16,8 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--tech-blue, #3b82f6);
+    background: var(--accent-blue-light, rgba(59, 130, 246, 0.1));
+    color: var(--tech-blue);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -27,13 +27,13 @@
 .title {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--text-primary, #0f172a);
+    color: var(--text-primary);
     margin: 0 0 8px 0;
 }
 
 .description {
     font-size: 0.95rem;
-    color: var(--text-secondary, #64748b);
+    color: var(--text-secondary);
     max-width: 480px;
     margin: 0 0 24px 0;
     line-height: 1.5;

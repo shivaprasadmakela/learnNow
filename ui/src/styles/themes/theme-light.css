@@ -13,6 +13,8 @@
   --bg-primary: var(--color-white);
   --bg-secondary: var(--color-slate-50);
   --bg-tertiary: var(--color-slate-100);
+  --bg-card: var(--color-white);
+  --card-bg: var(--color-white);
   --bg-dark-section: var(--color-dark-section);
 
   --text-primary: var(--color-slate-900);
