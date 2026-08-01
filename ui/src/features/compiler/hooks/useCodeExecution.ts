@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { executeCodeApi } from '../../../shared/api/compiler.api';
 
 export interface ConsoleLogEntry {
     type: 'log' | 'error' | 'warn' | 'info';
@@ -25,7 +26,8 @@ export function useCodeExecution() {
 
             if (lang === 'html' || lang === 'xml') {
                 setHtmlPreview(code);
-            } else if (lang === 'javascript' || lang === 'js' || lang === 'typescript' || lang === 'ts') {
+                capturedLogs.push({ type: 'info', message: 'Rendered live HTML preview in output pane.', timestamp });
+            } else if (lang === 'javascript' || lang === 'js') {
                 const customConsole = {
                     log: (...args: unknown[]) => {
                         capturedLogs.push({
@@ -54,55 +56,63 @@ export function useCodeExecution() {
                     capturedLogs.push({ type: 'info', message: `[stdin input]: ${stdin.trim()}`, timestamp });
                 }
 
-                // Execute in safe function context
                 const runnerFn = new Function('console', 'stdin', code);
                 runnerFn(customConsole, stdin);
 
                 if (capturedLogs.length === 0) {
-                    capturedLogs.push({ type: 'info', message: 'Program executed cleanly with zero output.', timestamp });
-                }
-            } else if (lang === 'python') {
-                if (stdin.trim()) {
-                    capturedLogs.push({ type: 'info', message: `[stdin input]: ${stdin.trim()}`, timestamp });
-                }
-                const lines = code.split('\n');
-                capturedLogs.push({ type: 'info', message: `Python 3.12 Environment Initialized`, timestamp });
-
-                lines.forEach(line => {
-                    if (line.includes('print(')) {
-                        const match = line.match(/print\((.*)\)/);
-                        if (match && match[1]) {
-                            let content = match[1].trim();
-                            if (content.startsWith('f"') || content.startsWith("f'")) {
-                                content = content.substring(2, content.length - 1);
-                            } else if ((content.startsWith('"') && content.endsWith('"')) || (content.startsWith("'") && content.endsWith("'"))) {
-                                content = content.substring(1, content.length - 1);
-                            }
-                            capturedLogs.push({ type: 'log', message: content, timestamp });
-                        }
-                    }
-                });
-
-                if (capturedLogs.length <= 1) {
-                    capturedLogs.push({ type: 'log', message: 'Process finished with exit code 0', timestamp });
+                    capturedLogs.push({ type: 'info', message: 'Program executed cleanly with zero console output.', timestamp });
                 }
             } else {
-                capturedLogs.push({ type: 'info', message: `Compiling & running ${languageId.toUpperCase()}...`, timestamp });
+                capturedLogs.push({ type: 'info', message: `Executing ${languageId.toUpperCase()} program...`, timestamp });
                 if (stdin.trim()) {
                     capturedLogs.push({ type: 'info', message: `[stdin]: ${stdin.trim()}`, timestamp });
                 }
-                capturedLogs.push({ type: 'log', message: `Process executed successfully. Output generated.`, timestamp });
+
+                const result = await executeCodeApi({
+                    language: languageId,
+                    code,
+                    stdin
+                });
+
+                if (result.compileOutput && result.compileOutput.trim()) {
+                    capturedLogs.push({
+                        type: 'error',
+                        message: `[Compilation Output]\n${result.compileOutput.trim()}`,
+                        timestamp
+                    });
+                }
+
+                if (result.stderr && result.stderr.trim()) {
+                    capturedLogs.push({
+                        type: 'error',
+                        message: result.stderr.trim(),
+                        timestamp
+                    });
+                }
+
+                if (result.stdout && result.stdout.trim()) {
+                    const stdoutLines = result.stdout.trim().split('\n');
+                    stdoutLines.forEach(line => {
+                        capturedLogs.push({ type: 'log', message: line, timestamp });
+                    });
+                } else if (!result.stderr && !result.compileOutput) {
+                    capturedLogs.push({ type: 'info', message: 'Process finished with exit code 0 (no output)', timestamp });
+                }
+
+                if (result.timeSeconds != null) {
+                    setExecutionTimeMs(Math.round(result.timeSeconds * 1000));
+                }
             }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
             capturedLogs.push({
                 type: 'error',
-                message: `Runtime Error: ${msg}`,
+                message: `Execution Error: ${msg}`,
                 timestamp
             });
         } finally {
             const endTime = performance.now();
-            setExecutionTimeMs(Math.round(endTime - startTime));
+            setExecutionTimeMs(prev => prev !== null ? prev : Math.round(endTime - startTime));
             setLogs(capturedLogs);
             setIsRunning(false);
         }
