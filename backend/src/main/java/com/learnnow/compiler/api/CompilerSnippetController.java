@@ -26,4 +26,9 @@ public class CompilerSnippetController {
         SharedSnippetResponse response = snippetService.getSnippetByShortId(shortId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/execute")
+    public ResponseEntity<com.learnnow.compiler.api.dto.ExecuteCodeResponse> executeCode(@Valid @RequestBody com.learnnow.compiler.api.dto.ExecuteCodeRequest request) {
+        return ResponseEntity.ok(snippetService.executeCode(request));
+    }
 }

@@ -31,3 +31,31 @@ export async function fetchSharedSnippetApi(shortId: string): Promise<SharedSnip
     }
     return res.json() as Promise<SharedSnippetData>;
 }
+
+export interface ExecuteCodePayload {
+    language: string;
+    code: string;
+    stdin?: string;
+}
+
+export interface ExecuteCodeResult {
+    stdout?: string;
+    stderr?: string;
+    compileOutput?: string;
+    statusCode?: number;
+    statusDescription?: string;
+    timeSeconds?: number;
+    memoryBytes?: number;
+}
+
+export async function executeCodeApi(payload: ExecuteCodePayload): Promise<ExecuteCodeResult> {
+    const res = await apiFetch('/api/compiler/snippets/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        throw new Error('Code execution failed');
+    }
+    return res.json() as Promise<ExecuteCodeResult>;
+}

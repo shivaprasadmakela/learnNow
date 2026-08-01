@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import type { Monaco } from '@monaco-editor/react';
+import type { Monaco, OnMount } from '@monaco-editor/react';
 import styles from './MonacoEditorPane.module.css';
 
 interface MonacoEditorPaneProps {
@@ -16,6 +16,9 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
     onChange,
     onRun
 }) => {
+    const editorRef = useRef<any>(null);
+    const monacoRef = useRef<Monaco | null>(null);
+
     const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
         if (typeof document !== 'undefined') {
             const attr = document.documentElement.getAttribute('data-theme');
@@ -40,7 +43,30 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
         return () => observer.disconnect();
     }, []);
 
+    // Keep Monaco model language strictly synchronized on language switch
+    useEffect(() => {
+        if (editorRef.current && monacoRef.current) {
+            const model = editorRef.current.getModel();
+            if (model) {
+                monacoRef.current.editor.setModelLanguage(model, language);
+            }
+            editorRef.current.layout();
+        }
+    }, [language]);
+
     const handleBeforeMount = (monaco: Monaco) => {
+        // Prevent false semantic diagnostic errors on JS/TS
+        if (monaco.languages.typescript) {
+            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: true,
+                noSyntaxValidation: false
+            });
+            monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: true,
+                noSyntaxValidation: false
+            });
+        }
+
         // Dark Theme
         monaco.editor.defineTheme('learnNowDark', {
             base: 'vs-dark',
@@ -88,6 +114,14 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
         });
     };
 
+    const handleMount: OnMount = (editor, monaco) => {
+        editorRef.current = editor;
+        monacoRef.current = monaco;
+        if (onRun) {
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => onRun());
+        }
+    };
+
     return (
         <div className={styles.editorWrapper}>
             <Editor
@@ -96,6 +130,7 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
                 theme={themeMode === 'light' ? 'learnNowLight' : 'learnNowDark'}
                 value={code}
                 beforeMount={handleBeforeMount}
+                onMount={handleMount}
                 onChange={(val) => onChange(val || '')}
                 options={{
                     fontSize: 14,
@@ -109,11 +144,6 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
                     cursorBlinking: 'smooth',
                     smoothScrolling: true,
                     padding: { top: 14, bottom: 14 }
-                }}
-                onMount={(editor) => {
-                    if (onRun) {
-                        editor.addCommand(2048 | 3, () => onRun());
-                    }
                 }}
             />
         </div>
