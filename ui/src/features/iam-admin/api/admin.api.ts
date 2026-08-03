@@ -131,4 +131,11 @@ export const importCourse = async (payload: ImportCoursePayload): Promise<Import
     return res.json();
 };
 
+export const deleteAdminPath = async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/admin/paths/${id}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete path');
+};
+
 

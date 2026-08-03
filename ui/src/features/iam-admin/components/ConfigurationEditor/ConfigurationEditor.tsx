@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, Trash2 } from 'lucide-react';
 import styles from './ConfigurationEditor.module.css';
 import type { ConfigurationEditorProps } from './ConfigurationEditor.types';
 import { useConfigurationEditor } from './ConfigurationEditor.hooks';
@@ -7,6 +7,7 @@ import { CourseDetailsPanel } from './components/CourseDetailsPanel';
 import { CurriculumPanel } from './components/CurriculumPanel';
 import { SubtopicEditorPanel } from './components/SubtopicEditorPanel';
 import { CoursePreviewModal } from '../CoursePreviewModal';
+import { deleteAdminPath } from '../../api/admin.api';
 
 export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
     pathId,
@@ -29,6 +30,19 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
         handleAddOption, handleRemoveOption, handleUpdateOption,
         handleSaveDraft, handlePublish,
     } = useConfigurationEditor(pathId, onSaveSuccess);
+
+    const handleDeleteCourse = async () => {
+        if (!pathId) return;
+        if (window.confirm(`Are you sure you want to delete course "${title}"? This action cannot be undone.`)) {
+            try {
+                await deleteAdminPath(pathId);
+                onCancel();
+            } catch (err) {
+                console.error('Failed to delete course:', err);
+                alert('Failed to delete course. Please try again.');
+            }
+        }
+    };
 
     if (isLoading) {
         return (
@@ -59,6 +73,17 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
                     </div>
                 </div>
                 <div className={styles.actionsArea}>
+                    {pathId && (
+                        <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            onClick={handleDeleteCourse}
+                            style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                            title="Delete Course"
+                        >
+                            <Trash2 size={16} /> Delete
+                        </button>
+                    )}
                     <CoursePreviewModal
                         title={title}
                         managedBy={managedBy}

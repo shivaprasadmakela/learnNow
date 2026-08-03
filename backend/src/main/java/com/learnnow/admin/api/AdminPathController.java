@@ -69,4 +69,10 @@ public class AdminPathController {
         Path path = publishService.publishPath(id);
         return ResponseEntity.ok(path);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePath(@PathVariable UUID id) {
+        authoringService.deletePath(id);
+        return ResponseEntity.noContent().build();
+    }
 }

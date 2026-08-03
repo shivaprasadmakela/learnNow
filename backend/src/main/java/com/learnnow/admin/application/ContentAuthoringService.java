@@ -197,6 +197,14 @@ public class ContentAuthoringService {
         return toAdminPathDto(saved);
     }
 
+    @Transactional
+    public void deletePath(UUID pathId) {
+        if (!pathRepository.existsById(pathId)) {
+            throw new com.learnnow.common.exception.NotFoundException("Path not found with id: " + pathId);
+        }
+        pathRepository.deleteById(pathId);
+    }
+
     @Transactional(readOnly = true)
     public ImportValidationResultDto validateImportConflicts(ImportCourseRequest request) {
         List<ImportConflictItemDto> conflicts = new java.util.ArrayList<>();
