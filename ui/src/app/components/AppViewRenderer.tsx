@@ -131,6 +131,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         onNavigateCreate={() => changeView('ADMIN_CREATE_PATH')}
                         onNavigateImport={() => changeView('ADMIN_IMPORT_COURSE')}
                         onNavigateEdit={(pathId) => changeView('ADMIN_EDIT_PATH', pathId)}
+                        refreshUserData={refreshUserData}
                     />
                 ) : (
                     <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
@@ -160,6 +161,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                             changeView('ADMIN');
                         }}
                         onCancel={() => changeView('ADMIN')}
+                        refreshUserData={refreshUserData}
                     />
                 ) : (
                     <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Save, Send, Trash2 } from 'lucide-react';
 import styles from './ConfigurationEditor.module.css';
 import type { ConfigurationEditorProps } from './ConfigurationEditor.types';
@@ -7,12 +7,14 @@ import { CourseDetailsPanel } from './components/CourseDetailsPanel';
 import { CurriculumPanel } from './components/CurriculumPanel';
 import { SubtopicEditorPanel } from './components/SubtopicEditorPanel';
 import { CoursePreviewModal } from '../CoursePreviewModal';
+import { ConfirmDeleteModal } from '../ConfirmDeleteModal';
 import { deleteAdminPath } from '../../api/admin.api';
 
 export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
     pathId,
     onSaveSuccess,
     onCancel,
+    refreshUserData
 }) => {
     const {
         isLoading, isSaving,
@@ -31,16 +33,23 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
         handleSaveDraft, handlePublish,
     } = useConfigurationEditor(pathId, onSaveSuccess);
 
-    const handleDeleteCourse = async () => {
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+    const [isDeletingCourse, setIsDeletingCourse] = useState(false);
+
+    const handleConfirmDelete = async () => {
         if (!pathId) return;
-        if (window.confirm(`Are you sure you want to delete course "${title}"? This action cannot be undone.`)) {
-            try {
-                await deleteAdminPath(pathId);
-                onCancel();
-            } catch (err) {
-                console.error('Failed to delete course:', err);
-                alert('Failed to delete course. Please try again.');
+        setIsDeletingCourse(true);
+        try {
+            await deleteAdminPath(pathId);
+            if (refreshUserData) {
+                refreshUserData();
             }
+            setIsConfirmDeleteOpen(false);
+            onCancel();
+        } catch (err) {
+            console.error('Failed to delete course:', err);
+        } finally {
+            setIsDeletingCourse(false);
         }
     };
 
@@ -77,7 +86,7 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
                         <button
                             type="button"
                             className={styles.btnSecondary}
-                            onClick={handleDeleteCourse}
+                            onClick={() => setIsConfirmDeleteOpen(true)}
                             style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
                             title="Delete Course"
                         >
@@ -151,6 +160,14 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
                     />
                 </div>
             </div>
+
+            <ConfirmDeleteModal
+                isOpen={isConfirmDeleteOpen}
+                title={title || 'Course'}
+                isDeleting={isDeletingCourse}
+                onConfirm={handleConfirmDelete}
+                onClose={() => setIsConfirmDeleteOpen(false)}
+            />
         </div>
     );
 };

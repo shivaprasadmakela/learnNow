@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
 import { CodePlayground } from '../../../../shared/components/code-playground';
@@ -25,7 +27,7 @@ export function StudyConsole({
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(false);
     const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(true);
-    const [activePlaygrounds, setActivePlaygrounds] = useState<Record<number, boolean>>({});
+    const [activePlaygrounds, setActivePlaygrounds] = useState<Record<string, boolean>>({});
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
@@ -72,134 +74,99 @@ export function StudyConsole({
         await onToggleComplete();
     };
 
-    const togglePlayground = (index: number) => {
-        setActivePlaygrounds(prev => ({ ...prev, [index]: !prev[index] }));
+    const togglePlayground = (snippetKey: string) => {
+        setActivePlaygrounds(prev => ({ ...prev, [snippetKey]: !prev[snippetKey] }));
     };
 
     const renderContent = (content: string) => {
         if (!content) return null;
-        const parts = content.split(/```/);
-        return parts.map((part, index) => {
-            if (index % 2 === 1) {
-                const lines = part.split('\n');
-                const lang = lines[0].trim() || 'javascript';
-                const code = lines.slice(1).join('\n').trim();
-                const isOpen = Boolean(activePlaygrounds[index]);
 
-                return (
-                    <div key={index} style={{ margin: '16px 0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>
-                                Code Snippet ({lang})
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => togglePlayground(index)}
-                                style={{
-                                    padding: '4px 10px',
-                                    borderRadius: '6px',
-                                    border: '1px solid var(--tech-blue)',
-                                    background: isOpen ? 'var(--tech-blue)' : 'transparent',
-                                    color: isOpen ? '#ffffff' : 'var(--tech-blue)',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                {isOpen ? 'Hide Playground' : '⚡ Try in Playground'}
-                            </button>
+        return (
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                    h1: ({ children }: { children?: React.ReactNode }) => <h2 className={styles.heading2}>{children}</h2>,
+                    h2: ({ children }: { children?: React.ReactNode }) => <h2 className={styles.heading2}>{children}</h2>,
+                    h3: ({ children }: { children?: React.ReactNode }) => <h3 className={styles.heading3}>{children}</h3>,
+                    h4: ({ children }: { children?: React.ReactNode }) => <h4 className={styles.heading4}>{children}</h4>,
+                    p: ({ children }: { children?: React.ReactNode }) => <p className={styles.paragraph}>{children}</p>,
+                    ul: ({ children }: { children?: React.ReactNode }) => <ul className={styles.list}>{children}</ul>,
+                    ol: ({ children }: { children?: React.ReactNode }) => <ol className={styles.list}>{children}</ol>,
+                    table: ({ children }: { children?: React.ReactNode }) => (
+                        <div className={styles.tableWrapper}>
+                            <table className={styles.table}>{children}</table>
                         </div>
+                    ),
+                    blockquote: ({ children }: { children?: React.ReactNode }) => (
+                        <blockquote
+                            style={{
+                                borderLeft: '4px solid var(--tech-blue)',
+                                paddingLeft: '1rem',
+                                margin: '1.25rem 0',
+                                color: 'var(--text-secondary)',
+                                fontStyle: 'italic',
+                                background: 'var(--bg-primary)',
+                                padding: '0.75rem 1rem',
+                                borderRadius: '0 8px 8px 0'
+                            }}
+                        >
+                            {children}
+                        </blockquote>
+                    ),
+                    code(props: React.ComponentPropsWithoutRef<'code'> & { node?: unknown }) {
+                        const { className, children, ...rest } = props;
+                        const match = /language-(\w+)/.exec(className || '');
+                        const lang = match ? match[1] : '';
+                        const isInline = !className;
+                        const codeString = String(children || '').replace(/\n$/, '');
+                        const snippetKey = `${lang}-${codeString.slice(0, 20)}`;
+                        const isOpen = Boolean(activePlaygrounds[snippetKey]);
 
-                        {isOpen ? (
-                            <CodePlayground initialCode={code} language={lang} />
-                        ) : (
-                            <pre className={styles.codeBlock}>
-                                {lang && <span className={styles.codeLang}>{lang}</span>}
-                                <code>{code}</code>
-                            </pre>
-                        )}
-                    </div>
-                );
-            } else {
-                // Formatting simple markdown annotations
-                return (
-                    <div key={index} className={styles.textBlock}>
-                        {part.split('\n\n').map((paragraph, pIdx) => {
-                            const trimmed = paragraph.trim();
-                            if (!trimmed) return null;
+                        if (isInline) {
+                            return <code className="inline-code" {...rest}>{children}</code>;
+                        }
 
-                            // Title Headings
-                            if (trimmed.startsWith('## ')) {
-                                return <h3 key={pIdx} className={styles.heading3}>{trimmed.replace(/^## /, '')}</h3>;
-                            }
-                            if (trimmed.startsWith('### ')) {
-                                return <h4 key={pIdx} className={styles.heading4}>{trimmed.replace(/^### /, '')}</h4>;
-                            }
-                            if (trimmed.startsWith('# ')) {
-                                return <h2 key={pIdx} className={styles.heading2}>{trimmed.replace(/^# /, '')}</h2>;
-                            }
+                        return (
+                            <div style={{ margin: '20px 0' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>
+                                        Code Snippet ({lang || 'text'})
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => togglePlayground(snippetKey)}
+                                        style={{
+                                            padding: '4px 10px',
+                                            borderRadius: '6px',
+                                            border: '1px solid var(--tech-blue)',
+                                            background: isOpen ? 'var(--tech-blue)' : 'transparent',
+                                            color: isOpen ? '#ffffff' : 'var(--tech-blue)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                    >
+                                        {isOpen ? 'Hide Playground' : '⚡ Try in Playground'}
+                                    </button>
+                                </div>
 
-                            // Bullet Lists
-                            if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-                                const listItems = trimmed.split(/\n[\*\-]\s+/);
-                                return (
-                                    <ul key={pIdx} className={styles.list}>
-                                        {listItems.map((item, iIdx) => {
-                                            const cleanItem = item.replace(/^[\*\-]\s+/, '').trim();
-                                            const formatted = cleanItem
-                                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                                                .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');
-                                            return <li key={iIdx} dangerouslySetInnerHTML={{ __html: formatted }} />;
-                                        })}
-                                    </ul>
-                                );
-                            }
-
-                            // Table block replacement (Comparison tables)
-                            if (trimmed.startsWith('|')) {
-                                const tableRows = trimmed.split('\n').filter(r => r.trim());
-                                const headers = tableRows[0].split('|').map(h => h.trim()).filter(h => h);
-                                const rows = tableRows.slice(2).map(r => r.split('|').map(td => td.trim()).filter(td => td));
-                                return (
-                                    <div key={pIdx} className={styles.tableWrapper}>
-                                        <table className={styles.table}>
-                                            <thead>
-                                                <tr>
-                                                    {headers.map((h, i) => <th key={i}>{h}</th>)}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {rows.map((row, rIdx) => (
-                                                    <tr key={rIdx}>
-                                                        {row.map((val, cIdx) => {
-                                                            const formatted = val
-                                                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                                                                .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');
-                                                            return <td key={cIdx} dangerouslySetInnerHTML={{ __html: formatted }} />;
-                                                        })}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                );
-                            }
-
-                            // Regular text formatting (inline bold, italic, code tags)
-                            const formatted = trimmed
-                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                                .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');
-
-                            return <p key={pIdx} className={styles.paragraph} dangerouslySetInnerHTML={{ __html: formatted }} />;
-                        })}
-                    </div>
-                );
-            }
-        });
+                                {isOpen ? (
+                                    <CodePlayground initialCode={codeString} language={lang || 'javascript'} />
+                                ) : (
+                                    <pre className={styles.codeBlock}>
+                                        {lang && <span className={styles.codeLang}>{lang}</span>}
+                                        <code>{codeString}</code>
+                                    </pre>
+                                )}
+                            </div>
+                        );
+                    }
+                }}
+            >
+                {content}
+            </ReactMarkdown>
+        );
     };
 
     return (
