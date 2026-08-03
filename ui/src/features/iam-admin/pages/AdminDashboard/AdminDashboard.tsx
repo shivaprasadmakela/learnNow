@@ -4,20 +4,26 @@ import styles from './AdminDashboard.module.css';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { LearningCard } from '../../../../shared/components/cards';
 import { fetchAdminPaths, deleteAdminPath, type AdminPathData } from '../../api/admin.api';
+import { ConfirmDeleteModal } from '../../components/ConfirmDeleteModal';
 
 interface AdminDashboardProps {
     onNavigateCreate: () => void;
     onNavigateImport: () => void;
     onNavigateEdit: (pathId: string) => void;
+    refreshUserData?: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onNavigateCreate,
     onNavigateImport,
-    onNavigateEdit
+    onNavigateEdit,
+    refreshUserData
 }) => {
     const [paths, setPaths] = useState<AdminPathData[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
     const loadPaths = async () => {
         setIsLoading(true);
@@ -31,16 +37,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
     };
 
-    const handleDelete = async (e: React.MouseEvent, pathId: string, pathTitle: string) => {
-        e.stopPropagation();
-        if (window.confirm(`Are you sure you want to delete "${pathTitle}"? This will permanently remove all topics, subtopics, and questions within this course.`)) {
-            try {
-                await deleteAdminPath(pathId);
-                await loadPaths();
-            } catch (err) {
-                console.error('Failed to delete path:', err);
-                alert('Failed to delete path. Please try again.');
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
+        try {
+            await deleteAdminPath(deleteTarget.id);
+            if (refreshUserData) {
+                refreshUserData();
             }
+            setDeleteTarget(null);
+            await loadPaths();
+        } catch (err) {
+            console.error('Failed to delete path:', err);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -106,7 +116,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 {path.id && (
                                     <button
                                         type="button"
-                                        onClick={(e) => handleDelete(e, path.id!, path.title)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDeleteTarget({ id: path.id!, title: path.title });
+                                        }}
                                         title="Delete Course"
                                         style={{
                                             position: 'absolute',
@@ -133,6 +146,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     })}
                 </div>
             )}
+
+            <ConfirmDeleteModal
+                isOpen={Boolean(deleteTarget)}
+                title={deleteTarget?.title || ''}
+                isDeleting={isDeleting}
+                onConfirm={handleConfirmDelete}
+                onClose={() => setDeleteTarget(null)}
+            />
         </div>
     );
 };
