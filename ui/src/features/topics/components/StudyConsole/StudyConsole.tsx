@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List } from 'lucide-react';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
 import { CodePlayground } from '../../../../shared/components/code-playground';
@@ -23,6 +23,7 @@ export function StudyConsole({
 }: StudyConsoleProps) {
     const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
+    const [isTocOpen, setIsTocOpen] = useState(false);
     const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(true);
     const [activePlaygrounds, setActivePlaygrounds] = useState<Record<number, boolean>>({});
 
@@ -43,6 +44,7 @@ export function StudyConsole({
     const handleSubtopicChange = (index: number) => {
         if (index >= 0 && index < subtopics.length) {
             setActiveSubtopicIndex(index);
+            setIsTocOpen(false);
         }
     };
 
@@ -205,6 +207,15 @@ export function StudyConsole({
             {/* Header section */}
             <header className={styles.studyHeader}>
                 <div className={styles.headerLeft}>
+                    <button 
+                        type="button"
+                        className={styles.mobileTocToggle}
+                        onClick={() => setIsTocOpen(!isTocOpen)}
+                        title="Toggle Table of Contents"
+                    >
+                        <List size={16} />
+                        <span>Menu</span>
+                    </button>
                     <BookOpen className={styles.headerIcon} />
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -244,8 +255,13 @@ export function StudyConsole({
 
             {/* Split layout */}
             <div className={styles.studyBody}>
+                {/* Mobile TOC Drawer Overlay */}
+                {isTocOpen && (
+                    <div className={styles.tocDrawerOverlay} onClick={() => setIsTocOpen(false)} />
+                )}
+
                 {/* Left Sidebar Table of Contents */}
-                <aside className={styles.tocSidebar}>
+                <aside className={`${styles.tocSidebar} ${isTocOpen ? styles.tocSidebarOpen : ''}`}>
                     <h3 className={styles.sidebarTitle}>Table of Contents</h3>
                     <ul className={styles.tocList}>
                         {subtopics.map((sec: SubtopicData, idx: number) => (

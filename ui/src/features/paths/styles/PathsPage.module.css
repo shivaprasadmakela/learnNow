@@ -762,6 +762,31 @@
     margin: 0 auto;
 }
 
+@media (max-width: 768px) {
+    .pathsTitle {
+        font-size: 2.25rem;
+        line-height: 2.75rem;
+    }
+
+    .pathsSubtitle {
+        font-size: 0.95rem;
+        line-height: 1.5rem;
+    }
+
+    .categoriesRow {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 12px;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+
+    .categoryItem {
+        flex-shrink: 0;
+    }
+}
+
 .categoriesRow {
     display: flex;
     justify-content: center;

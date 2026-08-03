@@ -480,17 +480,90 @@
     font-size: 0.85em;
 }
 
+.mobileTocToggle {
+    display: none;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.tocDrawerOverlay {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 999;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    .studyHeader {
+        padding: 0.75rem 1rem;
+        height: 60px;
+    }
+
+    .subtopicTitle {
+        font-size: 0.95rem;
+        max-width: 160px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .tocSidebar {
-        display: none; /* Hide TOC sidebar on mobile */
+        display: none;
     }
-    
+
+    .tocSidebarOpen {
+        display: flex !important;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        bottom: 60px;
+        width: 280px;
+        z-index: 1000;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .mobileTocToggle {
+        display: inline-flex;
+    }
+
     .contentPane {
-        padding: 2rem;
+        padding: 1.25rem 1rem;
     }
-    
+
     .headerCenter {
         display: none;
+    }
+
+    .studyFooter {
+        padding: 0.5rem 0.75rem;
+        height: auto;
+        gap: 6px;
+    }
+
+    .navBtn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .completeBtn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.78rem;
+        flex: 1;
+        justify-content: center;
+        text-align: center;
     }
 }

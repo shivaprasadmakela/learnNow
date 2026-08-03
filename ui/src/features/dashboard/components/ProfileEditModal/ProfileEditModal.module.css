@@ -98,3 +98,11 @@
         transform: translateY(0);
     }
 }
+
+@media (max-width: 600px) {
+    .modalContent {
+        padding: 20px;
+        width: calc(100vw - 32px);
+        max-width: 100%;
+    }
+}

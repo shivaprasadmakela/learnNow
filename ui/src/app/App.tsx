@@ -174,10 +174,16 @@ export default function App() {
             )}
 
             <div className={activeView === 'STUDY' ? styles.appLayoutStudy : styles.appLayout}>
+                {/* Mobile Backdrop */}
+                {isExpanded && activeView !== 'STUDY' && (
+                    <div className={styles.backdrop} onClick={() => setIsExpanded(false)} />
+                )}
+
                 {/* Sidebar */}
                 {activeView !== 'LOGIN' && activeView !== 'VERIFY_EMAIL' && activeView !== 'STUDY' && (
                     <Sidebar
                         isExpanded={isExpanded}
+                        setIsExpanded={setIsExpanded}
                         activeView={activeView}
                         changeView={handleViewChange}
                         isLoggedIn={isLoggedIn}

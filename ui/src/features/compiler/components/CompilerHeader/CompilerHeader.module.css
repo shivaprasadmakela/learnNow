@@ -146,3 +146,28 @@
         border-bottom: 1px solid var(--border-color, #1e293b);
     }
 }
+
+@media (max-width: 600px) {
+    .leftHeader {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 12px;
+    }
+
+    .title {
+        display: none;
+    }
+
+    .toolGroup {
+        gap: 4px;
+    }
+
+    .runBtn {
+        padding: 5px 12px;
+        font-size: 0.8rem;
+    }
+
+    .rightHeader {
+        padding: 0 12px;
+    }
+}
