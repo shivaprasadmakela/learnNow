@@ -10,7 +10,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     isLoggedIn,
     isPathsActive,
     onSelectPaths,
-    profile
+    profile,
+    setIsExpanded
 }) => {
     const isPrimaryActive = isLoggedIn
         ? (activeView === 'DASHBOARD' || activeView === 'CERTIFICATE') && !isPathsActive
@@ -19,8 +20,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const primaryLabel = isLoggedIn ? 'Dashboard' : 'Home';
     const primaryIcon = isLoggedIn ? 'fa-solid fa-gauge-high' : 'fa-solid fa-house';
 
-    const handlePrimaryClick = () => {
-        changeView(isLoggedIn ? 'DASHBOARD' : 'HOME');
+    const handleNavClick = (action: () => void) => {
+        action();
+        if (setIsExpanded && typeof window !== 'undefined' && window.innerWidth <= 768) {
+            setIsExpanded(false);
+        }
     };
 
     return (
@@ -31,21 +35,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     label={primaryLabel}
                     isActive={isPrimaryActive}
                     isExpanded={isExpanded}
-                    onClick={handlePrimaryClick}
+                    onClick={() => handleNavClick(() => changeView(isLoggedIn ? 'DASHBOARD' : 'HOME'))}
                 />
                 <SidebarNavItem
                     iconClass="fa-solid fa-dragon"
                     label="Paths"
                     isActive={isPathsActive}
                     isExpanded={isExpanded}
-                    onClick={onSelectPaths}
+                    onClick={() => handleNavClick(onSelectPaths)}
                 />
                 <SidebarNavItem
                     iconClass="fa-solid fa-code"
                     label="Compiler"
                     isActive={activeView === 'COMPILER'}
                     isExpanded={isExpanded}
-                    onClick={() => changeView('COMPILER')}
+                    onClick={() => handleNavClick(() => changeView('COMPILER'))}
                 />
 
                 {profile?.role === 'ADMIN' && (
@@ -54,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         label="Admin"
                         isActive={activeView === 'ADMIN'}
                         isExpanded={isExpanded}
-                        onClick={() => changeView('ADMIN')}
+                        onClick={() => handleNavClick(() => changeView('ADMIN'))}
                     />
                 )}
             </nav>

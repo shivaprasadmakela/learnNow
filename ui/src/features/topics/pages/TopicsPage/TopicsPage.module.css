@@ -563,6 +563,14 @@
         flex-direction: column;
     }
 
+    .heroLeft {
+        max-width: 100%;
+    }
+
+    .heroTitle {
+        font-size: 1.4rem;
+    }
+
     .heroRight {
         display: none;
     }

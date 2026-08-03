@@ -83,10 +83,10 @@
     .backdrop {
         display: block;
         position: fixed;
-        top: 72px;
+        top: 52px;
         left: 0;
         width: 100vw;
-        height: calc(100vh - 72px);
+        height: calc(100vh - 52px);
         background-color: rgba(0, 0, 0, 0.4);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
@@ -223,6 +223,15 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .pageContent {
+        padding: var(--space-4) var(--space-3);
+    }
+    .pageContentDashboard {
+        padding: var(--space-4) var(--space-3);
+    }
 }
 
 .studyLoadingOverlay {

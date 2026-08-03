@@ -622,6 +622,55 @@
     }
 }
 
+@media (max-width: 768px) {
+    .scrollContainer {
+        padding: 24px 16px 60px 16px;
+        gap: 56px;
+    }
+
+    .heroSection {
+        padding: 20px 0 32px 0;
+        min-height: auto;
+    }
+
+    .heroTitle {
+        font-size: 2.1rem;
+    }
+
+    .heroSubtitle {
+        font-size: 0.95rem;
+        margin-bottom: 24px;
+    }
+
+    .widgetsTitle {
+        font-size: 1.6rem;
+    }
+
+    .communitySection {
+        padding: 20px 16px;
+        gap: 24px;
+    }
+
+    .bottomBannerSection {
+        padding: 32px 16px;
+    }
+
+    .bottomTitle {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .heroTitle {
+        font-size: 1.8rem;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
 .communityLeft {
     display: flex;
     flex-direction: column;

@@ -8,4 +8,5 @@ export interface SidebarProps {
     isPathsActive: boolean;
     onSelectPaths: () => void;
     profile?: UserProfile | null;
+    setIsExpanded?: (isExpanded: boolean) => void;
 }
