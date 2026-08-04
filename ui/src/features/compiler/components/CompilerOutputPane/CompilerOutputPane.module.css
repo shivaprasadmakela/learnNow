@@ -2,8 +2,8 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--bg-tertiary, #0f172a);
-    border-left: 1px solid var(--border-color, #1e293b);
+    background: var(--bg-tertiary);
+    border-left: 1px solid var(--border-color);
 }
 
 .contentArea {
@@ -12,7 +12,8 @@
     overflow-y: auto;
     font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
     font-size: 0.88rem;
-    color: var(--text-primary, #f8fafc);
+    color: var(--text-primary);
+    min-height: 0;
 }
 
 .logLine {
@@ -21,31 +22,71 @@
     border-bottom: 1px solid rgba(125, 125, 125, 0.1);
     white-space: pre-wrap;
     font-family: inherit;
+    word-break: break-word;
 }
 
 .logLineError {
-    color: #ef4444;
+    color: var(--color-error, #ef4444);
 }
 
 .logLineWarn {
-    color: #f59e0b;
+    color: var(--color-warning, #f59e0b);
+}
+
+.logLineInfo {
+    color: var(--text-tertiary);
+    font-style: italic;
 }
 
 .stdinTextarea {
     width: 100%;
     height: 240px;
-    background: var(--bg-secondary, #1e293b);
-    border: 1px solid var(--border-color, #334155);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    color: var(--text-primary, #f8fafc);
+    color: var(--text-primary);
     padding: 12px;
     font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
     font-size: 0.85rem;
     outline: none;
     resize: none;
+    box-sizing: border-box;
 }
 
 .emptyState {
-    color: var(--text-tertiary, #64748b);
+    color: var(--text-tertiary);
     font-size: 0.85rem;
 }
+
+.footerBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 14px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    flex-shrink: 0;
+}
+
+.execTime {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.clearBtn {
+    padding: 3px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.clearBtn:hover {
+    border-color: var(--color-error, #ef4444);
+    color: var(--color-error, #ef4444);
+}
+

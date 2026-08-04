@@ -34,7 +34,7 @@ export const CompilerPage: React.FC = () => {
     const [stdin, setStdin] = useState<string>('');
     const [activeTab, setActiveTab] = useState<'input' | 'output'>('output');
 
-    const { logs, htmlPreview, isRunning, runCode, clearConsole } = useCodeExecution();
+    const { logs, htmlPreview, isRunning, executionTimeMs, runCode, clearConsole } = useCodeExecution();
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -71,7 +71,7 @@ export const CompilerPage: React.FC = () => {
 
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
-    }, []);
+    }, [clearConsole]);
 
     const handleCodeChange = useCallback((newCode: string) => {
         setCode(newCode);
@@ -150,6 +150,8 @@ export const CompilerPage: React.FC = () => {
                     onStdinChange={setStdin}
                     isHtml={selectedLanguage.monacoLanguage === 'html'}
                     activeTab={activeTab}
+                    onClear={clearConsole}
+                    executionTimeMs={executionTimeMs}
                 />
             </main>
         </div>

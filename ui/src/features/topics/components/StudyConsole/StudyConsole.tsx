@@ -78,6 +78,23 @@ export function StudyConsole({
         setActivePlaygrounds(prev => ({ ...prev, [snippetKey]: !prev[snippetKey] }));
     };
 
+    /** Map common markdown fence aliases to canonical Monaco / executor language IDs */
+    const normalizeLanguage = (alias: string): string => {
+        const map: Record<string, string> = {
+            js: 'javascript',
+            ts: 'typescript',
+            py: 'python',
+            rb: 'ruby',
+            sh: 'shell',
+            bash: 'shell',
+            cs: 'csharp',
+            'c++': 'cpp',
+            kt: 'kotlin',
+            rs: 'rust',
+        };
+        return map[alias.toLowerCase()] ?? alias.toLowerCase();
+    };
+
     const renderContent = (content: string) => {
         if (!content) return null;
 
@@ -152,7 +169,7 @@ export function StudyConsole({
                                 </div>
 
                                 {isOpen ? (
-                                    <CodePlayground initialCode={codeString} language={lang || 'javascript'} />
+                                    <CodePlayground initialCode={codeString} language={normalizeLanguage(lang || 'javascript')} />
                                 ) : (
                                     <pre className={styles.codeBlock}>
                                         {lang && <span className={styles.codeLang}>{lang}</span>}
