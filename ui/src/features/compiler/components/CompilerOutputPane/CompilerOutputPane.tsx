@@ -19,14 +19,16 @@ export const CompilerOutputPane: React.FC<CompilerOutputPaneProps> = ({
     stdin,
     onStdinChange,
     isHtml,
-    activeTab = 'output'
+    activeTab = 'output',
+    onClear,
+    executionTimeMs
 }) => {
     return (
         <div className={styles.outputContainer}>
             <div className={styles.contentArea}>
                 {activeTab === 'input' ? (
                     <div>
-                        <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: '#64748b' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
                             Standard Input (stdin):
                         </p>
                         <textarea
@@ -48,7 +50,10 @@ export const CompilerOutputPane: React.FC<CompilerOutputPaneProps> = ({
                         <div
                             key={idx}
                             className={`${styles.logLine} ${
-                                log.type === 'error' ? styles.logLineError : log.type === 'warn' ? styles.logLineWarn : ''
+                                log.type === 'error' ? styles.logLineError
+                                : log.type === 'warn' ? styles.logLineWarn
+                                : log.type === 'info' ? styles.logLineInfo
+                                : ''
                             }`}
                         >
                             {log.message}
@@ -60,6 +65,21 @@ export const CompilerOutputPane: React.FC<CompilerOutputPaneProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Footer: execution time + clear button */}
+            {activeTab === 'output' && (logs.length > 0 || executionTimeMs != null) && (
+                <div className={styles.footerBar}>
+                    {executionTimeMs != null && (
+                        <span className={styles.execTime}>⏱ {executionTimeMs} ms</span>
+                    )}
+                    {onClear && (
+                        <button type="button" className={styles.clearBtn} onClick={onClear} title="Clear output">
+                            Clear
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
+

@@ -1,8 +1,8 @@
 .playgroundCard {
     display: flex;
     flex-direction: column;
-    background: #020617;
-    border: 1px solid #1e293b;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     overflow: hidden;
     margin: 16px 0;
@@ -14,14 +14,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 14px;
-    background: #090d16;
-    border-bottom: 1px solid #1e293b;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .playgroundTitle {
     font-size: 0.8rem;
     font-weight: 700;
-    color: #38bdf8;
+    color: var(--tech-blue);
 }
 
 .btn {
@@ -30,9 +30,9 @@
     gap: 5px;
     padding: 4px 10px;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.05);
-    color: #e2e8f0;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
@@ -40,17 +40,17 @@
 }
 
 .btn:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--bg-primary);
 }
 
 .runBtn {
-    background: #2563eb;
-    border-color: #3b82f6;
+    background: var(--tech-blue);
+    border-color: var(--tech-blue);
     color: #ffffff;
 }
 
 .runBtn:hover {
-    background: #1d4ed8;
+    opacity: 0.85;
 }
 
 .splitBody {
@@ -76,3 +76,4 @@
         height: 500px;
     }
 }
+
