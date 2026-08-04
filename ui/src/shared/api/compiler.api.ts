@@ -19,6 +19,9 @@ export async function shareSnippetApi(payload: ShareSnippetPayload): Promise<Sha
         body: JSON.stringify(payload)
     });
     if (!res.ok) {
+        if (res.status === 401) {
+            throw new Error('login_required');
+        }
         throw new Error('Failed to share snippet');
     }
     return res.json() as Promise<SharedSnippetData>;

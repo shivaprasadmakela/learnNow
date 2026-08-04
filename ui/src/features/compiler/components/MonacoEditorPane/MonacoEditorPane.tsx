@@ -8,13 +8,15 @@ interface MonacoEditorPaneProps {
     language: string;
     onChange: (val: string) => void;
     onRun?: () => void;
+    onMountEditor?: (editor: any) => void;
 }
 
 export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
     code,
     language,
     onChange,
-    onRun
+    onRun,
+    onMountEditor
 }) => {
     const editorRef = useRef<any>(null);
     const monacoRef = useRef<Monaco | null>(null);
@@ -119,6 +121,9 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
         monacoRef.current = monaco;
         if (onRun) {
             editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => onRun());
+        }
+        if (onMountEditor) {
+            onMountEditor(editor);
         }
     };
 

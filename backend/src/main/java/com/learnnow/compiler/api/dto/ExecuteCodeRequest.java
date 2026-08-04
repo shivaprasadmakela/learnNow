@@ -1,6 +1,7 @@
 package com.learnnow.compiler.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,9 @@ public class ExecuteCodeRequest {
     private String language;
 
     @NotBlank(message = "code_required")
+    @Size(max = 65536, message = "code_too_large")
     private String code;
 
     private String stdin;
 }
+

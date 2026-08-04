@@ -10,6 +10,8 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
+import com.learnnow.common.exception.AuthException;
+import com.learnnow.common.exception.ConflictException;
 import com.learnnow.common.exception.ValidationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -54,7 +57,7 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest req) {
         if (userRepository.existsByEmailIgnoreCase(req.email())) {
-            throw new RuntimeException("user_already_created");
+            throw new ConflictException("user_already_created");
         }
 
         String userId = UUID.randomUUID().toString();
@@ -93,10 +96,10 @@ public class AuthService {
     public AuthResponse verifyEmail(String rawToken) {
         String hash = sha256(rawToken);
         EmailVerificationToken token = tokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new RuntimeException("token_invalid"));
+                .orElseThrow(() -> new AuthException("token_invalid"));
 
         User user = userRepository.findById(token.getUserId())
-                .orElseThrow(() -> new RuntimeException("user_not_found"));
+                .orElseThrow(() -> new AuthException("user_not_found"));
 
         if (token.isUsed()) {
             if (user.isEmailVerified()) {
@@ -104,10 +107,10 @@ public class AuthService {
                 UserDto profile = buildUserDto(user);
                 return new AuthResponse(jwt, profile);
             }
-            throw new RuntimeException("token_already_used");
+            throw new AuthException("token_already_used");
         }
         if (token.getExpiresAt().isBefore(Instant.now())) {
-            throw new RuntimeException("token_expired");
+            throw new AuthException("token_expired");
         }
 
         user.setEmailVerified(true);
@@ -124,10 +127,10 @@ public class AuthService {
     @Transactional
     public void resendVerification(String email) {
         User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new RuntimeException("user_not_found"));
+                .orElseThrow(() -> new AuthException("user_not_found"));
 
         if (user.isEmailVerified()) {
-            throw new RuntimeException("email_already_verified");
+            throw new AuthException("email_already_verified");
         }
 
         tokenRepository.deleteByUserId(user.getId());
@@ -216,18 +219,18 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmailIgnoreCase(req.email())
-                .orElseThrow(() -> new RuntimeException("user_credentials_mismatched"));
+                .orElseThrow(() -> new AuthException("user_credentials_mismatched"));
 
         if (user.getPasswordHash() == null) {
-            throw new ValidationException("account_registered_with_google");
+            throw new AuthException("account_registered_with_google");
         }
 
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
-            throw new RuntimeException("user_credentials_mismatched");
+            throw new AuthException("user_credentials_mismatched");
         }
 
         if (!user.isEmailVerified()) {
-            throw new RuntimeException("email_not_verified");
+            throw new AuthException("email_not_verified");
         }
 
         String token = tokenService.generateToken(user.getId(), user.getEmail(), user.getRole());
@@ -248,7 +251,9 @@ public class AuthService {
     }
 
     private String generateSecureToken() {
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(UUID.randomUUID().toString().getBytes());
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     private String sha256(String input) {

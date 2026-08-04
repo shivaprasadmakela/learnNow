@@ -1,5 +1,6 @@
 package com.learnnow.user.service;
 
+import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.user.dto.*;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
@@ -43,7 +44,7 @@ public class UserService {
     @Transactional
     public UserDto updateUser(String id, UpdateProfileRequest req) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found for id: " + id));
+                .orElseThrow(() -> new NotFoundException("user_not_found"));
 
         if (req.fullName() != null && !req.fullName().isBlank()) {
             user.setFullName(req.fullName());

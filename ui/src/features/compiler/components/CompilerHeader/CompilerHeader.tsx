@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Maximize2, Share2, Check, LogIn, LogOut } from 'lucide-react';
+import { RotateCcw, Maximize2, Share2, Check, LogIn, LogOut, Sparkles } from 'lucide-react';
 import type { LanguageOption } from '../../constants/codeTemplates';
 import styles from './CompilerHeader.module.css';
 
@@ -9,6 +9,7 @@ interface CompilerHeaderProps {
     onSelectLanguage: (lang: LanguageOption) => void;
     onRun: () => void;
     onReset: () => void;
+    onFormat?: () => void;
     onShare?: () => Promise<string>;
     isRunning: boolean;
     activeTab: 'input' | 'output';
@@ -21,6 +22,7 @@ export const CompilerHeader: React.FC<CompilerHeaderProps> = ({
     onSelectLanguage,
     onRun,
     onReset,
+    onFormat,
     onShare,
     isRunning,
     activeTab,
@@ -30,7 +32,8 @@ export const CompilerHeader: React.FC<CompilerHeaderProps> = ({
 
     const handleShareClick = async () => {
         if (onShare) {
-            await onShare();
+            const url = await onShare();
+            if (!url) return;
         } else {
             await navigator.clipboard.writeText(window.location.href);
         }
@@ -71,6 +74,11 @@ export const CompilerHeader: React.FC<CompilerHeaderProps> = ({
                 </div>
 
                 <div className={styles.toolGroup}>
+                    {onFormat && (
+                        <button type="button" className={styles.iconBtn} onClick={onFormat} title="Prettify / Format Code (Shift + Alt + F)">
+                            <Sparkles size={16} />
+                        </button>
+                    )}
                     <button type="button" className={styles.iconBtn} onClick={onReset} title="Reset Code Template">
                         <RotateCcw size={16} />
                     </button>
