@@ -28,25 +28,38 @@ export function useCodeExecution() {
                 setHtmlPreview(code);
                 capturedLogs.push({ type: 'info', message: 'Rendered live HTML preview in output pane.', timestamp });
             } else if (lang === 'javascript' || lang === 'js') {
+                const formatArg = (a: unknown) => {
+                    if (a === null) return 'null';
+                    if (a === undefined) return 'undefined';
+                    if (typeof a === 'object') {
+                        try {
+                            return JSON.stringify(a, null, 2);
+                        } catch {
+                            return String(a);
+                        }
+                    }
+                    return String(a);
+                };
+
                 const customConsole = {
                     log: (...args: unknown[]) => {
                         capturedLogs.push({
                             type: 'log',
-                            message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '),
+                            message: args.map(formatArg).join(' '),
                             timestamp
                         });
                     },
                     error: (...args: unknown[]) => {
                         capturedLogs.push({
                             type: 'error',
-                            message: args.map(a => String(a)).join(' '),
+                            message: args.map(formatArg).join(' '),
                             timestamp
                         });
                     },
                     warn: (...args: unknown[]) => {
                         capturedLogs.push({
                             type: 'warn',
-                            message: args.map(a => String(a)).join(' '),
+                            message: args.map(formatArg).join(' '),
                             timestamp
                         });
                     }
