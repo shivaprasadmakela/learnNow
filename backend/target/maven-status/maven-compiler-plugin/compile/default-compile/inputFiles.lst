@@ -21,7 +21,7 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/persistence/QuizQuestion.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/admin/persistence/QuizQuestionRepository.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/config/SecurityConfig.java
-/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/config/WebConfig.java
+/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/AuthException.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/ConflictException.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/GlobalExceptionHandler.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/common/exception/NotFoundException.java
@@ -70,7 +70,6 @@
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/persistence/SubtopicNoteRepository.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/persistence/TopicBookmark.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/notes/persistence/TopicBookmarkRepository.java
-/Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/config/DatabaseSeeder.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/controller/CatalogController.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/controller/PathController.java
 /Users/shivaprasad/Documents/Projects/learn-with-shiva/backend/src/main/java/com/learnnow/paths/controller/TopicController.java

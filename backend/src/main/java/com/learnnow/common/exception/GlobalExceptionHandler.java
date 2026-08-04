@@ -38,6 +38,13 @@ public class GlobalExceptionHandler {
                 .body(Map.of("code", ex.getMessage(), "message", resolved));
     }
 
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<Map<String, String>> handleAuth(AuthException ex) {
+        String resolved = resolve(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("code", ex.getMessage(), "message", resolved));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         String key = ex.getMessage();

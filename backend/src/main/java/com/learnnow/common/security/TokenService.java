@@ -18,10 +18,6 @@ public class TokenService {
         this.jwtEncoder = jwtEncoder;
     }
 
-    public String generateToken(String userId, String email) {
-        return generateToken(userId, email, "USER");
-    }
-
     public String generateToken(String userId, String email, String role) {
         Instant now = Instant.now();
         JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();

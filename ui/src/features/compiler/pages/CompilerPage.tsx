@@ -6,6 +6,7 @@ import { MonacoEditorPane } from '../components/MonacoEditorPane/MonacoEditorPan
 import { CompilerOutputPane } from '../components/CompilerOutputPane/CompilerOutputPane';
 import { useCodeExecution } from '../hooks/useCodeExecution';
 import { shareSnippetApi, fetchSharedSnippetApi } from '../../../shared/api/compiler.api';
+import { authClient } from '../../../shared/api/authClient';
 import styles from './CompilerPage.module.css';
 
 export const CompilerPage: React.FC = () => {
@@ -33,6 +34,8 @@ export const CompilerPage: React.FC = () => {
     const [code, setCode] = useState<string>(() => getInitialCode(getInitialLanguage()));
     const [stdin, setStdin] = useState<string>('');
     const [activeTab, setActiveTab] = useState<'input' | 'output'>('output');
+
+    const monacoEditorRef = React.useRef<any>(null);
 
     const { logs, htmlPreview, isRunning, executionTimeMs, runCode, clearConsole } = useCodeExecution();
 
@@ -102,6 +105,11 @@ export const CompilerPage: React.FC = () => {
     };
 
     const handleShare = async (): Promise<string> => {
+        if (!authClient.getToken()) {
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return '';
+        }
+
         try {
             const response = await shareSnippetApi({
                 language: selectedLanguage.id,
@@ -110,10 +118,18 @@ export const CompilerPage: React.FC = () => {
             const shareUrl = `${window.location.origin}/compiler/${selectedLanguage.id}?s=${response.shortId}`;
             await navigator.clipboard.writeText(shareUrl);
             return shareUrl;
-        } catch {
-            const shareUrl = window.location.href;
-            await navigator.clipboard.writeText(shareUrl);
-            return shareUrl;
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (msg === 'login_required') {
+                window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            }
+            return '';
+        }
+    };
+
+    const handleFormat = () => {
+        if (monacoEditorRef.current) {
+            monacoEditorRef.current.getAction('editor.action.formatDocument')?.run();
         }
     };
 
@@ -130,6 +146,7 @@ export const CompilerPage: React.FC = () => {
                 onSelectLanguage={handleSelectLanguage}
                 onRun={handleRun}
                 onReset={handleReset}
+                onFormat={handleFormat}
                 onShare={handleShare}
                 isRunning={isRunning}
                 activeTab={activeTab}
@@ -142,6 +159,7 @@ export const CompilerPage: React.FC = () => {
                     language={selectedLanguage.monacoLanguage}
                     onChange={handleCodeChange}
                     onRun={handleRun}
+                    onMountEditor={(ed) => { monacoEditorRef.current = ed; }}
                 />
                 <CompilerOutputPane
                     logs={logs}
