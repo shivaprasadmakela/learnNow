@@ -21,6 +21,9 @@ public class CourseImportServiceTest {
     @Autowired
     private ContentAuthoringService authoringService;
 
+    @Autowired
+    private com.learnnow.paths.repository.PathRepository pathRepository;
+
     private ImportCourseRequest.ImportTopicRequest makeTopic(String title, String description) {
         ImportCourseRequest.ImportSubtopicRequest sub = new ImportCourseRequest.ImportSubtopicRequest(
                 title + " - Subtopic 1",
@@ -273,6 +276,9 @@ public class CourseImportServiceTest {
     public void testImportFrontendDeveloperProductionJson() throws Exception {
         java.io.File file = new java.io.File("/Users/shivaprasad/Downloads/frontend-developer-production.json");
         if (!file.exists()) return;
+        pathRepository.findAll().stream()
+                .filter(p -> "Frontend Developer".equalsIgnoreCase(p.getTitle()))
+                .forEach(pathRepository::delete);
         String json = new String(java.nio.file.Files.readAllBytes(file.toPath()));
         ImportCourseRequest request = objectMapper.readValue(json, ImportCourseRequest.class);
         ImportResultDto result = authoringService.importCourse(request);

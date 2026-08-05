@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HelpCircle, CheckCircle2, XCircle, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { submitQuizAnswer } from '../../api/profile.api';
 import styles from './ContentRenderer.module.css';
 
 export interface QuizQuestionItem {
@@ -7,7 +8,7 @@ export interface QuizQuestionItem {
     kind: 'mcq' | 'true_false' | 'fill_blank';
     prompt: string;
     options?: string[];
-    correctAnswer: string;
+    correctAnswer?: string;
     explanation?: string;
     points?: number;
 }
@@ -41,6 +42,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
     const [attemptCounts, setAttemptCounts] = useState<Record<string, number>>({});
     const [submittedStates, setSubmittedStates] = useState<Record<string, boolean>>({});
     const [activeQuestionIndex, setActiveQuestionIndex] = useState<Record<string, number>>({});
+    const [validatedResults, setValidatedResults] = useState<Record<string, { isCorrect: boolean; correctAnswer?: string; explanation?: string }>>({});
 
     const allQuestions = blocks
         .filter(b => b.type === 'quiz' && b.questions)
@@ -54,6 +56,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
             setSubmittedStates({});
             setAttemptCounts({});
             setActiveQuestionIndex({});
+            setValidatedResults({});
         }
     }, [blockKey, isSubtopicCompleted]);
 
@@ -63,7 +66,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
             const preFilledAnswers: Record<string, string> = {};
             allQuestions.forEach(q => {
                 preFilledSubmitted[q.id] = true;
-                preFilledAnswers[q.id] = q.correctAnswer;
+                if (q.correctAnswer) preFilledAnswers[q.id] = q.correctAnswer;
             });
             setSubmittedStates(prev => ({ ...preFilledSubmitted, ...prev }));
             setSelectedAnswers(prev => ({ ...preFilledAnswers, ...prev }));
@@ -86,17 +89,36 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
         setSelectedAnswers(prev => ({ ...prev, [questionId]: option }));
     };
 
-    const handleSubmitQuiz = (q: QuizQuestionItem) => {
+    const handleSubmitQuiz = async (q: QuizQuestionItem) => {
         const selected = selectedAnswers[q.id];
         if (!selected) return;
 
         const currentAttempts = (attemptCounts[q.id] || 0) + 1;
         setAttemptCounts(prev => ({ ...prev, [q.id]: currentAttempts }));
+
+        let isCorrect = false;
+        let correctAnswer = q.correctAnswer;
+        let explanation = q.explanation;
+
+        try {
+            const res = await submitQuizAnswer(q.id, selected);
+            isCorrect = res.isCorrect;
+            correctAnswer = res.correctAnswer || q.correctAnswer;
+            explanation = res.explanation || q.explanation;
+        } catch (err) {
+            console.warn("Falling back to client validation:", err);
+            if (q.correctAnswer) {
+                isCorrect = selected.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+            }
+        }
+
+        setValidatedResults(prev => ({
+            ...prev,
+            [q.id]: { isCorrect, correctAnswer, explanation }
+        }));
         setSubmittedStates(prev => ({ ...prev, [q.id]: true }));
 
-        const isCorrect = selected.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
         const isFirstAttempt = currentAttempts === 1;
-
         if (onQuizAnswered) {
             onQuizAnswered(q.id, isCorrect, isFirstAttempt);
         }
@@ -160,7 +182,10 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
 
                     const selected = selectedAnswers[q.id] || '';
                     const isSubmitted = submittedStates[q.id];
-                    const isCorrect = selected.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+                    const valRes = validatedResults[q.id];
+                    const isCorrect = valRes ? valRes.isCorrect : (q.correctAnswer ? selected.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase() : false);
+                    const actualCorrectAnswer = valRes?.correctAnswer || q.correctAnswer || '';
+                    const actualExplanation = valRes?.explanation || q.explanation;
                     const attempts = attemptCounts[q.id] || 0;
                     const allInBlockSubmitted = block.questions.every(item => Boolean(submittedStates[item.id]));
 
@@ -204,7 +229,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
                                     {(q.options || ['True', 'False']).map((opt, oIdx) => {
                                         let btnStyle = styles.optionBtn;
                                         if (selected === opt) btnStyle += ` ${styles.optionBtnSelected}`;
-                                        if (isSubmitted && opt.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
+                                        if (isSubmitted && actualCorrectAnswer && opt.trim().toLowerCase() === actualCorrectAnswer.trim().toLowerCase()) {
                                             btnStyle += ` ${styles.optionBtnCorrect}`;
                                         } else if (isSubmitted && selected === opt && !isCorrect) {
                                             btnStyle += ` ${styles.optionBtnIncorrect}`;
@@ -252,9 +277,9 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
                                     )}
                                 </div>
 
-                                {isSubmitted && q.explanation && (
+                                {isSubmitted && actualExplanation && (
                                     <div className={styles.explanationBox}>
-                                        <strong>Explanation:</strong> {q.explanation}
+                                        <strong>Explanation:</strong> {actualExplanation}
                                     </div>
                                 )}
                             </div>

@@ -41,6 +41,12 @@ public class ContentAuthoringServiceTest {
                 "### Overview of HTTP Methods",
                 1,
                 "PUBLISHED",
+                "beginner",
+                "concept",
+                List.of(),
+                null,
+                5,
+                List.of(),
                 List.of(qDto)
         );
 
@@ -91,7 +97,7 @@ public class ContentAuthoringServiceTest {
     public void testUpdateExistingPathAddAndModifyMcqs() {
         // Step 1: Create initial path without MCQs
         AdminPathDto.AdminSubtopicDto sub1 = new AdminPathDto.AdminSubtopicDto(
-                null, "Subtopic 1", "Content 1", 1, "PUBLISHED", List.of()
+                null, "Subtopic 1", "Content 1", 1, "PUBLISHED", "beginner", "concept", List.of(), null, 5, List.of(), List.of()
         );
         AdminPathDto.AdminTopicDto topic1 = new AdminPathDto.AdminTopicDto(
                 null, "Topic 1", "Desc 1", "Backend", "1 hour", 1, "PUBLISHED", List.of(sub1)
@@ -114,6 +120,12 @@ public class ContentAuthoringServiceTest {
                 "Content 1",
                 1,
                 "PUBLISHED",
+                "beginner",
+                "concept",
+                List.of(),
+                null,
+                5,
+                List.of(),
                 List.of(newMcq)
         );
         AdminPathDto.AdminTopicDto updatedTopic1 = new AdminPathDto.AdminTopicDto(

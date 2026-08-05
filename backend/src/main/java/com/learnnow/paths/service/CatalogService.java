@@ -116,8 +116,8 @@ public class CatalogService {
                                                     q.getKind(),
                                                     q.getPrompt(),
                                                     optsList,
-                                                    q.getCorrectAnswer(),
-                                                    q.getExplanation(),
+                                                    null, // Answer key stripped for anti-cheating security
+                                                    null, // Explanation revealed only after server-side submit
                                                     q.getPoints()
                                             );
                                         })

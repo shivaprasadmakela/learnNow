@@ -171,6 +171,34 @@ export const useProfileDashboard = () => {
         };
     }, [handlePathChange, theme]);
 
+    // Real-time cross-tab authentication synchronization listener
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'ln_token') {
+                if (e.newValue) {
+                    // Token logged in on another tab!
+                    loadUserData()
+                        .then(() => {
+                            setActiveView('DASHBOARD');
+                        })
+                        .catch(() => {
+                            setActiveView('LOGIN');
+                        });
+                } else {
+                    // Token logged out on another tab!
+                    authClient.clearToken();
+                    setProfile(null);
+                    setActiveView('LOGIN');
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [loadUserData]);
+
     useEffect(() => {
         const token = authClient.getToken();
         if (token) {

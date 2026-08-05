@@ -1,5 +1,6 @@
 package com.learnnow.user.service;
 
+import com.learnnow.common.exception.AuthException;
 import com.learnnow.common.exception.ValidationException;
 import com.learnnow.common.security.ResendEmailClient;
 import com.learnnow.common.security.TokenService;
@@ -53,7 +54,7 @@ class AuthServiceTest {
 
         LoginRequest req = new LoginRequest("googleuser@example.com", "anyPassword");
 
-        ValidationException ex = assertThrows(ValidationException.class, () -> authService.login(req));
+        AuthException ex = assertThrows(AuthException.class, () -> authService.login(req));
         assertEquals("account_registered_with_google", ex.getMessage());
     }
 }
