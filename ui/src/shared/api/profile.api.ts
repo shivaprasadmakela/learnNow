@@ -82,6 +82,24 @@ export interface TopicDetails {
     subtopics: SubtopicData[];
 }
 
+export interface QuizSubmitResponse {
+    questionId: string;
+    isCorrect: boolean;
+    correctAnswer: string;
+    explanation?: string;
+    pointsEarned: number;
+}
+
+export const submitQuizAnswer = async (questionId: string, selectedOption: string): Promise<QuizSubmitResponse> => {
+    const response = await apiFetch('/api/quizzes/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId, selectedOption })
+    });
+    if (!response.ok) throw new Error('Failed to validate quiz answer');
+    return response.json();
+};
+
 export const fetchTopicDetails = async (id: string | number): Promise<TopicDetails> => {
     const response = await apiFetch(`/api/topics/${id}`);
     if (!response.ok) throw new Error('Failed to fetch topic details');
