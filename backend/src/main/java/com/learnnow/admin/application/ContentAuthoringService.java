@@ -145,13 +145,45 @@ public class ContentAuthoringService {
                     java.util.List<Subtopic> subtopics = new java.util.ArrayList<>();
                     int idx = 1;
                     for (AdminPathDto.AdminSubtopicDto stReq : topicReq.subtopics()) {
+                        String prereqsJson = "[]";
+                        if (stReq.prerequisites() != null) {
+                            try {
+                                prereqsJson = objectMapper.writeValueAsString(stReq.prerequisites());
+                            } catch (Exception ignored) {}
+                        }
+
                         Subtopic subtopic = Subtopic.builder()
                                 .title(stReq.title())
                                 .content(stReq.content())
                                 .orderIndex(stReq.orderIndex() > 0 ? stReq.orderIndex() : idx++)
                                 .status(parseStatus(stReq.status()))
+                                .level(stReq.level() != null ? stReq.level() : "beginner")
+                                .track(stReq.track() != null ? stReq.track() : "concept")
+                                .prerequisites(prereqsJson)
+                                .videoUrl(stReq.videoUrl())
+                                .estimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5)
                                 .topic(topic)
                                 .build();
+
+                        if (stReq.codeSnippets() != null && !stReq.codeSnippets().isEmpty()) {
+                            java.util.List<SubtopicCodeSnippet> snippets = new java.util.ArrayList<>();
+                            int snIdx = 1;
+                            for (AdminPathDto.AdminCodeSnippetDto snReq : stReq.codeSnippets()) {
+                                SubtopicCodeSnippet snippet = SubtopicCodeSnippet.builder()
+                                        .subtopic(subtopic)
+                                        .id(snReq.id() != null ? snReq.id() : "snippet-" + snIdx)
+                                        .language(snReq.language() != null ? snReq.language() : "javascript")
+                                        .label(snReq.label())
+                                        .code(snReq.code() != null ? snReq.code() : "")
+                                        .expectedOutput(snReq.expectedOutput())
+                                        .runnable(snReq.runnable() == null || snReq.runnable())
+                                        .editable(snReq.editable() == null || snReq.editable())
+                                        .orderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++)
+                                        .build();
+                                snippets.add(snippet);
+                            }
+                            subtopic.setCodeSnippets(snippets);
+                        }
 
                         if (stReq.questions() != null && !stReq.questions().isEmpty()) {
                             com.learnnow.admin.persistence.ContentBlock block = com.learnnow.admin.persistence.ContentBlock.builder()
@@ -397,11 +429,24 @@ public class ContentAuthoringService {
                             }
                         }
 
+                        String prereqsJson = "[]";
+                        if (stReq.prerequisites() != null) {
+                            try {
+                                prereqsJson = objectMapper.writeValueAsString(stReq.prerequisites());
+                            } catch (Exception ignored) {}
+                        }
+
                         Subtopic subtopic;
                         if (existingSubOpt.isPresent() && "OVERWRITE".equals(strategy)) {
                             subtopic = existingSubOpt.get();
                             subtopic.setContent(stReq.content());
+                            subtopic.setLevel(stReq.level() != null ? stReq.level() : "beginner");
+                            subtopic.setTrack(stReq.track() != null ? stReq.track() : "concept");
+                            subtopic.setPrerequisites(prereqsJson);
+                            subtopic.setVideoUrl(stReq.videoUrl());
+                            subtopic.setEstimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5);
                             subtopic.getBlocks().clear();
+                            subtopic.getCodeSnippets().clear();
                         } else {
                             subtopicCount++;
                             subtopic = Subtopic.builder()
@@ -410,9 +455,34 @@ public class ContentAuthoringService {
                                     .orderIndex(stIdx++)
                                     .status(ContentStatus.DRAFT)
                                     .version(1)
+                                    .level(stReq.level() != null ? stReq.level() : "beginner")
+                                    .track(stReq.track() != null ? stReq.track() : "concept")
+                                    .prerequisites(prereqsJson)
+                                    .videoUrl(stReq.videoUrl())
+                                    .estimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5)
                                     .topic(topic)
                                     .build();
                             topic.getSubtopics().add(subtopic);
+                        }
+
+                        if (stReq.codeSnippets() != null && !stReq.codeSnippets().isEmpty()) {
+                            java.util.List<SubtopicCodeSnippet> snippets = new java.util.ArrayList<>();
+                            int snIdx = 1;
+                            for (ImportCourseRequest.ImportCodeSnippetRequest snReq : stReq.codeSnippets()) {
+                                SubtopicCodeSnippet snippet = SubtopicCodeSnippet.builder()
+                                        .subtopic(subtopic)
+                                        .id(snReq.id() != null ? snReq.id() : "snippet-" + snIdx)
+                                        .language(snReq.language() != null ? snReq.language() : "javascript")
+                                        .label(snReq.label())
+                                        .code(snReq.code() != null ? snReq.code() : "")
+                                        .expectedOutput(snReq.expectedOutput())
+                                        .runnable(snReq.runnable() == null || snReq.runnable())
+                                        .editable(snReq.editable() == null || snReq.editable())
+                                        .orderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++)
+                                        .build();
+                                snippets.add(snippet);
+                            }
+                            subtopic.setCodeSnippets(snippets);
                         }
 
                         if (stReq.questions() != null && !stReq.questions().isEmpty()) {
@@ -504,12 +574,42 @@ public class ContentAuthoringService {
                                             );
                                         }).toList() : List.of();
 
+                                List<String> prereqs = List.of();
+                                if (st.getPrerequisites() != null) {
+                                    try {
+                                        prereqs = objectMapper.readValue(
+                                                st.getPrerequisites(),
+                                                new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
+                                        );
+                                    } catch (Exception ignored) {}
+                                }
+
+                                List<AdminPathDto.AdminCodeSnippetDto> snippets = st.getCodeSnippets() != null ? st.getCodeSnippets().stream()
+                                        .sorted(java.util.Comparator.comparingInt(SubtopicCodeSnippet::getOrderIndex))
+                                        .map(sn -> new AdminPathDto.AdminCodeSnippetDto(
+                                                sn.getId(),
+                                                sn.getLanguage(),
+                                                sn.getLabel(),
+                                                sn.getCode(),
+                                                sn.getExpectedOutput(),
+                                                sn.isRunnable(),
+                                                sn.isEditable(),
+                                                sn.getOrderIndex()
+                                        ))
+                                        .toList() : List.of();
+
                                 return new AdminPathDto.AdminSubtopicDto(
                                         st.getId(),
                                         st.getTitle(),
                                         st.getContent(),
                                         st.getOrderIndex(),
                                         st.getStatus() != null ? st.getStatus().name() : "DRAFT",
+                                        st.getLevel() != null ? st.getLevel() : "beginner",
+                                        st.getTrack() != null ? st.getTrack() : "concept",
+                                        prereqs,
+                                        st.getVideoUrl(),
+                                        st.getEstimatedMinutes() > 0 ? st.getEstimatedMinutes() : 5,
+                                        snippets,
                                         questions
                                 );
                             }).toList();

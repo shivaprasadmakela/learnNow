@@ -31,7 +31,24 @@ public record ImportCourseRequest(
     public record ImportSubtopicRequest(
         String title,
         String content,
+        String level,
+        String track,
+        List<String> prerequisites,
+        String videoUrl,
+        Integer estimatedMinutes,
+        @Valid List<ImportCodeSnippetRequest> codeSnippets,
         @Valid List<ImportQuestionRequest> questions
+    ) {}
+
+    public record ImportCodeSnippetRequest(
+        String id,
+        String language,
+        String label,
+        String code,
+        String expectedOutput,
+        Boolean runnable,
+        Boolean editable,
+        Integer orderIndex
     ) {}
 
     public record ImportQuestionRequest(

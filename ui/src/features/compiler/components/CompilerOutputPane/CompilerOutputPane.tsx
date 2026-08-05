@@ -49,12 +49,11 @@ export const CompilerOutputPane: React.FC<CompilerOutputPaneProps> = ({
                     logs.map((log, idx) => (
                         <div
                             key={idx}
-                            className={`${styles.logLine} ${
-                                log.type === 'error' ? styles.logLineError
-                                : log.type === 'warn' ? styles.logLineWarn
-                                : log.type === 'info' ? styles.logLineInfo
-                                : ''
-                            }`}
+                            className={`${styles.logLine} ${log.type === 'error' ? styles.logLineError
+                                    : log.type === 'warn' ? styles.logLineWarn
+                                        : log.type === 'info' ? styles.logLineInfo
+                                            : ''
+                                }`}
                         >
                             {log.message}
                         </div>

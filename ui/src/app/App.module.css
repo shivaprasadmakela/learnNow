@@ -67,6 +67,8 @@
 
 .mainContent {
     flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     height: calc(100vh - 72px);
@@ -208,11 +210,14 @@
 .pageContentFull,
 .pageContentHome {
     flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
     padding: 0;
     width: 100%;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 /* Dashboard overrides the wide side padding — uses only var(--space-6) on all sides */

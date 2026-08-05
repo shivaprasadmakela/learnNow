@@ -58,6 +58,9 @@ export async function executeCodeApi(payload: ExecuteCodePayload): Promise<Execu
         body: JSON.stringify(payload)
     });
     if (!res.ok) {
+        if (res.status === 401) {
+            throw new Error('login_required');
+        }
         throw new Error('Code execution failed');
     }
     return res.json() as Promise<ExecuteCodeResult>;

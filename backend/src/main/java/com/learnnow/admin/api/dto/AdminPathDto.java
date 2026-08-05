@@ -30,7 +30,24 @@ public record AdminPathDto(
         String content,
         int orderIndex,
         String status,
+        String level,
+        String track,
+        List<String> prerequisites,
+        String videoUrl,
+        Integer estimatedMinutes,
+        List<AdminCodeSnippetDto> codeSnippets,
         List<AdminQuizQuestionDto> questions
+    ) {}
+
+    public record AdminCodeSnippetDto(
+        String id,
+        String language,
+        String label,
+        String code,
+        String expectedOutput,
+        Boolean runnable,
+        Boolean editable,
+        Integer orderIndex
     ) {}
 
     public record AdminQuizQuestionDto(

@@ -28,8 +28,28 @@ CREATE TABLE subtopics (
     content TEXT,
     order_index INTEGER NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
-    version INTEGER NOT NULL DEFAULT 1
+    version INTEGER NOT NULL DEFAULT 1,
+    level VARCHAR(20) NOT NULL DEFAULT 'beginner',
+    track VARCHAR(30) NOT NULL DEFAULT 'concept',
+    prerequisites JSONB NOT NULL DEFAULT '[]',
+    video_url VARCHAR(512),
+    estimated_minutes INTEGER NOT NULL DEFAULT 5
 );
+
+-- 3.1. Create subtopic_code_snippets table
+CREATE TABLE subtopic_code_snippets (
+    id VARCHAR(100) NOT NULL,
+    subtopic_id UUID NOT NULL REFERENCES subtopics(id) ON DELETE CASCADE,
+    language VARCHAR(30) NOT NULL,
+    label VARCHAR(255),
+    code TEXT NOT NULL,
+    expected_output TEXT,
+    runnable BOOLEAN NOT NULL DEFAULT TRUE,
+    editable BOOLEAN NOT NULL DEFAULT TRUE,
+    order_index INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (subtopic_id, id)
+);
+CREATE INDEX idx_snippets_subtopic ON subtopic_code_snippets(subtopic_id);
 
 -- 4. Create content_blocks table
 CREATE TABLE content_blocks (

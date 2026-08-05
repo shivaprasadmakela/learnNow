@@ -1,0 +1,129 @@
+.codeBlockCard {
+    margin: 24px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.labelGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.snippetTitle {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.langBadge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--tech-blue);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid var(--tech-blue);
+    padding: 1px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+.runBtn {
+    background: var(--tech-blue);
+    color: #ffffff;
+    border: none;
+}
+
+.runBtn:hover {
+    filter: brightness(1.15);
+}
+
+.runBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.splitBody {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    height: 340px;
+    background: var(--bg-tertiary);
+}
+
+@media (max-width: 800px) {
+    .splitBody {
+        grid-template-columns: 1fr;
+        grid-template-rows: 240px 200px;
+        height: auto;
+    }
+}
+
+.editorBox {
+    height: 100%;
+    overflow: hidden;
+}
+
+.outputBox {
+    height: 100%;
+    border-left: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.diffBanner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-top: 1px solid var(--border-color);
+}
+
+.diffMatch {
+    background: rgba(34, 197, 94, 0.12);
+    color: var(--tech-green);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.diffMismatch {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.3);
+}

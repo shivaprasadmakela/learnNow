@@ -9,8 +9,25 @@ public record SubtopicDto(
     String content,
     int orderIndex,
     boolean isCompleted,
+    String level,
+    String track,
+    List<String> prerequisites,
+    String videoUrl,
+    int estimatedMinutes,
+    List<CodeSnippetDto> codeSnippets,
     List<QuizQuestionDto> questions
 ) {
+    public record CodeSnippetDto(
+        String id,
+        String language,
+        String label,
+        String code,
+        String expectedOutput,
+        boolean runnable,
+        boolean editable,
+        int orderIndex
+    ) {}
+
     public record QuizQuestionDto(
         UUID id,
         String kind,
@@ -21,3 +38,4 @@ public record SubtopicDto(
         int points
     ) {}
 }
+

@@ -2,27 +2,58 @@
     width: 100%;
     display: flex;
     justify-content: center;
-
-}
-
-.dividerRow {
-    display: flex;
     align-items: center;
-    margin: 20px 0;
+    margin-bottom: 16px;
+}
+
+/* Ensure Google OAuth iframe stretches full-width cleanly */
+.googleContainer :global(div[role="button"]) {
+    width: 100% !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    border: 1px solid var(--border-color) !important;
+    background-color: var(--bg-secondary) !important;
+    transition: border-color 0.2s ease, background-color 0.2s ease !important;
+}
+
+.googleContainer :global(div[role="button"]):hover {
+    box-shadow: none !important;
+    border-color: var(--tech-blue) !important;
+    background-color: var(--bg-tertiary) !important;
+}
+
+.googleBtn {
     width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    transition: all 0.2s ease;
+    outline: none;
 }
 
-.dividerLine {
-    flex: 1;
-    height: 1px;
-    background-color: var(--border-color, #e2e8f0);
+.googleBtn:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
 }
 
-.dividerText {
-    padding: 0 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-secondary, #64748b);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+.googleBtn:active {
+    opacity: 0.9;
+}
+
+.googleIcon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
 }

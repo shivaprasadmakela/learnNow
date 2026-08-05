@@ -35,6 +35,17 @@ export const fetchPublicPaths = async (): Promise<PathData[]> => {
     return response.json();
 };
 
+export interface CodeSnippetItem {
+    id: string;
+    language: string;
+    label?: string;
+    code: string;
+    expectedOutput?: string;
+    runnable?: boolean;
+    editable?: boolean;
+    orderIndex?: number;
+}
+
 export interface QuizQuestionDto {
     id?: string;
     kind: 'mcq' | 'true_false' | 'fill_blank';
@@ -51,6 +62,12 @@ export interface SubtopicData {
     content: string;
     orderIndex: number;
     isCompleted?: boolean;
+    level?: 'beginner' | 'intermediate' | 'advanced';
+    track?: 'concept' | 'hands-on' | 'interview-prep';
+    prerequisites?: string[];
+    videoUrl?: string | null;
+    estimatedMinutes?: number;
+    codeSnippets?: CodeSnippetItem[];
     questions?: QuizQuestionDto[];
 }
 
