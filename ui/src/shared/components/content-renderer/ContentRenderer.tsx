@@ -20,9 +20,12 @@ export interface ContentBlockItem {
     questions?: QuizQuestionItem[];
 }
 
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 interface ContentRendererProps {
     blocks: ContentBlockItem[];
     isSubtopicCompleted?: boolean;
+    hideHeader?: boolean;
     onQuizAnswered?: (questionId: string, isCorrect: boolean, isFirstAttempt: boolean) => void;
     onAllQuizzesAnsweredChange?: (allAnswered: boolean) => void;
 }
@@ -30,6 +33,7 @@ interface ContentRendererProps {
 export const ContentRenderer: React.FC<ContentRendererProps> = ({
     blocks,
     isSubtopicCompleted = false,
+    hideHeader = false,
     onQuizAnswered,
     onAllQuizzesAnsweredChange
 }) => {
@@ -41,6 +45,17 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
     const allQuestions = blocks
         .filter(b => b.type === 'quiz' && b.questions)
         .flatMap(b => b.questions || []);
+
+    const blockKey = blocks.map(b => b.id).join(':');
+
+    useEffect(() => {
+        if (!isSubtopicCompleted) {
+            setSelectedAnswers({});
+            setSubmittedStates({});
+            setAttemptCounts({});
+            setActiveQuestionIndex({});
+        }
+    }, [blockKey, isSubtopicCompleted]);
 
     useEffect(() => {
         if (isSubtopicCompleted && allQuestions.length > 0) {
@@ -151,11 +166,26 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
 
                     return (
                         <div key={block.id} className={styles.quizBlock}>
-                            <div className={styles.quizHeader} style={{ justifyContent: 'space-between' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <HelpCircle size={20} /> Concept Check Quiz
-                                </span>
-                                {allInBlockSubmitted && (
+                            {!hideHeader && (
+                                <div className={styles.quizHeader} style={{ justifyContent: 'space-between' }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <HelpCircle size={20} /> Concept Check
+                                    </span>
+                                    {allInBlockSubmitted && (
+                                        <button
+                                            type="button"
+                                            className={styles.steppedNavBtn}
+                                            onClick={() => handleRetakeFullQuiz(block.id, block.questions!)}
+                                            title="Retake all MCQs in this test"
+                                        >
+                                            <RotateCcw size={14} /> Retake Test
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            {hideHeader && allInBlockSubmitted && (
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                                     <button
                                         type="button"
                                         className={styles.steppedNavBtn}
@@ -164,8 +194,8 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
                                     >
                                         <RotateCcw size={14} /> Retake Test
                                     </button>
-                                )}
-                            </div>
+                                </div>
+                            )}
 
                             <div>
                                 <h4 className={styles.quizPrompt}>{q.prompt}</h4>
@@ -188,7 +218,8 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
                                                 onClick={() => !isSubmitted && handleSelectOption(q.id, opt)}
                                                 disabled={isSubmitted}
                                             >
-                                                <span>{opt}</span>
+                                                <span className={styles.optionBadge}>{OPTION_LETTERS[oIdx] || oIdx + 1}</span>
+                                                <span className={styles.optionText}>{opt}</span>
                                             </button>
                                         );
                                     })}

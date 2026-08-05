@@ -25,6 +25,12 @@ public class CourseImportServiceTest {
         ImportCourseRequest.ImportSubtopicRequest sub = new ImportCourseRequest.ImportSubtopicRequest(
                 title + " - Subtopic 1",
                 "## Content for " + title,
+                "beginner",
+                "concept",
+                List.of(),
+                null,
+                5,
+                List.of(),
                 List.of()
         );
         return new ImportCourseRequest.ImportTopicRequest(
@@ -49,12 +55,24 @@ public class CourseImportServiceTest {
         ImportCourseRequest.ImportSubtopicRequest subtopic1 = new ImportCourseRequest.ImportSubtopicRequest(
                 "Introduction to CQRS",
                 "# CQRS Overview\n\nCommand Query Responsibility Segregation divides...",
+                "beginner",
+                "concept",
+                List.of(),
+                null,
+                5,
+                List.of(),
                 List.of(question)
         );
 
         ImportCourseRequest.ImportSubtopicRequest subtopic2 = new ImportCourseRequest.ImportSubtopicRequest(
                 "Event Sourcing Basics",
                 "# Event Sourcing\n\nStoring changes as a sequence of events...",
+                "beginner",
+                "concept",
+                List.of(),
+                null,
+                5,
+                List.of(),
                 List.of()
         );
 
@@ -245,5 +263,22 @@ public class CourseImportServiceTest {
 
         AdminPathDto updatedPath = authoringService.getAdminPathById(initialResult.pathId()).orElseThrow();
         assertEquals("Updated description", updatedPath.description());
+    }
+
+    @Autowired
+    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    @Test
+    @Transactional
+    public void testImportFrontendDeveloperProductionJson() throws Exception {
+        java.io.File file = new java.io.File("/Users/shivaprasad/Downloads/frontend-developer-production.json");
+        if (!file.exists()) return;
+        String json = new String(java.nio.file.Files.readAllBytes(file.toPath()));
+        ImportCourseRequest request = objectMapper.readValue(json, ImportCourseRequest.class);
+        ImportResultDto result = authoringService.importCourse(request);
+        assertNotNull(result);
+        assertEquals("Frontend Developer", result.pathTitle());
+        assertEquals(27, result.topicsCreated());
+        assertTrue(result.subtopicsCreated() > 50);
     }
 }

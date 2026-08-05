@@ -8,6 +8,7 @@ import { ContentRenderer } from '../../../../shared/components/content-renderer/
 import { CodePlayground } from '../../../../shared/components/code-playground';
 import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCodeBlock';
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
+import { LevelBadge, TrackBadge, DurationBadge } from '../../../../shared/components/ui/Badge';
 import { useSubtopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
 import styles from './StudyConsole.module.css';
 
@@ -19,6 +20,13 @@ interface StudyConsoleProps {
     isUpdating: boolean;
 }
 
+const slugify = (text: string) => {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+};
+
 export function StudyConsole({ 
     topic, 
     onClose, 
@@ -26,21 +34,63 @@ export function StudyConsole({
     onToggleSubtopicComplete,
     isUpdating
 }: StudyConsoleProps) {
-    const [activeSubtopicIndex, setActiveSubtopicIndex] = useState(0);
+    const subtopics = topic.subtopics || [];
+
+    // Inspect URL on mount to restore active subtopic index if URL contains subtopic slug
+    const [activeSubtopicIndex, setActiveSubtopicIndex] = useState<number>(() => {
+        if (typeof window !== 'undefined' && subtopics.length > 0) {
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            if (parts.length >= 4 && parts[0] === 'paths') {
+                const subtopicSlug = parts[3];
+                const matchIdx = subtopics.findIndex(s => {
+                    const sSlug = slugify(s.title);
+                    const sClean = s.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const rClean = subtopicSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return sSlug === subtopicSlug || String(s.id) === subtopicSlug || sClean === rClean || rClean.includes(sClean) || sClean.includes(rClean);
+                });
+                if (matchIdx >= 0) return matchIdx;
+            }
+        }
+        return 0;
+    });
+
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(false);
-    const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(true);
     const [activePlaygrounds, setActivePlaygrounds] = useState<Record<string, boolean>>({});
     const contentPaneRef = useRef<HTMLElement>(null);
+
+    const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
+
+    const hasUnansweredQuizzes = Boolean(
+        activeSubtopic &&
+        !activeSubtopic.isCompleted &&
+        activeSubtopic.questions &&
+        activeSubtopic.questions.length > 0
+    );
+
+    const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(!hasUnansweredQuizzes);
+
+    // Sync browser URL to /paths/:pathSlug/:topicSlug/:subtopicSlug on subtopic change
+    useEffect(() => {
+        if (typeof window === 'undefined' || !activeSubtopic) return;
+        const parts = window.location.pathname.split('/').filter(Boolean);
+        if (parts.length >= 2 && parts[0] === 'paths') {
+            const pathSlug = parts[1] || 'course';
+            const topicSlug = parts[2] || slugify(topic.title);
+            const subtopicSlug = slugify(activeSubtopic.title);
+            const targetUrl = `/paths/${pathSlug}/${topicSlug}/${subtopicSlug}`;
+
+            if (window.location.pathname !== targetUrl) {
+                window.history.replaceState(null, '', targetUrl);
+            }
+        }
+    }, [activeSubtopicIndex, activeSubtopic, topic.title]);
 
     // Scroll back to top whenever the active subtopic changes
     useEffect(() => {
         contentPaneRef.current?.scrollTo({ top: 0, behavior: 'instant' });
-        setIsActiveSubtopicQuizzesAnswered(true);
-    }, [activeSubtopicIndex]);
-
-    const subtopics = topic.subtopics || [];
-    const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
+        setIsActiveSubtopicQuizzesAnswered(!hasUnansweredQuizzes);
+    }, [activeSubtopicIndex, hasUnansweredQuizzes]);
 
     const { isBookmarked, toggleBookmark } = useBookmarks();
     const { content: noteContent, setContent: setNoteContent, saveStatus: noteSaveStatus, isLoading: isNoteLoading, saveNow } = useSubtopicNote(activeSubtopic?.id);
@@ -299,18 +349,10 @@ export function StudyConsole({
                                 <div className={styles.subtopicHeaderRow}>
                                     <div>
                                         <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
-                                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                                            <span className={styles.levelBadge}>
-                                                {activeSubtopic.level === 'advanced' ? '🔴 Advanced' : activeSubtopic.level === 'intermediate' ? '🟡 Intermediate' : '🟢 Beginner'}
-                                            </span>
-                                            {activeSubtopic.track && (
-                                                <span className={styles.trackBadge}>
-                                                    {activeSubtopic.track.replace('-', ' ')}
-                                                </span>
-                                            )}
-                                            <span className={styles.levelBadge} style={{ color: 'var(--text-tertiary)' }}>
-                                                ⏱ {activeSubtopic.estimatedMinutes || 5} min read
-                                            </span>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center' }}>
+                                            <LevelBadge level={activeSubtopic.level} />
+                                            {activeSubtopic.track && <TrackBadge track={activeSubtopic.track} />}
+                                            <DurationBadge minutes={activeSubtopic.estimatedMinutes || 5} />
                                         </div>
                                     </div>
                                     <button
@@ -325,11 +367,37 @@ export function StudyConsole({
                                     </button>
                                 </div>
 
-                                {activeSubtopic.prerequisites && activeSubtopic.prerequisites.length > 0 && (
-                                    <div className={styles.prereqBanner}>
-                                        <strong>📌 Prerequisites:</strong> Recommended reading first: {activeSubtopic.prerequisites.join(', ')}
-                                    </div>
-                                )}
+                                {(() => {
+                                    const uncompletedPrereqs = (activeSubtopic.prerequisites || [])
+                                        .map(reqId => {
+                                            const match = subtopics.find(s => {
+                                                const sId = String(s.id).toLowerCase();
+                                                const rId = String(reqId).toLowerCase();
+                                                if (sId === rId) return true;
+
+                                                const sClean = s.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                                const rClean = rId.replace(/[^a-z0-9]/g, '');
+                                                if (sClean && rClean && (rClean.includes(sClean) || sClean.includes(rClean))) return true;
+
+                                                return false;
+                                            });
+
+                                            return {
+                                                title: match ? match.title : reqId.replace(/-/g, ' '),
+                                                isCompleted: match ? Boolean(match.isCompleted) : false
+                                            };
+                                        })
+                                        .filter(req => !req.isCompleted);
+
+                                    if (uncompletedPrereqs.length === 0) return null;
+
+                                    return (
+                                        <div className={styles.prereqBanner}>
+                                            <strong>📌 Prerequisites:</strong> Recommended reading first:{' '}
+                                            {uncompletedPrereqs.map(r => r.title).join(', ')}
+                                        </div>
+                                    );
+                                })()}
 
                                 {activeSubtopic.videoUrl && (
                                     <YouTubeEmbed url={activeSubtopic.videoUrl} />
@@ -346,13 +414,14 @@ export function StudyConsole({
                                             </div>
                                             <div style={{ padding: '24px' }}>
                                             <ContentRenderer
+                                                hideHeader={true}
                                                 isSubtopicCompleted={Boolean(activeSubtopic.isCompleted)}
                                                 blocks={[{
                                                     id: `quiz-${activeSubtopic.id || activeSubtopicIndex}`,
                                                     orderIndex: 1,
                                                     type: 'quiz',
                                                     questions: activeSubtopic.questions.map((q, qIdx) => ({
-                                                        id: q.id || `q-${qIdx}`,
+                                                        id: q.id || `q-${activeSubtopic.id || activeSubtopicIndex}-${qIdx}`,
                                                         kind: q.kind || 'mcq',
                                                         prompt: q.prompt,
                                                         options: q.options,

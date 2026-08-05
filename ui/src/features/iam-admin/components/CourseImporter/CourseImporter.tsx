@@ -204,6 +204,15 @@ export const CourseImporter: React.FC<CourseImporterProps> = ({
                         {copiedTemplate ? <Check size={16} style={{ color: 'var(--tech-green)' }} /> : <Copy size={16} />}
                         <span>{copiedTemplate ? 'Template Loaded!' : 'Load Sample Template'}</span>
                     </button>
+                    {onCancel && (
+                        <button
+                            type="button"
+                            className={styles.secondaryBtn}
+                            onClick={onCancel}
+                        >
+                            Cancel
+                        </button>
+                    )}
                 </div>
             </header>
 

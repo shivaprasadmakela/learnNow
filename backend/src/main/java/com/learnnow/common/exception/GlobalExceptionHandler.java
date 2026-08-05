@@ -45,8 +45,24 @@ public class GlobalExceptionHandler {
                 .body(Map.of("code", ex.getMessage(), "message", resolved));
     }
 
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValid(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        String detail = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .collect(java.util.stream.Collectors.joining("; "));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(Map.of("code", "validation_failed", "message", detail));
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleJsonNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("code", "invalid_json", "message", "JSON Parse Error: " + ex.getMostSpecificCause().getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
+        ex.printStackTrace();
         String key = ex.getMessage();
         String resolved = resolve(key);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -55,9 +71,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
+        ex.printStackTrace();
         String resolved = resolve("unknown_error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("code", "unknown_error", "message", resolved));
+                .body(Map.of("code", "unknown_error", "message", resolved != null ? resolved : ex.getMessage()));
     }
 
     private String resolve(String key) {

@@ -41,6 +41,7 @@ public class Subtopic {
     private String track = "concept";
 
     @Builder.Default
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     @Column(columnDefinition = "JSONB", nullable = false)
     private String prerequisites = "[]";
 

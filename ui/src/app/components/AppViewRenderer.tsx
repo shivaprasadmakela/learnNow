@@ -55,11 +55,13 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
 
     return (
         <div className={
-            activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'COMPILER' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
-                ? styles.pageContentFull
-                : activeView === 'DASHBOARD'
-                    ? styles.pageContentDashboard
-                    : styles.pageContent
+            activeView === 'COMPILER'
+                ? styles.pageContentCompiler
+                : activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
+                    ? styles.pageContentFull
+                    : activeView === 'DASHBOARD'
+                        ? styles.pageContentDashboard
+                        : styles.pageContent
         }>
             {activeView === 'HOME' && (
                 <Home
