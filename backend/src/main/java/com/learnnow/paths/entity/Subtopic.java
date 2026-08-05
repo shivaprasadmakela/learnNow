@@ -32,6 +32,25 @@ public class Subtopic {
     @Builder.Default
     private int version = 1;
 
+    @Builder.Default
+    @Column(nullable = false, length = 20)
+    private String level = "beginner";
+
+    @Builder.Default
+    @Column(nullable = false, length = 30)
+    private String track = "concept";
+
+    @Builder.Default
+    @Column(columnDefinition = "JSONB", nullable = false)
+    private String prerequisites = "[]";
+
+    @Column(name = "video_url", length = 512)
+    private String videoUrl;
+
+    @Builder.Default
+    @Column(name = "estimated_minutes", nullable = false)
+    private int estimatedMinutes = 5;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "topic_id")
     @JsonIgnore
@@ -40,4 +59,8 @@ public class Subtopic {
     @OneToMany(mappedBy = "subtopic", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private java.util.List<com.learnnow.admin.persistence.ContentBlock> blocks = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "subtopic", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<SubtopicCodeSnippet> codeSnippets = new java.util.ArrayList<>();
 }

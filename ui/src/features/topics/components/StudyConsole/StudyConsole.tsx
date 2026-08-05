@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
 import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
 import { CodePlayground } from '../../../../shared/components/code-playground';
+import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCodeBlock';
+import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { useSubtopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
 import styles from './StudyConsole.module.css';
 
@@ -28,6 +31,13 @@ export function StudyConsole({
     const [isTocOpen, setIsTocOpen] = useState(false);
     const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(true);
     const [activePlaygrounds, setActivePlaygrounds] = useState<Record<string, boolean>>({});
+    const contentPaneRef = useRef<HTMLElement>(null);
+
+    // Scroll back to top whenever the active subtopic changes
+    useEffect(() => {
+        contentPaneRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+        setIsActiveSubtopicQuizzesAnswered(true);
+    }, [activeSubtopicIndex]);
 
     const subtopics = topic.subtopics || [];
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
@@ -98,6 +108,13 @@ export function StudyConsole({
     const renderContent = (content: string) => {
         if (!content) return null;
 
+        const snippetMap = new Map((activeSubtopic?.codeSnippets || []).map(s => [s.id, s]));
+
+        const processedContent = content.replace(/\{\{snippet:([^}]+)\}\}/g, (_, id) => {
+            const cleanId = id.trim();
+            return `\n\n\`\`\`__snippet__:${cleanId}\n\`\`\`\n\n`;
+        });
+
         return (
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -132,39 +149,39 @@ export function StudyConsole({
                     ),
                     code(props: React.ComponentPropsWithoutRef<'code'> & { node?: unknown }) {
                         const { className, children, ...rest } = props;
-                        const match = /language-(\w+)/.exec(className || '');
+                        const match = /language-(\S+)/.exec(className || '');
                         const lang = match ? match[1] : '';
                         const isInline = !className;
                         const codeString = String(children || '').replace(/\n$/, '');
-                        const snippetKey = `${lang}-${codeString.slice(0, 20)}`;
-                        const isOpen = Boolean(activePlaygrounds[snippetKey]);
+
+                        if (lang.startsWith('__snippet__:')) {
+                            const snippetId = lang.replace('__snippet__:', '');
+                            const snippet = snippetMap.get(snippetId);
+                            if (snippet) {
+                                return <RunnableCodeBlock snippet={snippet} />;
+                            }
+                        }
 
                         if (isInline) {
                             return <code className="inline-code" {...rest}>{children}</code>;
                         }
 
+                        const snippetKey = `${lang}-${codeString.slice(0, 20)}`;
+                        const isOpen = Boolean(activePlaygrounds[snippetKey]);
+
                         return (
-                            <div style={{ margin: '20px 0' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>
-                                        Code Snippet ({lang || 'text'})
+                            <div className={styles.codeSection}>
+                                <div className={styles.codeSectionHeader}>
+                                    <span className={styles.codeSectionLabel}>
+                                        <i className="fa-solid fa-code" aria-hidden="true" style={{ marginRight: '6px' }} />
+                                        Code Example ({lang || 'text'})
                                     </span>
                                     <button
                                         type="button"
+                                        className={`${styles.playgroundToggleBtn} ${isOpen ? styles.playgroundToggleBtnActive : ''}`}
                                         onClick={() => togglePlayground(snippetKey)}
-                                        style={{
-                                            padding: '4px 10px',
-                                            borderRadius: '6px',
-                                            border: '1px solid var(--tech-blue)',
-                                            background: isOpen ? 'var(--tech-blue)' : 'transparent',
-                                            color: isOpen ? '#ffffff' : 'var(--tech-blue)',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s ease'
-                                        }}
                                     >
-                                        {isOpen ? 'Hide Playground' : '⚡ Try in Playground'}
+                                        {isOpen ? '✕ Hide Playground' : '⚡ Try in Playground'}
                                     </button>
                                 </div>
 
@@ -181,7 +198,7 @@ export function StudyConsole({
                     }
                 }}
             >
-                {content}
+                {processedContent}
             </ReactMarkdown>
         );
     };
@@ -275,12 +292,27 @@ export function StudyConsole({
                 </aside>
 
                 {/* Main reading content pane */}
-                <main className={styles.contentPane}>
+                <main className={styles.contentPane} ref={contentPaneRef}>
                     {activeSubtopic ? (
                         <div className={isNotesDrawerOpen ? styles.contentFlexLayout : ''}>
                             <article className={styles.article}>
                                 <div className={styles.subtopicHeaderRow}>
-                                    <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
+                                    <div>
+                                        <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                            <span className={styles.levelBadge}>
+                                                {activeSubtopic.level === 'advanced' ? '🔴 Advanced' : activeSubtopic.level === 'intermediate' ? '🟡 Intermediate' : '🟢 Beginner'}
+                                            </span>
+                                            {activeSubtopic.track && (
+                                                <span className={styles.trackBadge}>
+                                                    {activeSubtopic.track.replace('-', ' ')}
+                                                </span>
+                                            )}
+                                            <span className={styles.levelBadge} style={{ color: 'var(--text-tertiary)' }}>
+                                                ⏱ {activeSubtopic.estimatedMinutes || 5} min read
+                                            </span>
+                                        </div>
+                                    </div>
                                     <button
                                         type="button"
                                         className={`${styles.subtopicNotesBtn} ${isNotesDrawerOpen ? styles.subtopicNotesBtnActive : ''}`}
@@ -293,10 +325,26 @@ export function StudyConsole({
                                     </button>
                                 </div>
 
+                                {activeSubtopic.prerequisites && activeSubtopic.prerequisites.length > 0 && (
+                                    <div className={styles.prereqBanner}>
+                                        <strong>📌 Prerequisites:</strong> Recommended reading first: {activeSubtopic.prerequisites.join(', ')}
+                                    </div>
+                                )}
+
+                                {activeSubtopic.videoUrl && (
+                                    <YouTubeEmbed url={activeSubtopic.videoUrl} />
+                                )}
+
                                 <div className={styles.articleBody}>
                                     {renderContent(activeSubtopic.content)}
                                     {activeSubtopic.questions && activeSubtopic.questions.length > 0 && (
-                                        <div style={{ marginTop: '32px' }}>
+                                        <div className={styles.mcqSection}>
+                                            <div className={styles.mcqSectionHeader}>
+                                                <i className="fa-solid fa-circle-question" aria-hidden="true" />
+                                                <span>Concept Check</span>
+                                                <span className={styles.mcqCount}>{activeSubtopic.questions.length} Question{activeSubtopic.questions.length > 1 ? 's' : ''}</span>
+                                            </div>
+                                            <div style={{ padding: '24px' }}>
                                             <ContentRenderer
                                                 isSubtopicCompleted={Boolean(activeSubtopic.isCompleted)}
                                                 blocks={[{
@@ -315,6 +363,7 @@ export function StudyConsole({
                                                 }]}
                                                 onAllQuizzesAnsweredChange={setIsActiveSubtopicQuizzesAnswered}
                                             />
+                                            </div>
                                         </div>
                                     )}
                                 </div>

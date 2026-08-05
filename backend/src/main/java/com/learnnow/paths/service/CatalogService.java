@@ -123,12 +123,42 @@ public class CatalogService {
                                         })
                                         .toList() : List.of();
 
+                                List<String> prereqsList = List.of();
+                                if (st.getPrerequisites() != null) {
+                                    try {
+                                        prereqsList = objectMapper.readValue(
+                                                st.getPrerequisites(),
+                                                new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
+                                        );
+                                    } catch (Exception ignored) {}
+                                }
+
+                                List<SubtopicDto.CodeSnippetDto> snippets = st.getCodeSnippets() != null ? st.getCodeSnippets().stream()
+                                        .sorted(java.util.Comparator.comparingInt(com.learnnow.paths.entity.SubtopicCodeSnippet::getOrderIndex))
+                                        .map(sn -> new SubtopicDto.CodeSnippetDto(
+                                                sn.getId(),
+                                                sn.getLanguage(),
+                                                sn.getLabel(),
+                                                sn.getCode(),
+                                                sn.getExpectedOutput(),
+                                                sn.isRunnable(),
+                                                sn.isEditable(),
+                                                sn.getOrderIndex()
+                                        ))
+                                        .toList() : List.of();
+
                                 return new SubtopicDto(
                                         st.getId(),
                                         st.getTitle(),
                                         st.getContent(),
                                         st.getOrderIndex(),
                                         subtopicCompletionMap.getOrDefault(st.getId(), false),
+                                        st.getLevel() != null ? st.getLevel() : "beginner",
+                                        st.getTrack() != null ? st.getTrack() : "concept",
+                                        prereqsList,
+                                        st.getVideoUrl(),
+                                        st.getEstimatedMinutes() > 0 ? st.getEstimatedMinutes() : 5,
+                                        snippets,
                                         questions
                                 );
                             })

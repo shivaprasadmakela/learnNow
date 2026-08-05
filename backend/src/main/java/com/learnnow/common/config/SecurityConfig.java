@@ -32,7 +32,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/paths/**", "/api/catalog/**").permitAll()
                 // Auth flows
                 .requestMatchers("/api/auth/**", "/error").permitAll()
-                // Code sharing: reading shared snippets is public; creating shared snippets and execution require auth
+                // Compiler: execution is public (API key is server-side; abuse handled by IP rate limiting).
+                // Creating shared snippets requires login so snippets are tied to a user identity.
+                // Reading a shared snippet via short link is always public.
+                .requestMatchers(HttpMethod.POST, "/api/compiler/snippets/execute").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api/compiler/snippets/{shortId}").permitAll()
 
                 // Admin endpoints require ADMIN role

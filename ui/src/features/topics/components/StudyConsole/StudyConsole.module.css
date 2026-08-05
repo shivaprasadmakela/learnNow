@@ -274,13 +274,126 @@
     background: var(--tech-green);
 }
 
+.levelBadge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.trackBadge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid var(--tech-blue);
+    color: var(--tech-blue);
+    text-transform: capitalize;
+}
+
+.prereqBanner {
+    margin: 16px 0;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+}
+
+
 .articleBody {
     line-height: 1.7;
     font-size: 1.05rem;
     color: var(--text-secondary);
 }
 
-/* Custom Markdown Rendering Classes */
+/* ── MCQ Section Card ─────────────────────────────────────── */
+.mcqSection {
+    margin-top: 48px;
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--tech-blue);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.mcqSectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--tech-blue);
+}
+
+.mcqCount {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+/* ── Code Example Section Card ────────────────────────────── */
+.codeSection {
+    margin: 24px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.codeSectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.codeSectionLabel {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.playgroundToggleBtn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--tech-blue);
+    background: transparent;
+    color: var(--tech-blue);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.playgroundToggleBtnActive {
+    background: var(--tech-blue);
+    color: #ffffff;
+}
+
+.playgroundToggleBtn:hover {
+    background: var(--tech-blue);
+    color: #ffffff;
+}
+
+
 .textBlock {
     margin-bottom: 1.5rem;
 }
