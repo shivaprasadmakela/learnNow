@@ -101,6 +101,45 @@
     color: #ef4444;
 }
 
+.optionBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.optionText {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.optionBtnSelected .optionBadge {
+    background: var(--tech-blue);
+    color: #ffffff;
+    border-color: var(--tech-blue);
+}
+
+.optionBtnCorrect .optionBadge {
+    background: var(--tech-green);
+    color: #ffffff;
+    border-color: var(--tech-green);
+}
+
+.optionBtnIncorrect .optionBadge {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+}
+
 .submitQuizBtn {
     display: inline-flex;
     align-items: center;

@@ -30,8 +30,7 @@ public class ResendEmailClient {
                 "from", "Learn Portal <" + fromAddress + ">",
                 "to", List.of(toEmail),
                 "subject", "Verify your learnNow account",
-                "html", buildVerificationHtml(firstName, verifyLink)
-        );
+                "html", buildVerificationHtml(firstName, verifyLink));
 
         try {
             restClient.post()
@@ -41,7 +40,8 @@ public class ResendEmailClient {
                     .toBodilessEntity();
         } catch (Exception e) {
             System.err.println("Failed to send email via Resend: " + e.getMessage());
-            // Catch error but don't crash registration for local testing if API key is invalid/missing
+            // Catch error but don't crash registration for local testing if API key is
+            // invalid/missing
         }
     }
 
@@ -58,6 +58,7 @@ public class ResendEmailClient {
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;" />
                     <p style="font-size: 12px; color: #64748b;">If you did not request this registration, you can ignore this email.</p>
                 </div>
-                """.formatted(firstName, link);
+                """
+                .formatted(firstName, link);
     }
 }

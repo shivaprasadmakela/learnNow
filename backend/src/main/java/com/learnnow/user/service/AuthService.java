@@ -43,10 +43,10 @@ public class AuthService {
     private String googleClientId;
 
     public AuthService(UserRepository userRepository,
-                        EmailVerificationTokenRepository tokenRepository,
-                        PasswordEncoder passwordEncoder,
-                        ResendEmailClient emailClient,
-                        TokenService tokenService) {
+            EmailVerificationTokenRepository tokenRepository,
+            PasswordEncoder passwordEncoder,
+            ResendEmailClient emailClient,
+            TokenService tokenService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -246,8 +246,7 @@ public class AuthService {
                 user.getFullName(),
                 user.getAvatar(),
                 user.getRole(),
-                user.getBio()
-        );
+                user.getBio());
     }
 
     private String generateSecureToken() {
