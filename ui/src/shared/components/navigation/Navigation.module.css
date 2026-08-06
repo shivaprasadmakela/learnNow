@@ -88,6 +88,27 @@
     background-color: rgba(37, 99, 235, 0.08);
 }
 
+.coffeeBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #ffdd00 0%, #fbb034 100%);
+    color: #1e293b;
+    border: none;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(251, 176, 52, 0.25);
+}
+
+.coffeeBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(251, 176, 52, 0.4);
+}
+
 .signInBtnCollapsed {
     display: flex;
     align-items: center;

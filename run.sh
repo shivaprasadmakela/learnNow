@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Load local environment variables from .env if present
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
 # Function to clean up background processes on exit
 cleanup() {
     echo ""

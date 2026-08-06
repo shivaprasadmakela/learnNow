@@ -9,6 +9,7 @@ import { useUserData } from './hooks/useUserData';
 import { useTopicSession } from './hooks/useTopicSession';
 import { PathCelebrationModal } from './components/PathCelebrationModal';
 import { AppViewRenderer } from './components/AppViewRenderer';
+import { BuyMeACoffeeModal } from '../features/donation/components/BuyMeACoffeeModal';
 
 export default function App() {
     const {
@@ -30,6 +31,7 @@ export default function App() {
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
     const { showToast } = useToast();
 
     // Custom Hooks for User Data & Topic Sessions
@@ -190,6 +192,7 @@ export default function App() {
                         isPathsActive={isPathsActive}
                         onSelectPaths={handleSelectPaths}
                         profile={profile}
+                        onOpenDonationModal={() => setIsDonationModalOpen(true)}
                     />
                 )}
 
@@ -266,6 +269,12 @@ export default function App() {
             <PathCelebrationModal
                 path={celebratingPath}
                 onClose={() => {}}
+            />
+
+            <BuyMeACoffeeModal
+                isOpen={isDonationModalOpen}
+                onClose={() => setIsDonationModalOpen(false)}
+                currentUser={profile ? { name: profile.fullName, email: (profile as any).email } : null}
             />
         </div>
     );
