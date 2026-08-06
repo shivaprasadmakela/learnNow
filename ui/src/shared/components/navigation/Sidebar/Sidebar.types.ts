@@ -9,4 +9,5 @@ export interface SidebarProps {
     onSelectPaths: () => void;
     profile?: UserProfile | null;
     setIsExpanded?: (isExpanded: boolean) => void;
+    onOpenDonationModal?: () => void;
 }

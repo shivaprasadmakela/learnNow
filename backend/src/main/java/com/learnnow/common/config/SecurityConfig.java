@@ -32,6 +32,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/paths/**", "/api/catalog/**").permitAll()
                 // Auth flows
                 .requestMatchers("/api/auth/**", "/error").permitAll()
+                // Donations (Buy Me a Coffee) - open to both guest & logged in users
+                .requestMatchers("/api/donations/**").permitAll()
                 // Compiler: execution is public (API key is server-side; abuse handled by IP rate limiting).
                 // Creating shared snippets requires login so snippets are tied to a user identity.
                 // Reading a shared snippet via short link is always public.
@@ -50,20 +52,22 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String allowedOrigins;
+
     /**
      * Single source-of-truth CORS configuration.
-     * Allows localhost (dev) and any ngrok subdomain (tunnel testing).
-     * Remove the ngrok pattern before deploying to production.
+     * Uses configurable allowed-origins property for production security.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of(
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "https://*.ngrok-free.app",
-            "https://*.ngrok.io"
-        ));
+        List<String> origins = java.util.Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        cfg.setAllowedOriginPatterns(origins);
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);

@@ -7,6 +7,9 @@ docs/
 # Backend (Maven / Java / Spring Boot)
 backend/target/
 backend/src/main/resources/application-local.properties
+.env
+.env.local
+.env.*.local
 
 # Frontend (Node / Vite / React)
 ui/node_modules/

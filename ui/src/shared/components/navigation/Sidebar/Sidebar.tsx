@@ -11,7 +11,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     isPathsActive,
     onSelectPaths,
     profile,
-    setIsExpanded
+    setIsExpanded,
+    onOpenDonationModal
 }) => {
     const isPrimaryActive = isLoggedIn
         ? (activeView === 'DASHBOARD' || activeView === 'CERTIFICATE') && !isPathsActive
@@ -29,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     return (
         <aside className={`${styles.sidebar} ${isExpanded ? styles.sidebarExpanded : styles.sidebarCollapsed}`}>
-            <nav className={isExpanded ? styles.navContainer : styles.navContainerCentered}>
+            <nav className={isExpanded ? styles.navContainer : styles.navContainerCentered} style={{ flexGrow: 1 }}>
                 <SidebarNavItem
                     iconClass={primaryIcon}
                     label={primaryLabel}
@@ -62,6 +63,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                 )}
             </nav>
+
+            {onOpenDonationModal && (
+                <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-color)', width: '100%' }}>
+                    <SidebarNavItem
+                        iconClass="fa-solid fa-mug-hot"
+                        label="Buy Coffee"
+                        isActive={false}
+                        isExpanded={isExpanded}
+                        onClick={() => handleNavClick(onOpenDonationModal)}
+                    />
+                </div>
+            )}
         </aside>
     );
 };

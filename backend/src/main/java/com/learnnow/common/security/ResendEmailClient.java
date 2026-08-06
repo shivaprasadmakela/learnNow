@@ -1,5 +1,6 @@
 package com.learnnow.common.security;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -9,6 +10,7 @@ import org.springframework.web.client.RestClient;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class ResendEmailClient {
 
@@ -39,9 +41,8 @@ public class ResendEmailClient {
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
-            System.err.println("Failed to send email via Resend: " + e.getMessage());
-            // Catch error but don't crash registration for local testing if API key is
-            // invalid/missing
+            log.error("Failed to send verification email via Resend: {}", e.getMessage());
+            // Catch error but don't crash registration for local testing if API key is invalid/missing
         }
     }
 
