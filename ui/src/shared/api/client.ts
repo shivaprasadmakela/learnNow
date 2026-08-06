@@ -11,8 +11,11 @@ export const apiFetch = async (url: string, options: RequestInit = {}): Promise<
         ...authHeaders,
         ...options.headers,
     };
+
+    const baseUrl = import.meta.env.VITE_BACKEND_URL || '';
+    const targetUrl = url.startsWith('/') && baseUrl ? `${baseUrl}${url}` : url;
     
-    const response = await fetch(url, {
+    const response = await fetch(targetUrl, {
         ...options,
         headers,
     });

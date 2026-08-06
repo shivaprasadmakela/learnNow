@@ -79,6 +79,23 @@ export const BuyMeACoffeeModal: React.FC<BuyMeACoffeeModalProps> = ({
         return;
       }
 
+      // Ensure Razorpay SDK is loaded on demand
+      if (!(window as any).Razorpay) {
+        const isLoaded = await new Promise<boolean>((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+
+        if (!isLoaded) {
+          setError('Failed to load Razorpay payment gateway. Please check your internet connection.');
+          setLoading(false);
+          return;
+        }
+      }
+
       const options = {
         key: order.keyId,
         amount: order.amountInPaise,

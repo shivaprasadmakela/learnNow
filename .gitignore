@@ -10,6 +10,8 @@ backend/src/main/resources/application-local.properties
 .env
 .env.local
 .env.*.local
+key-*.json
+*.json.key
 
 # Frontend (Node / Vite / React)
 ui/node_modules/

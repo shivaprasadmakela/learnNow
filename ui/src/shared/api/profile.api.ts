@@ -30,7 +30,7 @@ export const fetchPaths = async (): Promise<PathData[]> => {
 };
 
 export const fetchPublicPaths = async (): Promise<PathData[]> => {
-    const response = await fetch('/api/catalog/paths');
+    const response = await apiFetch('/api/catalog/paths');
     if (!response.ok) throw new Error('Failed to fetch catalog paths');
     return response.json();
 };
