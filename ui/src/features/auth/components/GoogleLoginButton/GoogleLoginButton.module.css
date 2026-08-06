@@ -4,22 +4,20 @@
     justify-content: center;
     align-items: center;
     margin-bottom: 20px;
-    min-height: 44px;
+    box-sizing: border-box;
 }
 
-/* Force Google OAuth iframe wrapper and container to stretch 100% full width */
+/* Force all inner Google GSI iframe wrappers and containers to center & stretch */
 .googleContainer > div,
-.googleContainer iframe,
-.googleContainer :global(div[role="button"]),
-.googleContainer :global(iframe) {
+.googleContainer > div > div,
+.googleContainer > div > div > iframe,
+.googleContainer iframe {
     width: 100% !important;
     max-width: 100% !important;
-    min-width: 100% !important;
-    box-sizing: border-box !important;
     display: flex !important;
     justify-content: center !important;
-    border-radius: var(--radius-md, 10px) !important;
-    overflow: hidden !important;
+    align-items: center !important;
+    margin: 0 auto !important;
 }
 
 .googleBtn {
