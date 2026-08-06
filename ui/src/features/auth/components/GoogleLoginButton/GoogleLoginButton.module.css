@@ -3,53 +3,56 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    min-height: 44px;
 }
 
-/* Ensure Google OAuth iframe stretches full-width cleanly */
-.googleContainer :global(div[role="button"]) {
+/* Force Google OAuth iframe wrapper and container to stretch 100% full width */
+.googleContainer > div,
+.googleContainer iframe,
+.googleContainer :global(div[role="button"]),
+.googleContainer :global(iframe) {
     width: 100% !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    border: 1px solid var(--border-color) !important;
-    background-color: var(--bg-secondary) !important;
-    transition: border-color 0.2s ease, background-color 0.2s ease !important;
-}
-
-.googleContainer :global(div[role="button"]):hover {
-    box-shadow: none !important;
-    border-color: var(--tech-blue) !important;
-    background-color: var(--bg-tertiary) !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: center !important;
+    border-radius: var(--radius-md, 10px) !important;
+    overflow: hidden !important;
 }
 
 .googleBtn {
     width: 100%;
+    height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
+    padding: 0 20px;
+    border-radius: var(--radius-md, 10px);
+    border: 1px solid var(--border-color, #e2e8f0);
+    background-color: var(--bg-secondary, #ffffff);
+    color: var(--text-primary, #0f172a);
     font-family: inherit;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
     outline: none;
 }
 
 .googleBtn:hover {
-    background-color: var(--bg-tertiary);
-    border-color: var(--tech-blue);
-    color: var(--tech-blue);
+    background-color: var(--bg-tertiary, #f8fafc);
+    border-color: var(--tech-blue, #005995);
+    color: var(--tech-blue, #005995);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .googleBtn:active {
-    opacity: 0.9;
+    transform: translateY(1px);
+    opacity: 0.95;
 }
 
 .googleIcon {
