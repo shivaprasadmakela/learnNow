@@ -65,9 +65,11 @@ public class AdminPathController {
     }
 
     @PostMapping("/{id}/publish")
-    public ResponseEntity<Path> publishPath(@PathVariable UUID id) {
-        Path path = publishService.publishPath(id);
-        return ResponseEntity.ok(path);
+    public ResponseEntity<AdminPathDto> publishPath(@PathVariable UUID id) {
+        publishService.publishPath(id);
+        return authoringService.getAdminPathById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")

@@ -118,7 +118,8 @@ public class ContentAuthoringService {
     public AdminPathDto saveOrUpdatePath(AdminPathDto request) {
         Path path;
         if (request.id() != null && pathRepository.existsById(request.id())) {
-            path = pathRepository.findById(request.id()).orElseThrow();
+            path = pathDao.findFullAdminPathById(request.id())
+                    .orElseGet(() -> pathRepository.findById(request.id()).orElseThrow());
         } else {
             path = new Path();
         }

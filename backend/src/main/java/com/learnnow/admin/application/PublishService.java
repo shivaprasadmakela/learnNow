@@ -26,6 +26,7 @@ public class PublishService {
     private final TopicRepository topicRepository;
     private final PathRepository pathRepository;
     private final ContentBlockRepository contentBlockRepository;
+    private final com.learnnow.paths.dao.PathDao pathDao;
     private final ContentValidationPolicy validationPolicy = new ContentValidationPolicy();
 
     @Transactional
@@ -58,14 +59,18 @@ public class PublishService {
 
     @Transactional
     public Path publishPath(UUID pathId) {
-        Path path = pathRepository.findById(pathId)
+        Path path = pathDao.findFullAdminPathById(pathId)
                 .orElseThrow(() -> new NotFoundException("path_not_found"));
 
         path.setStatus(ContentStatus.PUBLISHED);
-        for (Topic t : path.getTopics()) {
-            t.setStatus(ContentStatus.PUBLISHED);
-            for (Subtopic st : t.getSubtopics()) {
-                st.setStatus(ContentStatus.PUBLISHED);
+        if (path.getTopics() != null) {
+            for (Topic t : path.getTopics()) {
+                t.setStatus(ContentStatus.PUBLISHED);
+                if (t.getSubtopics() != null) {
+                    for (Subtopic st : t.getSubtopics()) {
+                        st.setStatus(ContentStatus.PUBLISHED);
+                    }
+                }
             }
         }
         return pathRepository.save(path);

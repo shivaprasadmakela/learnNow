@@ -323,7 +323,6 @@ export const useConfigurationEditor = (
             if (saved && saved.topics) {
                 setTopics(saved.topics);
             }
-            if (saved.id) await publishAdminPath(saved.id);
             showToast('Course PUBLISHED successfully!', 'success');
             onSaveSuccess();
         } catch {
