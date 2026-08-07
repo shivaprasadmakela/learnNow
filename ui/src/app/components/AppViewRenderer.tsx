@@ -36,6 +36,7 @@ interface AppViewRendererProps {
     changeView: (view: any, slug?: string) => void;
     handleLoginSuccess: (token: string, profile: UserProfile) => void;
     refreshUserData: () => void;
+    onMetricsLoaded?: (streak: number, points: number) => void;
 }
 
 export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
@@ -56,7 +57,8 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     handleViewChange,
     changeView,
     handleLoginSuccess,
-    refreshUserData
+    refreshUserData,
+    onMetricsLoaded
 }) => {
     const isAdmin = isLoggedIn && profile?.role?.toUpperCase() === 'ADMIN';
 
@@ -96,6 +98,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         onSelectRecentTopic={onSelectRecentTopic}
                         activeTab={dashboardTab}
                         setActiveTab={setDashboardTab}
+                        onMetricsLoaded={onMetricsLoaded}
                     />
                 )}
 

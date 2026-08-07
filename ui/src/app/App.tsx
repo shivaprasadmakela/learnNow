@@ -37,7 +37,7 @@ export default function App() {
     const { showToast } = useToast();
 
     // Custom Hooks for User Data & Topic Sessions
-    const { courses, userStreak, userPoints, refreshUserData } = useUserData(isLoggedIn, activeView);
+    const { courses, userStreak, userPoints, updateMetrics, refreshUserData } = useUserData(isLoggedIn, activeView);
     const {
         activeTopic,
         isStudyLoading,
@@ -251,6 +251,7 @@ export default function App() {
                             changeView={changeView}
                             handleLoginSuccess={handleLoginSuccess}
                             refreshUserData={refreshUserData}
+                            onMetricsLoaded={updateMetrics}
                         />
                     </main>
                 )}
