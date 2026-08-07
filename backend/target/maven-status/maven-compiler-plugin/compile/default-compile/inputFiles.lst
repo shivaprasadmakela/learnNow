@@ -28,6 +28,7 @@
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/common/exception/NotFoundException.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/common/exception/ValidationException.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/common/security/JwtConfig.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/common/security/RateLimitingFilter.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/common/security/ResendEmailClient.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/common/security/TokenService.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/compiler/api/CompilerSnippetController.java
