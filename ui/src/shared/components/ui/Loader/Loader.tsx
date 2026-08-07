@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Coffee, Rocket, Server, Zap, Cpu, Sparkles, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Coffee, Rocket, Server, Zap, Cpu, Sparkles, RefreshCw, Sun, Moon, Sunset } from 'lucide-react';
 import styles from './Loader.module.css';
 
 export interface LoaderProps {
@@ -17,14 +17,44 @@ interface ColdStartQuote {
     accentColor: string;
 }
 
-const COLD_START_QUOTES: ColdStartQuote[] = [
-    {
-        icon: Coffee,
-        title: 'Morning Brew',
-        message: 'Waking up the backend server... It needs its morning coffee!',
-        badgeColor: 'rgba(245, 158, 11, 0.15)',
-        accentColor: '#f59e0b'
-    },
+const getTimeBasedFirstQuote = (): ColdStartQuote => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+        return {
+            icon: Coffee,
+            title: 'Morning Brew',
+            message: 'Waking up the backend server... It needs its morning coffee!',
+            badgeColor: 'rgba(245, 158, 11, 0.15)',
+            accentColor: '#f59e0b'
+        };
+    } else if (hour >= 12 && hour < 17) {
+        return {
+            icon: Sun,
+            title: 'Afternoon Fuel',
+            message: 'Waking up the backend server... Powering up for the afternoon!',
+            badgeColor: 'rgba(245, 158, 11, 0.15)',
+            accentColor: '#f59e0b'
+        };
+    } else if (hour >= 17 && hour < 22) {
+        return {
+            icon: Sunset,
+            title: 'Evening Shift',
+            message: 'Waking up the backend server... Warming up for your evening study!',
+            badgeColor: 'rgba(236, 72, 153, 0.15)',
+            accentColor: '#ec4899'
+        };
+    } else {
+        return {
+            icon: Moon,
+            title: 'Late Night Grind',
+            message: 'Waking up the backend server... Burning the midnight oil!',
+            badgeColor: 'rgba(124, 58, 237, 0.15)',
+            accentColor: '#7c3aed'
+        };
+    }
+};
+
+const COMMON_QUOTES: ColdStartQuote[] = [
     {
         icon: Rocket,
         title: 'GCP Cold Start',
@@ -71,6 +101,8 @@ export const Loader: React.FC<LoaderProps> = ({
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [quoteIndex, setQuoteIndex] = useState<number>(0);
 
+    const coldStartQuotes = useMemo(() => [getTimeBasedFirstQuote(), ...COMMON_QUOTES], []);
+
     // Track elapsed loading time
     useEffect(() => {
         const timer = setInterval(() => {
@@ -85,11 +117,11 @@ export const Loader: React.FC<LoaderProps> = ({
         if (elapsedTime < 2000 || !showColdStartFunnyMessages) return;
 
         const quoteInterval = setInterval(() => {
-            setQuoteIndex(prev => (prev + 1) % COLD_START_QUOTES.length);
+            setQuoteIndex(prev => (prev + 1) % coldStartQuotes.length);
         }, 3500);
 
         return () => clearInterval(quoteInterval);
-    }, [elapsedTime, showColdStartFunnyMessages]);
+    }, [elapsedTime, showColdStartFunnyMessages, coldStartQuotes.length]);
 
     // Optional background health ping when response takes > 3s
     useEffect(() => {
@@ -108,7 +140,7 @@ export const Loader: React.FC<LoaderProps> = ({
     }, [elapsedTime]);
 
     const isColdStart = elapsedTime >= 2200 && showColdStartFunnyMessages;
-    const currentQuote = COLD_START_QUOTES[quoteIndex];
+    const currentQuote = coldStartQuotes[quoteIndex];
     const QuoteIcon = currentQuote.icon;
 
     const containerClassName =

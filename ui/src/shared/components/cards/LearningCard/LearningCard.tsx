@@ -1,4 +1,4 @@
-import React from 'react';
+import { Trash2 } from 'lucide-react';
 import type { LearningCardProps } from './LearningCard.types';
 import styles from './LearningCard.module.css';
 import { CardBadge } from './components/CardBadge';
@@ -25,6 +25,7 @@ export const LearningCard: React.FC<LearningCardProps> = ({
     titleIcon,
     isBookmarked,
     onToggleBookmark,
+    onDelete,
     className = ''
 }) => {
     const pct = isCompleted ? 100 : Math.min(100, Math.max(0, progressPercentage || 0));
@@ -74,6 +75,19 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                                     showLabel={false}
                                 />
                             )}
+                            {onDelete && (
+                                <button
+                                    type="button"
+                                    className={styles.deleteCardBtn}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete();
+                                    }}
+                                    title="Delete Course"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            )}
                             <CardActionArrow tooltip={buttonTooltip} onClick={onClick} />
                         </div>
                     )}
@@ -106,6 +120,19 @@ export const LearningCard: React.FC<LearningCardProps> = ({
                             onToggle={onToggleBookmark}
                             showLabel={false}
                         />
+                    )}
+                    {onDelete && (
+                        <button
+                            type="button"
+                            className={styles.deleteCardBtn}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete();
+                            }}
+                            title="Delete Course"
+                        >
+                            <Trash2 size={16} />
+                        </button>
                     )}
                     {isCompleted && <CardCompletedBadge />}
                 </div>

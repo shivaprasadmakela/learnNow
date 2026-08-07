@@ -110,7 +110,7 @@ public class ContentAuthoringService {
 
     @Transactional(readOnly = true)
     public java.util.Optional<AdminPathDto> getAdminPathById(UUID pathId) {
-        return pathDao.findByIdWithTopics(pathId)
+        return pathDao.findFullAdminPathById(pathId)
                 .map(this::toAdminPathDto);
     }
 
@@ -228,7 +228,7 @@ public class ContentAuthoringService {
         }
 
         Path saved = pathRepository.save(path);
-        return toAdminPathDto(saved);
+        return getAdminPathById(saved.getId()).orElseThrow();
     }
 
     @Transactional

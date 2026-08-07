@@ -55,55 +55,6 @@ public class DashboardService {
 
         List<Path> allPaths = pathRepository.findAllWithTopicsByStatus(ContentStatus.PUBLISHED);
         List<UserTopicProgress> userTopicProgressList = topicProgressRepository.findByUserId(userId);
-        Map<UUID, UserTopicProgress> topicProgressMap = userTopicProgressList.stream()
-                .collect(Collectors.toMap(UserTopicProgress::getTopicId, t -> t));
-
-        List<PathProgressSummary> pathSummaries = new ArrayList<>();
-        for (Path path : allPaths) {
-            List<Topic> topics = path.getTopics();
-            List<TopicProgressSummary> topicSummaries = new ArrayList<>();
-            int completedTopicsCount = 0;
-            int totalTopicsCount = topics.size();
-            int totalProgressPoints = 0;
-
-            for (Topic topic : topics) {
-                UserTopicProgress topicProgress = topicProgressMap.get(topic.getId());
-                boolean isCompleted = topicProgress != null && topicProgress.getStatus() == ProgressStatus.COMPLETED;
-                if (isCompleted) {
-                    completedTopicsCount++;
-                }
-
-                int progressPercentage = calculateTopicPercentage(topic, subtopicProgressByTopic, isCompleted);
-                totalProgressPoints += progressPercentage;
-
-                topicSummaries.add(new TopicProgressSummary(
-                        topic.getId(),
-                        topic.getTitle(),
-                        topic.getDescription(),
-                        topic.getCategory(),
-                        topic.getDuration(),
-                        isCompleted,
-                        progressPercentage
-                ));
-            }
-
-            int pathProgressPercentage = 0;
-            if (totalTopicsCount > 0) {
-                pathProgressPercentage = totalProgressPoints / totalTopicsCount;
-            }
-
-            pathSummaries.add(new PathProgressSummary(
-                    path.getId(),
-                    path.getTitle(),
-                    path.getDescription(),
-                    path.getCategory(),
-                    path.getManagedBy(),
-                    pathProgressPercentage,
-                    completedTopicsCount,
-                    totalTopicsCount,
-                    topicSummaries
-            ));
-        }
 
         LocalDate monday = today.with(DayOfWeek.MONDAY);
         List<LocalDate> calendarDates = new ArrayList<>();
@@ -220,7 +171,6 @@ public class DashboardService {
                 prefs.getTimezone(),
                 weeklyCalendar,
                 recentTopics,
-                pathSummaries,
                 banner,
                 topLeaderboard,
                 currentUserRank,

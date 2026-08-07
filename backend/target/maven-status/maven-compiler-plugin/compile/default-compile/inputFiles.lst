@@ -87,6 +87,7 @@
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/controller/PathController.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/controller/TopicController.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dao/PathDao.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dao/TopicDao.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/AdminPathRequest.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/AdminSubtopicRequest.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/AdminTopicRequest.java

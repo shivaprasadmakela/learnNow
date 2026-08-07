@@ -9,4 +9,9 @@ public record TopicSummaryDto(
     String category,
     String duration,
     boolean isCompleted
-) {}
+) {
+    public TopicSummaryDto(UUID id, String title, String description, String category, String duration) {
+        this(id, title, description, category, duration, false);
+    }
+}
+

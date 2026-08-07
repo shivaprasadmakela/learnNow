@@ -12,8 +12,13 @@ import { StreakCalendar } from '../components/StreakCalendar';
 import { WeeklyLeagueBoard } from '../components/WeeklyLeagueBoard';
 import { OverallProgress } from '../components/OverallProgress';
 
+import type { Course } from '../../../types';
+
 export interface DashboardProps {
     profile: UserProfile | null;
+    courses?: Course[];
+    isCoursesLoading?: boolean;
+    refreshUserData?: (force?: boolean) => void;
     activeTab?: 'activities' | 'paths' | 'bookmarks';
     setActiveTab?: (tab: 'activities' | 'paths' | 'bookmarks') => void;
     onSelectPath: (pathId: number) => void;
@@ -23,6 +28,9 @@ export interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({
     profile,
+    courses = [],
+    isCoursesLoading = false,
+    refreshUserData,
     activeTab = 'activities',
     setActiveTab,
     onSelectPath,
@@ -30,12 +38,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
     onMetricsLoaded
 }) => {
     const { dashboardData, isLoading, error } = useDashboard();
+    const hasReportedRef = React.useRef(false);
 
     useEffect(() => {
-        if (dashboardData && onMetricsLoaded) {
+        if (dashboardData && onMetricsLoaded && !hasReportedRef.current) {
+            hasReportedRef.current = true;
             onMetricsLoaded(dashboardData.currentStreak, dashboardData.totalPoints);
         }
     }, [dashboardData, onMetricsLoaded]);
+
+    useEffect(() => {
+        if (activeTab === 'paths' && courses.length === 0 && !isCoursesLoading && refreshUserData) {
+            refreshUserData(true);
+        }
+    }, [activeTab, courses.length, isCoursesLoading, refreshUserData]);
 
     if (isLoading) {
         return <Loader variant="inline" text="Loading your dashboard metrics..." showColdStartFunnyMessages={true} />;
@@ -55,7 +71,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         currentStreak,
         weeklyCalendar,
         recentTopics = [],
-        paths = [],
         banner,
         weeklyLeaderboard = []
     } = dashboardData;
@@ -71,7 +86,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <DashboardHeader
                         profile={profile}
                         banner={banner}
-                        paths={paths}
+                        courses={courses}
                         onSelectPath={onSelectPath}
                     />
 
@@ -81,7 +96,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {activeTab === 'activities' && (
                             <RecentTopicsList
                                 topics={recentTopics}
-                                paths={paths}
                                 onSelectTopic={(topicId, pathId) => {
                                     if (onSelectRecentTopic) {
                                         onSelectRecentTopic(topicId, pathId);
@@ -92,11 +106,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             />
                         )}
                         {activeTab === 'paths' && (
-                            <PathsOverview paths={paths} onSelectPath={onSelectPath} />
+                            <PathsOverview
+                                courses={courses}
+                                isLoading={isCoursesLoading}
+                                onSelectPath={onSelectPath}
+                            />
                         )}
                         {activeTab === 'bookmarks' && (
                             <BookmarkedTopicsList
-                                paths={paths}
+                                courses={courses}
                                 onSelectRecentTopic={onSelectRecentTopic}
                                 onSelectPath={onSelectPath}
                             />
@@ -111,7 +129,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         weeklyCalendar={weeklyCalendar}
                     />
                     <WeeklyLeagueBoard entries={weeklyLeaderboard} />
-                    <OverallProgress paths={paths} />
+                    <OverallProgress
+                        courses={courses}
+                        streak={currentStreak}
+                        points={dashboardData.totalPoints}
+                    />
                 </div>
             </div>
         </div>

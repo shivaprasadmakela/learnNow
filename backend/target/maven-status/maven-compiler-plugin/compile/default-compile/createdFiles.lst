@@ -10,6 +10,7 @@ com/learnnow/paths/repository/PathRepository.class
 com/learnnow/paths/service/CatalogService$2.class
 com/learnnow/notes/persistence/TopicBookmark$TopicBookmarkBuilder.class
 com/learnnow/user/entity/User$UserBuilder.class
+com/learnnow/common/security/RateLimitingFilter$RequestTracker.class
 com/learnnow/learningprogress/enums/ProgressStatus.class
 com/learnnow/common/exception/GlobalExceptionHandler.class
 com/learnnow/learningprogress/repository/UserLearningPreferencesRepository.class
@@ -19,6 +20,7 @@ com/learnnow/admin/application/PublishService.class
 com/learnnow/paths/entity/Path.class
 com/learnnow/compiler/api/dto/ShareSnippetRequest.class
 com/learnnow/learningprogress/entity/UserLearningDailyActivity.class
+com/learnnow/paths/dao/PathDao.class
 com/learnnow/paths/dto/SubtopicDto$CodeSnippetDto.class
 com/learnnow/learningprogress/entity/UserSubtopicProgress.class
 com/learnnow/user/repository/UserRepository.class
@@ -66,6 +68,7 @@ com/learnnow/user/dto/LoginRequest.class
 com/learnnow/admin/api/dto/CreatePathRequest.class
 com/learnnow/paths/entity/SubtopicCodeSnippet.class
 com/learnnow/common/exception/ValidationException.class
+com/learnnow/common/security/RateLimitingFilter.class
 com/learnnow/admin/api/dto/ImportConflictItemDto.class
 com/learnnow/learningprogress/entity/UserTopicProgress$UserTopicProgressBuilder.class
 com/learnnow/notes/application/NotesService.class
@@ -88,6 +91,7 @@ com/learnnow/notes/api/dto/NoteRequest.class
 com/learnnow/notes/api/dto/NoteResponse.class
 com/learnnow/learningprogress/dto/request/SetTopicCompletionRequest.class
 com/learnnow/notes/persistence/SubtopicNoteRepository.class
+com/learnnow/paths/dao/TopicDao.class
 com/learnnow/common/config/SecurityConfig.class
 com/learnnow/admin/api/dto/CreateTopicRequest.class
 com/learnnow/paths/entity/Topic.class
@@ -99,6 +103,7 @@ com/learnnow/user/controller/UserController.class
 com/learnnow/learningprogress/dto/response/WeeklyCalendarDay.class
 com/learnnow/paths/service/CatalogService.class
 com/learnnow/admin/api/AdminTopicController.class
+com/learnnow/common/api/HealthController.class
 com/learnnow/learningprogress/service/QuizService.class
 com/learnnow/user/dto/UpdateProfileRequest.class
 com/learnnow/donations/repository/DonationOrderRepository.class

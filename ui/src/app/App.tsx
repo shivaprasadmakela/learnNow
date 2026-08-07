@@ -37,7 +37,7 @@ export default function App() {
     const { showToast } = useToast();
 
     // Custom Hooks for User Data & Topic Sessions
-    const { courses, userStreak, userPoints, updateMetrics, refreshUserData } = useUserData(isLoggedIn, activeView);
+    const { courses, isCoursesLoading, userStreak, userPoints, updateMetrics, refreshUserData } = useUserData(isLoggedIn, activeView, isLoading);
     const {
         activeTopic,
         isStudyLoading,
@@ -238,6 +238,7 @@ export default function App() {
                             isLoggedIn={isLoggedIn}
                             profile={profile}
                             courses={courses}
+                            isCoursesLoading={isCoursesLoading}
                             selectedPath={selectedPath}
                             dashboardTab={dashboardTab}
                             setDashboardTab={setDashboardTab}

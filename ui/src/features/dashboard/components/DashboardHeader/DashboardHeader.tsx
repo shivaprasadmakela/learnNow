@@ -20,10 +20,10 @@ export const WelcomeGreeting: React.FC<{ profile: UserProfile | null }> = ({ pro
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     banner,
-    paths,
+    paths = [],
     onSelectPath
 }) => {
-    const bannerPath = paths.find(p => p.id === banner.pathId);
+    const bannerPath = paths?.find(p => p.id === banner.pathId);
     const isPathStarted = bannerPath ? (bannerPath.progressPercentage > 0 || bannerPath.completedTopicsCount > 0) : false;
     const buttonLabel = isPathStarted || banner.type === 'REVIEW' ? 'Continue' : 'Start';
 

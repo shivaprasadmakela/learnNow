@@ -23,6 +23,7 @@ interface AppViewRendererProps {
     isLoggedIn: boolean;
     profile: UserProfile | null;
     courses: Course[];
+    isCoursesLoading?: boolean;
     selectedPath: Course;
     dashboardTab: 'activities' | 'paths' | 'bookmarks';
     setDashboardTab: (tab: 'activities' | 'paths' | 'bookmarks') => void;
@@ -35,7 +36,7 @@ interface AppViewRendererProps {
     handleViewChange: (view: any) => void;
     changeView: (view: any, slug?: string) => void;
     handleLoginSuccess: (token: string, profile: UserProfile) => void;
-    refreshUserData: () => void;
+    refreshUserData: (force?: boolean) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
 }
 
@@ -45,6 +46,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     isLoggedIn,
     profile,
     courses,
+    isCoursesLoading,
     selectedPath,
     dashboardTab,
     setDashboardTab,
@@ -94,6 +96,9 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                 {activeView === 'DASHBOARD' && (
                     <Dashboard
                         profile={profile}
+                        courses={courses}
+                        isCoursesLoading={isCoursesLoading}
+                        refreshUserData={refreshUserData}
                         onSelectPath={handleSelectPath}
                         onSelectRecentTopic={onSelectRecentTopic}
                         activeTab={dashboardTab}
@@ -125,6 +130,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         courses={courses}
                         onSelectPath={handleSelectPath}
                         isLoggedIn={isLoggedIn}
+                        isLoading={isCoursesLoading}
                     />
                 )}
 

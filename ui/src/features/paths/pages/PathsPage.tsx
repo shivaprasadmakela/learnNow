@@ -4,13 +4,16 @@ import styles from '../styles/PathsPage.module.css';
 import { CategoryFilterPills } from '../components/CategoryFilterPills';
 import { PathsGrid } from '../components/PathsGrid';
 
+import { Loader } from '../../../shared/components/ui/Loader';
+
 export interface PathsPageProps {
     courses: Course[];
     onSelectPath: (pathId: number) => void;
     isLoggedIn?: boolean;
+    isLoading?: boolean;
 }
 
-export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isLoggedIn = false }) => {
+export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isLoggedIn = false, isLoading = false }) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
     const categories = useMemo(
@@ -22,6 +25,14 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isL
         if (selectedCategory === 'All') return true;
         return path.category === selectedCategory;
     });
+
+    if (isLoading) {
+        return (
+            <div className={styles.container} style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader variant="inline" text="Loading learning paths..." showColdStartFunnyMessages={true} />
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>

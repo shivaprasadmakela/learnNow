@@ -3,16 +3,19 @@ import { Bookmark } from 'lucide-react';
 import { LearningCard } from '../../../../shared/components/cards';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { useBookmarks } from '../../../notes';
+import type { Course } from '../../../../types';
 import type { PathProgressSummary, TopicProgressSummary } from '../../types';
 
 interface BookmarkedTopicsListProps {
     paths?: PathProgressSummary[];
+    courses?: Course[];
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
     onSelectPath: (pathId: number) => void;
 }
 
 export const BookmarkedTopicsList: React.FC<BookmarkedTopicsListProps> = ({
     paths = [],
+    courses = [],
     onSelectRecentTopic,
     onSelectPath
 }) => {
@@ -36,20 +39,46 @@ export const BookmarkedTopicsList: React.FC<BookmarkedTopicsListProps> = ({
         );
     }
 
-    // Match bookmarks to topics inside paths
+    // Match bookmarks to topics inside courses or paths
     const bookmarkedTopics: { topic: TopicProgressSummary; pathTitle: string; pathId: number }[] = [];
 
     for (const b of bookmarks) {
         const idStr = String(b.topicId);
-        for (const p of paths) {
-            const matched = p.topics?.find(t => String(t.id) === idStr);
-            if (matched) {
-                bookmarkedTopics.push({
-                    topic: matched,
-                    pathTitle: p.title,
-                    pathId: p.id
-                });
-                break;
+        let found = false;
+        if (courses && courses.length > 0) {
+            for (const c of courses) {
+                const matched = c.topics?.find(t => String(t.id) === idStr);
+                if (matched) {
+                    bookmarkedTopics.push({
+                        topic: {
+                            id: typeof matched.id === 'number' ? matched.id : 0,
+                            title: matched.title,
+                            description: matched.description || '',
+                            category: matched.category || '',
+                            duration: matched.duration || '',
+                            completed: false,
+                            progressPercentage: 0
+                        },
+                        pathTitle: c.title,
+                        pathId: typeof c.id === 'number' ? c.id : 1
+                    });
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if (!found && paths && paths.length > 0) {
+            for (const p of paths) {
+                const matched = p.topics?.find(t => String(t.id) === idStr);
+                if (matched) {
+                    bookmarkedTopics.push({
+                        topic: matched,
+                        pathTitle: p.title,
+                        pathId: p.id
+                    });
+                    break;
+                }
             }
         }
     }

@@ -9,6 +9,7 @@ import com.learnnow.paths.controller.CatalogController.CatalogSubtopicTitle;
 import com.learnnow.paths.controller.CatalogController.CatalogTopicDetail;
 import com.learnnow.paths.dao.PathDao;
 import com.learnnow.paths.dto.PathSummaryDto;
+import com.learnnow.paths.dto.TopicSummaryDto;
 import com.learnnow.paths.dto.SubtopicDto;
 import com.learnnow.paths.dto.TopicDetailDto;
 import com.learnnow.paths.entity.ContentStatus;
@@ -23,12 +24,15 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.learnnow.paths.dao.TopicDao;
+
 @Service
 @RequiredArgsConstructor
 public class CatalogService {
 
     private final PathRepository pathRepository;
     private final PathDao pathDao;
+    private final TopicDao topicDao;
     private final TopicRepository topicRepository;
     private final UserTopicProgressRepository topicProgressRepository;
     private final UserSubtopicProgressRepository subtopicProgressRepository;
@@ -36,22 +40,31 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public List<PathSummaryDto> getAllPaths() {
-        return pathRepository.findByStatus(ContentStatus.PUBLISHED).stream()
+        return pathDao.findAllWithTopicsByStatus(ContentStatus.PUBLISHED).stream()
                 .map(path -> new PathSummaryDto(
                         path.getId(),
                         path.getTitle(),
                         path.getDescription(),
                         path.getCategory(),
                         path.getManagedBy(),
-                        List.of()
+                        path.getTopics() != null ? path.getTopics().stream()
+                                .filter(t -> t.getStatus() == ContentStatus.PUBLISHED)
+                                .map(t -> new TopicSummaryDto(
+                                        t.getId(),
+                                        t.getTitle(),
+                                        t.getDescription(),
+                                        t.getCategory(),
+                                        t.getDuration(),
+                                        false
+                                ))
+                                .toList() : List.of()
                 ))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Optional<CatalogPathDetail> getPathCatalogDetail(UUID pathId) {
-        return pathDao.findByIdWithTopics(pathId)
-                .filter(path -> path.getStatus() == ContentStatus.PUBLISHED)
+        return pathDao.findFullCatalogPathById(pathId)
                 .map(path -> {
                     List<CatalogTopicDetail> topics = path.getTopics().stream()
                             .filter(t -> t.getStatus() == ContentStatus.PUBLISHED)
@@ -83,7 +96,7 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public Optional<TopicDetailDto> getTopicDetails(UUID id, String userId) {
-        return topicRepository.findByIdAndStatusWithSubtopics(id, ContentStatus.PUBLISHED)
+        return topicDao.findFullTopicDetailsById(id, ContentStatus.PUBLISHED)
                 .map(topic -> {
                     boolean topicCompleted = topicProgressRepository.findByUserIdAndTopicId(userId, id)
                             .map(tp -> tp.getStatus() == ProgressStatus.COMPLETED)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { DashboardResponse } from '../types';
 import { fetchDashboard } from '../api/dashboardApi';
 
@@ -6,6 +6,8 @@ export function useDashboard() {
     const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+
+    const hasFetchedRef = useRef(false);
 
     const loadDashboard = useCallback(async (showLoading = true) => {
         if (showLoading) setIsLoading(true);
@@ -22,13 +24,19 @@ export function useDashboard() {
     }, []);
 
     useEffect(() => {
-        loadDashboard(true);
+        if (!hasFetchedRef.current) {
+            hasFetchedRef.current = true;
+            loadDashboard(true);
+        }
     }, [loadDashboard]);
 
     return {
         dashboardData,
         isLoading,
         error,
-        refreshDashboard: () => loadDashboard(true)
+        refreshDashboard: () => {
+            hasFetchedRef.current = true;
+            loadDashboard(true);
+        }
     };
 }

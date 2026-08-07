@@ -9,7 +9,6 @@ public record DashboardResponse(
     String timezone,
     List<WeeklyCalendarDay> weeklyCalendar,
     List<RecentTopicActivity> recentTopics,
-    List<PathProgressSummary> paths,
     DashboardBanner banner,
     List<WeeklyLeaderboardEntry> weeklyLeaderboard,
     int currentUserRank,

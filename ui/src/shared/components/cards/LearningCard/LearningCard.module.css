@@ -318,3 +318,21 @@
     background-color: rgba(26, 115, 232, 0.22);
     transform: translateX(2px);
 }
+
+.deleteCardBtn {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    border-radius: 8px;
+    color: var(--text-secondary, #64748b);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.deleteCardBtn:hover {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}

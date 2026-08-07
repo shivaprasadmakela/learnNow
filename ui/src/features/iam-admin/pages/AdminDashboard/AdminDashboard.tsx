@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, BookOpen, Upload, Trash2 } from 'lucide-react';
+import { ShieldCheck, Plus, BookOpen, Upload } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { Loader } from '../../../../shared/components/ui/Loader';
@@ -101,46 +101,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {paths.map(path => {
                         const isPublished = path.status === 'PUBLISHED';
                         return (
-                            <div key={path.id} style={{ position: 'relative' }}>
-                                <LearningCard
-                                    badgeLabel={path.category || 'Backend'}
-                                    badgeVariant={isPublished ? 'green' : 'orange'}
-                                    isCompleted={isPublished}
-                                    title={path.title}
-                                    description={path.description}
-                                    footerText={`${path.topics?.length || 0} Topics`}
-                                    buttonTooltip="Edit Course"
-                                    onClick={() => path.id && onNavigateEdit(path.id)}
-                                />
-                                {path.id && (
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDeleteTarget({ id: path.id!, title: path.title });
-                                        }}
-                                        title="Delete Course"
-                                        style={{
-                                            position: 'absolute',
-                                            top: '12px',
-                                            right: '12px',
-                                            background: 'var(--bg-secondary)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '6px',
-                                            padding: '6px',
-                                            color: '#ef4444',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'all 0.2s ease',
-                                            zIndex: 2
-                                        }}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                )}
-                            </div>
+                            <LearningCard
+                                key={path.id}
+                                badgeLabel={path.category || 'Backend'}
+                                badgeVariant={isPublished ? 'green' : 'orange'}
+                                isCompleted={isPublished}
+                                title={path.title}
+                                description={path.description}
+                                footerText={`${path.topics?.length || 0} Topics`}
+                                buttonTooltip="Edit Course"
+                                onClick={() => path.id && onNavigateEdit(path.id)}
+                                onDelete={path.id ? () => setDeleteTarget({ id: path.id!, title: path.title }) : undefined}
+                            />
                         );
                     })}
                 </div>

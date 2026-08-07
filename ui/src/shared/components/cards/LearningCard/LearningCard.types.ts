@@ -35,6 +35,8 @@ export interface LearningCardProps {
     /** Optional bookmark props */
     isBookmarked?: boolean;
     onToggleBookmark?: () => void;
+    /** Optional delete handler e.g. for Admin Studio course deletion */
+    onDelete?: () => void;
     /** Optional extra className */
     className?: string;
 }
