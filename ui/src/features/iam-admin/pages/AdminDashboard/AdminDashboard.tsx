@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Plus, BookOpen, Upload, Trash2 } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
+import { Loader } from '../../../../shared/components/ui/Loader';
 import { LearningCard } from '../../../../shared/components/cards';
 import { fetchAdminPaths, deleteAdminPath, type AdminPathData } from '../../api/admin.api';
 import { ConfirmDeleteModal } from '../../components/ConfirmDeleteModal';
@@ -86,9 +87,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {isLoading ? (
-                <div style={{ textAlign: 'center', padding: '60px' }}>
-                    <p>Loading course catalog...</p>
-                </div>
+                <Loader variant="inline" text="Loading course catalog..." showColdStartFunnyMessages={true} />
             ) : paths.length === 0 ? (
                 <EmptyState
                     icon={BookOpen}

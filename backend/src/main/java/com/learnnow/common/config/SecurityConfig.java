@@ -29,9 +29,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Public read-only catalog and path listing
-                .requestMatchers(HttpMethod.GET, "/api/paths/**", "/api/catalog/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/paths/**", "/api/catalog/**", "/api/health").permitAll()
                 // Auth flows
-                .requestMatchers("/api/auth/**", "/error").permitAll()
+                .requestMatchers("/api/auth/**", "/api/health", "/error").permitAll()
                 // Donations (Buy Me a Coffee) - open to both guest & logged in users
                 .requestMatchers("/api/donations/**").permitAll()
                 // Compiler: execution is public (API key is server-side; abuse handled by IP rate limiting).

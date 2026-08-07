@@ -3,12 +3,17 @@ import { fetchPaths, fetchPublicPaths } from '../../shared/api';
 import { fetchDashboard } from '../../features/dashboard';
 import type { Course } from '../../types';
 
-export const useUserData = (isLoggedIn: boolean) => {
+export const useUserData = (isLoggedIn: boolean, activeView?: string) => {
     const [courses, setCourses] = useState<Course[]>([]);
     const [userStreak, setUserStreak] = useState<number>(0);
     const [userPoints, setUserPoints] = useState<number>(0);
 
     const refreshUserData = useCallback(async () => {
+        // Skip fetching user courses/dashboard if the user is on standalone modules (Compiler, Auth)
+        if (activeView === 'COMPILER' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL') {
+            return;
+        }
+
         try {
             if (isLoggedIn) {
                 const [fetchedPaths, dashboardData] = await Promise.all([
@@ -69,7 +74,7 @@ export const useUserData = (isLoggedIn: boolean) => {
         } catch (err) {
             console.error("Failed to refresh user data", err);
         }
-    }, [isLoggedIn]);
+    }, [isLoggedIn, activeView]);
 
     useEffect(() => {
         refreshUserData();

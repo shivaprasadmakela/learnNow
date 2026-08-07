@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
-import { useProfileDashboard, ProfileEditModal } from '../features/dashboard';
-import { StudyConsole } from '../features/topics';
-import { Header, Sidebar, Breadcrumb } from '../shared/components';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useProfileDashboard } from '../features/dashboard/hooks/useProfileDashboard';
+import { Header, Sidebar, Breadcrumb, Loader } from '../shared/components';
 import { useToast } from '../shared/components/feedback/Toast';
 import styles from './App.module.css';
 
 import { useUserData } from './hooks/useUserData';
 import { useTopicSession } from './hooks/useTopicSession';
-import { PathCelebrationModal } from './components/PathCelebrationModal';
 import { AppViewRenderer } from './components/AppViewRenderer';
-import { BuyMeACoffeeModal } from '../features/donation/components/BuyMeACoffeeModal';
+
+const ProfileEditModal = React.lazy(() => import('../features/dashboard/components/ProfileEditModal/ProfileEditModal').then(m => ({ default: m.ProfileEditModal })));
+const StudyConsole = React.lazy(() => import('../features/topics/components/StudyConsole/StudyConsole').then(m => ({ default: m.StudyConsole })));
+const PathCelebrationModal = React.lazy(() => import('./components/PathCelebrationModal').then(m => ({ default: m.PathCelebrationModal })));
+const BuyMeACoffeeModal = React.lazy(() => import('../features/donation/components/BuyMeACoffeeModal').then(m => ({ default: m.BuyMeACoffeeModal })));
 
 export default function App() {
     const {
@@ -35,7 +37,7 @@ export default function App() {
     const { showToast } = useToast();
 
     // Custom Hooks for User Data & Topic Sessions
-    const { courses, userStreak, userPoints, refreshUserData } = useUserData(isLoggedIn);
+    const { courses, userStreak, userPoints, refreshUserData } = useUserData(isLoggedIn, activeView);
     const {
         activeTopic,
         isStudyLoading,
@@ -146,12 +148,7 @@ export default function App() {
     };
 
     if (isLoading) {
-        return (
-            <div className={styles.loadingScreen}>
-                <div className={styles.spinner} />
-                <p>Loading Profile Settings...</p>
-            </div>
-        );
+        return <Loader variant="fullScreen" showColdStartFunnyMessages={true} />;
     }
 
     const selectedPath = (selectedPathId ? courses.find(c => c.id === selectedPathId) : null) || courses[0];
@@ -199,17 +196,19 @@ export default function App() {
                 {/* Main Content View Switcher */}
                 {activeView === 'STUDY' ? (
                     activeTopic && !isStudyLoading ? (
-                        <StudyConsole
-                            topic={activeTopic}
-                            onClose={() => {
-                                clearTopicSession();
-                                changeView('TOPICS', 'java-backend-path');
-                                refreshUserData();
-                            }}
-                            onToggleComplete={handleToggleTopicComplete}
-                            onToggleSubtopicComplete={handleToggleSubtopicComplete}
-                            isUpdating={isStudyUpdating}
-                        />
+                        <Suspense fallback={null}>
+                            <StudyConsole
+                                topic={activeTopic}
+                                onClose={() => {
+                                    clearTopicSession();
+                                    changeView('TOPICS', 'java-backend-path');
+                                    refreshUserData();
+                                }}
+                                onToggleComplete={handleToggleTopicComplete}
+                                onToggleSubtopicComplete={handleToggleSubtopicComplete}
+                                isUpdating={isStudyUpdating}
+                            />
+                        </Suspense>
                     ) : (
                         <div className={styles.loadingScreen}>
                             <div className={styles.spinner} />
@@ -259,23 +258,27 @@ export default function App() {
 
             {/* Modals & Celebration */}
             {isEditingProfile && profile && (
-                <ProfileEditModal
-                    profile={profile}
-                    onClose={() => setIsEditingProfile(false)}
-                    onSaveProfile={saveProfile}
-                />
+                <Suspense fallback={null}>
+                    <ProfileEditModal
+                        profile={profile}
+                        onClose={() => setIsEditingProfile(false)}
+                        onSaveProfile={saveProfile}
+                    />
+                </Suspense>
             )}
 
-            <PathCelebrationModal
-                path={celebratingPath}
-                onClose={() => {}}
-            />
+            <Suspense fallback={null}>
+                <PathCelebrationModal
+                    path={celebratingPath}
+                    onClose={() => {}}
+                />
 
-            <BuyMeACoffeeModal
-                isOpen={isDonationModalOpen}
-                onClose={() => setIsDonationModalOpen(false)}
-                currentUser={profile ? { name: profile.fullName, email: (profile as any).email } : null}
-            />
+                <BuyMeACoffeeModal
+                    isOpen={isDonationModalOpen}
+                    onClose={() => setIsDonationModalOpen(false)}
+                    currentUser={profile ? { name: profile.fullName, email: (profile as any).email } : null}
+                />
+            </Suspense>
         </div>
     );
 }

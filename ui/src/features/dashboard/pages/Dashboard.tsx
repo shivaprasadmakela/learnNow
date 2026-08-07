@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import type { UserProfile } from '../../../types';
 import { useDashboard } from '../hooks/useDashboard';
+import { Loader } from '../../../shared/components/ui/Loader';
 import styles from '../styles/Dashboard.module.css';
 import { DashboardHeader, WelcomeGreeting } from '../components/DashboardHeader';
 import { DashboardTabs } from '../components/DashboardTabs';
@@ -37,13 +38,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }, [dashboardData, onMetricsLoaded]);
 
     if (isLoading) {
-        return (
-            <div className={styles.container} style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
-                <div className={styles.loadingSkeleton}>
-                    <p style={{ color: 'var(--text-secondary)' }}>Loading your dashboard metrics...</p>
-                </div>
-            </div>
-        );
+        return <Loader variant="inline" text="Loading your dashboard metrics..." showColdStartFunnyMessages={true} />;
     }
 
     if (error || !dashboardData) {

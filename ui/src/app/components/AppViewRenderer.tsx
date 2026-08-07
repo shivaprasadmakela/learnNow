@@ -1,14 +1,21 @@
-import React from 'react';
-import { Home } from '../../features/home';
-import { Dashboard } from '../../features/dashboard';
-import { LoginPage, VerifyEmailPage } from '../../features/auth';
-import { PathsPage } from '../../features/paths';
-import { TopicsPage } from '../../features/topics';
-import { AdminDashboard, ConfigurationEditor, CourseImporter } from '../../features/iam-admin';
-import { CompilerPage } from '../../features/compiler';
-import { UnauthorizedAccess } from '../../shared/components/ui/UnauthorizedAccess';
+import React, { Suspense } from 'react';
 import styles from '../App.module.css';
 import type { Course, UserProfile } from '../../types';
+
+// Dynamic Lazy Imports for Code-Splitting & Small Initial Bundle Size
+const Home = React.lazy(() => import('../../features/home').then(m => ({ default: m.Home })));
+const Dashboard = React.lazy(() => import('../../features/dashboard').then(m => ({ default: m.Dashboard })));
+const LoginPage = React.lazy(() => import('../../features/auth').then(m => ({ default: m.LoginPage })));
+const VerifyEmailPage = React.lazy(() => import('../../features/auth').then(m => ({ default: m.VerifyEmailPage })));
+const PathsPage = React.lazy(() => import('../../features/paths').then(m => ({ default: m.PathsPage })));
+const TopicsPage = React.lazy(() => import('../../features/topics').then(m => ({ default: m.TopicsPage })));
+const AdminDashboard = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.AdminDashboard })));
+const ConfigurationEditor = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.ConfigurationEditor })));
+const CourseImporter = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.CourseImporter })));
+const CompilerPage = React.lazy(() => import('../../features/compiler').then(m => ({ default: m.CompilerPage })));
+const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
+
+
 
 interface AppViewRendererProps {
     activeView: string;
@@ -63,112 +70,114 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         ? styles.pageContentDashboard
                         : styles.pageContent
         }>
-            {activeView === 'HOME' && (
-                <Home
-                    courses={courses}
-                    onSelectCourse={() => {
-                        if (isLoggedIn) {
-                            changeView('DASHBOARD');
-                            setDashboardTab('paths');
-                        } else {
-                            changeView('LOGIN');
-                        }
-                    }}
-                    searchQuery=""
-                    setSearchQuery={() => {}}
-                    isLoggedIn={isLoggedIn}
-                    changeView={handleViewChange}
-                />
-            )}
-
-            {activeView === 'DASHBOARD' && (
-                <Dashboard
-                    profile={profile}
-                    onSelectPath={handleSelectPath}
-                    onSelectRecentTopic={onSelectRecentTopic}
-                    activeTab={dashboardTab}
-                    setActiveTab={setDashboardTab}
-                />
-            )}
-
-            {activeView === 'LOGIN' && (
-                <LoginPage
-                    signIn={signIn}
-                    signUp={signUp}
-                    signInWithGoogle={signInWithGoogle}
-                    changeView={changeView}
-                />
-            )}
-
-            {activeView === 'VERIFY_EMAIL' && (
-                <VerifyEmailPage
-                    changeView={changeView}
-                    onVerificationSuccess={handleLoginSuccess}
-                />
-            )}
-
-            {activeView === 'COMPILER' && <CompilerPage />}
-
-            {activeView === 'PATHS' && (
-                <PathsPage
-                    courses={courses}
-                    onSelectPath={handleSelectPath}
-                    isLoggedIn={isLoggedIn}
-                />
-            )}
-
-            {activeView === 'TOPICS' && (
-                <TopicsPage
-                    pathTitle={selectedPath?.title || 'Learning Path'}
-                    managedBy={selectedPath?.managedBy || 'learnNow'}
-                    topics={selectedPath?.topics || []}
-                    progressPercent={selectedPath?.progressPercentage || 0}
-                    onSelectTopic={handleSelectTopic}
-                />
-            )}
-
-            {activeView === 'ADMIN' && (
-                isAdmin ? (
-                    <AdminDashboard
-                        onNavigateCreate={() => changeView('ADMIN_CREATE_PATH')}
-                        onNavigateImport={() => changeView('ADMIN_IMPORT_COURSE')}
-                        onNavigateEdit={(pathId) => changeView('ADMIN_EDIT_PATH', pathId)}
-                        refreshUserData={refreshUserData}
-                    />
-                ) : (
-                    <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
-                )
-            )}
-
-            {activeView === 'ADMIN_IMPORT_COURSE' && (
-                isAdmin ? (
-                    <CourseImporter
-                        onImportSuccess={(result) => {
-                            refreshUserData();
-                            changeView('ADMIN_EDIT_PATH', result.pathId);
+            <Suspense fallback={null}>
+                {activeView === 'HOME' && (
+                    <Home
+                        courses={courses}
+                        onSelectCourse={() => {
+                            if (isLoggedIn) {
+                                changeView('DASHBOARD');
+                                setDashboardTab('paths');
+                            } else {
+                                changeView('LOGIN');
+                            }
                         }}
-                        onCancel={() => changeView('ADMIN')}
+                        searchQuery=""
+                        setSearchQuery={() => {}}
+                        isLoggedIn={isLoggedIn}
+                        changeView={handleViewChange}
                     />
-                ) : (
-                    <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
-                )
-            )}
+                )}
 
-            {(activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH') && (
-                isAdmin ? (
-                    <ConfigurationEditor
-                        pathId={activeView === 'ADMIN_EDIT_PATH' ? editingPathId : null}
-                        onSaveSuccess={() => {
-                            refreshUserData();
-                            changeView('ADMIN');
-                        }}
-                        onCancel={() => changeView('ADMIN')}
-                        refreshUserData={refreshUserData}
+                {activeView === 'DASHBOARD' && (
+                    <Dashboard
+                        profile={profile}
+                        onSelectPath={handleSelectPath}
+                        onSelectRecentTopic={onSelectRecentTopic}
+                        activeTab={dashboardTab}
+                        setActiveTab={setDashboardTab}
                     />
-                ) : (
-                    <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
-                )
-            )}
+                )}
+
+                {activeView === 'LOGIN' && (
+                    <LoginPage
+                        signIn={signIn}
+                        signUp={signUp}
+                        signInWithGoogle={signInWithGoogle}
+                        changeView={changeView}
+                    />
+                )}
+
+                {activeView === 'VERIFY_EMAIL' && (
+                    <VerifyEmailPage
+                        changeView={changeView}
+                        onVerificationSuccess={handleLoginSuccess}
+                    />
+                )}
+
+                {activeView === 'COMPILER' && <CompilerPage />}
+
+                {activeView === 'PATHS' && (
+                    <PathsPage
+                        courses={courses}
+                        onSelectPath={handleSelectPath}
+                        isLoggedIn={isLoggedIn}
+                    />
+                )}
+
+                {activeView === 'TOPICS' && (
+                    <TopicsPage
+                        pathTitle={selectedPath?.title || 'Learning Path'}
+                        managedBy={selectedPath?.managedBy || 'learnNow'}
+                        topics={selectedPath?.topics || []}
+                        progressPercent={selectedPath?.progressPercentage || 0}
+                        onSelectTopic={handleSelectTopic}
+                    />
+                )}
+
+                {activeView === 'ADMIN' && (
+                    isAdmin ? (
+                        <AdminDashboard
+                            onNavigateCreate={() => changeView('ADMIN_CREATE_PATH')}
+                            onNavigateImport={() => changeView('ADMIN_IMPORT_COURSE')}
+                            onNavigateEdit={(pathId) => changeView('ADMIN_EDIT_PATH', pathId)}
+                            refreshUserData={refreshUserData}
+                        />
+                    ) : (
+                        <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
+                    )
+                )}
+
+                {activeView === 'ADMIN_IMPORT_COURSE' && (
+                    isAdmin ? (
+                        <CourseImporter
+                            onImportSuccess={(result) => {
+                                refreshUserData();
+                                changeView('ADMIN_EDIT_PATH', result.pathId);
+                            }}
+                            onCancel={() => changeView('ADMIN')}
+                        />
+                    ) : (
+                        <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
+                    )
+                )}
+
+                {(activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH') && (
+                    isAdmin ? (
+                        <ConfigurationEditor
+                            pathId={activeView === 'ADMIN_EDIT_PATH' ? editingPathId : null}
+                            onSaveSuccess={() => {
+                                refreshUserData();
+                                changeView('ADMIN');
+                            }}
+                            onCancel={() => changeView('ADMIN')}
+                            refreshUserData={refreshUserData}
+                        />
+                    ) : (
+                        <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
+                    )
+                )}
+            </Suspense>
         </div>
     );
 };

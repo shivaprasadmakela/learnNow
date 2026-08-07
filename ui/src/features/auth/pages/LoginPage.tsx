@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from '../styles/LoginPage.module.css';
 import { useAuthForm } from '../hooks/useAuthForm';
 import { SignInForm } from '../components/SignInForm';
 import { SignUpForm } from '../components/SignUpForm';
 import { RegistrationSuccess } from '../components/RegistrationSuccess';
+import { Loader } from '../../../shared/components/ui/Loader';
 
 export interface LoginPageProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
@@ -14,12 +15,15 @@ export interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp, signInWithGoogle }) => {
     const form = useAuthForm({ signIn, signUp });
+    const [isGoogleAuthenticating, setIsGoogleAuthenticating] = useState(false);
 
     const handleGoogleSuccess = async (idToken: string) => {
         if (!signInWithGoogle) return;
+        setIsGoogleAuthenticating(true);
         try {
             await signInWithGoogle(idToken);
         } catch (err: unknown) {
+            setIsGoogleAuthenticating(false);
             const msg = err instanceof Error ? err.message : 'Google login failed';
             form.showToast(msg, 'error');
         }
@@ -27,6 +31,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ signIn, signUp, signInWith
 
     return (
         <div className={styles.authPageContainer}>
+            {isGoogleAuthenticating && (
+                <Loader
+                    variant="overlay"
+                    text="Authenticating with Google... Syncing your profile & dashboard..."
+                    showColdStartFunnyMessages={true}
+                />
+            )}
             {form.isRegisteredSuccess ? (
                 <RegistrationSuccess
                     onContinue={() => {
