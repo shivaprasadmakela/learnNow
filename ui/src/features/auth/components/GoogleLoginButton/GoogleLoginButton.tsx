@@ -61,6 +61,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
                     width="100%"
                     text="continue_with"
                     logo_alignment="center"
+                    useOneTap={true}
                 />
             </div>
         </GoogleOAuthProvider>
