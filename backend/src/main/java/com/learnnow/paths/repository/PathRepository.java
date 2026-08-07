@@ -18,4 +18,10 @@ public interface PathRepository extends JpaRepository<Path, UUID> {
 
     @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t WHERE p.status = :status")
     List<Path> findAllWithTopicsByStatus(@Param("status") ContentStatus status);
+
+    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t ORDER BY p.title ASC")
+    List<Path> findAllWithTopics();
+
+    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t WHERE p.id = :id")
+    java.util.Optional<Path> findByIdWithTopics(@Param("id") UUID id);
 }

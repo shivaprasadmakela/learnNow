@@ -7,6 +7,7 @@ import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
 import com.learnnow.paths.controller.CatalogController.CatalogPathDetail;
 import com.learnnow.paths.controller.CatalogController.CatalogSubtopicTitle;
 import com.learnnow.paths.controller.CatalogController.CatalogTopicDetail;
+import com.learnnow.paths.dao.PathDao;
 import com.learnnow.paths.dto.PathSummaryDto;
 import com.learnnow.paths.dto.SubtopicDto;
 import com.learnnow.paths.dto.TopicDetailDto;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class CatalogService {
 
     private final PathRepository pathRepository;
+    private final PathDao pathDao;
     private final TopicRepository topicRepository;
     private final UserTopicProgressRepository topicProgressRepository;
     private final UserSubtopicProgressRepository subtopicProgressRepository;
@@ -48,7 +50,7 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public Optional<CatalogPathDetail> getPathCatalogDetail(UUID pathId) {
-        return pathRepository.findById(pathId)
+        return pathDao.findByIdWithTopics(pathId)
                 .filter(path -> path.getStatus() == ContentStatus.PUBLISHED)
                 .map(path -> {
                     List<CatalogTopicDetail> topics = path.getTopics().stream()

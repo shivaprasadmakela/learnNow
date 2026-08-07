@@ -3,6 +3,7 @@ package com.learnnow.admin.application;
 import com.learnnow.admin.api.dto.*;
 import com.learnnow.admin.persistence.*;
 import com.learnnow.common.exception.NotFoundException;
+import com.learnnow.paths.dao.PathDao;
 import com.learnnow.paths.entity.*;
 import com.learnnow.paths.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class ContentAuthoringService {
 
     private final PathRepository pathRepository;
+    private final PathDao pathDao;
     private final TopicRepository topicRepository;
     private final SubtopicRepository subtopicRepository;
     private final ContentBlockRepository contentBlockRepository;
@@ -101,14 +103,14 @@ public class ContentAuthoringService {
 
     @Transactional(readOnly = true)
     public List<AdminPathDto> getAllAdminPaths() {
-        return pathRepository.findAll().stream()
-                .map(this::toAdminPathDto)
+        return pathDao.findAllWithTopics().stream()
+                .map(this::toAdminPathSummaryDto)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public java.util.Optional<AdminPathDto> getAdminPathById(UUID pathId) {
-        return pathRepository.findById(pathId)
+        return pathDao.findByIdWithTopics(pathId)
                 .map(this::toAdminPathDto);
     }
 
@@ -625,6 +627,31 @@ public class ContentAuthoringService {
                             subtopics
                     );
                 }).toList();
+
+        return new AdminPathDto(
+                path.getId(),
+                path.getTitle(),
+                path.getDescription(),
+                path.getCategory(),
+                path.getManagedBy(),
+                path.getStatus() != null ? path.getStatus().name() : "DRAFT",
+                topics
+        );
+    }
+
+    private AdminPathDto toAdminPathSummaryDto(Path path) {
+        List<AdminPathDto.AdminTopicDto> topics = path.getTopics().stream()
+                .sorted(java.util.Comparator.comparingInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
+                .map(t -> new AdminPathDto.AdminTopicDto(
+                        t.getId(),
+                        t.getTitle(),
+                        t.getDescription(),
+                        t.getCategory(),
+                        t.getDuration(),
+                        t.getOrderIndex() != null ? t.getOrderIndex() : 1,
+                        t.getStatus() != null ? t.getStatus().name() : "DRAFT",
+                        List.of()
+                )).toList();
 
         return new AdminPathDto(
                 path.getId(),
