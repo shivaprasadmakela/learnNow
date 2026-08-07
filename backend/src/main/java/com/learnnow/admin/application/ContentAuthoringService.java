@@ -131,22 +131,47 @@ public class ContentAuthoringService {
         path.setStatus(parseStatus(request.status()));
 
         if (request.topics() != null) {
-            java.util.List<Topic> topics = new java.util.ArrayList<>();
+            java.util.Map<UUID, Topic> existingTopicsMap = new java.util.HashMap<>();
+            if (path.getTopics() != null) {
+                for (Topic t : path.getTopics()) {
+                    if (t.getId() != null) {
+                        existingTopicsMap.put(t.getId(), t);
+                    }
+                }
+            }
+
+            java.util.List<Topic> updatedTopicsList = new java.util.ArrayList<>();
             int tIdx = 1;
+
             for (AdminPathDto.AdminTopicDto topicReq : request.topics()) {
-                Topic topic = Topic.builder()
-                        .title(topicReq.title())
-                        .description(topicReq.description())
-                        .category(topicReq.category() != null ? topicReq.category() : "Topic")
-                        .duration(topicReq.duration() != null ? topicReq.duration() : "1 hour")
-                        .orderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++)
-                        .status(parseStatus(topicReq.status()))
-                        .path(path)
-                        .build();
+                Topic topic;
+                if (topicReq.id() != null && existingTopicsMap.containsKey(topicReq.id())) {
+                    topic = existingTopicsMap.remove(topicReq.id());
+                } else {
+                    topic = new Topic();
+                    topic.setPath(path);
+                }
+
+                topic.setTitle(topicReq.title());
+                topic.setDescription(topicReq.description());
+                topic.setCategory(topicReq.category() != null ? topicReq.category() : "Topic");
+                topic.setDuration(topicReq.duration() != null ? topicReq.duration() : "1 hour");
+                topic.setOrderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++);
+                topic.setStatus(parseStatus(topicReq.status()));
 
                 if (topicReq.subtopics() != null) {
-                    java.util.List<Subtopic> subtopics = new java.util.ArrayList<>();
-                    int idx = 1;
+                    java.util.Map<UUID, Subtopic> existingSubtopicsMap = new java.util.HashMap<>();
+                    if (topic.getSubtopics() != null) {
+                        for (Subtopic st : topic.getSubtopics()) {
+                            if (st.getId() != null) {
+                                existingSubtopicsMap.put(st.getId(), st);
+                            }
+                        }
+                    }
+
+                    java.util.List<Subtopic> updatedSubtopicsList = new java.util.ArrayList<>();
+                    int stIdx = 1;
+
                     for (AdminPathDto.AdminSubtopicDto stReq : topicReq.subtopics()) {
                         String prereqsJson = "[]";
                         if (stReq.prerequisites() != null) {
@@ -155,47 +180,90 @@ public class ContentAuthoringService {
                             } catch (Exception ignored) {}
                         }
 
-                        Subtopic subtopic = Subtopic.builder()
-                                .title(stReq.title())
-                                .content(stReq.content())
-                                .orderIndex(stReq.orderIndex() > 0 ? stReq.orderIndex() : idx++)
-                                .status(parseStatus(stReq.status()))
-                                .level(stReq.level() != null ? stReq.level() : "beginner")
-                                .track(stReq.track() != null ? stReq.track() : "concept")
-                                .prerequisites(prereqsJson)
-                                .videoUrl(stReq.videoUrl())
-                                .estimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5)
-                                .topic(topic)
-                                .build();
-
-                        if (stReq.codeSnippets() != null && !stReq.codeSnippets().isEmpty()) {
-                            java.util.List<SubtopicCodeSnippet> snippets = new java.util.ArrayList<>();
-                            int snIdx = 1;
-                            for (AdminPathDto.AdminCodeSnippetDto snReq : stReq.codeSnippets()) {
-                                SubtopicCodeSnippet snippet = SubtopicCodeSnippet.builder()
-                                        .subtopic(subtopic)
-                                        .id(snReq.id() != null ? snReq.id() : "snippet-" + snIdx)
-                                        .language(snReq.language() != null ? snReq.language() : "javascript")
-                                        .label(snReq.label())
-                                        .code(snReq.code() != null ? snReq.code() : "")
-                                        .expectedOutput(snReq.expectedOutput())
-                                        .runnable(snReq.runnable() == null || snReq.runnable())
-                                        .editable(snReq.editable() == null || snReq.editable())
-                                        .orderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++)
-                                        .build();
-                                snippets.add(snippet);
-                            }
-                            subtopic.setCodeSnippets(snippets);
+                        Subtopic subtopic;
+                        if (stReq.id() != null && existingSubtopicsMap.containsKey(stReq.id())) {
+                            subtopic = existingSubtopicsMap.remove(stReq.id());
+                        } else {
+                            subtopic = new Subtopic();
+                            subtopic.setTopic(topic);
                         }
 
-                        if (stReq.questions() != null && !stReq.questions().isEmpty()) {
-                            com.learnnow.admin.persistence.ContentBlock block = com.learnnow.admin.persistence.ContentBlock.builder()
-                                    .subtopic(subtopic)
-                                    .type("quiz")
-                                    .orderIndex(1)
-                                    .build();
+                        subtopic.setTitle(stReq.title());
+                        subtopic.setContent(stReq.content());
+                        subtopic.setOrderIndex(stReq.orderIndex() > 0 ? stReq.orderIndex() : stIdx++);
+                        subtopic.setStatus(parseStatus(stReq.status()));
+                        subtopic.setLevel(stReq.level() != null ? stReq.level() : "beginner");
+                        subtopic.setTrack(stReq.track() != null ? stReq.track() : "concept");
+                        subtopic.setPrerequisites(prereqsJson);
+                        subtopic.setVideoUrl(stReq.videoUrl());
+                        subtopic.setEstimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5);
 
-                            java.util.List<com.learnnow.admin.persistence.QuizQuestion> questions = new java.util.ArrayList<>();
+                        // Code Snippets in-place update
+                        if (stReq.codeSnippets() != null) {
+                            java.util.Map<String, SubtopicCodeSnippet> existingSnippetsMap = new java.util.HashMap<>();
+                            if (subtopic.getCodeSnippets() != null) {
+                                for (SubtopicCodeSnippet sn : subtopic.getCodeSnippets()) {
+                                    if (sn.getId() != null) {
+                                        existingSnippetsMap.put(sn.getId(), sn);
+                                    }
+                                }
+                            }
+                            java.util.List<SubtopicCodeSnippet> updatedSnippetsList = new java.util.ArrayList<>();
+                            int snIdx = 1;
+                            for (AdminPathDto.AdminCodeSnippetDto snReq : stReq.codeSnippets()) {
+                                String snId = snReq.id() != null ? snReq.id() : "snippet-" + snIdx;
+                                SubtopicCodeSnippet snippet;
+                                if (existingSnippetsMap.containsKey(snId)) {
+                                    snippet = existingSnippetsMap.remove(snId);
+                                } else {
+                                    snippet = new SubtopicCodeSnippet();
+                                    snippet.setSubtopic(subtopic);
+                                    snippet.setId(snId);
+                                }
+                                snippet.setLanguage(snReq.language() != null ? snReq.language() : "javascript");
+                                snippet.setLabel(snReq.label());
+                                snippet.setCode(snReq.code() != null ? snReq.code() : "");
+                                snippet.setExpectedOutput(snReq.expectedOutput());
+                                snippet.setRunnable(snReq.runnable() == null || snReq.runnable());
+                                snippet.setEditable(snReq.editable() == null || snReq.editable());
+                                snippet.setOrderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++);
+                                updatedSnippetsList.add(snippet);
+                            }
+                            if (subtopic.getCodeSnippets() == null) {
+                                subtopic.setCodeSnippets(new java.util.ArrayList<>());
+                            }
+                            subtopic.getCodeSnippets().clear();
+                            subtopic.getCodeSnippets().addAll(updatedSnippetsList);
+                        }
+
+                        // Quiz Questions in-place update
+                        if (stReq.questions() != null) {
+                            ContentBlock quizBlock = subtopic.getBlocks() != null ? subtopic.getBlocks().stream()
+                                    .filter(b -> "quiz".equalsIgnoreCase(b.getType()))
+                                    .findFirst()
+                                    .orElse(null) : null;
+
+                            if (quizBlock == null) {
+                                quizBlock = ContentBlock.builder()
+                                        .subtopic(subtopic)
+                                        .type("quiz")
+                                        .orderIndex(1)
+                                        .build();
+                                if (subtopic.getBlocks() == null) {
+                                    subtopic.setBlocks(new java.util.ArrayList<>());
+                                }
+                                subtopic.getBlocks().add(quizBlock);
+                            }
+
+                            java.util.Map<UUID, QuizQuestion> existingQuestionsMap = new java.util.HashMap<>();
+                            if (quizBlock.getQuestions() != null) {
+                                for (QuizQuestion q : quizBlock.getQuestions()) {
+                                    if (q.getId() != null) {
+                                        existingQuestionsMap.put(q.getId(), q);
+                                    }
+                                }
+                            }
+                            java.util.List<QuizQuestion> updatedQuestionsList = new java.util.ArrayList<>();
                             for (AdminPathDto.AdminQuizQuestionDto qReq : stReq.questions()) {
                                 String optionsJson = "[]";
                                 if (qReq.options() != null) {
@@ -203,29 +271,46 @@ public class ContentAuthoringService {
                                         optionsJson = objectMapper.writeValueAsString(qReq.options());
                                     } catch (Exception ignored) {}
                                 }
-                                com.learnnow.admin.persistence.QuizQuestion q = com.learnnow.admin.persistence.QuizQuestion.builder()
-                                        .block(block)
-                                        .kind(qReq.kind() != null ? qReq.kind() : "mcq")
-                                        .prompt(qReq.prompt())
-                                        .options(optionsJson)
-                                        .correctAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "")
-                                        .explanation(qReq.explanation())
-                                        .points(qReq.points() > 0 ? qReq.points() : 5)
-                                        .build();
-                                questions.add(q);
+                                QuizQuestion q;
+                                if (qReq.id() != null && existingQuestionsMap.containsKey(qReq.id())) {
+                                    q = existingQuestionsMap.remove(qReq.id());
+                                } else {
+                                    q = new QuizQuestion();
+                                    q.setBlock(quizBlock);
+                                }
+                                q.setKind(qReq.kind() != null ? qReq.kind() : "mcq");
+                                q.setPrompt(qReq.prompt());
+                                q.setOptions(optionsJson);
+                                q.setCorrectAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "");
+                                q.setExplanation(qReq.explanation());
+                                q.setPoints(qReq.points() > 0 ? qReq.points() : 5);
+                                updatedQuestionsList.add(q);
                             }
-                            block.setQuestions(questions);
-                            subtopic.getBlocks().add(block);
+                            if (quizBlock.getQuestions() == null) {
+                                quizBlock.setQuestions(new java.util.ArrayList<>());
+                            }
+                            quizBlock.getQuestions().clear();
+                            quizBlock.getQuestions().addAll(updatedQuestionsList);
                         }
 
-                        subtopics.add(subtopic);
+                        updatedSubtopicsList.add(subtopic);
                     }
-                    topic.setSubtopics(subtopics);
+
+                    if (topic.getSubtopics() == null) {
+                        topic.setSubtopics(new java.util.ArrayList<>());
+                    }
+                    topic.getSubtopics().clear();
+                    topic.getSubtopics().addAll(updatedSubtopicsList);
                 }
-                topics.add(topic);
+
+                updatedTopicsList.add(topic);
+            }
+
+            if (path.getTopics() == null) {
+                path.setTopics(new java.util.ArrayList<>());
             }
             path.getTopics().clear();
-            path.getTopics().addAll(topics);
+            path.getTopics().addAll(updatedTopicsList);
         }
 
         Path saved = pathRepository.save(path);

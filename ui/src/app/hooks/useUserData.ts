@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { fetchPaths, fetchPublicPaths } from '../../shared/api';
 import type { Course } from '../../types';
 
@@ -7,6 +7,18 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
     const [isCoursesLoading, setIsCoursesLoading] = useState<boolean>(false);
     const [userStreak, setUserStreak] = useState<number>(0);
     const [userPoints, setUserPoints] = useState<number>(0);
+
+    const isFetchingRef = useRef(false);
+    const hasFetchedRef = useRef(false);
+    const prevAuthRef = useRef<boolean>(isLoggedIn);
+
+    // Reset fetch status if login status changes
+    useEffect(() => {
+        if (prevAuthRef.current !== isLoggedIn) {
+            hasFetchedRef.current = false;
+            prevAuthRef.current = isLoggedIn;
+        }
+    }, [isLoggedIn]);
 
     const refreshUserData = useCallback(async (force = false) => {
         // Wait for initial auth profile check to settle before fetching paths
@@ -20,11 +32,17 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
             return;
         }
 
-        // If courses are already populated and not forcing refresh, skip duplicate API call
-        if (courses.length > 0 && !force) {
+        // If paths are already successfully fetched and not forcing, skip duplicate API call
+        if (hasFetchedRef.current && !force) {
             return;
         }
 
+        // Prevent concurrent duplicate fetch calls
+        if (isFetchingRef.current && !force) {
+            return;
+        }
+
+        isFetchingRef.current = true;
         setIsCoursesLoading(true);
         try {
             if (isLoggedIn) {
@@ -62,12 +80,15 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
                     setCourses(mapped);
                 }
             }
+            hasFetchedRef.current = true;
         } catch (err) {
             console.error("Failed to refresh user data", err);
+            hasFetchedRef.current = true; // Mark attempted to avoid infinite retry loops on error
         } finally {
+            isFetchingRef.current = false;
             setIsCoursesLoading(false);
         }
-    }, [isLoggedIn, activeView, isAuthLoading, courses.length]);
+    }, [isLoggedIn, activeView, isAuthLoading]);
 
     useEffect(() => {
         refreshUserData();
