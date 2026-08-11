@@ -137,7 +137,9 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                 {activeView === 'TOPICS' && (
                     <TopicsPage
                         pathTitle={selectedPath?.title || 'Learning Path'}
-                        managedBy={selectedPath?.managedBy || 'learnNow'}
+                        description={selectedPath?.description}
+                        managedBy={selectedPath?.managedBy || 'learnNow Team'}
+                        activitiesCount={selectedPath?.topics?.length}
                         topics={selectedPath?.topics || []}
                         progressPercent={selectedPath?.progressPercentage || 0}
                         onSelectTopic={handleSelectTopic}

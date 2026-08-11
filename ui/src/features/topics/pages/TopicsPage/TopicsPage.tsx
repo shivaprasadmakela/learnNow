@@ -8,15 +8,17 @@ import { TopicCardList } from '../../components/TopicCardList';
 
 export const TopicsPage: React.FC<TopicsPageProps> = ({
     pathTitle,
+    description,
     managedBy = 'learnNow',
-    activitiesCount = 8,
-    lastUpdated = 'Recently',
+    activitiesCount,
     topics,
     progressPercent = 0,
     onSelectTopic
 }) => {
     const { showToast } = useToast();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+    const dynamicCount = typeof activitiesCount === 'number' ? activitiesCount : (topics ? topics.length : 0);
 
     const handleTopicClick = (id: number, title: string) => {
         if (onSelectTopic) {
@@ -38,9 +40,9 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
         <div className={styles.container}>
             <TopicHeroBanner
                 pathTitle={pathTitle}
+                description={description}
                 managedBy={managedBy}
-                activitiesCount={activitiesCount}
-                lastUpdated={lastUpdated}
+                activitiesCount={dynamicCount}
                 progressPercent={progressPercent}
                 onContinueClick={handleContinueClick}
             />
