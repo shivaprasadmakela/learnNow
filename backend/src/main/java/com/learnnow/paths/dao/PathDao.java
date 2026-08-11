@@ -148,4 +148,16 @@ public class PathDao {
                 .stream()
                 .findFirst();
     }
+
+    /**
+     * Delete a path using native SQL. PostgreSQL ON DELETE CASCADE handles
+     * all child entities (topics, subtopics, blocks, questions, snippets)
+     * in a single database round-trip, avoiding Hibernate's N+1 cascade
+     * loading storm that loads every child entity before deleting.
+     */
+    public void deletePathNative(UUID id) {
+        entityManager.createNativeQuery("DELETE FROM paths WHERE id = :id")
+                .setParameter("id", id)
+                .executeUpdate();
+    }
 }

@@ -1,5 +1,6 @@
 package com.learnnow.admin.application;
 
+import com.learnnow.admin.api.dto.AdminPathDto;
 import com.learnnow.admin.domain.ContentValidationPolicy;
 import com.learnnow.admin.persistence.ContentBlock;
 import com.learnnow.admin.persistence.ContentBlockRepository;
@@ -27,6 +28,7 @@ public class PublishService {
     private final PathRepository pathRepository;
     private final ContentBlockRepository contentBlockRepository;
     private final com.learnnow.paths.dao.PathDao pathDao;
+    private final ContentAuthoringService authoringService;
     private final ContentValidationPolicy validationPolicy = new ContentValidationPolicy();
 
     @Transactional
@@ -58,7 +60,7 @@ public class PublishService {
     }
 
     @Transactional
-    public Path publishPath(UUID pathId) {
+    public AdminPathDto publishPath(UUID pathId) {
         Path path = pathDao.findFullAdminPathById(pathId)
                 .orElseThrow(() -> new NotFoundException("path_not_found"));
 
@@ -73,6 +75,8 @@ public class PublishService {
                 }
             }
         }
-        return pathRepository.save(path);
+        Path saved = pathRepository.save(path);
+        return authoringService.getAdminPathById(saved.getId()).orElseThrow();
     }
 }
+

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     fetchAdminPathById,
     saveAdminPath,
-    publishAdminPath,
     type AdminPathData,
     type AdminTopicData,
     type AdminSubtopicData,

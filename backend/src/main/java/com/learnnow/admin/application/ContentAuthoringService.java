@@ -314,7 +314,7 @@ public class ContentAuthoringService {
         }
 
         Path saved = pathRepository.save(path);
-        return getAdminPathById(saved.getId()).orElseThrow();
+        return toAdminPathDto(saved);
     }
 
     @Transactional
@@ -322,7 +322,10 @@ public class ContentAuthoringService {
         if (!pathRepository.existsById(pathId)) {
             throw new com.learnnow.common.exception.NotFoundException("Path not found with id: " + pathId);
         }
-        pathRepository.deleteById(pathId);
+        // Native SQL DELETE lets PostgreSQL ON DELETE CASCADE handle the entire
+        // entity tree in a single round-trip, avoiding Hibernate's N+1 cascade
+        // loading storm (which loads every child entity before deleting).
+        pathDao.deletePathNative(pathId);
     }
 
     @Transactional(readOnly = true)
