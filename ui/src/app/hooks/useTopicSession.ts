@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { fetchTopicDetails } from '../../shared/api';
 import type { TopicDetails } from '../../shared/api';
 import { useRecordActivity } from '../../features/activity';
@@ -35,24 +35,32 @@ export const useTopicSession = ({
 
     const { recordTopicCompletion, recordSubtopicCompletion } = useRecordActivity();
 
+    const fetchingRef = useRef<string | number | null>(null);
+
     const handleSelectTopic = useCallback(async (id: string | number) => {
         if (!isLoggedIn) {
             changeView('LOGIN');
             return;
         }
+
+        if (fetchingRef.current === id) return;
+        fetchingRef.current = id;
+
+        setActiveTopicId(id);
+        setIsStudyLoading(true);
+
+        const parentCourse = courses.find(c => c.topics?.some(s => s.id === id));
+        const sub = parentCourse?.topics?.find(s => s.id === id);
+        if (parentCourse && sub) {
+            changeView('STUDY', slugify(parentCourse.title), slugify(sub.title));
+        } else {
+            changeView('STUDY', 'path', 'topic');
+        }
+
         try {
-            setIsStudyLoading(true);
             const details = await fetchTopicDetails(id);
             setActiveTopic(details);
-            setActiveTopicId(id);
-
-            const parentCourse = courses.find(c => c.topics?.some(s => s.id === id));
-            const sub = parentCourse?.topics?.find(s => s.id === id);
-            if (parentCourse && sub) {
-                const pathSlug = slugify(parentCourse.title);
-                const topicSlug = slugify(sub.title);
-                changeView('STUDY', pathSlug, topicSlug);
-            } else {
+            if (details.title && (!parentCourse || !sub)) {
                 changeView('STUDY', 'path', slugify(details.title));
             }
         } catch (err) {
@@ -60,8 +68,11 @@ export const useTopicSession = ({
             showToast("Failed to load topic details", "error");
         } finally {
             setIsStudyLoading(false);
+            fetchingRef.current = null;
         }
     }, [courses, changeView, showToast, isLoggedIn]);
+
+    const attemptedRestoreRef = useRef<string | null>(null);
 
     // Auto-restore topic session when URL matches /paths/:pathSlug/:topicSlug and activeTopic is null
     useEffect(() => {
@@ -69,12 +80,28 @@ export const useTopicSession = ({
         if (typeof window === 'undefined') return;
 
         const path = window.location.pathname;
+        if (attemptedRestoreRef.current === path) return;
+
         const parts = path.split('/').filter(Boolean);
         if (parts.length >= 3 && parts[0] === 'paths') {
             const topicSlug = parts[2];
             if (!topicSlug) return;
 
-            let foundTopicId: number | null = null;
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(topicSlug);
+
+            if (isUuid) {
+                attemptedRestoreRef.current = path;
+                if (String(activeTopicId) !== topicSlug) {
+                    handleSelectTopic(topicSlug);
+                }
+                return;
+            }
+
+            if (courses.length === 0) return;
+
+            attemptedRestoreRef.current = path;
+
+            let foundTopicId: string | number | null = null;
             const normSlug = topicSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
 
             for (const course of courses) {
@@ -85,8 +112,6 @@ export const useTopicSession = ({
                         return (
                             tSlug === topicSlug ||
                             normTitle === normSlug ||
-                            normTitle.includes(normSlug) ||
-                            normSlug.includes(normTitle) ||
                             String(t.id) === topicSlug
                         );
                     });
@@ -97,20 +122,11 @@ export const useTopicSession = ({
                 }
             }
 
-            if (foundTopicId !== null) {
+            if (foundTopicId !== null && String(activeTopicId) !== String(foundTopicId)) {
                 handleSelectTopic(foundTopicId);
-            } else if (courses.length > 0) {
-                const matchedCourse = courses.find(c =>
-                    c.title.toLowerCase().includes('java') ||
-                    slugify(c.title).includes(parts[1]?.toLowerCase() || '')
-                ) || courses[0];
-                const fallbackTopic = matchedCourse?.topics?.[0] || courses[0]?.topics?.[0];
-                if (fallbackTopic) {
-                    handleSelectTopic(fallbackTopic.id);
-                }
             }
         }
-    }, [isLoggedIn, activeTopic, courses, isStudyLoading, handleSelectTopic]);
+    }, [isLoggedIn, activeTopic, activeTopicId, courses, isStudyLoading, handleSelectTopic]);
 
     const handleToggleTopicComplete = async () => {
         if (!activeTopicId || !activeTopic) return;
@@ -151,9 +167,24 @@ export const useTopicSession = ({
         }
     };
 
+    const handleSelectNextTopic = useCallback(() => {
+        if (!activeTopicId || !courses || courses.length === 0) return;
+        for (const course of courses) {
+            if (course.topics && course.topics.length > 0) {
+                const idx = course.topics.findIndex(t => String(t.id) === String(activeTopicId));
+                if (idx >= 0 && idx < course.topics.length - 1) {
+                    const nextTopic = course.topics[idx + 1];
+                    handleSelectTopic(nextTopic.id);
+                    return;
+                }
+            }
+        }
+    }, [activeTopicId, courses, handleSelectTopic]);
+
     const clearTopicSession = useCallback(() => {
         setActiveTopicId(null);
         setActiveTopic(null);
+        attemptedRestoreRef.current = null;
     }, []);
 
     return {
@@ -162,6 +193,7 @@ export const useTopicSession = ({
         isStudyLoading,
         isStudyUpdating,
         handleSelectTopic,
+        handleSelectNextTopic,
         handleToggleTopicComplete,
         handleToggleSubtopicComplete,
         clearTopicSession

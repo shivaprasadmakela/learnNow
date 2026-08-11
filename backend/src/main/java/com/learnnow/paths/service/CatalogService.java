@@ -111,7 +111,7 @@ public class CatalogService {
                             ));
 
                     List<SubtopicDto> subtopics = topic.getSubtopics().stream()
-                            .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
+                            .filter(st -> st.getStatus() == ContentStatus.PUBLISHED || topic.getStatus() == ContentStatus.PUBLISHED || (topic.getPath() != null && topic.getPath().getStatus() == ContentStatus.PUBLISHED))
                             .map(st -> {
                                 List<SubtopicDto.QuizQuestionDto> questions = st.getBlocks() != null ? st.getBlocks().stream()
                                         .filter(b -> "quiz".equalsIgnoreCase(b.getType()) && b.getQuestions() != null)

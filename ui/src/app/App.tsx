@@ -43,6 +43,7 @@ export default function App() {
         isStudyLoading,
         isStudyUpdating,
         handleSelectTopic,
+        handleSelectNextTopic,
         handleToggleTopicComplete,
         handleToggleSubtopicComplete,
         clearTopicSession
@@ -206,6 +207,7 @@ export default function App() {
                                 }}
                                 onToggleComplete={handleToggleTopicComplete}
                                 onToggleSubtopicComplete={handleToggleSubtopicComplete}
+                                onSelectNextTopic={handleSelectNextTopic}
                                 isUpdating={isStudyUpdating}
                             />
                         </Suspense>

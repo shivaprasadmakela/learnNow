@@ -17,6 +17,7 @@ interface StudyConsoleProps {
     onClose: () => void;
     onToggleComplete: () => Promise<void>;
     onToggleSubtopicComplete?: (subtopicId: string | number, completed: boolean) => Promise<void>;
+    onSelectNextTopic?: () => void;
     isUpdating: boolean;
 }
 
@@ -32,6 +33,7 @@ export function StudyConsole({
     onClose, 
     onToggleComplete, 
     onToggleSubtopicComplete,
+    onSelectNextTopic,
     isUpdating
 }: StudyConsoleProps) {
     const subtopics = topic.subtopics || [];
@@ -93,7 +95,7 @@ export function StudyConsole({
     }, [activeSubtopicIndex, hasUnansweredQuizzes]);
 
     const { isBookmarked, toggleBookmark } = useBookmarks();
-    const { content: noteContent, setContent: setNoteContent, saveStatus: noteSaveStatus, isLoading: isNoteLoading, saveNow } = useSubtopicNote(activeSubtopic?.id);
+    const { content: noteContent, setContent: setNoteContent, saveStatus: noteSaveStatus, isLoading: isNoteLoading, saveNow } = useSubtopicNote(activeSubtopic?.id, isNotesDrawerOpen);
 
     const completedSubtopicsCount = subtopics.filter((s: SubtopicData) => s.isCompleted).length;
     const allSubtopicsCompleted = subtopics.length > 0 && subtopics.every((s: SubtopicData) => s.isCompleted);
@@ -530,14 +532,25 @@ export function StudyConsole({
                     )}
                 </button>
 
-                <button 
-                    className={styles.navBtn} 
-                    onClick={handleNext} 
-                    disabled={subtopics.length === 0 || activeSubtopicIndex === subtopics.length - 1}
-                >
-                    Next
-                    <ChevronRight size={18} />
-                </button>
+                {activeSubtopicIndex === subtopics.length - 1 && onSelectNextTopic ? (
+                    <button 
+                        className={`${styles.navBtn} ${styles.nextTopicBtn}`} 
+                        onClick={onSelectNextTopic}
+                        title="Proceed to Next Topic in Path"
+                    >
+                        Next Topic
+                        <ChevronRight size={18} />
+                    </button>
+                ) : (
+                    <button 
+                        className={styles.navBtn} 
+                        onClick={handleNext} 
+                        disabled={subtopics.length === 0 || activeSubtopicIndex === subtopics.length - 1}
+                    >
+                        Next
+                        <ChevronRight size={18} />
+                    </button>
+                )}
             </footer>
         </div>
     );

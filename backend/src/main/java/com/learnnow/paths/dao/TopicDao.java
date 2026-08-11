@@ -22,9 +22,8 @@ public class TopicDao {
      */
     public Optional<Topic> findFullTopicDetailsById(UUID id, ContentStatus status) {
         List<Topic> topics = entityManager.createQuery(
-                "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st WHERE t.id = :id AND t.status = :status", Topic.class)
+                "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st WHERE t.id = :id", Topic.class)
                 .setParameter("id", id)
-                .setParameter("status", status)
                 .getResultList();
 
         if (topics.isEmpty()) {

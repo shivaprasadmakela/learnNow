@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchSubtopicNote, saveSubtopicNote } from '../api/notes.api';
 
-export function useSubtopicNote(subtopicId?: string | number) {
+export function useSubtopicNote(subtopicId?: string | number, enabled: boolean = true) {
     const [content, setContent] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -9,12 +9,14 @@ export function useSubtopicNote(subtopicId?: string | number) {
     const lastSavedContent = useRef('');
     const idString = subtopicId ? String(subtopicId) : '';
 
-    // Load note on subtopic change
+    // Load note on subtopic change when enabled
     useEffect(() => {
-        if (!idString) {
-            setContent('');
-            lastSavedContent.current = '';
-            setSaveStatus('idle');
+        if (!idString || !enabled) {
+            if (!idString) {
+                setContent('');
+                lastSavedContent.current = '';
+                setSaveStatus('idle');
+            }
             return;
         }
 
@@ -49,7 +51,7 @@ export function useSubtopicNote(subtopicId?: string | number) {
         return () => {
             isMounted = false;
         };
-    }, [idString]);
+    }, [idString, enabled]);
 
     // Manual Save action (only executed when user explicitly clicks Save button)
     const performSave = useCallback(async (textToSave: string) => {

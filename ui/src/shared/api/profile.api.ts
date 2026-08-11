@@ -1,13 +1,35 @@
 import { apiFetch } from './client';
 import type { UserProfile, PathData } from '../../types';
 
-export const fetchProfile = async (): Promise<UserProfile> => {
-    const response = await apiFetch('/api/user');
-    if (!response.ok) throw new Error('Failed to fetch profile');
-    return response.json();
+let profileCache: UserProfile | null = null;
+let profilePromise: Promise<UserProfile> | null = null;
+
+export const invalidateProfileCache = () => {
+    profileCache = null;
+    profilePromise = null;
+};
+
+export const fetchProfile = async (force: boolean = false): Promise<UserProfile> => {
+    if (!force && profileCache) return profileCache;
+    if (!force && profilePromise) return profilePromise;
+
+    profilePromise = (async () => {
+        const response = await apiFetch('/api/user');
+        if (!response.ok) throw new Error('Failed to fetch profile');
+        const data = await response.json();
+        profileCache = data;
+        profilePromise = null;
+        return data;
+    })().catch(err => {
+        profilePromise = null;
+        throw err;
+    });
+
+    return profilePromise;
 };
 
 export const updateProfile = async (profile: Partial<UserProfile> & { fullName: string }): Promise<UserProfile> => {
+    invalidateProfileCache();
     const response = await apiFetch('/api/user', {
         method: 'PUT',
         headers: {
@@ -23,10 +45,31 @@ export const updateProfile = async (profile: Partial<UserProfile> & { fullName: 
     return response.json();
 };
 
-export const fetchPaths = async (): Promise<PathData[]> => {
-    const response = await apiFetch('/api/paths');
-    if (!response.ok) throw new Error('Failed to fetch paths');
-    return response.json();
+let pathsCache: PathData[] | null = null;
+let pathsPromise: Promise<PathData[]> | null = null;
+
+export const invalidatePathsCache = () => {
+    pathsCache = null;
+    pathsPromise = null;
+};
+
+export const fetchPaths = async (force: boolean = false): Promise<PathData[]> => {
+    if (!force && pathsCache) return pathsCache;
+    if (!force && pathsPromise) return pathsPromise;
+
+    pathsPromise = (async () => {
+        const response = await apiFetch('/api/paths');
+        if (!response.ok) throw new Error('Failed to fetch paths');
+        const data = await response.json();
+        pathsCache = data;
+        pathsPromise = null;
+        return data;
+    })().catch(err => {
+        pathsPromise = null;
+        throw err;
+    });
+
+    return pathsPromise;
 };
 
 export const fetchPublicPaths = async (): Promise<PathData[]> => {

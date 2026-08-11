@@ -357,3 +357,106 @@
     background: rgba(59, 130, 246, 0.06);
     border: 1px solid rgba(59, 130, 246, 0.15);
 }
+
+/* ── Upload Progress UI ──────────────────────────────────── */
+.progressCard {
+    padding: 2.25rem 2rem;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.progressHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.progressTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.progressTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.progressPercent {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--tech-blue);
+}
+
+.progressBarTrack {
+    width: 100%;
+    height: 10px;
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.progressBarFill {
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa, #2563eb);
+    transition: width 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.progressBarFill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.stepsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stepItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: var(--text-tertiary);
+    transition: color 0.2s ease;
+}
+
+.stepItemActive {
+    color: var(--tech-blue);
+    font-weight: 600;
+}
+
+.stepItemDone {
+    color: var(--tech-green);
+    font-weight: 500;
+}
+
+.stepIcon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+

@@ -104,14 +104,46 @@ export const CourseImporter: React.FC<CourseImporterProps> = ({
         }
     };
 
+    const [progressPercent, setProgressPercent] = useState<number>(0);
+    const [payloadStats, setPayloadStats] = useState<{ topics: number; subtopics: number; questions: number } | null>(null);
+
     const executeImport = async (
         payload: ImportCoursePayload,
         strategy: 'FAIL_ON_CONFLICT' | ConflictStrategyOption = 'FAIL_ON_CONFLICT'
     ) => {
         try {
             setIsLoading(true);
+            setProgressPercent(15);
+
+            // Calculate payload statistics for progress UI
+            let tCount = 0;
+            let stCount = 0;
+            let qCount = 0;
+            if (Array.isArray(payload.topics)) {
+                tCount = payload.topics.length;
+                payload.topics.forEach((t: any) => {
+                    if (Array.isArray(t?.subtopics)) {
+                        stCount += t.subtopics.length;
+                        t.subtopics.forEach((st: any) => {
+                            if (Array.isArray(st?.questions)) {
+                                qCount += st.questions.length;
+                            }
+                        });
+                    }
+                });
+            }
+            setPayloadStats({ topics: tCount, subtopics: stCount, questions: qCount });
+
+            const timer1 = setTimeout(() => setProgressPercent(45), 300);
+            const timer2 = setTimeout(() => setProgressPercent(75), 700);
+
             const fullPayload: ImportCoursePayload = { ...payload, conflictStrategy: strategy };
             const result = await importCourse(fullPayload);
+
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+            setProgressPercent(100);
+
             setImportResult(result);
             setDetectedConflicts([]);
             setPendingPayload(null);
@@ -123,6 +155,7 @@ export const CourseImporter: React.FC<CourseImporterProps> = ({
             setErrorMessage(msg);
         } finally {
             setIsLoading(false);
+            setProgressPercent(0);
         }
     };
 
@@ -158,12 +191,14 @@ export const CourseImporter: React.FC<CourseImporterProps> = ({
 
         try {
             setIsLoading(true);
+            setProgressPercent(20);
             // Pre-check for conflicts via dry-run endpoint
             const validation = await validateImportConflicts(payload);
             if (validation.hasConflicts) {
                 setPendingPayload(payload);
                 setDetectedConflicts(validation.conflicts);
                 setIsLoading(false);
+                setProgressPercent(0);
                 return;
             }
             await executeImport(payload, 'FAIL_ON_CONFLICT');
@@ -171,6 +206,7 @@ export const CourseImporter: React.FC<CourseImporterProps> = ({
             const msg = err instanceof Error ? err.message : 'Failed to validate course import';
             setErrorMessage(msg);
             setIsLoading(false);
+            setProgressPercent(0);
         }
     };
 
@@ -216,7 +252,61 @@ export const CourseImporter: React.FC<CourseImporterProps> = ({
                 </div>
             </header>
 
-            {importResult ? (
+            {isLoading ? (
+                <div className={styles.progressCard}>
+                    <div className={styles.progressHeader}>
+                        <div className={styles.progressTitleGroup}>
+                            <Loader2 size={24} className="animate-spin" style={{ color: 'var(--tech-blue)' }} />
+                            <h3 className={styles.progressTitle}>
+                                {importMode === 'append' ? 'Appending Topics to Course...' : 'Importing Course Draft...'}
+                            </h3>
+                        </div>
+                        <span className={styles.progressPercent}>{progressPercent}%</span>
+                    </div>
+
+                    <div className={styles.progressBarTrack}>
+                        <div className={styles.progressBarFill} style={{ width: `${progressPercent}%` }} />
+                    </div>
+
+                    <div className={styles.stepsList}>
+                        <div className={`${styles.stepItem} ${progressPercent >= 30 ? styles.stepItemDone : styles.stepItemActive}`}>
+                            <span className={styles.stepIcon}>
+                                {progressPercent >= 30 ? <Check size={16} /> : <Loader2 size={16} className="animate-spin" />}
+                            </span>
+                            <span>Step 1: Validating JSON syntax & Schema structure</span>
+                        </div>
+                        <div className={`${styles.stepItem} ${progressPercent >= 70 ? styles.stepItemDone : progressPercent >= 30 ? styles.stepItemActive : ''}`}>
+                            <span className={styles.stepIcon}>
+                                {progressPercent >= 70 ? <Check size={16} /> : progressPercent >= 30 ? <Loader2 size={16} className="animate-spin" /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--border-color)' }} />}
+                            </span>
+                            <span>Step 2: Processing topic hierarchy, subtopic markdown & quiz questions</span>
+                        </div>
+                        <div className={`${styles.stepItem} ${progressPercent >= 95 ? styles.stepItemDone : progressPercent >= 70 ? styles.stepItemActive : ''}`}>
+                            <span className={styles.stepIcon}>
+                                {progressPercent >= 95 ? <Check size={16} /> : progressPercent >= 70 ? <Loader2 size={16} className="animate-spin" /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--border-color)' }} />}
+                            </span>
+                            <span>Step 3: Writing entity graph & creating draft database records</span>
+                        </div>
+                    </div>
+
+                    {payloadStats && (
+                        <div className={styles.statsGrid} style={{ marginTop: '8px' }}>
+                            <div className={styles.statPill}>
+                                <span className={styles.statLabel}>Detected Topics</span>
+                                <span className={styles.statValue}>{payloadStats.topics}</span>
+                            </div>
+                            <div className={styles.statPill}>
+                                <span className={styles.statLabel}>Detected Subtopics</span>
+                                <span className={styles.statValue}>{payloadStats.subtopics}</span>
+                            </div>
+                            <div className={styles.statPill}>
+                                <span className={styles.statLabel}>Detected MCQs</span>
+                                <span className={styles.statValue}>{payloadStats.questions}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : importResult ? (
                 <div className={styles.successCard}>
                     <div className={styles.successHeader}>
                         <Check size={28} />

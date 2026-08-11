@@ -45,7 +45,7 @@ export const useProfileDashboard = () => {
                 return 'PATHS';
             } else if (parts.length === 2 && parts[0] === 'paths') {
                 return 'TOPICS';
-            } else if (parts.length === 3 && parts[0] === 'paths') {
+            } else if (parts.length >= 3 && parts[0] === 'paths') {
                 return 'STUDY';
             } else if (parts.length === 1 && parts[0] === 'iamAdmin') {
                 return 'ADMIN';
@@ -116,7 +116,7 @@ export const useProfileDashboard = () => {
             setActiveView('PATHS');
         } else if (parts.length === 2 && parts[0] === 'paths') {
             setActiveView('TOPICS');
-        } else if (parts.length === 3 && parts[0] === 'paths') {
+        } else if (parts.length >= 3 && parts[0] === 'paths') {
             setActiveView('STUDY');
         } else if (parts.length === 1 && parts[0] === 'iamAdmin') {
             setActiveView('ADMIN');
