@@ -11,6 +11,7 @@ import { BookmarkedTopicsList } from '../components/BookmarkedTopicsList';
 import { StreakCalendar } from '../components/StreakCalendar';
 import { WeeklyLeagueBoard } from '../components/WeeklyLeagueBoard';
 import { OverallProgress } from '../components/OverallProgress';
+import { BrandFooter } from '../components/BrandFooter';
 
 import type { Course } from '../../../types';
 
@@ -136,6 +137,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     />
                 </div>
             </div>
+
+            <BrandFooter />
         </div>
     );
 };

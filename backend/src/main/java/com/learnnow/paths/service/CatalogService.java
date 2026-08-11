@@ -48,7 +48,7 @@ public class CatalogService {
                         path.getCategory(),
                         path.getManagedBy(),
                         path.getTopics() != null ? path.getTopics().stream()
-                                .filter(t -> t.getStatus() == ContentStatus.PUBLISHED)
+                                .filter(t -> t.getStatus() == ContentStatus.PUBLISHED || path.getStatus() == ContentStatus.PUBLISHED)
                                 .map(t -> new TopicSummaryDto(
                                         t.getId(),
                                         t.getTitle(),

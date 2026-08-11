@@ -65,15 +65,26 @@ public class PublishService {
                 .orElseThrow(() -> new NotFoundException("path_not_found"));
 
         path.setStatus(ContentStatus.PUBLISHED);
+        List<Topic> topicsToSave = new java.util.ArrayList<>();
+        List<Subtopic> subtopicsToSave = new java.util.ArrayList<>();
+
         if (path.getTopics() != null) {
             for (Topic t : path.getTopics()) {
                 t.setStatus(ContentStatus.PUBLISHED);
+                topicsToSave.add(t);
                 if (t.getSubtopics() != null) {
                     for (Subtopic st : t.getSubtopics()) {
                         st.setStatus(ContentStatus.PUBLISHED);
+                        subtopicsToSave.add(st);
                     }
                 }
             }
+        }
+        if (!subtopicsToSave.isEmpty()) {
+            subtopicRepository.saveAll(subtopicsToSave);
+        }
+        if (!topicsToSave.isEmpty()) {
+            topicRepository.saveAll(topicsToSave);
         }
         Path saved = pathRepository.save(path);
         return authoringService.getAdminPathById(saved.getId()).orElseThrow();

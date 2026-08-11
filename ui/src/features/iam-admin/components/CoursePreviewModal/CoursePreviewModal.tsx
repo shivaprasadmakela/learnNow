@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Eye, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import styles from './CoursePreviewModal.module.css';
 import type { AdminTopicData, QuizQuestionDto } from '../../api/admin.api';
-import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
+import { ContentRenderer, type ContentBlockItem } from '../../../../shared/components/content-renderer/ContentRenderer';
 
 interface CoursePreviewModalProps {
     title: string;
@@ -36,62 +36,35 @@ function flattenSubtopics(topics: AdminTopicData[]): SubtopicEntry[] {
     return entries;
 }
 
-function renderContent(content: string) {
-    if (!content) return <p className={styles.emptyContent}>No content yet.</p>;
-    const parts = content.split(/```/);
-    return (
-        <>
-            {parts.map((part, index) => {
-                if (index % 2 === 1) {
-                    const lines = part.split('\n');
-                    const lang = lines[0].trim();
-                    const code = lines.slice(1).join('\n').trim();
-                    return (
-                        <pre key={index} className={styles.codeBlock}>
-                            {lang && <span className={styles.codeLang}>{lang}</span>}
-                            <code>{code}</code>
-                        </pre>
-                    );
-                }
-                return (
-                    <div key={index} className={styles.textBlock}>
-                        {part.split('\n\n').map((paragraph, pIdx) => {
-                            const t = paragraph.trim();
-                            if (!t) return null;
-                            if (t.startsWith('### ')) return <h4 key={pIdx} className={styles.h4}>{t.replace(/^### /, '')}</h4>;
-                            if (t.startsWith('## ')) return <h3 key={pIdx} className={styles.h3}>{t.replace(/^## /, '')}</h3>;
-                            if (t.startsWith('# ')) return <h2 key={pIdx} className={styles.h2}>{t.replace(/^# /, '')}</h2>;
-                            if (t.startsWith('* ') || t.startsWith('- ')) {
-                                const items = t.split(/\n[*-]\s+/);
-                                return (
-                                    <ul key={pIdx} className={styles.list}>
-                                        {items.map((item, i) => {
-                                            const clean = item.replace(/^[*-]\s+/, '').trim()
-                                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                                .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');
-                                            return <li key={i} dangerouslySetInnerHTML={{ __html: clean }} />;
-                                        })}
-                                    </ul>
-                                );
-                            }
-                            const fmt = t
-                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');
-                            return <p key={pIdx} className={styles.paragraph} dangerouslySetInnerHTML={{ __html: fmt }} />;
-                        })}
-                    </div>
-                );
-            })}
-        </>
-    );
-}
-
 export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ title, managedBy: _managedBy, topics }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
 
     const entries = flattenSubtopics(topics);
     const active = entries[activeIndex];
+
+    const activeBlocks: ContentBlockItem[] = active ? [
+        ...(active.content ? [{
+            id: `preview-md-${active.topicIdx}-${active.subtopicIdx}`,
+            orderIndex: 1,
+            type: 'markdown' as const,
+            body: active.content,
+        }] : []),
+        ...(active.questions && active.questions.length > 0 ? [{
+            id: `preview-quiz-${active.topicIdx}-${active.subtopicIdx}`,
+            orderIndex: 2,
+            type: 'quiz' as const,
+            questions: active.questions.map((q, idx) => ({
+                id: q.id || `q-${idx}`,
+                kind: q.kind as any,
+                prompt: q.prompt,
+                options: q.options,
+                correctAnswer: q.correctAnswer,
+                explanation: q.explanation,
+                points: q.points,
+            })),
+        }] : [])
+    ] : [];
 
     return (
         <>
@@ -166,27 +139,7 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ title, m
                                         <article className={styles.article}>
                                             <h1 className={styles.articleTitle}>{active.subtopicTitle}</h1>
                                             <div className={styles.articleBody}>
-                                                {renderContent(active.content)}
-                                                {active.questions && active.questions.length > 0 && (
-                                                    <div style={{ marginTop: '24px' }}>
-                                                        <ContentRenderer
-                                                            blocks={[{
-                                                                id: `preview-quiz-${active.subtopicIdx}`,
-                                                                orderIndex: 1,
-                                                                type: 'quiz',
-                                                                questions: active.questions.map((q, idx) => ({
-                                                                    id: q.id || `q-${idx}`,
-                                                                    kind: q.kind,
-                                                                    prompt: q.prompt,
-                                                                    options: q.options,
-                                                                    correctAnswer: q.correctAnswer,
-                                                                    explanation: q.explanation,
-                                                                    points: q.points,
-                                                                })),
-                                                            }]}
-                                                        />
-                                                    </div>
-                                                )}
+                                                <ContentRenderer blocks={activeBlocks} />
                                             </div>
                                         </article>
                                     ) : (
