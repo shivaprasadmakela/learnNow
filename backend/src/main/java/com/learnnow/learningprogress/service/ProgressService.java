@@ -63,19 +63,22 @@ public class ProgressService {
         progress.setCompletedAt(Instant.now());
         topicProgressRepository.save(progress);
 
-        ZoneId userZone = preferencesRepository.findByUserId(userId)
-                .map(preferences -> ZoneId.of(preferences.getTimezone()))
-                .orElse(DEFAULT_ZONE);
-        activityRecordingService.recordTopicCompletion(userId, topic.getPath().getId(), topicId, userZone);
+        UserLearningPreferences prefs = getOrCreatePreferences(userId);
+        ZoneId userZone = ZoneId.of(prefs.getTimezone());
+        activityRecordingService.recordTopicCompletion(userId, topic.getPath().getId(), topicId, userZone, prefs);
     }
 
     /**
      * Mark a subtopic as completed. If all subtopics in the topic are now complete,
      * auto-complete the parent topic (triggering streak + points + activity recording).
+     *
+     * Optimized: uses JOIN FETCH for subtopic→topic, count queries instead of
+     * loading collections, and passes pre-loaded preferences to avoid duplicate lookups.
      */
     @Transactional
     public void markSubtopicComplete(String userId, UUID subtopicId, boolean completed) {
-        Subtopic subtopic = subtopicRepository.findById(subtopicId)
+        // JOIN FETCH: loads subtopic + topic in single query (eliminates lazy-load)
+        Subtopic subtopic = subtopicRepository.findByIdWithTopic(subtopicId)
                 .orElseThrow(() -> new NotFoundException("subtopic_not_found"));
 
         Topic topic = subtopic.getTopic();
@@ -99,17 +102,16 @@ public class ProgressService {
         subtopicProgressRepository.save(subProgress);
 
         if (completed) {
-            UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
-                    .orElseGet(() -> UserLearningPreferences.builder()
-                            .userId(userId)
-                            .build());
+            // Load prefs ONCE and pass everywhere (eliminates 2 duplicate DB lookups)
+            UserLearningPreferences prefs = getOrCreatePreferences(userId);
             prefs.addPoints(PointsConfig.SUBTOPIC_COMPLETED);
             preferencesRepository.save(prefs);
 
             ZoneId userZone = ZoneId.of(prefs.getTimezone());
-            activityRecordingService.recordDailyPoints(userId, userZone, PointsConfig.SUBTOPIC_COMPLETED);
+            activityRecordingService.recordDailyPoints(userId, userZone, PointsConfig.SUBTOPIC_COMPLETED, prefs);
 
-            long totalSubtopics = topic.getSubtopics().size();
+            // Count query instead of lazy-loading all subtopics collection
+            long totalSubtopics = topicRepository.countSubtopicsByTopicId(topicId);
             long completedSubtopics = subtopicProgressRepository.countByUserIdAndTopicIdAndCompletedTrue(userId, topicId);
 
             if (totalSubtopics > 0 && completedSubtopics >= totalSubtopics) {
@@ -127,5 +129,12 @@ public class ProgressService {
                 }
             }
         }
+    }
+
+    private UserLearningPreferences getOrCreatePreferences(String userId) {
+        return preferencesRepository.findByUserId(userId)
+                .orElseGet(() -> UserLearningPreferences.builder()
+                        .userId(userId)
+                        .build());
     }
 }

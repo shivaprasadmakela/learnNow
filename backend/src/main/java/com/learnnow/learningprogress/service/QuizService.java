@@ -5,6 +5,8 @@ import com.learnnow.admin.persistence.QuizQuestionRepository;
 import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.learningprogress.dto.QuizSubmitRequest;
 import com.learnnow.learningprogress.dto.QuizSubmitResponse;
+import com.learnnow.learningprogress.entity.UserLearningPreferences;
+import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ public class QuizService {
 
     private final QuizQuestionRepository quizQuestionRepository;
     private final ActivityRecordingService activityRecordingService;
+    private final UserLearningPreferencesRepository preferencesRepository;
 
     @Transactional
     public QuizSubmitResponse validateAndSubmitQuiz(String userId, QuizSubmitRequest request) {
@@ -32,7 +35,12 @@ public class QuizService {
         if (isCorrect) {
             pointsEarned = question.getPoints() > 0 ? question.getPoints() : 5;
             if (userId != null && !userId.isBlank()) {
-                activityRecordingService.recordDailyPoints(userId, ZoneId.systemDefault(), pointsEarned);
+                // Load prefs once and pass to avoid duplicate lookup in activityRecordingService
+                UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
+                        .orElseGet(() -> UserLearningPreferences.builder()
+                                .userId(userId)
+                                .build());
+                activityRecordingService.recordDailyPoints(userId, ZoneId.of(prefs.getTimezone()), pointsEarned, prefs);
             }
         }
 
