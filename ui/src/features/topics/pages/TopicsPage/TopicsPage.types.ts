@@ -10,9 +10,9 @@ export interface Topic {
 
 export interface TopicsPageProps {
     pathTitle: string;
+    description?: string;
     managedBy?: string;
     activitiesCount?: number;
-    lastUpdated?: string;
     topics: Topic[];
     progressPercent?: number;
     onSelectTopic?: (id: number) => void;

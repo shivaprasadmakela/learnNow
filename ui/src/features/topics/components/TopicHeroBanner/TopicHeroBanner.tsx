@@ -4,9 +4,9 @@ import type { TopicHeroBannerProps } from './TopicHeroBanner.types';
 
 export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
     pathTitle,
+    description,
     managedBy,
     activitiesCount,
-    lastUpdated,
     progressPercent,
     onContinueClick
 }) => {
@@ -15,17 +15,17 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
             <div className={styles.heroBanner}>
                 {/* Top content: left info */}
                 <div className={styles.heroTopContent}>
-                    {/* Left: Badge, Title, Details */}
+                    {/* Left: Badge, Title, Description, Details */}
                     <div className={styles.heroLeft}>
                         <div className={styles.heroBadge}>
                             <i className="fa-solid fa-dragon" style={{ marginRight: '6px' }} aria-hidden="true" />
                             Path
                         </div>
                         <h1 className={styles.heroTitle}>{pathTitle}</h1>
+                        {description && <p className={styles.heroDescription}>{description}</p>}
                         <div className={styles.metaRow}>
                             <span className={styles.metaDetail}>Managed by {managedBy}</span>
-                            <span className={styles.metaDetail}>{activitiesCount} topics</span>
-                            <span className={styles.metaDetail}>Last updated {lastUpdated}</span>
+                            <span className={styles.metaDetail}>{activitiesCount} {activitiesCount === 1 ? 'topic' : 'topics'}</span>
                         </div>
                     </div>
                 </div>

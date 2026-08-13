@@ -3,21 +3,16 @@ package com.learnnow.learningprogress.service;
 import com.learnnow.learningprogress.config.PointsConfig;
 import com.learnnow.learningprogress.entity.UserLearningDailyActivity;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
-import com.learnnow.learningprogress.entity.UserTopicProgress;
-import com.learnnow.learningprogress.enums.ProgressStatus;
 import com.learnnow.learningprogress.repository.UserLearningDailyActivityRepository;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
-import com.learnnow.paths.entity.Path;
-import com.learnnow.paths.entity.Topic;
-import com.learnnow.paths.repository.PathRepository;
+import com.learnnow.paths.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -27,16 +22,14 @@ public class ActivityRecordingService {
     private final UserLearningDailyActivityRepository dailyActivityRepository;
     private final UserLearningPreferencesRepository preferencesRepository;
     private final UserTopicProgressRepository topicProgressRepository;
-    private final PathRepository pathRepository;
+    private final TopicRepository topicRepository;
     private final StreakService streakService;
 
+    /**
+     * Record topic completion with pre-loaded preferences (avoids duplicate DB lookup).
+     */
     @Transactional
-    public void recordTopicCompletion(String userId, UUID pathId, UUID topicId, ZoneId userZone) {
-
-        UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
-                .orElseGet(() -> preferencesRepository.save(
-                        UserLearningPreferences.builder().userId(userId).timezone(userZone.getId()).build()
-                ));
+    public void recordTopicCompletion(String userId, UUID pathId, UUID topicId, ZoneId userZone, UserLearningPreferences prefs) {
 
         LocalDate localDate = LocalDate.now(userZone);
 
@@ -56,12 +49,11 @@ public class ActivityRecordingService {
         upsertDailyActivity(userId, localDate, pointsToAward);
     }
 
+    /**
+     * Record daily points with pre-loaded preferences (avoids duplicate DB lookup).
+     */
     @Transactional
-    public void recordDailyPoints(String userId, ZoneId userZone, int points) {
-        UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
-                .orElseGet(() -> preferencesRepository.save(
-                        UserLearningPreferences.builder().userId(userId).timezone(userZone.getId()).build()
-                ));
+    public void recordDailyPoints(String userId, ZoneId userZone, int points, UserLearningPreferences prefs) {
         LocalDate localDate = LocalDate.now(userZone);
         expireStreakIfStale(prefs, localDate);
         streakService.updateStreak(prefs, localDate);
@@ -69,19 +61,27 @@ public class ActivityRecordingService {
         upsertDailyActivity(userId, localDate, points);
     }
 
+    /**
+     * Fallback: loads prefs from DB when caller doesn't have them.
+     */
+    @Transactional
+    public void recordDailyPoints(String userId, ZoneId userZone, int points) {
+        UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
+                .orElseGet(() -> preferencesRepository.save(
+                        UserLearningPreferences.builder().userId(userId).timezone(userZone.getId()).build()
+                ));
+        recordDailyPoints(userId, userZone, points, prefs);
+    }
+
+    /**
+     * Uses count queries instead of loading all Path → Topics entities.
+     */
     private boolean isPathCompleted(String userId, UUID pathId) {
-        Path path = pathRepository.findById(pathId).orElse(null);
-        if (path == null) return false;
+        long totalTopics = topicRepository.countPublishedTopicsByPathId(pathId);
+        if (totalTopics == 0) return false;
 
-        List<Topic> topics = path.getTopics();
-        if (topics.isEmpty()) return false;
-
-        List<UserTopicProgress> progressList = topicProgressRepository.findByUserIdAndPathId(userId, pathId);
-        long completedCount = progressList.stream()
-                .filter(p -> p.getStatus() == ProgressStatus.COMPLETED)
-                .count();
-
-        return completedCount >= topics.size();
+        long completedCount = topicProgressRepository.countCompletedByUserIdAndPathId(userId, pathId);
+        return completedCount >= totalTopics;
     }
 
     private void upsertDailyActivity(String userId, LocalDate localDate, int points) {
