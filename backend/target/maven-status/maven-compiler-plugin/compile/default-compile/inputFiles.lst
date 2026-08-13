@@ -91,6 +91,13 @@
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/controller/TopicController.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dao/PathDao.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dao/TopicDao.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/AdminPathRequest.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/AdminSubtopicRequest.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/AdminTopicRequest.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/PathSummaryDto.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/SubtopicDto.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/TopicDetailDto.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/TopicSummaryDto.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/response/CatalogPathDto.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/response/PathSummaryDto.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/response/SubtopicDto.java

@@ -1,6 +1,9 @@
+com/learnnow/paths/dto/TopicDetailDto.class
 com/learnnow/paths/entity/Subtopic.class
 com/learnnow/learningprogress/controller/QuizController.class
+com/learnnow/paths/dto/PathSummaryDto.class
 com/learnnow/notes/entity/SubtopicNote.class
+com/learnnow/paths/dto/SubtopicDto$QuizQuestionDto.class
 com/learnnow/user/dto/request/RegisterRequest.class
 com/learnnow/common/exception/AuthException.class
 com/learnnow/learningprogress/repository/UserSubtopicProgressRepository.class
@@ -13,6 +16,7 @@ com/learnnow/user/entity/User$UserBuilder.class
 com/learnnow/common/security/RateLimitingFilter$RequestTracker.class
 com/learnnow/donations/dto/request/DonationRequest.class
 com/learnnow/learningprogress/enums/ProgressStatus.class
+com/learnnow/paths/dto/AdminTopicRequest.class
 com/learnnow/notes/repository/SubtopicNoteRepository.class
 com/learnnow/common/exception/GlobalExceptionHandler.class
 com/learnnow/learningprogress/repository/UserLearningPreferencesRepository.class
@@ -36,6 +40,7 @@ com/learnnow/compiler/dto/response/ExecuteCodeResponse.class
 com/learnnow/paths/entity/Topic.class
 com/learnnow/paths/dao/PathDao.class
 com/learnnow/paths/repository/SubtopicRepository.class
+com/learnnow/paths/dto/SubtopicDto$CodeSnippetDto.class
 com/learnnow/learningprogress/entity/UserSubtopicProgress.class
 com/learnnow/user/repository/UserRepository.class
 com/learnnow/admin/dto/response/AdminPathDto.class
@@ -61,6 +66,7 @@ com/learnnow/learningprogress/service/ProgressService.class
 com/learnnow/learningprogress/service/ActivityRecordingService.class
 com/learnnow/admin/repository/QuizQuestionRepository.class
 com/learnnow/admin/service/validation/ContentValidationPolicy.class
+com/learnnow/paths/dto/SubtopicDto.class
 com/learnnow/user/dto/request/GoogleAuthRequest.class
 com/learnnow/learningprogress/entity/UserSubtopicProgress$UserSubtopicProgressBuilder.class
 com/learnnow/notes/service/NotesService.class
@@ -73,6 +79,7 @@ com/learnnow/learningprogress/service/DashboardService.class
 com/learnnow/admin/entity/QuizQuestion$QuizQuestionBuilder.class
 com/learnnow/compiler/dto/request/ExecuteCodeRequest$ExecuteCodeRequestBuilder.class
 com/learnnow/donations/dto/response/DonationResponse$DonationResponseBuilder.class
+com/learnnow/paths/dto/AdminSubtopicRequest.class
 com/learnnow/user/dto/response/AuthResponse.class
 com/learnnow/admin/dto/response/ContentBlockResponse.class
 com/learnnow/paths/controller/CatalogController.class
@@ -124,6 +131,7 @@ com/learnnow/learningprogress/entity/UserTopicProgress.class
 com/learnnow/learningprogress/repository/UserLearningDailyActivityRepository$WeeklyPointsRow.class
 com/learnnow/paths/service/CatalogService$1.class
 com/learnnow/admin/dto/response/AdminPathDto$AdminTopicDto.class
+com/learnnow/paths/dto/TopicSummaryDto.class
 com/learnnow/user/dto/request/LoginRequest.class
 com/learnnow/donations/entity/DonationOrder.class
 com/learnnow/admin/dto/response/SubtopicResponse.class
@@ -148,6 +156,7 @@ com/learnnow/common/security/JwtConfig.class
 com/learnnow/compiler/dto/response/ExecuteCodeResponse$ExecuteCodeResponseBuilder.class
 com/learnnow/learningprogress/dto/response/RecentTopicActivity.class
 com/learnnow/BackendApplication.class
+com/learnnow/paths/dto/AdminPathRequest.class
 com/learnnow/admin/service/ContentAuthoringService$2.class
 com/learnnow/common/security/ResendEmailClient.class
 com/learnnow/compiler/entity/SharedSnippet$SharedSnippetBuilder.class
