@@ -1,6 +1,6 @@
 package com.learnnow.paths.controller;
 
-import com.learnnow.paths.dto.TopicDetailDto;
+import com.learnnow.paths.dto.response.TopicDetailDto;
 import com.learnnow.paths.service.CatalogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

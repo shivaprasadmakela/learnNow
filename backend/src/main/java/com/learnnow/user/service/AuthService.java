@@ -1,6 +1,7 @@
 package com.learnnow.user.service;
 
-import com.learnnow.user.dto.*;
+import com.learnnow.user.dto.request.*;
+import com.learnnow.user.dto.response.*;
 import com.learnnow.user.entity.*;
 import com.learnnow.user.repository.*;
 import com.learnnow.common.security.*;

@@ -1,7 +1,7 @@
 package com.learnnow.learningprogress.controller;
 
-import com.learnnow.learningprogress.dto.QuizSubmitRequest;
-import com.learnnow.learningprogress.dto.QuizSubmitResponse;
+import com.learnnow.learningprogress.dto.request.QuizSubmitRequest;
+import com.learnnow.learningprogress.dto.response.QuizSubmitResponse;
 import com.learnnow.learningprogress.service.QuizService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

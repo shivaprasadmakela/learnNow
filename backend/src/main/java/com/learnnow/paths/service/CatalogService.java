@@ -4,14 +4,12 @@ import com.learnnow.learningprogress.entity.UserSubtopicProgress;
 import com.learnnow.learningprogress.enums.ProgressStatus;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
-import com.learnnow.paths.controller.CatalogController.CatalogPathDetail;
-import com.learnnow.paths.controller.CatalogController.CatalogSubtopicTitle;
-import com.learnnow.paths.controller.CatalogController.CatalogTopicDetail;
+import com.learnnow.paths.dto.response.CatalogPathDto;
 import com.learnnow.paths.dao.PathDao;
-import com.learnnow.paths.dto.PathSummaryDto;
-import com.learnnow.paths.dto.TopicSummaryDto;
-import com.learnnow.paths.dto.SubtopicDto;
-import com.learnnow.paths.dto.TopicDetailDto;
+import com.learnnow.paths.dto.response.PathSummaryDto;
+import com.learnnow.paths.dto.response.TopicSummaryDto;
+import com.learnnow.paths.dto.response.SubtopicDto;
+import com.learnnow.paths.dto.response.TopicDetailDto;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.repository.PathRepository;
 import com.learnnow.paths.repository.TopicRepository;
@@ -39,59 +37,57 @@ public class CatalogService {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
+    public List<CatalogPathDto> getPublicCatalogPaths() {
+        return pathRepository.findByStatus(ContentStatus.PUBLISHED).stream()
+                .map(path -> new CatalogPathDto(
+                        path.getId(),
+                        path.getTitle(),
+                        path.getDescription(),
+                        path.getCategory(),
+                        path.getManagedBy()
+                ))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<PathSummaryDto> getAllPaths() {
-        return pathDao.findAllWithTopicsByStatus(ContentStatus.PUBLISHED).stream()
+        return pathRepository.findByStatus(ContentStatus.PUBLISHED).stream()
                 .map(path -> new PathSummaryDto(
                         path.getId(),
                         path.getTitle(),
                         path.getDescription(),
                         path.getCategory(),
                         path.getManagedBy(),
-                        path.getTopics() != null ? path.getTopics().stream()
-                                .filter(t -> t.getStatus() == ContentStatus.PUBLISHED || path.getStatus() == ContentStatus.PUBLISHED)
-                                .map(t -> new TopicSummaryDto(
-                                        t.getId(),
-                                        t.getTitle(),
-                                        t.getDescription(),
-                                        t.getCategory(),
-                                        t.getDuration(),
-                                        false
-                                ))
-                                .toList() : List.of()
+                        List.of()
                 ))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public Optional<CatalogPathDetail> getPathCatalogDetail(UUID pathId) {
-        return pathDao.findFullCatalogPathById(pathId)
-                .map(path -> {
-                    List<CatalogTopicDetail> topics = path.getTopics().stream()
-                            .filter(t -> t.getStatus() == ContentStatus.PUBLISHED)
-                            .map(topic -> {
-                                List<CatalogSubtopicTitle> subtopicTitles = topic.getSubtopics().stream()
-                                        .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
-                                        .map(st -> new CatalogSubtopicTitle(st.getId(), st.getTitle(), st.getOrderIndex()))
-                                        .toList();
-                                return new CatalogTopicDetail(
-                                        topic.getId(),
-                                        topic.getTitle(),
-                                        topic.getDescription(),
-                                        topic.getCategory(),
-                                        topic.getDuration(),
-                                        subtopicTitles
-                                );
-                            })
-                            .toList();
-                    return new CatalogPathDetail(
-                            path.getId(),
-                            path.getTitle(),
-                            path.getDescription(),
-                            path.getCategory(),
-                            path.getManagedBy(),
-                            topics
-                    );
-                });
+    public List<TopicSummaryDto> getTopicsForPath(UUID pathId) {
+        return topicRepository.findByPathIdAndStatus(pathId, ContentStatus.PUBLISHED).stream()
+                .map(t -> new TopicSummaryDto(
+                        t.getId(),
+                        t.getTitle(),
+                        t.getDescription(),
+                        t.getCategory(),
+                        t.getDuration(),
+                        false
+                ))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PathSummaryDto> getPathDetails(UUID pathId) {
+        return pathRepository.findById(pathId)
+                .map(path -> new PathSummaryDto(
+                        path.getId(),
+                        path.getTitle(),
+                        path.getDescription(),
+                        path.getCategory(),
+                        path.getManagedBy(),
+                        getTopicsForPath(pathId)
+                ));
     }
 
     @Transactional(readOnly = true)

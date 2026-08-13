@@ -1,10 +1,10 @@
 package com.learnnow.learningprogress.service;
 
-import com.learnnow.admin.persistence.QuizQuestion;
-import com.learnnow.admin.persistence.QuizQuestionRepository;
+import com.learnnow.admin.entity.QuizQuestion;
+import com.learnnow.admin.repository.QuizQuestionRepository;
 import com.learnnow.common.exception.NotFoundException;
-import com.learnnow.learningprogress.dto.QuizSubmitRequest;
-import com.learnnow.learningprogress.dto.QuizSubmitResponse;
+import com.learnnow.learningprogress.dto.request.QuizSubmitRequest;
+import com.learnnow.learningprogress.dto.response.QuizSubmitResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

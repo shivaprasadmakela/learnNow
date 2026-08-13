@@ -1,7 +1,8 @@
 package com.learnnow.user.service;
 
 import com.learnnow.common.exception.NotFoundException;
-import com.learnnow.user.dto.*;
+import com.learnnow.user.dto.request.*;
+import com.learnnow.user.dto.response.*;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,8 @@
 package com.learnnow.donations.service;
 
-import com.learnnow.donations.dto.DonationRequest;
-import com.learnnow.donations.dto.DonationResponse;
-import com.learnnow.donations.dto.PaymentVerificationRequest;
+import com.learnnow.donations.dto.request.DonationRequest;
+import com.learnnow.donations.dto.response.DonationResponse;
+import com.learnnow.donations.dto.request.PaymentVerificationRequest;
 import com.learnnow.donations.entity.DonationOrder;
 import com.learnnow.donations.repository.DonationOrderRepository;
 import com.razorpay.Order;

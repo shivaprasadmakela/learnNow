@@ -13,6 +13,9 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
 
     List<Topic> findByStatus(ContentStatus status);
 
+    @Query("SELECT t FROM Topic t WHERE t.path.id = :pathId AND (t.status = :status OR t.path.status = :status) ORDER BY t.orderIndex ASC")
+    List<Topic> findByPathIdAndStatus(@Param("pathId") UUID pathId, @Param("status") ContentStatus status);
+
     @Query("SELECT t FROM Topic t LEFT JOIN FETCH t.subtopics WHERE t.id = :id AND t.status = :status")
     Optional<Topic> findByIdAndStatusWithSubtopics(@Param("id") UUID id, @Param("status") ContentStatus status);
 }

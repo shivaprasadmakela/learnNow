@@ -37,7 +37,7 @@ export default function App() {
     const { showToast } = useToast();
 
     // Custom Hooks for User Data & Topic Sessions
-    const { courses, isCoursesLoading, userStreak, userPoints, updateMetrics, refreshUserData } = useUserData(isLoggedIn, activeView, isLoading);
+    const { courses, isCoursesLoading, userStreak, userPoints, updateMetrics, refreshUserData, loadTopicsForPath } = useUserData(isLoggedIn, activeView, isLoading);
     const {
         activeTopic,
         isStudyLoading,
@@ -88,6 +88,16 @@ export default function App() {
         }
     }, [courses]);
 
+    // On-demand topic fetching when a path is selected
+    useEffect(() => {
+        if (selectedPathId) {
+            const target = courses.find(c => String(c.id) === String(selectedPathId));
+            if (target && (!target.topics || target.topics.length === 0)) {
+                loadTopicsForPath(selectedPathId);
+            }
+        }
+    }, [selectedPathId, courses, loadTopicsForPath]);
+
     // Auth redirection effect
     useEffect(() => {
         if (!isLoading) {
@@ -123,6 +133,7 @@ export default function App() {
             return;
         }
         setSelectedPathId(pathId);
+        loadTopicsForPath(pathId);
         const path = courses.find(c => c.id === pathId);
         const slug = path ? slugify(path.title) : 'path';
         changeView('TOPICS', slug);

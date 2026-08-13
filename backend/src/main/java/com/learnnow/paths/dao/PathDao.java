@@ -83,45 +83,18 @@ public class PathDao {
                 List<UUID> blockIds = path.getTopics().stream()
                         .flatMap(t -> t.getSubtopics() != null ? t.getSubtopics().stream() : java.util.stream.Stream.empty())
                         .flatMap(st -> st.getBlocks() != null ? st.getBlocks().stream() : java.util.stream.Stream.empty())
-                        .map(com.learnnow.admin.persistence.ContentBlock::getId)
+                        .map(com.learnnow.admin.entity.ContentBlock::getId)
                         .toList();
 
                 if (!blockIds.isEmpty()) {
                     // Step 4: Eagerly fetch quiz questions for all content blocks
                     entityManager.createQuery(
                             "SELECT DISTINCT b FROM ContentBlock b LEFT JOIN FETCH b.questions WHERE b.id IN :ids",
-                            com.learnnow.admin.persistence.ContentBlock.class)
+                            com.learnnow.admin.entity.ContentBlock.class)
                             .setParameter("ids", blockIds)
                             .getResultList();
                 }
             }
-        }
-
-        return Optional.of(path);
-    }
-
-    /**
-     * Fetch a published catalog path by ID with topics and subtopics loaded via batch queries.
-     */
-    public Optional<Path> findFullCatalogPathById(UUID id) {
-        List<Path> paths = entityManager.createQuery(
-                "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t WHERE p.id = :id AND p.status = :status", Path.class)
-                .setParameter("id", id)
-                .setParameter("status", ContentStatus.PUBLISHED)
-                .getResultList();
-
-        if (paths.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Path path = paths.get(0);
-        if (path.getTopics() != null && !path.getTopics().isEmpty()) {
-            entityManager.createQuery(
-                    "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st WHERE t.path.id = :pathId AND t.status = :status",
-                    com.learnnow.paths.entity.Topic.class)
-                    .setParameter("pathId", id)
-                    .setParameter("status", ContentStatus.PUBLISHED)
-                    .getResultList();
         }
 
         return Optional.of(path);

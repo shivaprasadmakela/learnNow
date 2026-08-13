@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { fetchPaths, fetchPublicPaths } from '../../shared/api';
+import { fetchPaths, fetchPublicPaths, fetchTopicsByPath } from '../../shared/api';
 import type { Course } from '../../types';
 
 export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoading = false) => {
@@ -19,6 +19,17 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
             prevAuthRef.current = isLoggedIn;
         }
     }, [isLoggedIn]);
+
+    const loadTopicsForPath = useCallback(async (pathId: number | string) => {
+        try {
+            const topics = await fetchTopicsByPath(pathId);
+            if (topics) {
+                setCourses(prev => prev.map(c => String(c.id) === String(pathId) ? { ...c, topics } : c));
+            }
+        } catch (err) {
+            console.error("Failed to load topics for path", err);
+        }
+    }, []);
 
     const refreshUserData = useCallback(async (force = false) => {
         // Wait for initial auth profile check to settle before fetching paths
@@ -105,7 +116,8 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         userStreak,
         userPoints,
         updateMetrics,
-        refreshUserData
+        refreshUserData,
+        loadTopicsForPath
     };
 };
 

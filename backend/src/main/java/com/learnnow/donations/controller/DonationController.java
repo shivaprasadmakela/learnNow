@@ -1,8 +1,8 @@
 package com.learnnow.donations.controller;
 
-import com.learnnow.donations.dto.DonationRequest;
-import com.learnnow.donations.dto.DonationResponse;
-import com.learnnow.donations.dto.PaymentVerificationRequest;
+import com.learnnow.donations.dto.request.DonationRequest;
+import com.learnnow.donations.dto.response.DonationResponse;
+import com.learnnow.donations.dto.request.PaymentVerificationRequest;
 import com.learnnow.donations.service.RazorpayService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

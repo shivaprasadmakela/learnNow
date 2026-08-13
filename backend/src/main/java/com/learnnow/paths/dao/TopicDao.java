@@ -52,14 +52,14 @@ public class TopicDao {
 
             List<UUID> blockIds = topic.getSubtopics().stream()
                     .flatMap(st -> st.getBlocks() != null ? st.getBlocks().stream() : java.util.stream.Stream.empty())
-                    .map(com.learnnow.admin.persistence.ContentBlock::getId)
+                    .map(com.learnnow.admin.entity.ContentBlock::getId)
                     .toList();
 
             if (!blockIds.isEmpty()) {
                 // Eagerly fetch quiz questions for blocks
                 entityManager.createQuery(
                         "SELECT DISTINCT b FROM ContentBlock b LEFT JOIN FETCH b.questions WHERE b.id IN :ids",
-                        com.learnnow.admin.persistence.ContentBlock.class)
+                        com.learnnow.admin.entity.ContentBlock.class)
                         .setParameter("ids", blockIds)
                         .getResultList();
             }

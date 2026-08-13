@@ -1,6 +1,7 @@
 package com.learnnow.user.controller;
 
-import com.learnnow.user.dto.*;
+import com.learnnow.user.dto.request.*;
+import com.learnnow.user.dto.response.*;
 import com.learnnow.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

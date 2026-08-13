@@ -4,7 +4,7 @@ import com.learnnow.common.exception.AuthException;
 import com.learnnow.common.exception.ValidationException;
 import com.learnnow.common.security.ResendEmailClient;
 import com.learnnow.common.security.TokenService;
-import com.learnnow.user.dto.LoginRequest;
+import com.learnnow.user.dto.request.LoginRequest;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.EmailVerificationTokenRepository;
 import com.learnnow.user.repository.UserRepository;

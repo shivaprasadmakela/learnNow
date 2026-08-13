@@ -78,6 +78,12 @@ export const fetchPublicPaths = async (): Promise<PathData[]> => {
     return response.json();
 };
 
+export const fetchTopicsByPath = async (pathId: string | number) => {
+    const response = await apiFetch(`/api/paths/${pathId}/topics`);
+    if (!response.ok) throw new Error('Failed to fetch topics for path');
+    return response.json();
+};
+
 export interface CodeSnippetItem {
     id: string;
     language: string;

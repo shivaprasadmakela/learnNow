@@ -1,6 +1,7 @@
 package com.learnnow.user.controller;
 
-import com.learnnow.user.dto.*;
+import com.learnnow.user.dto.request.*;
+import com.learnnow.user.dto.response.*;
 import com.learnnow.user.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
