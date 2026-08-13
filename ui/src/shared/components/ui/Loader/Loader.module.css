@@ -145,3 +145,20 @@
         transform: translateY(0);
     }
 }
+
+.gifLoaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 24px;
+    animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.gifLoaderImage {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    border-radius: 20px;
+    background: transparent;
+    animation: fadeIn 0.4s ease-out;
+}

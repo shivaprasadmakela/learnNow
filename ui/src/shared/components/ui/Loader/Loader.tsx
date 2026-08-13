@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Coffee, Rocket, Server, Zap, Cpu, Sparkles, RefreshCw, Sun, Moon, Sunset } from 'lucide-react';
+import { RefreshCw, Coffee, Sun, Sunset, Moon } from 'lucide-react';
 import styles from './Loader.module.css';
 
 export interface LoaderProps {
@@ -9,88 +9,80 @@ export interface LoaderProps {
     minHeight?: string | number;
 }
 
-interface ColdStartQuote {
-    icon: React.ComponentType<{ className?: string; size?: number; color?: string }>;
+interface ColdStartConfig {
+    gifUrl: string;
     title: string;
     message: string;
     badgeColor: string;
     accentColor: string;
+    icon: React.ComponentType<{ className?: string; size?: number; color?: string }>;
+    subMessages: string[];
 }
 
-const getTimeBasedFirstQuote = (): ColdStartQuote => {
+const getTimeBasedLoaderConfig = (): ColdStartConfig => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
         return {
-            icon: Coffee,
+            gifUrl: '/bouncer.gif',
             title: 'Morning Brew',
-            message: 'Waking up the backend server... It needs its morning coffee!',
+            message: 'Waking up the backend server... Let\'s bounce into action!',
             badgeColor: 'rgba(245, 158, 11, 0.15)',
-            accentColor: '#f59e0b'
+            accentColor: '#f59e0b',
+            icon: Coffee,
+            subMessages: [
+                'Brewing morning coffee for JVM...',
+                'Stretching Java bytecode muscles...',
+                'Powering up local cache structures...',
+                'Ready to bounce into today\'s coding goals!'
+            ]
         };
     } else if (hour >= 12 && hour < 17) {
         return {
-            icon: Sun,
+            gifUrl: '/loading.gif',
             title: 'Afternoon Fuel',
             message: 'Waking up the backend server... Powering up for the afternoon!',
-            badgeColor: 'rgba(245, 158, 11, 0.15)',
-            accentColor: '#f59e0b'
+            badgeColor: 'rgba(59, 130, 246, 0.15)',
+            accentColor: '#3b82f6',
+            icon: Sun,
+            subMessages: [
+                'Injecting afternoon fuel...',
+                'Stretching JVM heap memory...',
+                'Establishing PostgreSQL handshake...',
+                'Preparing compiler syntax highlight engines!'
+            ]
         };
     } else if (hour >= 17 && hour < 22) {
         return {
-            icon: Sunset,
+            gifUrl: '/cat-crying.gif',
             title: 'Evening Shift',
             message: 'Waking up the backend server... Warming up for your evening study!',
             badgeColor: 'rgba(236, 72, 153, 0.15)',
-            accentColor: '#ec4899'
+            accentColor: '#ec4899',
+            icon: Sunset,
+            subMessages: [
+                'Waking up the sleepy server instance...',
+                'Even the cat is crying from this late grind...',
+                'Polishing learning modules for tonight...',
+                'Checking connection to database pools...'
+            ]
         };
     } else {
         return {
-            icon: Moon,
+            gifUrl: '/cat-crying.gif',
             title: 'Late Night Grind',
             message: 'Waking up the backend server... Burning the midnight oil!',
             badgeColor: 'rgba(124, 58, 237, 0.15)',
-            accentColor: '#7c3aed'
+            accentColor: '#7c3aed',
+            icon: Moon,
+            subMessages: [
+                'Powering up midnight server cells...',
+                'Waking up sleepy database connections...',
+                'Even the cat is crying to start this study session...',
+                'Optimizing workspace for night owls...'
+            ]
         };
     }
 };
-
-const COMMON_QUOTES: ColdStartQuote[] = [
-    {
-        icon: Rocket,
-        title: 'GCP Cold Start',
-        message: 'Spinning up GCP Cloud Run container instance...',
-        badgeColor: 'rgba(11, 87, 208, 0.15)',
-        accentColor: '#0b57d0'
-    },
-    {
-        icon: Server,
-        title: 'Power Nap',
-        message: 'Server was taking a power nap. Stretching JVM bytecodes...',
-        badgeColor: 'rgba(124, 58, 237, 0.15)',
-        accentColor: '#7c3aed'
-    },
-    {
-        icon: Zap,
-        title: 'DB Connection',
-        message: 'Warming up PostgreSQL database connection pools...',
-        badgeColor: 'rgba(16, 185, 129, 0.15)',
-        accentColor: '#10b981'
-    },
-    {
-        icon: Cpu,
-        title: 'Spells Compiling',
-        message: 'Casting compilation spells... Almost ready!',
-        badgeColor: 'rgba(236, 72, 153, 0.15)',
-        accentColor: '#ec4899'
-    },
-    {
-        icon: Sparkles,
-        title: 'Syncing Metrics',
-        message: 'Fetching latest learning modules & progress state...',
-        badgeColor: 'rgba(0, 242, 254, 0.15)',
-        accentColor: '#00f2fe'
-    }
-];
 
 export const Loader: React.FC<LoaderProps> = ({
     variant = 'inline',
@@ -99,9 +91,21 @@ export const Loader: React.FC<LoaderProps> = ({
     minHeight
 }) => {
     const [elapsedTime, setElapsedTime] = useState<number>(0);
-    const [quoteIndex, setQuoteIndex] = useState<number>(0);
+    const [messageIndex, setMessageIndex] = useState<number>(0);
 
-    const coldStartQuotes = useMemo(() => [getTimeBasedFirstQuote(), ...COMMON_QUOTES], []);
+    const loaderConfig = useMemo(() => getTimeBasedLoaderConfig(), []);
+
+    const rotatingMessages = useMemo(() => {
+        return [
+            loaderConfig.message,
+            ...loaderConfig.subMessages,
+            'Spinning up GCP Cloud Run container instance...',
+            'Server was taking a power nap. Stretching JVM bytecodes...',
+            'Warming up PostgreSQL database connection pools...',
+            'Casting compilation spells... Almost ready!',
+            'Fetching latest learning modules & progress state...'
+        ];
+    }, [loaderConfig]);
 
     // Track elapsed loading time
     useEffect(() => {
@@ -112,16 +116,16 @@ export const Loader: React.FC<LoaderProps> = ({
         return () => clearInterval(timer);
     }, []);
 
-    // Rotate quotes every 3.5 seconds when loading takes > 2 seconds
+    // Rotate messages every 3.5 seconds when loading takes > 2 seconds
     useEffect(() => {
         if (elapsedTime < 2000 || !showColdStartFunnyMessages) return;
 
-        const quoteInterval = setInterval(() => {
-            setQuoteIndex(prev => (prev + 1) % coldStartQuotes.length);
+        const interval = setInterval(() => {
+            setMessageIndex(prev => (prev + 1) % rotatingMessages.length);
         }, 3500);
 
-        return () => clearInterval(quoteInterval);
-    }, [elapsedTime, showColdStartFunnyMessages, coldStartQuotes.length]);
+        return () => clearInterval(interval);
+    }, [elapsedTime, showColdStartFunnyMessages, rotatingMessages.length]);
 
     // Optional background health ping when response takes > 3s
     useEffect(() => {
@@ -140,8 +144,7 @@ export const Loader: React.FC<LoaderProps> = ({
     }, [elapsedTime]);
 
     const isColdStart = elapsedTime >= 2200 && showColdStartFunnyMessages;
-    const currentQuote = coldStartQuotes[quoteIndex];
-    const QuoteIcon = currentQuote.icon;
+    const QuoteIcon = loaderConfig.icon;
 
     const containerClassName =
         variant === 'fullScreen'
@@ -152,21 +155,27 @@ export const Loader: React.FC<LoaderProps> = ({
 
     return (
         <div className={containerClassName} style={minHeight ? { minHeight } : undefined}>
-            <div className={styles.spinnerContainer}>
-                <div
-                    className={styles.spinnerRing}
-                    style={{
-                        borderTopColor: isColdStart ? currentQuote.accentColor : 'var(--tech-blue, #0b57d0)'
-                    }}
-                />
-                <div className={styles.spinnerCenterIcon}>
-                    {isColdStart ? (
-                        <QuoteIcon size={18} color={currentQuote.accentColor} />
-                    ) : (
-                        <RefreshCw size={16} color="var(--tech-blue, #0b57d0)" />
-                    )}
+            {isColdStart ? (
+                <div className={styles.gifLoaderContainer}>
+                    <img
+                        src={loaderConfig.gifUrl}
+                        alt={loaderConfig.title}
+                        className={styles.gifLoaderImage}
+                    />
                 </div>
-            </div>
+            ) : (
+                <div className={styles.spinnerContainer}>
+                    <div
+                        className={styles.spinnerRing}
+                        style={{
+                            borderTopColor: 'var(--tech-blue, #0b57d0)'
+                        }}
+                    />
+                    <div className={styles.spinnerCenterIcon}>
+                        <RefreshCw size={16} color="var(--tech-blue, #0b57d0)" />
+                    </div>
+                </div>
+            )}
 
             <div className={styles.textContainer}>
                 {isColdStart ? (
@@ -174,15 +183,15 @@ export const Loader: React.FC<LoaderProps> = ({
                         <div
                             className={styles.titleBadge}
                             style={{
-                                backgroundColor: currentQuote.badgeColor,
-                                borderColor: `${currentQuote.accentColor}40`,
-                                color: currentQuote.accentColor
+                                backgroundColor: loaderConfig.badgeColor,
+                                borderColor: `${loaderConfig.accentColor}40`,
+                                color: loaderConfig.accentColor
                             }}
                         >
-                            <QuoteIcon size={12} color={currentQuote.accentColor} />
-                            <span>{currentQuote.title}</span>
+                            <QuoteIcon size={12} color={loaderConfig.accentColor} />
+                            <span>{loaderConfig.title}</span>
                         </div>
-                        <p className={styles.messageText}>{currentQuote.message}</p>
+                        <p className={styles.messageText}>{rotatingMessages[messageIndex]}</p>
                         <p className={styles.subNotice}>
                             Free-tier server instance is spinning up. Thanks for your patience!
                         </p>
