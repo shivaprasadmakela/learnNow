@@ -25,11 +25,7 @@ public class QuizService {
         QuizQuestion question =
                 quizQuestionRepository
                         .findById(request.questionId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Quiz question not found with ID: "
-                                                        + request.questionId()));
+                        .orElseThrow(() -> new NotFoundException("quiz_question_not_found"));
 
         String expected =
                 question.getCorrectAnswer() != null ? question.getCorrectAnswer().trim() : "";

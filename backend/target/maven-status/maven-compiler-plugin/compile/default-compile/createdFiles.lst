@@ -64,6 +64,7 @@ com/learnnow/admin/dto/request/CreateTopicRequest.class
 com/learnnow/learningprogress/controller/MeController.class
 com/learnnow/learningprogress/service/ProgressService.class
 com/learnnow/learningprogress/service/ActivityRecordingService.class
+com/learnnow/admin/service/ContentAuthoringService$ImportCounts.class
 com/learnnow/admin/repository/QuizQuestionRepository.class
 com/learnnow/admin/service/validation/ContentValidationPolicy.class
 com/learnnow/paths/dto/SubtopicDto.class

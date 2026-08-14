@@ -22,8 +22,8 @@ public class TopicDao {
         List<Topic> topics =
                 entityManager
                         .createQuery(
-                                "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st"
-                                        + " WHERE t.id = :id",
+                                "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.path p LEFT JOIN"
+                                        + " FETCH t.subtopics st WHERE t.id = :id",
                                 Topic.class)
                         .setParameter("id", id)
                         .getResultList();

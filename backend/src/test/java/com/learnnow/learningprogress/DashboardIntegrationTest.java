@@ -17,6 +17,7 @@ import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
 import com.learnnow.paths.repository.SubtopicRepository;
 import com.learnnow.paths.repository.TopicRepository;
+import com.learnnow.paths.service.CatalogService;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
 import java.time.LocalDate;
@@ -42,6 +43,8 @@ public class DashboardIntegrationTest {
     @Autowired private ActivityRecordingService activityRecordingService;
 
     @Autowired private UserLearningPreferencesRepository preferencesRepository;
+
+    @Autowired private CatalogService catalogService;
 
     @Autowired private PathRepository pathRepository;
 
@@ -149,6 +152,12 @@ public class DashboardIntegrationTest {
     @Test
     public void testBuildDashboard() {
         DashboardResponse response = dashboardService.buildDashboard("TEST_USER");
+        assertNotNull(response);
+    }
+
+    @Test
+    public void testGetTopicDetails() {
+        var response = catalogService.getTopicDetails(sampleTopicId1, "TEST_USER");
         assertNotNull(response);
     }
 

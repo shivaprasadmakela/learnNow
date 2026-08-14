@@ -8,15 +8,43 @@ import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.paths.dao.PathDao;
 import com.learnnow.paths.entity.*;
 import com.learnnow.paths.repository.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class ContentAuthoringService {
+
+    private static final String STRATEGY_FAIL_ON_CONFLICT = "FAIL_ON_CONFLICT";
+    private static final String STRATEGY_OVERWRITE = "OVERWRITE";
+    private static final String STRATEGY_KEEP_BOTH = "KEEP_BOTH";
+    private static final String STRATEGY_SKIP_EXISTING = "SKIP_EXISTING";
+    private static final String DEFAULT_CATEGORY_PATH = "General";
+    private static final String DEFAULT_MANAGED_BY = "learnNow";
+    private static final String DEFAULT_CATEGORY_BACKEND = "Backend";
+    private static final String DEFAULT_CATEGORY_TOPIC = "course";
+    private static final String DEFAULT_DURATION_TOPIC = "1 hour";
+    private static final String DEFAULT_LEVEL_SUBTOPIC = "beginner";
+    private static final String DEFAULT_TRACK_SUBTOPIC = "concept";
+    private static final String DEFAULT_SNIPPET_LANGUAGE = "javascript";
+    private static final int DEFAULT_ESTIMATED_MINUTES = 5;
+    private static final int DEFAULT_QUESTION_POINTS = 5;
+
+    private static class ImportCounts {
+        int topics = 0;
+        int subtopics = 0;
+        int questions = 0;
+    }
 
     private final PathRepository pathRepository;
     private final PathDao pathDao;
@@ -25,6 +53,7 @@ public class ContentAuthoringService {
     private final ContentBlockRepository contentBlockRepository;
     private final QuizQuestionRepository quizQuestionRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final MessageSource messageSource;
 
     @Transactional
     public Path createPath(CreatePathRequest request) {
@@ -32,8 +61,14 @@ public class ContentAuthoringService {
                 Path.builder()
                         .title(request.title())
                         .description(request.description())
-                        .category(request.category() != null ? request.category() : "General")
-                        .managedBy(request.managedBy() != null ? request.managedBy() : "learnNow")
+                        .category(
+                                request.category() != null
+                                        ? request.category()
+                                        : DEFAULT_CATEGORY_PATH)
+                        .managedBy(
+                                request.managedBy() != null
+                                        ? request.managedBy()
+                                        : DEFAULT_MANAGED_BY)
                         .status(ContentStatus.DRAFT)
                         .build();
         return pathRepository.save(path);
@@ -121,7 +156,7 @@ public class ContentAuthoringService {
     }
 
     @Transactional(readOnly = true)
-    public java.util.Optional<AdminPathDto> getAdminPathById(UUID pathId) {
+    public Optional<AdminPathDto> getAdminPathById(UUID pathId) {
         return pathDao.findFullAdminPathById(pathId).map(this::toAdminPathDto);
     }
 
@@ -138,12 +173,13 @@ public class ContentAuthoringService {
 
         path.setTitle(request.title());
         path.setDescription(request.description());
-        path.setCategory(request.category() != null ? request.category() : "Backend");
-        path.setManagedBy(request.managedBy() != null ? request.managedBy() : "learnNow");
+        path.setCategory(
+                request.category() != null ? request.category() : DEFAULT_CATEGORY_BACKEND);
+        path.setManagedBy(request.managedBy() != null ? request.managedBy() : DEFAULT_MANAGED_BY);
         path.setStatus(parseStatus(request.status()));
 
         if (request.topics() != null) {
-            java.util.Map<UUID, Topic> existingTopicsMap = new java.util.HashMap<>();
+            Map<UUID, Topic> existingTopicsMap = new HashMap<>();
             if (path.getTopics() != null) {
                 for (Topic t : path.getTopics()) {
                     if (t.getId() != null) {
@@ -152,7 +188,7 @@ public class ContentAuthoringService {
                 }
             }
 
-            java.util.List<Topic> updatedTopicsList = new java.util.ArrayList<>();
+            List<Topic> updatedTopicsList = new ArrayList<>();
             int tIdx = 1;
 
             for (AdminPathDto.AdminTopicDto topicReq : request.topics()) {
@@ -172,7 +208,7 @@ public class ContentAuthoringService {
                 topic.setStatus(parseStatus(topicReq.status()));
 
                 if (topicReq.subtopics() != null) {
-                    java.util.Map<UUID, Subtopic> existingSubtopicsMap = new java.util.HashMap<>();
+                    Map<UUID, Subtopic> existingSubtopicsMap = new HashMap<>();
                     if (topic.getSubtopics() != null) {
                         for (Subtopic st : topic.getSubtopics()) {
                             if (st.getId() != null) {
@@ -181,7 +217,7 @@ public class ContentAuthoringService {
                         }
                     }
 
-                    java.util.List<Subtopic> updatedSubtopicsList = new java.util.ArrayList<>();
+                    List<Subtopic> updatedSubtopicsList = new ArrayList<>();
                     int stIdx = 1;
 
                     for (AdminPathDto.AdminSubtopicDto stReq : topicReq.subtopics()) {
@@ -218,8 +254,7 @@ public class ContentAuthoringService {
 
                         // Code Snippets in-place update
                         if (stReq.codeSnippets() != null) {
-                            java.util.Map<String, SubtopicCodeSnippet> existingSnippetsMap =
-                                    new java.util.HashMap<>();
+                            Map<String, SubtopicCodeSnippet> existingSnippetsMap = new HashMap<>();
                             if (subtopic.getCodeSnippets() != null) {
                                 for (SubtopicCodeSnippet sn : subtopic.getCodeSnippets()) {
                                     if (sn.getId() != null) {
@@ -227,8 +262,7 @@ public class ContentAuthoringService {
                                     }
                                 }
                             }
-                            java.util.List<SubtopicCodeSnippet> updatedSnippetsList =
-                                    new java.util.ArrayList<>();
+                            List<SubtopicCodeSnippet> updatedSnippetsList = new ArrayList<>();
                             int snIdx = 1;
                             for (AdminPathDto.AdminCodeSnippetDto snReq : stReq.codeSnippets()) {
                                 String snId = snReq.id() != null ? snReq.id() : "snippet-" + snIdx;
@@ -252,7 +286,7 @@ public class ContentAuthoringService {
                                 updatedSnippetsList.add(snippet);
                             }
                             if (subtopic.getCodeSnippets() == null) {
-                                subtopic.setCodeSnippets(new java.util.ArrayList<>());
+                                subtopic.setCodeSnippets(new ArrayList<>());
                             }
                             subtopic.getCodeSnippets().clear();
                             subtopic.getCodeSnippets().addAll(updatedSnippetsList);
@@ -280,13 +314,12 @@ public class ContentAuthoringService {
                                                 .orderIndex(1)
                                                 .build();
                                 if (subtopic.getBlocks() == null) {
-                                    subtopic.setBlocks(new java.util.ArrayList<>());
+                                    subtopic.setBlocks(new ArrayList<>());
                                 }
                                 subtopic.getBlocks().add(quizBlock);
                             }
 
-                            java.util.Map<UUID, QuizQuestion> existingQuestionsMap =
-                                    new java.util.HashMap<>();
+                            Map<UUID, QuizQuestion> existingQuestionsMap = new HashMap<>();
                             if (quizBlock.getQuestions() != null) {
                                 for (QuizQuestion q : quizBlock.getQuestions()) {
                                     if (q.getId() != null) {
@@ -294,8 +327,7 @@ public class ContentAuthoringService {
                                     }
                                 }
                             }
-                            java.util.List<QuizQuestion> updatedQuestionsList =
-                                    new java.util.ArrayList<>();
+                            List<QuizQuestion> updatedQuestionsList = new ArrayList<>();
                             for (AdminPathDto.AdminQuizQuestionDto qReq : stReq.questions()) {
                                 String optionsJson = "[]";
                                 if (qReq.options() != null) {
@@ -323,7 +355,7 @@ public class ContentAuthoringService {
                                 updatedQuestionsList.add(q);
                             }
                             if (quizBlock.getQuestions() == null) {
-                                quizBlock.setQuestions(new java.util.ArrayList<>());
+                                quizBlock.setQuestions(new ArrayList<>());
                             }
                             quizBlock.getQuestions().clear();
                             quizBlock.getQuestions().addAll(updatedQuestionsList);
@@ -333,7 +365,7 @@ public class ContentAuthoringService {
                     }
 
                     if (topic.getSubtopics() == null) {
-                        topic.setSubtopics(new java.util.ArrayList<>());
+                        topic.setSubtopics(new ArrayList<>());
                     }
                     topic.getSubtopics().clear();
                     topic.getSubtopics().addAll(updatedSubtopicsList);
@@ -343,7 +375,7 @@ public class ContentAuthoringService {
             }
 
             if (path.getTopics() == null) {
-                path.setTopics(new java.util.ArrayList<>());
+                path.setTopics(new ArrayList<>());
             }
             path.getTopics().clear();
             path.getTopics().addAll(updatedTopicsList);
@@ -356,8 +388,7 @@ public class ContentAuthoringService {
     @Transactional
     public void deletePath(UUID pathId) {
         if (!pathRepository.existsById(pathId)) {
-            throw new com.learnnow.common.exception.NotFoundException(
-                    "Path not found with id: " + pathId);
+            throw new com.learnnow.common.exception.NotFoundException("path_not_found");
         }
         // Native SQL DELETE lets PostgreSQL ON DELETE CASCADE handle the entire
         // entity tree in a single round-trip, avoiding Hibernate's N+1 cascade
@@ -367,7 +398,7 @@ public class ContentAuthoringService {
 
     @Transactional(readOnly = true)
     public ImportValidationResultDto validateImportConflicts(ImportCourseRequest request) {
-        List<ImportConflictItemDto> conflicts = new java.util.ArrayList<>();
+        List<ImportConflictItemDto> conflicts = new ArrayList<>();
 
         if (request.pathId() == null) {
             // CREATE mode: check if path with same title exists
@@ -376,14 +407,15 @@ public class ContentAuthoringService {
                         .findByTitleIgnoreCase(request.title().trim())
                         .ifPresent(
                                 p -> {
+                                    String msg =
+                                            messageSource.getMessage(
+                                                    "path_conflict_message",
+                                                    new Object[] {p.getTitle()},
+                                                    p.getTitle() + " already exists.",
+                                                    LocaleContextHolder.getLocale());
                                     conflicts.add(
                                             new ImportConflictItemDto(
-                                                    "PATH",
-                                                    p.getTitle(),
-                                                    p.getId(),
-                                                    "A learning path titled '"
-                                                            + p.getTitle()
-                                                            + "' already exists."));
+                                                    "PATH", p.getTitle(), p.getId(), msg));
                                 });
             }
         } else {
@@ -402,16 +434,22 @@ public class ContentAuthoringService {
                             .findFirst()
                             .ifPresent(
                                     existingTopic -> {
+                                        String msg =
+                                                messageSource.getMessage(
+                                                        "topic_conflict_message",
+                                                        new Object[] {
+                                                            existingTopic.getTitle(),
+                                                            existingPath.getTitle()
+                                                        },
+                                                        existingTopic.getTitle()
+                                                                + " already exists.",
+                                                        LocaleContextHolder.getLocale());
                                         conflicts.add(
                                                 new ImportConflictItemDto(
                                                         "TOPIC",
                                                         existingTopic.getTitle(),
                                                         existingTopic.getId(),
-                                                        "Topic '"
-                                                                + existingTopic.getTitle()
-                                                                + "' already exists in path '"
-                                                                + existingPath.getTitle()
-                                                                + "'."));
+                                                        msg));
 
                                         if (tReq.subtopics() != null) {
                                             for (ImportCourseRequest.ImportSubtopicRequest stReq :
@@ -430,6 +468,23 @@ public class ContentAuthoringService {
                                                         .findFirst()
                                                         .ifPresent(
                                                                 existingSub -> {
+                                                                    String subMsg =
+                                                                            messageSource
+                                                                                    .getMessage(
+                                                                                            "subtopic_conflict_message",
+                                                                                            new Object
+                                                                                                    [] {
+                                                                                                existingSub
+                                                                                                        .getTitle(),
+                                                                                                existingTopic
+                                                                                                        .getTitle()
+                                                                                            },
+                                                                                            existingSub
+                                                                                                            .getTitle()
+                                                                                                    + " already"
+                                                                                                    + " exists.",
+                                                                                            LocaleContextHolder
+                                                                                                    .getLocale());
                                                                     conflicts.add(
                                                                             new ImportConflictItemDto(
                                                                                     "SUBTOPIC",
@@ -437,16 +492,7 @@ public class ContentAuthoringService {
                                                                                             .getTitle(),
                                                                                     existingSub
                                                                                             .getId(),
-                                                                                    "Subtopic '"
-                                                                                            + existingSub
-                                                                                                    .getTitle()
-                                                                                            + "' already"
-                                                                                            + " exists"
-                                                                                            + " in topic"
-                                                                                            + " '"
-                                                                                            + existingTopic
-                                                                                                    .getTitle()
-                                                                                            + "'."));
+                                                                                    subMsg));
                                                                 });
                                             }
                                         }
@@ -463,10 +509,10 @@ public class ContentAuthoringService {
         String strategy =
                 request.conflictStrategy() != null && !request.conflictStrategy().isBlank()
                         ? request.conflictStrategy().toUpperCase()
-                        : "FAIL_ON_CONFLICT";
+                        : STRATEGY_FAIL_ON_CONFLICT;
 
         // Pre-check for conflicts if default strategy or explicitly requested
-        if ("FAIL_ON_CONFLICT".equals(strategy)) {
+        if (STRATEGY_FAIL_ON_CONFLICT.equals(strategy)) {
             ImportValidationResultDto validation = validateImportConflicts(request);
             if (validation.hasConflicts()) {
                 String firstMsg = validation.conflicts().get(0).message();
@@ -474,14 +520,13 @@ public class ContentAuthoringService {
             }
         }
 
-        if (request.pathId() == null && strategy.equals("FAIL_ON_CONFLICT")) {
+        if (request.pathId() == null && STRATEGY_FAIL_ON_CONFLICT.equals(strategy)) {
             if (request.title() == null || request.title().isBlank()) {
-                throw new com.learnnow.common.exception.ValidationException(
-                        "title is required when creating a new course");
+                throw new com.learnnow.common.exception.ValidationException("path_title_required");
             }
             if (request.description() == null || request.description().isBlank()) {
                 throw new com.learnnow.common.exception.ValidationException(
-                        "description is required when creating a new course");
+                        "path_description_required");
             }
         }
 
@@ -505,12 +550,12 @@ public class ContentAuthoringService {
                                     .orElse(0)
                             + 1;
         } else {
-            java.util.Optional<Path> existingPathOpt =
+            Optional<Path> existingPathOpt =
                     (request.title() != null && !request.title().isBlank())
                             ? pathRepository.findByTitleIgnoreCase(request.title().trim())
-                            : java.util.Optional.empty();
+                            : Optional.empty();
 
-            if (existingPathOpt.isPresent() && "OVERWRITE".equals(strategy)) {
+            if (existingPathOpt.isPresent() && STRATEGY_OVERWRITE.equals(strategy)) {
                 path = existingPathOpt.get();
                 if (request.description() != null) path.setDescription(request.description());
                 if (request.category() != null) path.setCategory(request.category());
@@ -526,7 +571,7 @@ public class ContentAuthoringService {
                                 + 1;
             } else {
                 String finalTitle = request.title() != null ? request.title() : "Untitled Course";
-                if (existingPathOpt.isPresent() && "KEEP_BOTH".equals(strategy)) {
+                if (existingPathOpt.isPresent() && STRATEGY_KEEP_BOTH.equals(strategy)) {
                     finalTitle = finalTitle + " (Imported)";
                 }
 
@@ -536,239 +581,242 @@ public class ContentAuthoringService {
                                 .description(
                                         request.description() != null ? request.description() : "")
                                 .category(
-                                        request.category() != null ? request.category() : "Backend")
+                                        request.category() != null
+                                                ? request.category()
+                                                : DEFAULT_CATEGORY_BACKEND)
                                 .managedBy(
                                         request.managedBy() != null
                                                 ? request.managedBy()
-                                                : "learnNow")
+                                                : DEFAULT_MANAGED_BY)
                                 .status(ContentStatus.DRAFT)
                                 .build();
                 startOrderIndex = 1;
             }
         }
 
-        int topicCount = 0;
-        int subtopicCount = 0;
-        int questionCount = 0;
-
-        if (request.topics() != null) {
-            int tIdx = startOrderIndex;
-            for (ImportCourseRequest.ImportTopicRequest tReq : request.topics()) {
-                if (tReq.title() == null || tReq.title().isBlank()) continue;
-                final String origTTitle = tReq.title().trim();
-                String tTitle = origTTitle;
-
-                java.util.Optional<Topic> existingTopicOpt =
-                        path.getTopics().stream()
-                                .filter(
-                                        t ->
-                                                t.getTitle() != null
-                                                        && t.getTitle()
-                                                                .equalsIgnoreCase(origTTitle))
-                                .findFirst();
-
-                if (existingTopicOpt.isPresent()) {
-                    if ("SKIP_EXISTING".equals(strategy)) {
-                        continue;
-                    }
-                    if ("KEEP_BOTH".equals(strategy)) {
-                        tTitle = tTitle + " (Imported)";
-                    }
-                }
-
-                Topic topic;
-                if (existingTopicOpt.isPresent() && "OVERWRITE".equals(strategy)) {
-                    topic = existingTopicOpt.get();
-                    if (tReq.description() != null) topic.setDescription(tReq.description());
-                    if (tReq.duration() != null) topic.setDuration(tReq.duration());
-                } else {
-                    topicCount++;
-                    topic =
-                            Topic.builder()
-                                    .title(tTitle)
-                                    .description(tReq.description())
-                                    .category(tReq.category() != null ? tReq.category() : "course")
-                                    .duration(tReq.duration() != null ? tReq.duration() : "1 hour")
-                                    .orderIndex(tIdx++)
-                                    .status(ContentStatus.DRAFT)
-                                    .path(path)
-                                    .build();
-                    path.getTopics().add(topic);
-                }
-
-                if (tReq.subtopics() != null) {
-                    int stIdx =
-                            topic.getSubtopics().stream()
-                                            .mapToInt(Subtopic::getOrderIndex)
-                                            .max()
-                                            .orElse(0)
-                                    + 1;
-
-                    for (ImportCourseRequest.ImportSubtopicRequest stReq : tReq.subtopics()) {
-                        if (stReq.title() == null || stReq.title().isBlank()) continue;
-                        final String origStTitle = stReq.title().trim();
-                        String stTitle = origStTitle;
-
-                        java.util.Optional<Subtopic> existingSubOpt =
-                                topic.getSubtopics().stream()
-                                        .filter(
-                                                st ->
-                                                        st.getTitle() != null
-                                                                && st.getTitle()
-                                                                        .equalsIgnoreCase(
-                                                                                origStTitle))
-                                        .findFirst();
-
-                        if (existingSubOpt.isPresent()) {
-                            if ("SKIP_EXISTING".equals(strategy)) {
-                                continue;
-                            }
-                            if ("KEEP_BOTH".equals(strategy)) {
-                                stTitle = stTitle + " (Imported)";
-                            }
-                        }
-
-                        String prereqsJson = "[]";
-                        if (stReq.prerequisites() != null) {
-                            try {
-                                prereqsJson =
-                                        objectMapper.writeValueAsString(stReq.prerequisites());
-                            } catch (Exception ignored) {
-                            }
-                        }
-
-                        Subtopic subtopic;
-                        if (existingSubOpt.isPresent() && "OVERWRITE".equals(strategy)) {
-                            subtopic = existingSubOpt.get();
-                            subtopic.setContent(stReq.content());
-                            subtopic.setLevel(stReq.level() != null ? stReq.level() : "beginner");
-                            subtopic.setTrack(stReq.track() != null ? stReq.track() : "concept");
-                            subtopic.setPrerequisites(prereqsJson);
-                            subtopic.setVideoUrl(stReq.videoUrl());
-                            subtopic.setEstimatedMinutes(
-                                    stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0
-                                            ? stReq.estimatedMinutes()
-                                            : 5);
-                            subtopic.getBlocks().clear();
-                            subtopic.getCodeSnippets().clear();
-                        } else {
-                            subtopicCount++;
-                            subtopic =
-                                    Subtopic.builder()
-                                            .title(stTitle)
-                                            .content(stReq.content())
-                                            .orderIndex(stIdx++)
-                                            .status(ContentStatus.DRAFT)
-                                            .version(1)
-                                            .level(
-                                                    stReq.level() != null
-                                                            ? stReq.level()
-                                                            : "beginner")
-                                            .track(
-                                                    stReq.track() != null
-                                                            ? stReq.track()
-                                                            : "concept")
-                                            .prerequisites(prereqsJson)
-                                            .videoUrl(stReq.videoUrl())
-                                            .estimatedMinutes(
-                                                    stReq.estimatedMinutes() != null
-                                                                    && stReq.estimatedMinutes() > 0
-                                                            ? stReq.estimatedMinutes()
-                                                            : 5)
-                                            .topic(topic)
-                                            .build();
-                            topic.getSubtopics().add(subtopic);
-                        }
-
-                        if (stReq.codeSnippets() != null && !stReq.codeSnippets().isEmpty()) {
-                            java.util.List<SubtopicCodeSnippet> snippets =
-                                    new java.util.ArrayList<>();
-                            int snIdx = 1;
-                            for (ImportCourseRequest.ImportCodeSnippetRequest snReq :
-                                    stReq.codeSnippets()) {
-                                SubtopicCodeSnippet snippet =
-                                        SubtopicCodeSnippet.builder()
-                                                .subtopic(subtopic)
-                                                .id(
-                                                        snReq.id() != null
-                                                                ? snReq.id()
-                                                                : "snippet-" + snIdx)
-                                                .language(
-                                                        snReq.language() != null
-                                                                ? snReq.language()
-                                                                : "javascript")
-                                                .label(snReq.label())
-                                                .code(snReq.code() != null ? snReq.code() : "")
-                                                .expectedOutput(snReq.expectedOutput())
-                                                .runnable(
-                                                        snReq.runnable() == null
-                                                                || snReq.runnable())
-                                                .editable(
-                                                        snReq.editable() == null
-                                                                || snReq.editable())
-                                                .orderIndex(
-                                                        snReq.orderIndex() != null
-                                                                ? snReq.orderIndex()
-                                                                : snIdx++)
-                                                .build();
-                                snippets.add(snippet);
-                            }
-                            subtopic.setCodeSnippets(snippets);
-                        }
-
-                        if (stReq.questions() != null && !stReq.questions().isEmpty()) {
-                            ContentBlock block =
-                                    ContentBlock.builder()
-                                            .subtopic(subtopic)
-                                            .type("quiz")
-                                            .orderIndex(1)
-                                            .build();
-
-                            List<QuizQuestion> questions = new java.util.ArrayList<>();
-                            for (ImportCourseRequest.ImportQuestionRequest qReq :
-                                    stReq.questions()) {
-                                questionCount++;
-                                String optionsJson = "[]";
-                                if (qReq.options() != null) {
-                                    try {
-                                        optionsJson =
-                                                objectMapper.writeValueAsString(qReq.options());
-                                    } catch (Exception ignored) {
-                                    }
-                                }
-                                QuizQuestion q =
-                                        QuizQuestion.builder()
-                                                .block(block)
-                                                .kind(qReq.kind() != null ? qReq.kind() : "mcq")
-                                                .prompt(qReq.prompt())
-                                                .options(optionsJson)
-                                                .correctAnswer(
-                                                        qReq.correctAnswer() != null
-                                                                ? qReq.correctAnswer()
-                                                                : "")
-                                                .explanation(qReq.explanation())
-                                                .points(qReq.points() > 0 ? qReq.points() : 5)
-                                                .build();
-                                questions.add(q);
-                            }
-                            block.setQuestions(questions);
-                            subtopic.getBlocks().add(block);
-                        }
-                    }
-                }
-            }
-        }
+        ImportCounts counts = new ImportCounts();
+        processTopics(request.topics(), path, strategy, startOrderIndex, counts);
 
         Path saved = pathRepository.save(path);
 
         return new ImportResultDto(
                 saved.getId(),
                 saved.getTitle(),
-                topicCount,
-                subtopicCount,
-                questionCount,
+                counts.topics,
+                counts.subtopics,
+                counts.questions,
                 saved.getStatus().name(),
                 isAppend ? "APPENDED" : "CREATED");
+    }
+
+    private void processTopics(
+            List<ImportCourseRequest.ImportTopicRequest> topics,
+            Path path,
+            String strategy,
+            int startOrderIndex,
+            ImportCounts counts) {
+        if (topics == null) return;
+        int tIdx = startOrderIndex;
+        for (ImportCourseRequest.ImportTopicRequest tReq : topics) {
+            if (tReq.title() == null || tReq.title().isBlank()) continue;
+            final String origTTitle = tReq.title().trim();
+            String tTitle = origTTitle;
+
+            Optional<Topic> existingTopicOpt =
+                    path.getTopics().stream()
+                            .filter(
+                                    t ->
+                                            t.getTitle() != null
+                                                    && t.getTitle().equalsIgnoreCase(origTTitle))
+                            .findFirst();
+
+            if (existingTopicOpt.isPresent()) {
+                if (STRATEGY_SKIP_EXISTING.equals(strategy)) {
+                    continue;
+                }
+                if (STRATEGY_KEEP_BOTH.equals(strategy)) {
+                    tTitle = tTitle + " (Imported)";
+                }
+            }
+
+            Topic topic;
+            if (existingTopicOpt.isPresent() && STRATEGY_OVERWRITE.equals(strategy)) {
+                topic = existingTopicOpt.get();
+                if (tReq.description() != null) topic.setDescription(tReq.description());
+                if (tReq.duration() != null) topic.setDuration(tReq.duration());
+            } else {
+                counts.topics++;
+                topic =
+                        Topic.builder()
+                                .title(tTitle)
+                                .description(tReq.description())
+                                .category(
+                                        tReq.category() != null
+                                                ? tReq.category()
+                                                : DEFAULT_CATEGORY_TOPIC)
+                                .duration(
+                                        tReq.duration() != null
+                                                ? tReq.duration()
+                                                : DEFAULT_DURATION_TOPIC)
+                                .orderIndex(tIdx++)
+                                .status(ContentStatus.DRAFT)
+                                .path(path)
+                                .build();
+                path.getTopics().add(topic);
+            }
+
+            processSubtopics(tReq.subtopics(), topic, strategy, counts);
+        }
+    }
+
+    private void processSubtopics(
+            List<ImportCourseRequest.ImportSubtopicRequest> subtopics,
+            Topic topic,
+            String strategy,
+            ImportCounts counts) {
+        if (subtopics == null) return;
+        int stIdx =
+                topic.getSubtopics().stream().mapToInt(Subtopic::getOrderIndex).max().orElse(0) + 1;
+
+        for (ImportCourseRequest.ImportSubtopicRequest stReq : subtopics) {
+            if (stReq.title() == null || stReq.title().isBlank()) continue;
+            final String origStTitle = stReq.title().trim();
+            String stTitle = origStTitle;
+
+            Optional<Subtopic> existingSubOpt =
+                    topic.getSubtopics().stream()
+                            .filter(
+                                    st ->
+                                            st.getTitle() != null
+                                                    && st.getTitle().equalsIgnoreCase(origStTitle))
+                            .findFirst();
+
+            if (existingSubOpt.isPresent()) {
+                if (STRATEGY_SKIP_EXISTING.equals(strategy)) {
+                    continue;
+                }
+                if (STRATEGY_KEEP_BOTH.equals(strategy)) {
+                    stTitle = stTitle + " (Imported)";
+                }
+            }
+
+            String prereqsJson = serializePrerequisites(stReq.prerequisites());
+
+            Subtopic subtopic;
+            if (existingSubOpt.isPresent() && STRATEGY_OVERWRITE.equals(strategy)) {
+                subtopic = existingSubOpt.get();
+                subtopic.setContent(stReq.content());
+                subtopic.setLevel(stReq.level() != null ? stReq.level() : DEFAULT_LEVEL_SUBTOPIC);
+                subtopic.setTrack(stReq.track() != null ? stReq.track() : DEFAULT_TRACK_SUBTOPIC);
+                subtopic.setPrerequisites(prereqsJson);
+                subtopic.setVideoUrl(stReq.videoUrl());
+                subtopic.setEstimatedMinutes(
+                        stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0
+                                ? stReq.estimatedMinutes()
+                                : DEFAULT_ESTIMATED_MINUTES);
+                subtopic.getBlocks().clear();
+                subtopic.getCodeSnippets().clear();
+            } else {
+                counts.subtopics++;
+                subtopic =
+                        Subtopic.builder()
+                                .title(stTitle)
+                                .content(stReq.content())
+                                .orderIndex(stIdx++)
+                                .status(ContentStatus.DRAFT)
+                                .version(1)
+                                .level(
+                                        stReq.level() != null
+                                                ? stReq.level()
+                                                : DEFAULT_LEVEL_SUBTOPIC)
+                                .track(
+                                        stReq.track() != null
+                                                ? stReq.track()
+                                                : DEFAULT_TRACK_SUBTOPIC)
+                                .prerequisites(prereqsJson)
+                                .videoUrl(stReq.videoUrl())
+                                .estimatedMinutes(
+                                        stReq.estimatedMinutes() != null
+                                                        && stReq.estimatedMinutes() > 0
+                                                ? stReq.estimatedMinutes()
+                                                : DEFAULT_ESTIMATED_MINUTES)
+                                .topic(topic)
+                                .build();
+                topic.getSubtopics().add(subtopic);
+            }
+
+            processCodeSnippets(stReq.codeSnippets(), subtopic);
+            processQuestions(stReq.questions(), subtopic, counts);
+        }
+    }
+
+    private String serializePrerequisites(List<String> prerequisites) {
+        if (prerequisites == null) return "[]";
+        try {
+            return objectMapper.writeValueAsString(prerequisites);
+        } catch (Exception ignored) {
+            return "[]";
+        }
+    }
+
+    private void processCodeSnippets(
+            List<ImportCourseRequest.ImportCodeSnippetRequest> codeSnippets, Subtopic subtopic) {
+        if (codeSnippets == null || codeSnippets.isEmpty()) return;
+        List<SubtopicCodeSnippet> snippets = new ArrayList<>();
+        int snIdx = 1;
+        for (ImportCourseRequest.ImportCodeSnippetRequest snReq : codeSnippets) {
+            SubtopicCodeSnippet snippet =
+                    SubtopicCodeSnippet.builder()
+                            .subtopic(subtopic)
+                            .id(snReq.id() != null ? snReq.id() : "snippet-" + snIdx)
+                            .language(
+                                    snReq.language() != null
+                                            ? snReq.language()
+                                            : DEFAULT_SNIPPET_LANGUAGE)
+                            .label(snReq.label())
+                            .code(snReq.code() != null ? snReq.code() : "")
+                            .expectedOutput(snReq.expectedOutput())
+                            .runnable(snReq.runnable() == null || snReq.runnable())
+                            .editable(snReq.editable() == null || snReq.editable())
+                            .orderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++)
+                            .build();
+            snippets.add(snippet);
+        }
+        subtopic.setCodeSnippets(snippets);
+    }
+
+    private void processQuestions(
+            List<ImportCourseRequest.ImportQuestionRequest> questions,
+            Subtopic subtopic,
+            ImportCounts counts) {
+        if (questions == null || questions.isEmpty()) return;
+        ContentBlock block =
+                ContentBlock.builder().subtopic(subtopic).type("quiz").orderIndex(1).build();
+
+        List<QuizQuestion> quizQuestions = new ArrayList<>();
+        for (ImportCourseRequest.ImportQuestionRequest qReq : questions) {
+            counts.questions++;
+            String optionsJson = "[]";
+            if (qReq.options() != null) {
+                try {
+                    optionsJson = objectMapper.writeValueAsString(qReq.options());
+                } catch (Exception ignored) {
+                }
+            }
+            QuizQuestion q =
+                    QuizQuestion.builder()
+                            .block(block)
+                            .kind(qReq.kind() != null ? qReq.kind() : "mcq")
+                            .prompt(qReq.prompt())
+                            .options(optionsJson)
+                            .correctAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "")
+                            .explanation(qReq.explanation())
+                            .points(qReq.points() > 0 ? qReq.points() : DEFAULT_QUESTION_POINTS)
+                            .build();
+            quizQuestions.add(q);
+        }
+        block.setQuestions(quizQuestions);
+        subtopic.getBlocks().add(block);
     }
 
     private ContentStatus parseStatus(String status) {
@@ -784,14 +832,14 @@ public class ContentAuthoringService {
         List<AdminPathDto.AdminTopicDto> topics =
                 path.getTopics().stream()
                         .sorted(
-                                java.util.Comparator.comparingInt(
+                                Comparator.comparingInt(
                                         t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
                         .map(
                                 t -> {
                                     List<AdminPathDto.AdminSubtopicDto> subtopics =
                                             t.getSubtopics().stream()
                                                     .sorted(
-                                                            java.util.Comparator.comparingInt(
+                                                            Comparator.comparingInt(
                                                                     st -> st.getOrderIndex()))
                                                     .map(
                                                             st -> {
@@ -978,7 +1026,7 @@ public class ContentAuthoringService {
         List<AdminPathDto.AdminTopicDto> topics =
                 path.getTopics().stream()
                         .sorted(
-                                java.util.Comparator.comparingInt(
+                                Comparator.comparingInt(
                                         t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
                         .map(
                                 t ->

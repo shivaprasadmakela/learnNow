@@ -29,16 +29,35 @@ public class CompilerSnippetService {
     private static final String ALPHANUMERIC =
             "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
+
+    private static final String EMPTY_RESPONSE_MSG = "Execution engine returned empty response";
+    private static final String INTERNAL_ERROR_MSG = "Internal Error";
+    private static final String EXECUTION_ERROR_PREFIX = "Execution Error: ";
+    private static final String EXECUTION_FAILED_MSG = "Execution Failed";
+
+    private static final String KEY_STDOUT = "stdout";
+    private static final String KEY_STDERR = "stderr";
+    private static final String KEY_COMPILE_OUTPUT = "compile_output";
+    private static final String KEY_TIME = "time";
+    private static final String KEY_MEMORY = "memory";
+    private static final String KEY_STATUS = "status";
+    private static final String KEY_STATUS_ID = "id";
+    private static final String KEY_STATUS_DESCRIPTION = "description";
+
+    private static final String KEY_LANGUAGE_ID = "language_id";
+    private static final String KEY_SOURCE_CODE = "source_code";
+    private static final String KEY_STDIN = "stdin";
+
     private final SharedSnippetRepository snippetRepository;
 
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest request) {
         int languageId = mapLanguageToJudge0Id(request.getLanguage());
 
         Map<String, Object> body = new HashMap<>();
-        body.put("language_id", languageId);
-        body.put("source_code", request.getCode());
+        body.put(KEY_LANGUAGE_ID, languageId);
+        body.put(KEY_SOURCE_CODE, request.getCode());
         if (request.getStdin() != null && !request.getStdin().isBlank()) {
-            body.put("stdin", request.getStdin());
+            body.put(KEY_STDIN, request.getStdin());
         }
 
         try {
@@ -53,17 +72,17 @@ public class CompilerSnippetService {
 
             if (response == null) {
                 return ExecuteCodeResponse.builder()
-                        .stderr("Execution engine returned empty response")
+                        .stderr(EMPTY_RESPONSE_MSG)
                         .statusCode(13)
-                        .statusDescription("Internal Error")
+                        .statusDescription(INTERNAL_ERROR_MSG)
                         .build();
             }
 
-            String stdout = (String) response.get("stdout");
-            String stderr = (String) response.get("stderr");
-            String compileOutput = (String) response.get("compile_output");
-            String timeStr = (String) response.get("time");
-            Number memoryNum = (Number) response.get("memory");
+            String stdout = (String) response.get(KEY_STDOUT);
+            String stderr = (String) response.get(KEY_STDERR);
+            String compileOutput = (String) response.get(KEY_COMPILE_OUTPUT);
+            String timeStr = (String) response.get(KEY_TIME);
+            Number memoryNum = (Number) response.get(KEY_MEMORY);
 
             Double timeSeconds = null;
             if (timeStr != null) {
@@ -80,11 +99,11 @@ public class CompilerSnippetService {
 
             Integer statusCode = null;
             String statusDesc = null;
-            if (response.get("status") instanceof Map<?, ?> statusMap) {
-                if (statusMap.get("id") instanceof Number numId) {
+            if (response.get(KEY_STATUS) instanceof Map<?, ?> statusMap) {
+                if (statusMap.get(KEY_STATUS_ID) instanceof Number numId) {
                     statusCode = numId.intValue();
                 }
-                statusDesc = (String) statusMap.get("description");
+                statusDesc = (String) statusMap.get(KEY_STATUS_DESCRIPTION);
             }
 
             return ExecuteCodeResponse.builder()
@@ -99,9 +118,9 @@ public class CompilerSnippetService {
 
         } catch (Exception e) {
             return ExecuteCodeResponse.builder()
-                    .stderr("Execution Error: " + e.getMessage())
+                    .stderr(EXECUTION_ERROR_PREFIX + e.getMessage())
                     .statusCode(13)
-                    .statusDescription("Execution Failed")
+                    .statusDescription(EXECUTION_FAILED_MSG)
                     .build();
         }
     }
@@ -163,10 +182,7 @@ public class CompilerSnippetService {
         SharedSnippet snippet =
                 snippetRepository
                         .findByShortId(shortId)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Code snippet not found for ID: " + shortId));
+                        .orElseThrow(() -> new NotFoundException("snippet_not_found"));
 
         snippet.setLastAccessedAt(Instant.now());
         snippetRepository.save(snippet);

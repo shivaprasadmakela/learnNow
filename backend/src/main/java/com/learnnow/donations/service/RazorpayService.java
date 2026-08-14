@@ -1,5 +1,6 @@
 package com.learnnow.donations.service;
 
+import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.donations.dto.request.DonationRequest;
 import com.learnnow.donations.dto.request.PaymentVerificationRequest;
 import com.learnnow.donations.dto.response.DonationResponse;
@@ -90,11 +91,7 @@ public class RazorpayService {
         DonationOrder donationOrder =
                 donationOrderRepository
                         .findByOrderId(request.getRazorpayOrderId())
-                        .orElseThrow(
-                                () ->
-                                        new IllegalArgumentException(
-                                                "Donation order not found for ID: "
-                                                        + request.getRazorpayOrderId()));
+                        .orElseThrow(() -> new NotFoundException("donation_order_not_found"));
 
         boolean isValidSignature = false;
 

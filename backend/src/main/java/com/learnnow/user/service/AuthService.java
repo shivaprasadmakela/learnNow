@@ -227,7 +227,7 @@ public class AuthService {
         } catch (ValidationException ve) {
             throw ve;
         } catch (Exception e) {
-            throw new ValidationException("google_auth_failed: " + e.getMessage());
+            throw new ValidationException("google_auth_failed");
         }
     }
 
