@@ -7,6 +7,7 @@ import com.learnnow.learningprogress.dto.response.WeeklyCalendarDay;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
+import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
 import com.learnnow.learningprogress.service.ActivityRecordingService;
 import com.learnnow.learningprogress.service.DashboardService;
 import com.learnnow.learningprogress.service.ProgressService;
@@ -53,6 +54,8 @@ public class DashboardIntegrationTest {
     @Autowired private SubtopicRepository subtopicRepository;
 
     @Autowired private UserSubtopicProgressRepository userSubtopicProgressRepository;
+
+    @Autowired private UserTopicProgressRepository topicProgressRepository;
 
     private UUID samplePathId;
     private UUID sampleTopicId1;
@@ -173,6 +176,11 @@ public class DashboardIntegrationTest {
                             .fullName("Streak Tester")
                             .build());
         }
+        
+        topicProgressRepository.findAll().stream()
+                .filter(tp -> tp.getUserId().equals(testUserId))
+                .forEach(tp -> topicProgressRepository.delete(tp));
+        preferencesRepository.findByUserId(testUserId).ifPresent(preferencesRepository::delete);
 
         progressService.setTopicCompletion(testUserId, sampleTopicId1, true);
         if (sampleTopicId2 != null && !sampleTopicId2.equals(sampleTopicId1)) {
@@ -283,5 +291,34 @@ public class DashboardIntegrationTest {
                 1,
                 updated.getCurrentStreak(),
                 "Stale streak should be expired to 0, then restarted at 1 after new activity!");
+    }
+
+    @Test
+    public void testStaleStreakShowsAsZeroOnDashboard() {
+        String testUserId = "USER_STALE_DASHBOARD_ID";
+        if (userRepository.findById(testUserId).isEmpty()) {
+            userRepository.save(
+                    User.builder()
+                            .id(testUserId)
+                            .email("stale_dash@example.com")
+                            .passwordHash("hashedpass")
+                            .fullName("Stale Dash Tester")
+                            .build());
+        }
+
+        preferencesRepository.findByUserId(testUserId).ifPresent(preferencesRepository::delete);
+
+        UserLearningPreferences prefs =
+                UserLearningPreferences.builder()
+                        .userId(testUserId)
+                        .currentStreak(5)
+                        .longestStreak(5)
+                        .lastActivityDate(LocalDate.now().minusDays(2))
+                        .timezone("Asia/Kolkata")
+                        .build();
+        preferencesRepository.save(prefs);
+
+        DashboardResponse response = dashboardService.buildDashboard(testUserId);
+        assertEquals(0, response.currentStreak(), "Stale streak should be 0 on the dashboard!");
     }
 }

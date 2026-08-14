@@ -832,7 +832,7 @@ public class ContentAuthoringService {
         List<AdminPathDto.AdminTopicDto> topics =
                 path.getTopics().stream()
                         .sorted(
-                                Comparator.comparingInt(
+                                Comparator.<Topic>comparingInt(
                                         t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
                         .map(
                                 t -> {
@@ -1026,7 +1026,7 @@ public class ContentAuthoringService {
         List<AdminPathDto.AdminTopicDto> topics =
                 path.getTopics().stream()
                         .sorted(
-                                Comparator.comparingInt(
+                                Comparator.<Topic>comparingInt(
                                         t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
                         .map(
                                 t ->

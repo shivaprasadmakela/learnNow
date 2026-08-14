@@ -70,4 +70,11 @@ public class UserLearningPreferences {
             this.lastActivityDate = activityDate;
         }
     }
+
+    public int getCurrentStreakForDate(LocalDate today) {
+        if (this.lastActivityDate == null || this.lastActivityDate.isBefore(today.minusDays(1))) {
+            return 0;
+        }
+        return this.currentStreak;
+    }
 }
