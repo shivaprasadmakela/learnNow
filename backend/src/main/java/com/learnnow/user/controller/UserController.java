@@ -26,7 +26,9 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<UserDto> updateProfile(@AuthenticationPrincipal Jwt jwt, @jakarta.validation.Valid @RequestBody UpdateProfileRequest req) {
+    public ResponseEntity<UserDto> updateProfile(
+            @AuthenticationPrincipal Jwt jwt,
+            @jakarta.validation.Valid @RequestBody UpdateProfileRequest req) {
         String id = jwt.getSubject();
         return ResponseEntity.ok(userService.updateUser(id, req));
     }

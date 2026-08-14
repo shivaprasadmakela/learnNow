@@ -2,9 +2,8 @@ package com.learnnow.paths.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.io.Serializable;
+import lombok.*;
 
 @Entity
 @Table(name = "subtopic_code_snippets")

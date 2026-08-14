@@ -16,18 +16,22 @@ public class ContentValidationPolicy {
             for (ContentBlock block : blocks) {
                 if ("markdown".equalsIgnoreCase(block.getType())) {
                     if (block.getBody() == null || block.getBody().isBlank()) {
-                        throw new IllegalArgumentException("Markdown content block body cannot be blank");
+                        throw new IllegalArgumentException(
+                                "Markdown content block body cannot be blank");
                     }
                 } else if ("quiz".equalsIgnoreCase(block.getType())) {
                     if (block.getQuestions() == null || block.getQuestions().isEmpty()) {
-                        throw new IllegalArgumentException("Quiz content block must contain at least one question");
+                        throw new IllegalArgumentException(
+                                "Quiz content block must contain at least one question");
                     }
                     for (QuizQuestion q : block.getQuestions()) {
                         if (q.getPrompt() == null || q.getPrompt().isBlank()) {
-                            throw new IllegalArgumentException("Quiz question prompt cannot be blank");
+                            throw new IllegalArgumentException(
+                                    "Quiz question prompt cannot be blank");
                         }
                         if (q.getCorrectAnswer() == null || q.getCorrectAnswer().isBlank()) {
-                            throw new IllegalArgumentException("Quiz question must specify a valid correct_answer");
+                            throw new IllegalArgumentException(
+                                    "Quiz question must specify a valid correct_answer");
                         }
                     }
                 }

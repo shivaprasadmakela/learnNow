@@ -1,23 +1,20 @@
 package com.learnnow.user.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
 import com.learnnow.common.exception.AuthException;
-import com.learnnow.common.exception.ValidationException;
 import com.learnnow.common.security.ResendEmailClient;
 import com.learnnow.common.security.TokenService;
 import com.learnnow.user.dto.request.LoginRequest;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.EmailVerificationTokenRepository;
 import com.learnnow.user.repository.UserRepository;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 class AuthServiceTest {
 
@@ -36,18 +33,25 @@ class AuthServiceTest {
         emailClient = new ResendEmailClient("test-key");
         tokenService = Mockito.mock(TokenService.class);
 
-        authService = new AuthService(userRepository, tokenRepository, passwordEncoder, emailClient, tokenService);
+        authService =
+                new AuthService(
+                        userRepository,
+                        tokenRepository,
+                        passwordEncoder,
+                        emailClient,
+                        tokenService);
     }
 
     @Test
     void testLoginFailsForGoogleOnlyUserWithoutPassword() {
-        User googleUser = User.builder()
-                .id("u-123")
-                .email("googleuser@example.com")
-                .passwordHash(null)
-                .googleSub("sub-12345")
-                .emailVerified(true)
-                .build();
+        User googleUser =
+                User.builder()
+                        .id("u-123")
+                        .email("googleuser@example.com")
+                        .passwordHash(null)
+                        .googleSub("sub-12345")
+                        .emailVerified(true)
+                        .build();
 
         when(userRepository.findByEmailIgnoreCase("googleuser@example.com"))
                 .thenReturn(Optional.of(googleUser));

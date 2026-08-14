@@ -2,14 +2,14 @@ package com.learnnow.learningprogress.entity;
 
 import com.learnnow.learningprogress.enums.ProgressStatus;
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
-@Table(name = "user_topic_progress", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "topic_id"})
-})
+@Table(
+        name = "user_topic_progress",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "topic_id"})})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

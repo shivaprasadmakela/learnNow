@@ -1,15 +1,15 @@
 package com.learnnow.learningprogress.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
-@Table(name = "user_learning_daily_activity", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "activity_date"})
-})
+@Table(
+        name = "user_learning_daily_activity",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "activity_date"})})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

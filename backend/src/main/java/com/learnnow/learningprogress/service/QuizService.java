@@ -7,11 +7,10 @@ import com.learnnow.learningprogress.dto.request.QuizSubmitRequest;
 import com.learnnow.learningprogress.dto.response.QuizSubmitResponse;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
+import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -23,10 +22,17 @@ public class QuizService {
 
     @Transactional
     public QuizSubmitResponse validateAndSubmitQuiz(String userId, QuizSubmitRequest request) {
-        QuizQuestion question = quizQuestionRepository.findById(request.questionId())
-                .orElseThrow(() -> new NotFoundException("Quiz question not found with ID: " + request.questionId()));
+        QuizQuestion question =
+                quizQuestionRepository
+                        .findById(request.questionId())
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Quiz question not found with ID: "
+                                                        + request.questionId()));
 
-        String expected = question.getCorrectAnswer() != null ? question.getCorrectAnswer().trim() : "";
+        String expected =
+                question.getCorrectAnswer() != null ? question.getCorrectAnswer().trim() : "";
         String actual = request.selectedOption() != null ? request.selectedOption().trim() : "";
 
         boolean isCorrect = expected.equalsIgnoreCase(actual);
@@ -37,11 +43,16 @@ public class QuizService {
             if (userId != null && !userId.isBlank()) {
                 // Load prefs once and pass to avoid duplicate lookup in
                 // activityRecordingService
-                UserLearningPreferences prefs = preferencesRepository.findByUserId(userId)
-                        .orElseGet(() -> UserLearningPreferences.builder()
-                                .userId(userId)
-                                .build());
-                activityRecordingService.recordDailyPoints(userId, ZoneId.of(prefs.getTimezone()), pointsEarned, prefs);
+                UserLearningPreferences prefs =
+                        preferencesRepository
+                                .findByUserId(userId)
+                                .orElseGet(
+                                        () ->
+                                                UserLearningPreferences.builder()
+                                                        .userId(userId)
+                                                        .build());
+                activityRecordingService.recordDailyPoints(
+                        userId, ZoneId.of(prefs.getTimezone()), pointsEarned, prefs);
             }
         }
 

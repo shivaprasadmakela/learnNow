@@ -4,10 +4,9 @@ import com.learnnow.user.dto.request.*;
 import com.learnnow.user.dto.response.*;
 import com.learnnow.user.service.AuthService;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")

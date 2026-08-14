@@ -95,6 +95,7 @@ com/learnnow/common/exception/ConflictException.class
 com/learnnow/learningprogress/dto/response/WeeklyLeaderboardEntry.class
 com/learnnow/admin/dto/request/CreateQuizQuestionRequest.class
 com/learnnow/admin/dto/request/CreatePathRequest.class
+com/learnnow/learningprogress/service/DashboardService$LeaderboardResult.class
 com/learnnow/admin/dto/request/ImportCourseRequest$ImportSubtopicRequest.class
 com/learnnow/paths/repository/TopicRepository.class
 com/learnnow/admin/dto/response/ImportResultDto.class

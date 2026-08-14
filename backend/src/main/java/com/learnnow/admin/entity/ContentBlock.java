@@ -3,11 +3,11 @@ package com.learnnow.admin.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.learnnow.paths.entity.Subtopic;
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.Instant;
-import java.util.UUID;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "content_blocks")

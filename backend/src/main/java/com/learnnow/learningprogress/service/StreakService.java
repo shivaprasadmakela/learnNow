@@ -2,8 +2,8 @@ package com.learnnow.learningprogress.service;
 
 import com.learnnow.learningprogress.config.PointsConfig;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
-import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import org.springframework.stereotype.Service;
 
 @Service
 public class StreakService {

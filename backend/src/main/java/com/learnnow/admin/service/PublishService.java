@@ -1,9 +1,9 @@
 package com.learnnow.admin.service;
 
 import com.learnnow.admin.dto.response.AdminPathDto;
-import com.learnnow.admin.service.validation.ContentValidationPolicy;
 import com.learnnow.admin.entity.ContentBlock;
 import com.learnnow.admin.repository.ContentBlockRepository;
+import com.learnnow.admin.service.validation.ContentValidationPolicy;
 import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
@@ -12,12 +12,11 @@ import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
 import com.learnnow.paths.repository.SubtopicRepository;
 import com.learnnow.paths.repository.TopicRepository;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +32,13 @@ public class PublishService {
 
     @Transactional
     public Subtopic publishSubtopic(UUID subtopicId) {
-        Subtopic subtopic = subtopicRepository.findById(subtopicId)
-                .orElseThrow(() -> new NotFoundException("subtopic_not_found"));
+        Subtopic subtopic =
+                subtopicRepository
+                        .findById(subtopicId)
+                        .orElseThrow(() -> new NotFoundException("subtopic_not_found"));
 
-        List<ContentBlock> blocks = contentBlockRepository.findBySubtopicIdOrderByOrderIndexAsc(subtopicId);
+        List<ContentBlock> blocks =
+                contentBlockRepository.findBySubtopicIdOrderByOrderIndexAsc(subtopicId);
 
         validationPolicy.validateSubtopicForPublishing(subtopic, blocks);
 
@@ -61,8 +63,9 @@ public class PublishService {
 
     @Transactional
     public AdminPathDto publishPath(UUID pathId) {
-        Path path = pathDao.findFullAdminPathById(pathId)
-                .orElseThrow(() -> new NotFoundException("path_not_found"));
+        Path path =
+                pathDao.findFullAdminPathById(pathId)
+                        .orElseThrow(() -> new NotFoundException("path_not_found"));
 
         path.setStatus(ContentStatus.PUBLISHED);
         List<Topic> topicsToSave = new java.util.ArrayList<>();
@@ -90,4 +93,3 @@ public class PublishService {
         return authoringService.getAdminPathById(saved.getId()).orElseThrow();
     }
 }
-

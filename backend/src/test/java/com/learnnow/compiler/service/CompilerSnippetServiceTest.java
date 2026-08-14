@@ -1,30 +1,27 @@
 package com.learnnow.compiler.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.learnnow.compiler.dto.request.ShareSnippetRequest;
 import com.learnnow.compiler.dto.response.SharedSnippetResponse;
 import com.learnnow.compiler.entity.SharedSnippet;
 import com.learnnow.compiler.repository.SharedSnippetRepository;
+import java.time.Instant;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class CompilerSnippetServiceTest {
 
-    @Mock
-    private SharedSnippetRepository snippetRepository;
+    @Mock private SharedSnippetRepository snippetRepository;
 
-    @InjectMocks
-    private CompilerSnippetService snippetService;
+    @InjectMocks private CompilerSnippetService snippetService;
 
     @Test
     void shareSnippet_NewSnippet_SavesAndReturnsShortId() {
@@ -52,13 +49,14 @@ class CompilerSnippetServiceTest {
         request.setLanguage("javascript");
         request.setCode("console.log('test');");
 
-        SharedSnippet existing = SharedSnippet.builder()
-                .shortId("a8K9z2")
-                .codeHash("hash123")
-                .language("javascript")
-                .code("console.log('test');")
-                .createdAt(Instant.now())
-                .build();
+        SharedSnippet existing =
+                SharedSnippet.builder()
+                        .shortId("a8K9z2")
+                        .codeHash("hash123")
+                        .language("javascript")
+                        .code("console.log('test');")
+                        .createdAt(Instant.now())
+                        .build();
 
         when(snippetRepository.findByCodeHash(anyString())).thenReturn(Optional.of(existing));
         when(snippetRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

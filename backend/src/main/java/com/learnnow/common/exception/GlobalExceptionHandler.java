@@ -1,12 +1,12 @@
 package com.learnnow.common.exception;
 
+import java.util.Map;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -46,16 +46,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValid(org.springframework.web.bind.MethodArgumentNotValidException ex) {
-        String detail = ex.getBindingResult().getFieldErrors().stream()
-                .map(err -> err.getField() + ": " + err.getDefaultMessage())
-                .collect(java.util.stream.Collectors.joining("; "));
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValid(
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        String detail =
+                ex.getBindingResult().getFieldErrors().stream()
+                        .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                        .collect(java.util.stream.Collectors.joining("; "));
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Map.of("code", "validation_failed", "message", detail));
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, String>> handleJsonNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+    public ResponseEntity<Map<String, String>> handleJsonNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("code", "invalid_json", "message", "Malformed JSON request payload."));
     }
@@ -65,14 +68,26 @@ public class GlobalExceptionHandler {
         String key = ex.getMessage();
         String resolved = resolve(key);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("code", key != null ? key : "bad_request", "message", resolved != null ? resolved : "Invalid request."));
+                .body(
+                        Map.of(
+                                "code",
+                                key != null ? key : "bad_request",
+                                "message",
+                                resolved != null ? resolved : "Invalid request."));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
         String resolved = resolve("unknown_error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("code", "unknown_error", "message", resolved != null ? resolved : "An unexpected server error occurred."));
+                .body(
+                        Map.of(
+                                "code",
+                                "unknown_error",
+                                "message",
+                                resolved != null
+                                        ? resolved
+                                        : "An unexpected server error occurred."));
     }
 
     private String resolve(String key) {
@@ -80,8 +95,6 @@ public class GlobalExceptionHandler {
                 key != null ? key : "unknown_error",
                 null,
                 key != null ? key : "An unexpected error occurred.",
-                LocaleContextHolder.getLocale()
-        );
+                LocaleContextHolder.getLocale());
     }
 }
-

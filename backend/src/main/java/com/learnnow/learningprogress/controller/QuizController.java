@@ -19,8 +19,7 @@ public class QuizController {
 
     @PostMapping("/submit")
     public ResponseEntity<QuizSubmitResponse> submitQuiz(
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody QuizSubmitRequest request) {
+            @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody QuizSubmitRequest request) {
         String userId = jwt != null ? jwt.getSubject() : null;
         QuizSubmitResponse response = quizService.validateAndSubmitQuiz(userId, request);
         return ResponseEntity.ok(response);

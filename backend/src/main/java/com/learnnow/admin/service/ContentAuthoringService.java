@@ -8,12 +8,11 @@ import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.paths.dao.PathDao;
 import com.learnnow.paths.entity.*;
 import com.learnnow.paths.repository.*;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,73 +28,86 @@ public class ContentAuthoringService {
 
     @Transactional
     public Path createPath(CreatePathRequest request) {
-        Path path = Path.builder()
-                .title(request.title())
-                .description(request.description())
-                .category(request.category() != null ? request.category() : "General")
-                .managedBy(request.managedBy() != null ? request.managedBy() : "learnNow")
-                .status(ContentStatus.DRAFT)
-                .build();
+        Path path =
+                Path.builder()
+                        .title(request.title())
+                        .description(request.description())
+                        .category(request.category() != null ? request.category() : "General")
+                        .managedBy(request.managedBy() != null ? request.managedBy() : "learnNow")
+                        .status(ContentStatus.DRAFT)
+                        .build();
         return pathRepository.save(path);
     }
 
     @Transactional
     public Topic createTopic(UUID pathId, CreateTopicRequest request) {
-        Path path = pathRepository.findById(pathId)
-                .orElseThrow(() -> new NotFoundException("path_not_found"));
+        Path path =
+                pathRepository
+                        .findById(pathId)
+                        .orElseThrow(() -> new NotFoundException("path_not_found"));
 
-        Topic topic = Topic.builder()
-                .path(path)
-                .title(request.title())
-                .description(request.description())
-                .category(request.category() != null ? request.category() : "course")
-                .duration(request.duration() != null ? request.duration() : "1 hour")
-                .status(ContentStatus.DRAFT)
-                .build();
+        Topic topic =
+                Topic.builder()
+                        .path(path)
+                        .title(request.title())
+                        .description(request.description())
+                        .category(request.category() != null ? request.category() : "course")
+                        .duration(request.duration() != null ? request.duration() : "1 hour")
+                        .status(ContentStatus.DRAFT)
+                        .build();
         return topicRepository.save(topic);
     }
 
     @Transactional
     public Subtopic createSubtopic(UUID topicId, CreateSubtopicRequest request) {
-        Topic topic = topicRepository.findById(topicId)
-                .orElseThrow(() -> new NotFoundException("topic_not_found"));
+        Topic topic =
+                topicRepository
+                        .findById(topicId)
+                        .orElseThrow(() -> new NotFoundException("topic_not_found"));
 
-        Subtopic subtopic = Subtopic.builder()
-                .topic(topic)
-                .title(request.title())
-                .content(request.content())
-                .orderIndex(request.orderIndex())
-                .status(ContentStatus.DRAFT)
-                .version(1)
-                .build();
+        Subtopic subtopic =
+                Subtopic.builder()
+                        .topic(topic)
+                        .title(request.title())
+                        .content(request.content())
+                        .orderIndex(request.orderIndex())
+                        .status(ContentStatus.DRAFT)
+                        .version(1)
+                        .build();
         return subtopicRepository.save(subtopic);
     }
 
     @Transactional
     public ContentBlock addContentBlock(UUID subtopicId, CreateContentBlockRequest request) {
-        Subtopic subtopic = subtopicRepository.findById(subtopicId)
-                .orElseThrow(() -> new NotFoundException("subtopic_not_found"));
+        Subtopic subtopic =
+                subtopicRepository
+                        .findById(subtopicId)
+                        .orElseThrow(() -> new NotFoundException("subtopic_not_found"));
 
-        ContentBlock block = ContentBlock.builder()
-                .subtopic(subtopic)
-                .orderIndex(request.orderIndex())
-                .type(request.type())
-                .body(request.body())
-                .build();
+        ContentBlock block =
+                ContentBlock.builder()
+                        .subtopic(subtopic)
+                        .orderIndex(request.orderIndex())
+                        .type(request.type())
+                        .body(request.body())
+                        .build();
         ContentBlock savedBlock = contentBlockRepository.save(block);
 
         if (request.questions() != null && !request.questions().isEmpty()) {
-            List<QuizQuestion> questions = request.questions().stream()
-                    .map(q -> QuizQuestion.builder()
-                            .block(savedBlock)
-                            .kind(q.kind())
-                            .prompt(q.prompt())
-                            .options(q.options())
-                            .correctAnswer(q.correctAnswer())
-                            .explanation(q.explanation())
-                            .points(q.points() > 0 ? q.points() : 5)
-                            .build())
-                    .toList();
+            List<QuizQuestion> questions =
+                    request.questions().stream()
+                            .map(
+                                    q ->
+                                            QuizQuestion.builder()
+                                                    .block(savedBlock)
+                                                    .kind(q.kind())
+                                                    .prompt(q.prompt())
+                                                    .options(q.options())
+                                                    .correctAnswer(q.correctAnswer())
+                                                    .explanation(q.explanation())
+                                                    .points(q.points() > 0 ? q.points() : 5)
+                                                    .build())
+                            .toList();
             quizQuestionRepository.saveAll(questions);
             savedBlock.setQuestions(questions);
         }
@@ -105,23 +117,21 @@ public class ContentAuthoringService {
 
     @Transactional(readOnly = true)
     public List<AdminPathDto> getAllAdminPaths() {
-        return pathDao.findAllWithTopics().stream()
-                .map(this::toAdminPathSummaryDto)
-                .toList();
+        return pathDao.findAllWithTopics().stream().map(this::toAdminPathSummaryDto).toList();
     }
 
     @Transactional(readOnly = true)
     public java.util.Optional<AdminPathDto> getAdminPathById(UUID pathId) {
-        return pathDao.findFullAdminPathById(pathId)
-                .map(this::toAdminPathDto);
+        return pathDao.findFullAdminPathById(pathId).map(this::toAdminPathDto);
     }
 
     @Transactional
     public AdminPathDto saveOrUpdatePath(AdminPathDto request) {
         Path path;
         if (request.id() != null && pathRepository.existsById(request.id())) {
-            path = pathDao.findFullAdminPathById(request.id())
-                    .orElseGet(() -> pathRepository.findById(request.id()).orElseThrow());
+            path =
+                    pathDao.findFullAdminPathById(request.id())
+                            .orElseGet(() -> pathRepository.findById(request.id()).orElseThrow());
         } else {
             path = new Path();
         }
@@ -178,8 +188,10 @@ public class ContentAuthoringService {
                         String prereqsJson = "[]";
                         if (stReq.prerequisites() != null) {
                             try {
-                                prereqsJson = objectMapper.writeValueAsString(stReq.prerequisites());
-                            } catch (Exception ignored) {}
+                                prereqsJson =
+                                        objectMapper.writeValueAsString(stReq.prerequisites());
+                            } catch (Exception ignored) {
+                            }
                         }
 
                         Subtopic subtopic;
@@ -192,17 +204,22 @@ public class ContentAuthoringService {
 
                         subtopic.setTitle(stReq.title());
                         subtopic.setContent(stReq.content());
-                        subtopic.setOrderIndex(stReq.orderIndex() > 0 ? stReq.orderIndex() : stIdx++);
+                        subtopic.setOrderIndex(
+                                stReq.orderIndex() > 0 ? stReq.orderIndex() : stIdx++);
                         subtopic.setStatus(parseStatus(stReq.status()));
                         subtopic.setLevel(stReq.level() != null ? stReq.level() : "beginner");
                         subtopic.setTrack(stReq.track() != null ? stReq.track() : "concept");
                         subtopic.setPrerequisites(prereqsJson);
                         subtopic.setVideoUrl(stReq.videoUrl());
-                        subtopic.setEstimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5);
+                        subtopic.setEstimatedMinutes(
+                                stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0
+                                        ? stReq.estimatedMinutes()
+                                        : 5);
 
                         // Code Snippets in-place update
                         if (stReq.codeSnippets() != null) {
-                            java.util.Map<String, SubtopicCodeSnippet> existingSnippetsMap = new java.util.HashMap<>();
+                            java.util.Map<String, SubtopicCodeSnippet> existingSnippetsMap =
+                                    new java.util.HashMap<>();
                             if (subtopic.getCodeSnippets() != null) {
                                 for (SubtopicCodeSnippet sn : subtopic.getCodeSnippets()) {
                                     if (sn.getId() != null) {
@@ -210,7 +227,8 @@ public class ContentAuthoringService {
                                     }
                                 }
                             }
-                            java.util.List<SubtopicCodeSnippet> updatedSnippetsList = new java.util.ArrayList<>();
+                            java.util.List<SubtopicCodeSnippet> updatedSnippetsList =
+                                    new java.util.ArrayList<>();
                             int snIdx = 1;
                             for (AdminPathDto.AdminCodeSnippetDto snReq : stReq.codeSnippets()) {
                                 String snId = snReq.id() != null ? snReq.id() : "snippet-" + snIdx;
@@ -222,13 +240,15 @@ public class ContentAuthoringService {
                                     snippet.setSubtopic(subtopic);
                                     snippet.setId(snId);
                                 }
-                                snippet.setLanguage(snReq.language() != null ? snReq.language() : "javascript");
+                                snippet.setLanguage(
+                                        snReq.language() != null ? snReq.language() : "javascript");
                                 snippet.setLabel(snReq.label());
                                 snippet.setCode(snReq.code() != null ? snReq.code() : "");
                                 snippet.setExpectedOutput(snReq.expectedOutput());
                                 snippet.setRunnable(snReq.runnable() == null || snReq.runnable());
                                 snippet.setEditable(snReq.editable() == null || snReq.editable());
-                                snippet.setOrderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++);
+                                snippet.setOrderIndex(
+                                        snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++);
                                 updatedSnippetsList.add(snippet);
                             }
                             if (subtopic.getCodeSnippets() == null) {
@@ -240,24 +260,33 @@ public class ContentAuthoringService {
 
                         // Quiz Questions in-place update
                         if (stReq.questions() != null) {
-                            ContentBlock quizBlock = subtopic.getBlocks() != null ? subtopic.getBlocks().stream()
-                                    .filter(b -> "quiz".equalsIgnoreCase(b.getType()))
-                                    .findFirst()
-                                    .orElse(null) : null;
+                            ContentBlock quizBlock =
+                                    subtopic.getBlocks() != null
+                                            ? subtopic.getBlocks().stream()
+                                                    .filter(
+                                                            b ->
+                                                                    "quiz"
+                                                                            .equalsIgnoreCase(
+                                                                                    b.getType()))
+                                                    .findFirst()
+                                                    .orElse(null)
+                                            : null;
 
                             if (quizBlock == null) {
-                                quizBlock = ContentBlock.builder()
-                                        .subtopic(subtopic)
-                                        .type("quiz")
-                                        .orderIndex(1)
-                                        .build();
+                                quizBlock =
+                                        ContentBlock.builder()
+                                                .subtopic(subtopic)
+                                                .type("quiz")
+                                                .orderIndex(1)
+                                                .build();
                                 if (subtopic.getBlocks() == null) {
                                     subtopic.setBlocks(new java.util.ArrayList<>());
                                 }
                                 subtopic.getBlocks().add(quizBlock);
                             }
 
-                            java.util.Map<UUID, QuizQuestion> existingQuestionsMap = new java.util.HashMap<>();
+                            java.util.Map<UUID, QuizQuestion> existingQuestionsMap =
+                                    new java.util.HashMap<>();
                             if (quizBlock.getQuestions() != null) {
                                 for (QuizQuestion q : quizBlock.getQuestions()) {
                                     if (q.getId() != null) {
@@ -265,16 +294,20 @@ public class ContentAuthoringService {
                                     }
                                 }
                             }
-                            java.util.List<QuizQuestion> updatedQuestionsList = new java.util.ArrayList<>();
+                            java.util.List<QuizQuestion> updatedQuestionsList =
+                                    new java.util.ArrayList<>();
                             for (AdminPathDto.AdminQuizQuestionDto qReq : stReq.questions()) {
                                 String optionsJson = "[]";
                                 if (qReq.options() != null) {
                                     try {
-                                        optionsJson = objectMapper.writeValueAsString(qReq.options());
-                                    } catch (Exception ignored) {}
+                                        optionsJson =
+                                                objectMapper.writeValueAsString(qReq.options());
+                                    } catch (Exception ignored) {
+                                    }
                                 }
                                 QuizQuestion q;
-                                if (qReq.id() != null && existingQuestionsMap.containsKey(qReq.id())) {
+                                if (qReq.id() != null
+                                        && existingQuestionsMap.containsKey(qReq.id())) {
                                     q = existingQuestionsMap.remove(qReq.id());
                                 } else {
                                     q = new QuizQuestion();
@@ -283,7 +316,8 @@ public class ContentAuthoringService {
                                 q.setKind(qReq.kind() != null ? qReq.kind() : "mcq");
                                 q.setPrompt(qReq.prompt());
                                 q.setOptions(optionsJson);
-                                q.setCorrectAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "");
+                                q.setCorrectAnswer(
+                                        qReq.correctAnswer() != null ? qReq.correctAnswer() : "");
                                 q.setExplanation(qReq.explanation());
                                 q.setPoints(qReq.points() > 0 ? qReq.points() : 5);
                                 updatedQuestionsList.add(q);
@@ -322,7 +356,8 @@ public class ContentAuthoringService {
     @Transactional
     public void deletePath(UUID pathId) {
         if (!pathRepository.existsById(pathId)) {
-            throw new com.learnnow.common.exception.NotFoundException("Path not found with id: " + pathId);
+            throw new com.learnnow.common.exception.NotFoundException(
+                    "Path not found with id: " + pathId);
         }
         // Native SQL DELETE lets PostgreSQL ON DELETE CASCADE handle the entire
         // entity tree in a single round-trip, avoiding Hibernate's N+1 cascade
@@ -337,14 +372,19 @@ public class ContentAuthoringService {
         if (request.pathId() == null) {
             // CREATE mode: check if path with same title exists
             if (request.title() != null && !request.title().isBlank()) {
-                pathRepository.findByTitleIgnoreCase(request.title().trim()).ifPresent(p -> {
-                    conflicts.add(new ImportConflictItemDto(
-                            "PATH",
-                            p.getTitle(),
-                            p.getId(),
-                            "A learning path titled '" + p.getTitle() + "' already exists."
-                    ));
-                });
+                pathRepository
+                        .findByTitleIgnoreCase(request.title().trim())
+                        .ifPresent(
+                                p -> {
+                                    conflicts.add(
+                                            new ImportConflictItemDto(
+                                                    "PATH",
+                                                    p.getTitle(),
+                                                    p.getId(),
+                                                    "A learning path titled '"
+                                                            + p.getTitle()
+                                                            + "' already exists."));
+                                });
             }
         } else {
             // APPEND mode: check existing topics in target path
@@ -355,35 +395,62 @@ public class ContentAuthoringService {
                     String tTitle = tReq.title().trim();
 
                     existingPath.getTopics().stream()
-                            .filter(t -> t.getTitle() != null && t.getTitle().equalsIgnoreCase(tTitle))
+                            .filter(
+                                    t ->
+                                            t.getTitle() != null
+                                                    && t.getTitle().equalsIgnoreCase(tTitle))
                             .findFirst()
-                            .ifPresent(existingTopic -> {
-                                conflicts.add(new ImportConflictItemDto(
-                                        "TOPIC",
-                                        existingTopic.getTitle(),
-                                        existingTopic.getId(),
-                                        "Topic '" + existingTopic.getTitle() + "' already exists in path '" + existingPath.getTitle() + "'."
-                                ));
+                            .ifPresent(
+                                    existingTopic -> {
+                                        conflicts.add(
+                                                new ImportConflictItemDto(
+                                                        "TOPIC",
+                                                        existingTopic.getTitle(),
+                                                        existingTopic.getId(),
+                                                        "Topic '"
+                                                                + existingTopic.getTitle()
+                                                                + "' already exists in path '"
+                                                                + existingPath.getTitle()
+                                                                + "'."));
 
-                                if (tReq.subtopics() != null) {
-                                    for (ImportCourseRequest.ImportSubtopicRequest stReq : tReq.subtopics()) {
-                                        if (stReq.title() == null || stReq.title().isBlank()) continue;
-                                        String stTitle = stReq.title().trim();
+                                        if (tReq.subtopics() != null) {
+                                            for (ImportCourseRequest.ImportSubtopicRequest stReq :
+                                                    tReq.subtopics()) {
+                                                if (stReq.title() == null
+                                                        || stReq.title().isBlank()) continue;
+                                                String stTitle = stReq.title().trim();
 
-                                        existingTopic.getSubtopics().stream()
-                                                .filter(st -> st.getTitle() != null && st.getTitle().equalsIgnoreCase(stTitle))
-                                                .findFirst()
-                                                .ifPresent(existingSub -> {
-                                                    conflicts.add(new ImportConflictItemDto(
-                                                            "SUBTOPIC",
-                                                            existingSub.getTitle(),
-                                                            existingSub.getId(),
-                                                            "Subtopic '" + existingSub.getTitle() + "' already exists in topic '" + existingTopic.getTitle() + "'."
-                                                    ));
-                                                });
-                                    }
-                                }
-                            });
+                                                existingTopic.getSubtopics().stream()
+                                                        .filter(
+                                                                st ->
+                                                                        st.getTitle() != null
+                                                                                && st.getTitle()
+                                                                                        .equalsIgnoreCase(
+                                                                                                stTitle))
+                                                        .findFirst()
+                                                        .ifPresent(
+                                                                existingSub -> {
+                                                                    conflicts.add(
+                                                                            new ImportConflictItemDto(
+                                                                                    "SUBTOPIC",
+                                                                                    existingSub
+                                                                                            .getTitle(),
+                                                                                    existingSub
+                                                                                            .getId(),
+                                                                                    "Subtopic '"
+                                                                                            + existingSub
+                                                                                                    .getTitle()
+                                                                                            + "' already"
+                                                                                            + " exists"
+                                                                                            + " in topic"
+                                                                                            + " '"
+                                                                                            + existingTopic
+                                                                                                    .getTitle()
+                                                                                            + "'."));
+                                                                });
+                                            }
+                                        }
+                                    });
                 }
             }
         }
@@ -393,9 +460,10 @@ public class ContentAuthoringService {
 
     @Transactional
     public ImportResultDto importCourse(ImportCourseRequest request) {
-        String strategy = request.conflictStrategy() != null && !request.conflictStrategy().isBlank()
-                ? request.conflictStrategy().toUpperCase()
-                : "FAIL_ON_CONFLICT";
+        String strategy =
+                request.conflictStrategy() != null && !request.conflictStrategy().isBlank()
+                        ? request.conflictStrategy().toUpperCase()
+                        : "FAIL_ON_CONFLICT";
 
         // Pre-check for conflicts if default strategy or explicitly requested
         if ("FAIL_ON_CONFLICT".equals(strategy)) {
@@ -408,10 +476,12 @@ public class ContentAuthoringService {
 
         if (request.pathId() == null && strategy.equals("FAIL_ON_CONFLICT")) {
             if (request.title() == null || request.title().isBlank()) {
-                throw new com.learnnow.common.exception.ValidationException("title is required when creating a new course");
+                throw new com.learnnow.common.exception.ValidationException(
+                        "title is required when creating a new course");
             }
             if (request.description() == null || request.description().isBlank()) {
-                throw new com.learnnow.common.exception.ValidationException("description is required when creating a new course");
+                throw new com.learnnow.common.exception.ValidationException(
+                        "description is required when creating a new course");
             }
         }
 
@@ -420,38 +490,59 @@ public class ContentAuthoringService {
         int startOrderIndex;
 
         if (isAppend) {
-            path = pathRepository.findById(request.pathId())
-                    .orElseThrow(() -> new com.learnnow.common.exception.NotFoundException("path_not_found"));
-            startOrderIndex = path.getTopics().stream()
-                    .mapToInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0)
-                    .max()
-                    .orElse(0) + 1;
+            path =
+                    pathRepository
+                            .findById(request.pathId())
+                            .orElseThrow(
+                                    () ->
+                                            new com.learnnow.common.exception.NotFoundException(
+                                                    "path_not_found"));
+            startOrderIndex =
+                    path.getTopics().stream()
+                                    .mapToInt(
+                                            t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0)
+                                    .max()
+                                    .orElse(0)
+                            + 1;
         } else {
-            java.util.Optional<Path> existingPathOpt = (request.title() != null && !request.title().isBlank())
-                    ? pathRepository.findByTitleIgnoreCase(request.title().trim())
-                    : java.util.Optional.empty();
+            java.util.Optional<Path> existingPathOpt =
+                    (request.title() != null && !request.title().isBlank())
+                            ? pathRepository.findByTitleIgnoreCase(request.title().trim())
+                            : java.util.Optional.empty();
 
             if (existingPathOpt.isPresent() && "OVERWRITE".equals(strategy)) {
                 path = existingPathOpt.get();
                 if (request.description() != null) path.setDescription(request.description());
                 if (request.category() != null) path.setCategory(request.category());
-                startOrderIndex = path.getTopics().stream()
-                        .mapToInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0)
-                        .max()
-                        .orElse(0) + 1;
+                startOrderIndex =
+                        path.getTopics().stream()
+                                        .mapToInt(
+                                                t ->
+                                                        t.getOrderIndex() != null
+                                                                ? t.getOrderIndex()
+                                                                : 0)
+                                        .max()
+                                        .orElse(0)
+                                + 1;
             } else {
                 String finalTitle = request.title() != null ? request.title() : "Untitled Course";
                 if (existingPathOpt.isPresent() && "KEEP_BOTH".equals(strategy)) {
                     finalTitle = finalTitle + " (Imported)";
                 }
 
-                path = Path.builder()
-                        .title(finalTitle)
-                        .description(request.description() != null ? request.description() : "")
-                        .category(request.category() != null ? request.category() : "Backend")
-                        .managedBy(request.managedBy() != null ? request.managedBy() : "learnNow")
-                        .status(ContentStatus.DRAFT)
-                        .build();
+                path =
+                        Path.builder()
+                                .title(finalTitle)
+                                .description(
+                                        request.description() != null ? request.description() : "")
+                                .category(
+                                        request.category() != null ? request.category() : "Backend")
+                                .managedBy(
+                                        request.managedBy() != null
+                                                ? request.managedBy()
+                                                : "learnNow")
+                                .status(ContentStatus.DRAFT)
+                                .build();
                 startOrderIndex = 1;
             }
         }
@@ -467,9 +558,14 @@ public class ContentAuthoringService {
                 final String origTTitle = tReq.title().trim();
                 String tTitle = origTTitle;
 
-                java.util.Optional<Topic> existingTopicOpt = path.getTopics().stream()
-                        .filter(t -> t.getTitle() != null && t.getTitle().equalsIgnoreCase(origTTitle))
-                        .findFirst();
+                java.util.Optional<Topic> existingTopicOpt =
+                        path.getTopics().stream()
+                                .filter(
+                                        t ->
+                                                t.getTitle() != null
+                                                        && t.getTitle()
+                                                                .equalsIgnoreCase(origTTitle))
+                                .findFirst();
 
                 if (existingTopicOpt.isPresent()) {
                     if ("SKIP_EXISTING".equals(strategy)) {
@@ -487,31 +583,41 @@ public class ContentAuthoringService {
                     if (tReq.duration() != null) topic.setDuration(tReq.duration());
                 } else {
                     topicCount++;
-                    topic = Topic.builder()
-                            .title(tTitle)
-                            .description(tReq.description())
-                            .category(tReq.category() != null ? tReq.category() : "course")
-                            .duration(tReq.duration() != null ? tReq.duration() : "1 hour")
-                            .orderIndex(tIdx++)
-                            .status(ContentStatus.DRAFT)
-                            .path(path)
-                            .build();
+                    topic =
+                            Topic.builder()
+                                    .title(tTitle)
+                                    .description(tReq.description())
+                                    .category(tReq.category() != null ? tReq.category() : "course")
+                                    .duration(tReq.duration() != null ? tReq.duration() : "1 hour")
+                                    .orderIndex(tIdx++)
+                                    .status(ContentStatus.DRAFT)
+                                    .path(path)
+                                    .build();
                     path.getTopics().add(topic);
                 }
 
                 if (tReq.subtopics() != null) {
-                    int stIdx = topic.getSubtopics().stream()
-                            .mapToInt(Subtopic::getOrderIndex)
-                            .max().orElse(0) + 1;
+                    int stIdx =
+                            topic.getSubtopics().stream()
+                                            .mapToInt(Subtopic::getOrderIndex)
+                                            .max()
+                                            .orElse(0)
+                                    + 1;
 
                     for (ImportCourseRequest.ImportSubtopicRequest stReq : tReq.subtopics()) {
                         if (stReq.title() == null || stReq.title().isBlank()) continue;
                         final String origStTitle = stReq.title().trim();
                         String stTitle = origStTitle;
 
-                        java.util.Optional<Subtopic> existingSubOpt = topic.getSubtopics().stream()
-                                .filter(st -> st.getTitle() != null && st.getTitle().equalsIgnoreCase(origStTitle))
-                                .findFirst();
+                        java.util.Optional<Subtopic> existingSubOpt =
+                                topic.getSubtopics().stream()
+                                        .filter(
+                                                st ->
+                                                        st.getTitle() != null
+                                                                && st.getTitle()
+                                                                        .equalsIgnoreCase(
+                                                                                origStTitle))
+                                        .findFirst();
 
                         if (existingSubOpt.isPresent()) {
                             if ("SKIP_EXISTING".equals(strategy)) {
@@ -525,8 +631,10 @@ public class ContentAuthoringService {
                         String prereqsJson = "[]";
                         if (stReq.prerequisites() != null) {
                             try {
-                                prereqsJson = objectMapper.writeValueAsString(stReq.prerequisites());
-                            } catch (Exception ignored) {}
+                                prereqsJson =
+                                        objectMapper.writeValueAsString(stReq.prerequisites());
+                            } catch (Exception ignored) {
+                            }
                         }
 
                         Subtopic subtopic;
@@ -537,72 +645,110 @@ public class ContentAuthoringService {
                             subtopic.setTrack(stReq.track() != null ? stReq.track() : "concept");
                             subtopic.setPrerequisites(prereqsJson);
                             subtopic.setVideoUrl(stReq.videoUrl());
-                            subtopic.setEstimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5);
+                            subtopic.setEstimatedMinutes(
+                                    stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0
+                                            ? stReq.estimatedMinutes()
+                                            : 5);
                             subtopic.getBlocks().clear();
                             subtopic.getCodeSnippets().clear();
                         } else {
                             subtopicCount++;
-                            subtopic = Subtopic.builder()
-                                    .title(stTitle)
-                                    .content(stReq.content())
-                                    .orderIndex(stIdx++)
-                                    .status(ContentStatus.DRAFT)
-                                    .version(1)
-                                    .level(stReq.level() != null ? stReq.level() : "beginner")
-                                    .track(stReq.track() != null ? stReq.track() : "concept")
-                                    .prerequisites(prereqsJson)
-                                    .videoUrl(stReq.videoUrl())
-                                    .estimatedMinutes(stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0 ? stReq.estimatedMinutes() : 5)
-                                    .topic(topic)
-                                    .build();
+                            subtopic =
+                                    Subtopic.builder()
+                                            .title(stTitle)
+                                            .content(stReq.content())
+                                            .orderIndex(stIdx++)
+                                            .status(ContentStatus.DRAFT)
+                                            .version(1)
+                                            .level(
+                                                    stReq.level() != null
+                                                            ? stReq.level()
+                                                            : "beginner")
+                                            .track(
+                                                    stReq.track() != null
+                                                            ? stReq.track()
+                                                            : "concept")
+                                            .prerequisites(prereqsJson)
+                                            .videoUrl(stReq.videoUrl())
+                                            .estimatedMinutes(
+                                                    stReq.estimatedMinutes() != null
+                                                                    && stReq.estimatedMinutes() > 0
+                                                            ? stReq.estimatedMinutes()
+                                                            : 5)
+                                            .topic(topic)
+                                            .build();
                             topic.getSubtopics().add(subtopic);
                         }
 
                         if (stReq.codeSnippets() != null && !stReq.codeSnippets().isEmpty()) {
-                            java.util.List<SubtopicCodeSnippet> snippets = new java.util.ArrayList<>();
+                            java.util.List<SubtopicCodeSnippet> snippets =
+                                    new java.util.ArrayList<>();
                             int snIdx = 1;
-                            for (ImportCourseRequest.ImportCodeSnippetRequest snReq : stReq.codeSnippets()) {
-                                SubtopicCodeSnippet snippet = SubtopicCodeSnippet.builder()
-                                        .subtopic(subtopic)
-                                        .id(snReq.id() != null ? snReq.id() : "snippet-" + snIdx)
-                                        .language(snReq.language() != null ? snReq.language() : "javascript")
-                                        .label(snReq.label())
-                                        .code(snReq.code() != null ? snReq.code() : "")
-                                        .expectedOutput(snReq.expectedOutput())
-                                        .runnable(snReq.runnable() == null || snReq.runnable())
-                                        .editable(snReq.editable() == null || snReq.editable())
-                                        .orderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++)
-                                        .build();
+                            for (ImportCourseRequest.ImportCodeSnippetRequest snReq :
+                                    stReq.codeSnippets()) {
+                                SubtopicCodeSnippet snippet =
+                                        SubtopicCodeSnippet.builder()
+                                                .subtopic(subtopic)
+                                                .id(
+                                                        snReq.id() != null
+                                                                ? snReq.id()
+                                                                : "snippet-" + snIdx)
+                                                .language(
+                                                        snReq.language() != null
+                                                                ? snReq.language()
+                                                                : "javascript")
+                                                .label(snReq.label())
+                                                .code(snReq.code() != null ? snReq.code() : "")
+                                                .expectedOutput(snReq.expectedOutput())
+                                                .runnable(
+                                                        snReq.runnable() == null
+                                                                || snReq.runnable())
+                                                .editable(
+                                                        snReq.editable() == null
+                                                                || snReq.editable())
+                                                .orderIndex(
+                                                        snReq.orderIndex() != null
+                                                                ? snReq.orderIndex()
+                                                                : snIdx++)
+                                                .build();
                                 snippets.add(snippet);
                             }
                             subtopic.setCodeSnippets(snippets);
                         }
 
                         if (stReq.questions() != null && !stReq.questions().isEmpty()) {
-                            ContentBlock block = ContentBlock.builder()
-                                    .subtopic(subtopic)
-                                    .type("quiz")
-                                    .orderIndex(1)
-                                    .build();
+                            ContentBlock block =
+                                    ContentBlock.builder()
+                                            .subtopic(subtopic)
+                                            .type("quiz")
+                                            .orderIndex(1)
+                                            .build();
 
                             List<QuizQuestion> questions = new java.util.ArrayList<>();
-                            for (ImportCourseRequest.ImportQuestionRequest qReq : stReq.questions()) {
+                            for (ImportCourseRequest.ImportQuestionRequest qReq :
+                                    stReq.questions()) {
                                 questionCount++;
                                 String optionsJson = "[]";
                                 if (qReq.options() != null) {
                                     try {
-                                        optionsJson = objectMapper.writeValueAsString(qReq.options());
-                                    } catch (Exception ignored) {}
+                                        optionsJson =
+                                                objectMapper.writeValueAsString(qReq.options());
+                                    } catch (Exception ignored) {
+                                    }
                                 }
-                                QuizQuestion q = QuizQuestion.builder()
-                                        .block(block)
-                                        .kind(qReq.kind() != null ? qReq.kind() : "mcq")
-                                        .prompt(qReq.prompt())
-                                        .options(optionsJson)
-                                        .correctAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "")
-                                        .explanation(qReq.explanation())
-                                        .points(qReq.points() > 0 ? qReq.points() : 5)
-                                        .build();
+                                QuizQuestion q =
+                                        QuizQuestion.builder()
+                                                .block(block)
+                                                .kind(qReq.kind() != null ? qReq.kind() : "mcq")
+                                                .prompt(qReq.prompt())
+                                                .options(optionsJson)
+                                                .correctAnswer(
+                                                        qReq.correctAnswer() != null
+                                                                ? qReq.correctAnswer()
+                                                                : "")
+                                                .explanation(qReq.explanation())
+                                                .points(qReq.points() > 0 ? qReq.points() : 5)
+                                                .build();
                                 questions.add(q);
                             }
                             block.setQuestions(questions);
@@ -622,10 +768,8 @@ public class ContentAuthoringService {
                 subtopicCount,
                 questionCount,
                 saved.getStatus().name(),
-                isAppend ? "APPENDED" : "CREATED"
-        );
+                isAppend ? "APPENDED" : "CREATED");
     }
-
 
     private ContentStatus parseStatus(String status) {
         if (status == null) return ContentStatus.DRAFT;
@@ -637,87 +781,188 @@ public class ContentAuthoringService {
     }
 
     private AdminPathDto toAdminPathDto(Path path) {
-        List<AdminPathDto.AdminTopicDto> topics = path.getTopics().stream()
-                .sorted(java.util.Comparator.comparingInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
-                .map(t -> {
-                    List<AdminPathDto.AdminSubtopicDto> subtopics = t.getSubtopics().stream()
-                            .sorted(java.util.Comparator.comparingInt(st -> st.getOrderIndex()))
-                            .map(st -> {
-                                List<AdminPathDto.AdminQuizQuestionDto> questions = st.getBlocks() != null ? st.getBlocks().stream()
-                                        .filter(b -> "quiz".equalsIgnoreCase(b.getType()) && b.getQuestions() != null)
-                                        .flatMap(b -> b.getQuestions().stream())
-                                        .map(q -> {
-                                            List<String> optsList = List.of();
-                                            if (q.getOptions() != null) {
-                                                try {
-                                                    optsList = objectMapper.readValue(
-                                                            q.getOptions(),
-                                                            new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
-                                                    );
-                                                } catch (Exception ignored) {}
-                                            }
-                                            return new AdminPathDto.AdminQuizQuestionDto(
-                                                    q.getId(),
-                                                    q.getKind(),
-                                                    q.getPrompt(),
-                                                    optsList,
-                                                    q.getCorrectAnswer(),
-                                                    q.getExplanation(),
-                                                    q.getPoints()
-                                            );
-                                        }).toList() : List.of();
+        List<AdminPathDto.AdminTopicDto> topics =
+                path.getTopics().stream()
+                        .sorted(
+                                java.util.Comparator.comparingInt(
+                                        t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
+                        .map(
+                                t -> {
+                                    List<AdminPathDto.AdminSubtopicDto> subtopics =
+                                            t.getSubtopics().stream()
+                                                    .sorted(
+                                                            java.util.Comparator.comparingInt(
+                                                                    st -> st.getOrderIndex()))
+                                                    .map(
+                                                            st -> {
+                                                                List<
+                                                                                AdminPathDto
+                                                                                        .AdminQuizQuestionDto>
+                                                                        questions =
+                                                                                st.getBlocks()
+                                                                                                != null
+                                                                                        ? st
+                                                                                                .getBlocks()
+                                                                                                .stream()
+                                                                                                .filter(
+                                                                                                        b ->
+                                                                                                                "quiz"
+                                                                                                                                .equalsIgnoreCase(
+                                                                                                                                        b
+                                                                                                                                                .getType())
+                                                                                                                        && b
+                                                                                                                                        .getQuestions()
+                                                                                                                                != null)
+                                                                                                .flatMap(
+                                                                                                        b ->
+                                                                                                                b
+                                                                                                                        .getQuestions()
+                                                                                                                        .stream())
+                                                                                                .map(
+                                                                                                        q -> {
+                                                                                                            List<
+                                                                                                                            String>
+                                                                                                                    optsList =
+                                                                                                                            List
+                                                                                                                                    .of();
+                                                                                                            if (q
+                                                                                                                            .getOptions()
+                                                                                                                    != null) {
+                                                                                                                try {
+                                                                                                                    optsList =
+                                                                                                                            objectMapper
+                                                                                                                                    .readValue(
+                                                                                                                                            q
+                                                                                                                                                    .getOptions(),
+                                                                                                                                            new com
+                                                                                                                                                            .fasterxml
+                                                                                                                                                            .jackson
+                                                                                                                                                            .core
+                                                                                                                                                            .type
+                                                                                                                                                            .TypeReference<
+                                                                                                                                                    List<
+                                                                                                                                                            String>>() {});
+                                                                                                                } catch (
+                                                                                                                        Exception
+                                                                                                                                ignored) {
+                                                                                                                }
+                                                                                                            }
+                                                                                                            return new AdminPathDto
+                                                                                                                    .AdminQuizQuestionDto(
+                                                                                                                    q
+                                                                                                                            .getId(),
+                                                                                                                    q
+                                                                                                                            .getKind(),
+                                                                                                                    q
+                                                                                                                            .getPrompt(),
+                                                                                                                    optsList,
+                                                                                                                    q
+                                                                                                                            .getCorrectAnswer(),
+                                                                                                                    q
+                                                                                                                            .getExplanation(),
+                                                                                                                    q
+                                                                                                                            .getPoints());
+                                                                                                        })
+                                                                                                .toList()
+                                                                                        : List.of();
 
-                                List<String> prereqs = List.of();
-                                if (st.getPrerequisites() != null) {
-                                    try {
-                                        prereqs = objectMapper.readValue(
-                                                st.getPrerequisites(),
-                                                new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){}
-                                        );
-                                    } catch (Exception ignored) {}
-                                }
+                                                                List<String> prereqs = List.of();
+                                                                if (st.getPrerequisites() != null) {
+                                                                    try {
+                                                                        prereqs =
+                                                                                objectMapper
+                                                                                        .readValue(
+                                                                                                st
+                                                                                                        .getPrerequisites(),
+                                                                                                new com
+                                                                                                                .fasterxml
+                                                                                                                .jackson
+                                                                                                                .core
+                                                                                                                .type
+                                                                                                                .TypeReference<
+                                                                                                        List<
+                                                                                                                String>>() {});
+                                                                    } catch (Exception ignored) {
+                                                                    }
+                                                                }
 
-                                List<AdminPathDto.AdminCodeSnippetDto> snippets = st.getCodeSnippets() != null ? st.getCodeSnippets().stream()
-                                        .sorted(java.util.Comparator.comparingInt(SubtopicCodeSnippet::getOrderIndex))
-                                        .map(sn -> new AdminPathDto.AdminCodeSnippetDto(
-                                                sn.getId(),
-                                                sn.getLanguage(),
-                                                sn.getLabel(),
-                                                sn.getCode(),
-                                                sn.getExpectedOutput(),
-                                                sn.isRunnable(),
-                                                sn.isEditable(),
-                                                sn.getOrderIndex()
-                                        ))
-                                        .toList() : List.of();
+                                                                List<
+                                                                                AdminPathDto
+                                                                                        .AdminCodeSnippetDto>
+                                                                        snippets =
+                                                                                st.getCodeSnippets()
+                                                                                                != null
+                                                                                        ? st
+                                                                                                .getCodeSnippets()
+                                                                                                .stream()
+                                                                                                .sorted(
+                                                                                                        java
+                                                                                                                .util
+                                                                                                                .Comparator
+                                                                                                                .comparingInt(
+                                                                                                                        SubtopicCodeSnippet
+                                                                                                                                ::getOrderIndex))
+                                                                                                .map(
+                                                                                                        sn ->
+                                                                                                                new AdminPathDto
+                                                                                                                        .AdminCodeSnippetDto(
+                                                                                                                        sn
+                                                                                                                                .getId(),
+                                                                                                                        sn
+                                                                                                                                .getLanguage(),
+                                                                                                                        sn
+                                                                                                                                .getLabel(),
+                                                                                                                        sn
+                                                                                                                                .getCode(),
+                                                                                                                        sn
+                                                                                                                                .getExpectedOutput(),
+                                                                                                                        sn
+                                                                                                                                .isRunnable(),
+                                                                                                                        sn
+                                                                                                                                .isEditable(),
+                                                                                                                        sn
+                                                                                                                                .getOrderIndex()))
+                                                                                                .toList()
+                                                                                        : List.of();
 
-                                return new AdminPathDto.AdminSubtopicDto(
-                                        st.getId(),
-                                        st.getTitle(),
-                                        st.getContent(),
-                                        st.getOrderIndex(),
-                                        st.getStatus() != null ? st.getStatus().name() : "DRAFT",
-                                        st.getLevel() != null ? st.getLevel() : "beginner",
-                                        st.getTrack() != null ? st.getTrack() : "concept",
-                                        prereqs,
-                                        st.getVideoUrl(),
-                                        st.getEstimatedMinutes() > 0 ? st.getEstimatedMinutes() : 5,
-                                        snippets,
-                                        questions
-                                );
-                            }).toList();
+                                                                return new AdminPathDto
+                                                                        .AdminSubtopicDto(
+                                                                        st.getId(),
+                                                                        st.getTitle(),
+                                                                        st.getContent(),
+                                                                        st.getOrderIndex(),
+                                                                        st.getStatus() != null
+                                                                                ? st.getStatus()
+                                                                                        .name()
+                                                                                : "DRAFT",
+                                                                        st.getLevel() != null
+                                                                                ? st.getLevel()
+                                                                                : "beginner",
+                                                                        st.getTrack() != null
+                                                                                ? st.getTrack()
+                                                                                : "concept",
+                                                                        prereqs,
+                                                                        st.getVideoUrl(),
+                                                                        st.getEstimatedMinutes() > 0
+                                                                                ? st
+                                                                                        .getEstimatedMinutes()
+                                                                                : 5,
+                                                                        snippets,
+                                                                        questions);
+                                                            })
+                                                    .toList();
 
-                    return new AdminPathDto.AdminTopicDto(
-                            t.getId(),
-                            t.getTitle(),
-                            t.getDescription(),
-                            t.getCategory(),
-                            t.getDuration(),
-                            t.getOrderIndex() != null ? t.getOrderIndex() : 1,
-                            t.getStatus() != null ? t.getStatus().name() : "DRAFT",
-                            subtopics
-                    );
-                }).toList();
+                                    return new AdminPathDto.AdminTopicDto(
+                                            t.getId(),
+                                            t.getTitle(),
+                                            t.getDescription(),
+                                            t.getCategory(),
+                                            t.getDuration(),
+                                            t.getOrderIndex() != null ? t.getOrderIndex() : 1,
+                                            t.getStatus() != null ? t.getStatus().name() : "DRAFT",
+                                            subtopics);
+                                })
+                        .toList();
 
         return new AdminPathDto(
                 path.getId(),
@@ -726,23 +971,29 @@ public class ContentAuthoringService {
                 path.getCategory(),
                 path.getManagedBy(),
                 path.getStatus() != null ? path.getStatus().name() : "DRAFT",
-                topics
-        );
+                topics);
     }
 
     private AdminPathDto toAdminPathSummaryDto(Path path) {
-        List<AdminPathDto.AdminTopicDto> topics = path.getTopics().stream()
-                .sorted(java.util.Comparator.comparingInt(t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
-                .map(t -> new AdminPathDto.AdminTopicDto(
-                        t.getId(),
-                        t.getTitle(),
-                        t.getDescription(),
-                        t.getCategory(),
-                        t.getDuration(),
-                        t.getOrderIndex() != null ? t.getOrderIndex() : 1,
-                        t.getStatus() != null ? t.getStatus().name() : "DRAFT",
-                        List.of()
-                )).toList();
+        List<AdminPathDto.AdminTopicDto> topics =
+                path.getTopics().stream()
+                        .sorted(
+                                java.util.Comparator.comparingInt(
+                                        t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
+                        .map(
+                                t ->
+                                        new AdminPathDto.AdminTopicDto(
+                                                t.getId(),
+                                                t.getTitle(),
+                                                t.getDescription(),
+                                                t.getCategory(),
+                                                t.getDuration(),
+                                                t.getOrderIndex() != null ? t.getOrderIndex() : 1,
+                                                t.getStatus() != null
+                                                        ? t.getStatus().name()
+                                                        : "DRAFT",
+                                                List.of()))
+                        .toList();
 
         return new AdminPathDto(
                 path.getId(),
@@ -751,7 +1002,6 @@ public class ContentAuthoringService {
                 path.getCategory(),
                 path.getManagedBy(),
                 path.getStatus() != null ? path.getStatus().name() : "DRAFT",
-                topics
-        );
+                topics);
     }
 }

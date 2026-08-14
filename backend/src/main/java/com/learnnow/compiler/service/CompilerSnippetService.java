@@ -2,17 +2,11 @@ package com.learnnow.compiler.service;
 
 import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.compiler.dto.request.ExecuteCodeRequest;
-import com.learnnow.compiler.dto.response.ExecuteCodeResponse;
 import com.learnnow.compiler.dto.request.ShareSnippetRequest;
+import com.learnnow.compiler.dto.response.ExecuteCodeResponse;
 import com.learnnow.compiler.dto.response.SharedSnippetResponse;
 import com.learnnow.compiler.entity.SharedSnippet;
 import com.learnnow.compiler.repository.SharedSnippetRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,12 +16,18 @@ import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 
 @Service
 @RequiredArgsConstructor
 public class CompilerSnippetService {
 
-    private static final String ALPHANUMERIC = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
+    private static final String ALPHANUMERIC =
+            "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
     private final SharedSnippetRepository snippetRepository;
 
@@ -42,13 +42,14 @@ public class CompilerSnippetService {
         }
 
         try {
-            Map<?, ?> response = RestClient.create()
-                    .post()
-                    .uri("https://ce.judge0.com/submissions?wait=true")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(Map.class);
+            Map<?, ?> response =
+                    RestClient.create()
+                            .post()
+                            .uri("https://ce.judge0.com/submissions?wait=true")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(body)
+                            .retrieve()
+                            .body(Map.class);
 
             if (response == null) {
                 return ExecuteCodeResponse.builder()
@@ -66,7 +67,10 @@ public class CompilerSnippetService {
 
             Double timeSeconds = null;
             if (timeStr != null) {
-                try { timeSeconds = Double.parseDouble(timeStr); } catch (Exception ignored) {}
+                try {
+                    timeSeconds = Double.parseDouble(timeStr);
+                } catch (Exception ignored) {
+                }
             }
 
             Long memoryBytes = null;
@@ -140,14 +144,15 @@ public class CompilerSnippetService {
 
         // Create new unique short ID
         String shortId = generateUniqueShortId();
-        SharedSnippet newSnippet = SharedSnippet.builder()
-                .shortId(shortId)
-                .codeHash(codeHash)
-                .language(lang)
-                .code(code)
-                .createdAt(Instant.now())
-                .lastAccessedAt(Instant.now())
-                .build();
+        SharedSnippet newSnippet =
+                SharedSnippet.builder()
+                        .shortId(shortId)
+                        .codeHash(codeHash)
+                        .language(lang)
+                        .code(code)
+                        .createdAt(Instant.now())
+                        .lastAccessedAt(Instant.now())
+                        .build();
 
         SharedSnippet saved = snippetRepository.save(newSnippet);
         return toResponse(saved);
@@ -155,8 +160,13 @@ public class CompilerSnippetService {
 
     @Transactional
     public SharedSnippetResponse getSnippetByShortId(String shortId) {
-        SharedSnippet snippet = snippetRepository.findByShortId(shortId)
-                .orElseThrow(() -> new NotFoundException("Code snippet not found for ID: " + shortId));
+        SharedSnippet snippet =
+                snippetRepository
+                        .findByShortId(shortId)
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "Code snippet not found for ID: " + shortId));
 
         snippet.setLastAccessedAt(Instant.now());
         snippetRepository.save(snippet);

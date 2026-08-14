@@ -5,9 +5,5 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record QuizSubmitRequest(
-    @NotNull(message = "Question ID is required")
-    UUID questionId,
-
-    @NotBlank(message = "Selected option is required")
-    String selectedOption
-) {}
+        @NotNull(message = "Question ID is required") UUID questionId,
+        @NotBlank(message = "Selected option is required") String selectedOption) {}

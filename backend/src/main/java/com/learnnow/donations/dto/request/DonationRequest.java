@@ -29,4 +29,3 @@ public class DonationRequest {
     @Size(max = 500, message = "Message cannot exceed 500 characters")
     private String message;
 }
-

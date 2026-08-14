@@ -1,5 +1,3 @@
 package com.learnnow.user.dto.request;
 
-public record VerifyEmailRequest(
-    String token
-) {}
+public record VerifyEmailRequest(String token) {}

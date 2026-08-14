@@ -1,11 +1,10 @@
 package com.learnnow.notes.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.Instant;
 import java.util.UUID;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "topic_bookmarks")

@@ -1,10 +1,10 @@
 package com.learnnow.learningprogress.repository;
 
 import com.learnnow.learningprogress.entity.UserSubtopicProgress;
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserSubtopicProgressRepository extends JpaRepository<UserSubtopicProgress, UUID> {
 

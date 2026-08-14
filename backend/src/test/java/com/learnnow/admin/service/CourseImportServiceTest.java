@@ -1,44 +1,40 @@
 package com.learnnow.admin.service;
 
-import com.learnnow.admin.dto.response.AdminPathDto;
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.learnnow.admin.dto.request.ImportCourseRequest;
+import com.learnnow.admin.dto.response.AdminPathDto;
 import com.learnnow.admin.dto.response.ImportResultDto;
 import com.learnnow.common.exception.ValidationException;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 @ActiveProfiles("local")
 public class CourseImportServiceTest {
 
-    @Autowired
-    private ContentAuthoringService authoringService;
+    @Autowired private ContentAuthoringService authoringService;
 
-    @Autowired
-    private com.learnnow.paths.repository.PathRepository pathRepository;
+    @Autowired private com.learnnow.paths.repository.PathRepository pathRepository;
 
     private ImportCourseRequest.ImportTopicRequest makeTopic(String title, String description) {
-        ImportCourseRequest.ImportSubtopicRequest sub = new ImportCourseRequest.ImportSubtopicRequest(
-                title + " - Subtopic 1",
-                "## Content for " + title,
-                "beginner",
-                "concept",
-                List.of(),
-                null,
-                5,
-                List.of(),
-                List.of()
-        );
+        ImportCourseRequest.ImportSubtopicRequest sub =
+                new ImportCourseRequest.ImportSubtopicRequest(
+                        title + " - Subtopic 1",
+                        "## Content for " + title,
+                        "beginner",
+                        "concept",
+                        List.of(),
+                        null,
+                        5,
+                        List.of(),
+                        List.of());
         return new ImportCourseRequest.ImportTopicRequest(
-                title, description, "course", "1 hour", List.of(sub)
-        );
+                title, description, "course", "1 hour", List.of(sub));
     }
 
     // ─── Test 1: Create new course ───────────────────────────────────────────────
@@ -46,57 +42,57 @@ public class CourseImportServiceTest {
     @Test
     @Transactional
     public void testBulkImportCourseToDraft() {
-        ImportCourseRequest.ImportQuestionRequest question = new ImportCourseRequest.ImportQuestionRequest(
-                "mcq",
-                "Which pattern separates read and write models?",
-                List.of("Event Sourcing", "CQRS", "Saga", "Circuit Breaker"),
-                "CQRS",
-                "CQRS stands for Command Query Responsibility Segregation.",
-                5
-        );
+        ImportCourseRequest.ImportQuestionRequest question =
+                new ImportCourseRequest.ImportQuestionRequest(
+                        "mcq",
+                        "Which pattern separates read and write models?",
+                        List.of("Event Sourcing", "CQRS", "Saga", "Circuit Breaker"),
+                        "CQRS",
+                        "CQRS stands for Command Query Responsibility Segregation.",
+                        5);
 
-        ImportCourseRequest.ImportSubtopicRequest subtopic1 = new ImportCourseRequest.ImportSubtopicRequest(
-                "Introduction to CQRS",
-                "# CQRS Overview\n\nCommand Query Responsibility Segregation divides...",
-                "beginner",
-                "concept",
-                List.of(),
-                null,
-                5,
-                List.of(),
-                List.of(question)
-        );
+        ImportCourseRequest.ImportSubtopicRequest subtopic1 =
+                new ImportCourseRequest.ImportSubtopicRequest(
+                        "Introduction to CQRS",
+                        "# CQRS Overview\n\nCommand Query Responsibility Segregation divides...",
+                        "beginner",
+                        "concept",
+                        List.of(),
+                        null,
+                        5,
+                        List.of(),
+                        List.of(question));
 
-        ImportCourseRequest.ImportSubtopicRequest subtopic2 = new ImportCourseRequest.ImportSubtopicRequest(
-                "Event Sourcing Basics",
-                "# Event Sourcing\n\nStoring changes as a sequence of events...",
-                "beginner",
-                "concept",
-                List.of(),
-                null,
-                5,
-                List.of(),
-                List.of()
-        );
+        ImportCourseRequest.ImportSubtopicRequest subtopic2 =
+                new ImportCourseRequest.ImportSubtopicRequest(
+                        "Event Sourcing Basics",
+                        "# Event Sourcing\n\nStoring changes as a sequence of events...",
+                        "beginner",
+                        "concept",
+                        List.of(),
+                        null,
+                        5,
+                        List.of(),
+                        List.of());
 
-        ImportCourseRequest.ImportTopicRequest topic1 = new ImportCourseRequest.ImportTopicRequest(
-                "Advanced Architecture Patterns",
-                "Deep dive into CQRS and Event Sourcing",
-                "course",
-                "2 hours",
-                List.of(subtopic1, subtopic2)
-        );
+        ImportCourseRequest.ImportTopicRequest topic1 =
+                new ImportCourseRequest.ImportTopicRequest(
+                        "Advanced Architecture Patterns",
+                        "Deep dive into CQRS and Event Sourcing",
+                        "course",
+                        "2 hours",
+                        List.of(subtopic1, subtopic2));
 
         // null pathId = CREATE mode
-        ImportCourseRequest request = new ImportCourseRequest(
-                null,
-                "Distributed Systems Mastery",
-                "Complete course on designing distributed systems",
-                "Backend",
-                "learnNow",
-                "FAIL_ON_CONFLICT",
-                List.of(topic1)
-        );
+        ImportCourseRequest request =
+                new ImportCourseRequest(
+                        null,
+                        "Distributed Systems Mastery",
+                        "Complete course on designing distributed systems",
+                        "Backend",
+                        "learnNow",
+                        "FAIL_ON_CONFLICT",
+                        List.of(topic1));
 
         ImportResultDto result = authoringService.importCourse(request);
 
@@ -122,7 +118,8 @@ public class CourseImportServiceTest {
         assertEquals("Introduction to CQRS", sub1.title());
         assertEquals(1, sub1.orderIndex());
         assertEquals(1, sub1.questions().size());
-        assertEquals("Which pattern separates read and write models?", sub1.questions().get(0).prompt());
+        assertEquals(
+                "Which pattern separates read and write models?", sub1.questions().get(0).prompt());
 
         AdminPathDto.AdminSubtopicDto sub2 = topic.subtopics().get(1);
         assertEquals("Event Sourcing Basics", sub2.title());
@@ -136,41 +133,40 @@ public class CourseImportServiceTest {
     @Transactional
     public void testBulkAppendTopicsToExistingCourse() {
         // Step 1: Create a base course with 2 topics
-        ImportCourseRequest createRequest = new ImportCourseRequest(
-                null,
-                "Java Masterclass",
-                "Complete Java course",
-                "Backend",
-                "learnNow",
-                "FAIL_ON_CONFLICT",
-                List.of(
-                        makeTopic("Topic 1: Java Basics", "Fundamentals of Java"),
-                        makeTopic("Topic 2: OOP", "Object-Oriented Programming")
-                )
-        );
+        ImportCourseRequest createRequest =
+                new ImportCourseRequest(
+                        null,
+                        "Java Masterclass",
+                        "Complete Java course",
+                        "Backend",
+                        "learnNow",
+                        "FAIL_ON_CONFLICT",
+                        List.of(
+                                makeTopic("Topic 1: Java Basics", "Fundamentals of Java"),
+                                makeTopic("Topic 2: OOP", "Object-Oriented Programming")));
         ImportResultDto created = authoringService.importCourse(createRequest);
         assertNotNull(created.pathId());
         assertEquals("CREATED", created.mode());
         assertEquals(2, created.topicsCreated());
 
         // Verify initial orderIndex values
-        AdminPathDto afterCreate = authoringService.getAdminPathById(created.pathId()).orElseThrow();
+        AdminPathDto afterCreate =
+                authoringService.getAdminPathById(created.pathId()).orElseThrow();
         assertEquals(1, afterCreate.topics().get(0).orderIndex());
         assertEquals(2, afterCreate.topics().get(1).orderIndex());
 
         // Step 2: Append 2 more topics to the same path
-        ImportCourseRequest appendRequest = new ImportCourseRequest(
-                created.pathId(),  // APPEND mode
-                null,
-                null,
-                null,
-                null,
-                "FAIL_ON_CONFLICT",
-                List.of(
-                        makeTopic("Topic 3: Collections", "Java Collections Framework"),
-                        makeTopic("Topic 4: Streams", "Java Streams API")
-                )
-        );
+        ImportCourseRequest appendRequest =
+                new ImportCourseRequest(
+                        created.pathId(), // APPEND mode
+                        null,
+                        null,
+                        null,
+                        null,
+                        "FAIL_ON_CONFLICT",
+                        List.of(
+                                makeTopic("Topic 3: Collections", "Java Collections Framework"),
+                                makeTopic("Topic 4: Streams", "Java Streams API")));
         ImportResultDto appended = authoringService.importCourse(appendRequest);
 
         assertEquals(created.pathId(), appended.pathId());
@@ -179,7 +175,8 @@ public class CourseImportServiceTest {
         assertEquals(2, appended.topicsCreated());
 
         // Verify appended topics have orderIndex continuation (3, 4)
-        AdminPathDto afterAppend = authoringService.getAdminPathById(created.pathId()).orElseThrow();
+        AdminPathDto afterAppend =
+                authoringService.getAdminPathById(created.pathId()).orElseThrow();
         assertEquals(4, afterAppend.topics().size());
 
         // First 2 topics unchanged
@@ -200,15 +197,15 @@ public class CourseImportServiceTest {
     @Test
     @Transactional
     public void testCreateModeRequiresTitleAndDescription() {
-        ImportCourseRequest badRequest = new ImportCourseRequest(
-                null, // no pathId = CREATE mode
-                null, // missing title
-                null, // missing description
-                "Backend",
-                "learnNow",
-                "FAIL_ON_CONFLICT",
-                List.of(makeTopic("Some Topic", "Desc"))
-        );
+        ImportCourseRequest badRequest =
+                new ImportCourseRequest(
+                        null, // no pathId = CREATE mode
+                        null, // missing title
+                        null, // missing description
+                        "Backend",
+                        "learnNow",
+                        "FAIL_ON_CONFLICT",
+                        List.of(makeTopic("Some Topic", "Desc")));
 
         assertThrows(ValidationException.class, () -> authoringService.importCourse(badRequest));
     }
@@ -219,62 +216,66 @@ public class CourseImportServiceTest {
     @Transactional
     public void testConflictValidationAndStrategyExecution() {
         // Step 1: Initial import
-        ImportCourseRequest initialReq = new ImportCourseRequest(
-                null,
-                "Microservices System Design",
-                "Learn microservices architecture",
-                "Backend",
-                "learnNow",
-                "FAIL_ON_CONFLICT",
-                List.of(makeTopic("API Gateway Pattern", "Overview of API Gateways"))
-        );
+        ImportCourseRequest initialReq =
+                new ImportCourseRequest(
+                        null,
+                        "Microservices System Design",
+                        "Learn microservices architecture",
+                        "Backend",
+                        "learnNow",
+                        "FAIL_ON_CONFLICT",
+                        List.of(makeTopic("API Gateway Pattern", "Overview of API Gateways")));
         ImportResultDto initialResult = authoringService.importCourse(initialReq);
 
         // Step 2: Validate collision dry-run
-        ImportCourseRequest duplicateReq = new ImportCourseRequest(
-                null,
-                "Microservices System Design",
-                "New description",
-                "Backend",
-                "learnNow",
-                "FAIL_ON_CONFLICT",
-                List.of(makeTopic("API Gateway Pattern", "New topic content"))
-        );
+        ImportCourseRequest duplicateReq =
+                new ImportCourseRequest(
+                        null,
+                        "Microservices System Design",
+                        "New description",
+                        "Backend",
+                        "learnNow",
+                        "FAIL_ON_CONFLICT",
+                        List.of(makeTopic("API Gateway Pattern", "New topic content")));
 
-        com.learnnow.admin.dto.response.ImportValidationResultDto validation = authoringService.validateImportConflicts(duplicateReq);
+        com.learnnow.admin.dto.response.ImportValidationResultDto validation =
+                authoringService.validateImportConflicts(duplicateReq);
         assertTrue(validation.hasConflicts());
         assertEquals(1, validation.conflicts().size());
         assertEquals("PATH", validation.conflicts().get(0).level());
         assertEquals("Microservices System Design", validation.conflicts().get(0).entityName());
 
         // Step 3: Default FAIL_ON_CONFLICT strategy throws ConflictException
-        assertThrows(com.learnnow.common.exception.ConflictException.class, () -> authoringService.importCourse(duplicateReq));
+        assertThrows(
+                com.learnnow.common.exception.ConflictException.class,
+                () -> authoringService.importCourse(duplicateReq));
 
         // Step 4: Test OVERWRITE strategy
-        ImportCourseRequest overwriteReq = new ImportCourseRequest(
-                null,
-                "Microservices System Design",
-                "Updated description",
-                "Backend",
-                "learnNow",
-                "OVERWRITE",
-                List.of(makeTopic("API Gateway Pattern", "Updated Gateway content"))
-        );
+        ImportCourseRequest overwriteReq =
+                new ImportCourseRequest(
+                        null,
+                        "Microservices System Design",
+                        "Updated description",
+                        "Backend",
+                        "learnNow",
+                        "OVERWRITE",
+                        List.of(makeTopic("API Gateway Pattern", "Updated Gateway content")));
 
         ImportResultDto overwriteResult = authoringService.importCourse(overwriteReq);
         assertEquals(initialResult.pathId(), overwriteResult.pathId());
 
-        AdminPathDto updatedPath = authoringService.getAdminPathById(initialResult.pathId()).orElseThrow();
+        AdminPathDto updatedPath =
+                authoringService.getAdminPathById(initialResult.pathId()).orElseThrow();
         assertEquals("Updated description", updatedPath.description());
     }
 
-    @Autowired
-    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    @Autowired private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Test
     @Transactional
     public void testImportFrontendDeveloperProductionJson() throws Exception {
-        java.io.File file = new java.io.File("/Users/shivaprasad/Downloads/frontend-developer-production.json");
+        java.io.File file =
+                new java.io.File("/Users/shivaprasad/Downloads/frontend-developer-production.json");
         if (!file.exists()) return;
         pathRepository.findAll().stream()
                 .filter(p -> "Frontend Developer".equalsIgnoreCase(p.getTitle()))

@@ -1,11 +1,11 @@
 package com.learnnow.paths.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.UUID;
-import java.util.List;
+import jakarta.persistence.*;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "topics")
@@ -26,7 +26,7 @@ public class Topic {
     private String description;
 
     private String category; // "course" | "lab"
-    
+
     private String duration;
 
     @Column(name = "order_index")

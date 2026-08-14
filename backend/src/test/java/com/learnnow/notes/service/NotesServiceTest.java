@@ -1,5 +1,7 @@
 package com.learnnow.notes.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.learnnow.notes.dto.response.BookmarkResponse;
 import com.learnnow.notes.dto.response.NoteResponse;
 import com.learnnow.paths.entity.ContentStatus;
@@ -11,6 +13,8 @@ import com.learnnow.paths.repository.SubtopicRepository;
 import com.learnnow.paths.repository.TopicRepository;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,29 +22,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 @ActiveProfiles("local")
 public class NotesServiceTest {
 
-    @Autowired
-    private NotesService notesService;
+    @Autowired private NotesService notesService;
 
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private UserRepository userRepository;
 
-    @Autowired
-    private PathRepository pathRepository;
+    @Autowired private PathRepository pathRepository;
 
-    @Autowired
-    private TopicRepository topicRepository;
+    @Autowired private TopicRepository topicRepository;
 
-    @Autowired
-    private SubtopicRepository subtopicRepository;
+    @Autowired private SubtopicRepository subtopicRepository;
 
     private User testUser;
     private Topic testTopic;
@@ -48,30 +42,35 @@ public class NotesServiceTest {
 
     @BeforeEach
     public void setUp() {
-        testUser = userRepository.save(User.builder()
-                .id("test-user-notes-" + UUID.randomUUID())
-                .email("testnotes" + UUID.randomUUID() + "@example.com")
-                .passwordHash("hashed")
-                .build());
+        testUser =
+                userRepository.save(
+                        User.builder()
+                                .id("test-user-notes-" + UUID.randomUUID())
+                                .email("testnotes" + UUID.randomUUID() + "@example.com")
+                                .passwordHash("hashed")
+                                .build());
 
-        Path path = pathRepository.save(Path.builder()
-                .title("Test Path")
-                .status(ContentStatus.PUBLISHED)
-                .build());
+        Path path =
+                pathRepository.save(
+                        Path.builder().title("Test Path").status(ContentStatus.PUBLISHED).build());
 
-        testTopic = topicRepository.save(Topic.builder()
-                .title("Test Topic")
-                .path(path)
-                .status(ContentStatus.PUBLISHED)
-                .orderIndex(1)
-                .build());
+        testTopic =
+                topicRepository.save(
+                        Topic.builder()
+                                .title("Test Topic")
+                                .path(path)
+                                .status(ContentStatus.PUBLISHED)
+                                .orderIndex(1)
+                                .build());
 
-        testSubtopic = subtopicRepository.save(Subtopic.builder()
-                .title("Test Subtopic")
-                .topic(testTopic)
-                .orderIndex(1)
-                .status(ContentStatus.PUBLISHED)
-                .build());
+        testSubtopic =
+                subtopicRepository.save(
+                        Subtopic.builder()
+                                .title("Test Subtopic")
+                                .topic(testTopic)
+                                .orderIndex(1)
+                                .status(ContentStatus.PUBLISHED)
+                                .build());
     }
 
     @Test
@@ -84,7 +83,8 @@ public class NotesServiceTest {
         assertTrue(notesService.getNote(userId, subtopicId).isEmpty());
 
         // 2. Create note
-        NoteResponse created = notesService.upsertNote(userId, subtopicId, "My personal study note");
+        NoteResponse created =
+                notesService.upsertNote(userId, subtopicId, "My personal study note");
         assertNotNull(created.id());
         assertEquals(subtopicId, created.subtopicId());
         assertEquals("My personal study note", created.content());

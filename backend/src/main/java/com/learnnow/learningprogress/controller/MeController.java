@@ -4,12 +4,12 @@ import com.learnnow.learningprogress.dto.request.SetTopicCompletionRequest;
 import com.learnnow.learningprogress.dto.response.DashboardResponse;
 import com.learnnow.learningprogress.service.DashboardService;
 import com.learnnow.learningprogress.service.ProgressService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/me")

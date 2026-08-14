@@ -1,11 +1,11 @@
 package com.learnnow.user.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import java.time.Instant;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users")
@@ -15,8 +15,7 @@ import java.time.Instant;
 @Builder
 public class User {
 
-    @Id
-    private String id;
+    @Id private String id;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -31,19 +30,15 @@ public class User {
     @Column(name = "google_sub", unique = true)
     private String googleSub;
 
-    @Builder.Default
-    private boolean emailVerified = false;
+    @Builder.Default private boolean emailVerified = false;
 
     private String avatar;
 
-    @Builder.Default
-    private String role = "USER";
+    @Builder.Default private String role = "USER";
 
     private String bio;
 
-    @Builder.Default
-    private Instant createdAt = Instant.now();
+    @Builder.Default private Instant createdAt = Instant.now();
 
-    @Builder.Default
-    private Instant updatedAt = Instant.now();
+    @Builder.Default private Instant updatedAt = Instant.now();
 }

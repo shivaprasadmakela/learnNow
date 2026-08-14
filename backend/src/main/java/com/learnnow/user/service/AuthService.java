@@ -1,10 +1,5 @@
 package com.learnnow.user.service;
 
-import com.learnnow.user.dto.request.*;
-import com.learnnow.user.dto.response.*;
-import com.learnnow.user.entity.*;
-import com.learnnow.user.repository.*;
-import com.learnnow.common.security.*;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -14,11 +9,11 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.learnnow.common.exception.AuthException;
 import com.learnnow.common.exception.ConflictException;
 import com.learnnow.common.exception.ValidationException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.learnnow.common.security.*;
+import com.learnnow.user.dto.request.*;
+import com.learnnow.user.dto.response.*;
+import com.learnnow.user.entity.*;
+import com.learnnow.user.repository.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -27,6 +22,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -43,7 +42,8 @@ public class AuthService {
     @Value("${app.google.client-id:}")
     private String googleClientId;
 
-    public AuthService(UserRepository userRepository,
+    public AuthService(
+            UserRepository userRepository,
             EmailVerificationTokenRepository tokenRepository,
             PasswordEncoder passwordEncoder,
             ResendEmailClient emailClient,
@@ -64,16 +64,17 @@ public class AuthService {
         String userId = UUID.randomUUID().toString();
         String fullName = req.firstName() + " " + req.lastName();
 
-        User user = User.builder()
-                .id(userId)
-                .email(req.email().toLowerCase())
-                .firstName(req.firstName())
-                .lastName(req.lastName())
-                .fullName(fullName)
-                .passwordHash(passwordEncoder.encode(req.password()))
-                .avatar(UUID.randomUUID().toString())
-                .emailVerified(false)
-                .build();
+        User user =
+                User.builder()
+                        .id(userId)
+                        .email(req.email().toLowerCase())
+                        .firstName(req.firstName())
+                        .lastName(req.lastName())
+                        .fullName(fullName)
+                        .passwordHash(passwordEncoder.encode(req.password()))
+                        .avatar(UUID.randomUUID().toString())
+                        .emailVerified(false)
+                        .build();
 
         userRepository.save(user);
         issueVerificationToken(user);
@@ -81,11 +82,12 @@ public class AuthService {
 
     private void issueVerificationToken(User user) {
         String rawToken = generateSecureToken();
-        EmailVerificationToken token = EmailVerificationToken.builder()
-                .userId(user.getId())
-                .tokenHash(sha256(rawToken))
-                .expiresAt(Instant.now().plus(24, ChronoUnit.HOURS))
-                .build();
+        EmailVerificationToken token =
+                EmailVerificationToken.builder()
+                        .userId(user.getId())
+                        .tokenHash(sha256(rawToken))
+                        .expiresAt(Instant.now().plus(24, ChronoUnit.HOURS))
+                        .build();
 
         tokenRepository.save(token);
 
@@ -96,15 +98,20 @@ public class AuthService {
     @Transactional
     public AuthResponse verifyEmail(String rawToken) {
         String hash = sha256(rawToken);
-        EmailVerificationToken token = tokenRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new AuthException("token_invalid"));
+        EmailVerificationToken token =
+                tokenRepository
+                        .findByTokenHash(hash)
+                        .orElseThrow(() -> new AuthException("token_invalid"));
 
-        User user = userRepository.findById(token.getUserId())
-                .orElseThrow(() -> new AuthException("user_not_found"));
+        User user =
+                userRepository
+                        .findById(token.getUserId())
+                        .orElseThrow(() -> new AuthException("user_not_found"));
 
         if (token.isUsed()) {
             if (user.isEmailVerified()) {
-                String jwt = tokenService.generateToken(user.getId(), user.getEmail(), user.getRole());
+                String jwt =
+                        tokenService.generateToken(user.getId(), user.getEmail(), user.getRole());
                 UserDto profile = buildUserDto(user);
                 return new AuthResponse(jwt, profile);
             }
@@ -127,8 +134,10 @@ public class AuthService {
 
     @Transactional
     public void resendVerification(String email) {
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new AuthException("user_not_found"));
+        User user =
+                userRepository
+                        .findByEmailIgnoreCase(email)
+                        .orElseThrow(() -> new AuthException("user_not_found"));
 
         if (user.isEmailVerified()) {
             throw new AuthException("email_already_verified");
@@ -153,8 +162,10 @@ public class AuthService {
             throw new ValidationException("google_token_invalid_email");
         }
 
-        User user = userRepository.findByGoogleSub(googleSub)
-                .orElseGet(() -> userRepository.findByEmailIgnoreCase(email).orElse(null));
+        User user =
+                userRepository
+                        .findByGoogleSub(googleSub)
+                        .orElseGet(() -> userRepository.findByEmailIgnoreCase(email).orElse(null));
 
         if (user != null) {
             if (user.getGoogleSub() == null) {
@@ -173,18 +184,19 @@ public class AuthService {
             String lastName = familyName != null ? familyName : "";
             String fullName = name != null ? name : (firstName + " " + lastName).trim();
 
-            user = User.builder()
-                    .id(userId)
-                    .email(email.toLowerCase())
-                    .firstName(firstName)
-                    .lastName(lastName)
-                    .fullName(fullName)
-                    .passwordHash(null)
-                    .googleSub(googleSub)
-                    .emailVerified(true)
-                    .avatar(picture != null ? picture : UUID.randomUUID().toString())
-                    .role("USER")
-                    .build();
+            user =
+                    User.builder()
+                            .id(userId)
+                            .email(email.toLowerCase())
+                            .firstName(firstName)
+                            .lastName(lastName)
+                            .fullName(fullName)
+                            .passwordHash(null)
+                            .googleSub(googleSub)
+                            .emailVerified(true)
+                            .avatar(picture != null ? picture : UUID.randomUUID().toString())
+                            .role("USER")
+                            .build();
 
             userRepository.save(user);
         }
@@ -199,7 +211,8 @@ public class AuthService {
             HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
             JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
 
-            GoogleIdTokenVerifier.Builder verifierBuilder = new GoogleIdTokenVerifier.Builder(transport, jsonFactory);
+            GoogleIdTokenVerifier.Builder verifierBuilder =
+                    new GoogleIdTokenVerifier.Builder(transport, jsonFactory);
             if (googleClientId != null && !googleClientId.isBlank()) {
                 verifierBuilder.setAudience(Collections.singletonList(googleClientId));
             }
@@ -219,8 +232,10 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest req) {
-        User user = userRepository.findByEmailIgnoreCase(req.email())
-                .orElseThrow(() -> new AuthException("user_credentials_mismatched"));
+        User user =
+                userRepository
+                        .findByEmailIgnoreCase(req.email())
+                        .orElseThrow(() -> new AuthException("user_credentials_mismatched"));
 
         if (user.getPasswordHash() == null) {
             throw new AuthException("account_registered_with_google");
@@ -259,7 +274,8 @@ public class AuthService {
     private String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] hashBytes =
+                    digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             for (byte b : hashBytes) {
                 sb.append(String.format("%02x", b));

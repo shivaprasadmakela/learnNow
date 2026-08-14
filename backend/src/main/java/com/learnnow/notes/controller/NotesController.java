@@ -1,19 +1,18 @@
 package com.learnnow.notes.controller;
 
-import com.learnnow.notes.dto.response.BookmarkResponse;
 import com.learnnow.notes.dto.request.NoteRequest;
+import com.learnnow.notes.dto.response.BookmarkResponse;
 import com.learnnow.notes.dto.response.NoteResponse;
 import com.learnnow.notes.service.NotesService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/me")
@@ -30,12 +29,15 @@ public class NotesController {
 
     @GetMapping("/notes/subtopics/{subtopicId}")
     public ResponseEntity<NoteResponse> getSubtopicNote(
-            @AuthenticationPrincipal Jwt jwt,
-            @PathVariable UUID subtopicId) {
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID subtopicId) {
         String userId = jwt.getSubject();
-        return notesService.getNote(userId, subtopicId)
+        return notesService
+                .getNote(userId, subtopicId)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.ok(new NoteResponse(null, subtopicId, "", null, null)));
+                .orElseGet(
+                        () ->
+                                ResponseEntity.ok(
+                                        new NoteResponse(null, subtopicId, "", null, null)));
     }
 
     @PutMapping("/notes/subtopics/{subtopicId}")
@@ -49,15 +51,15 @@ public class NotesController {
 
     @PostMapping("/bookmarks/topics/{topicId}")
     public ResponseEntity<Map<String, Boolean>> toggleBookmark(
-            @AuthenticationPrincipal Jwt jwt,
-            @PathVariable UUID topicId) {
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID topicId) {
         String userId = jwt.getSubject();
         boolean isBookmarked = notesService.toggleBookmark(userId, topicId);
         return ResponseEntity.ok(Map.of("bookmarked", isBookmarked));
     }
 
     @GetMapping("/bookmarks")
-    public ResponseEntity<List<BookmarkResponse>> getAllBookmarks(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<List<BookmarkResponse>> getAllBookmarks(
+            @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         return ResponseEntity.ok(notesService.getAllBookmarks(userId));
     }

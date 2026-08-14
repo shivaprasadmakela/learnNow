@@ -1,8 +1,7 @@
 package com.learnnow.learningprogress.config;
 
 /**
- * Centralized points configuration.
- * All point values live here so they can be tuned in one place.
+ * Centralized points configuration. All point values live here so they can be tuned in one place.
  * Later can be moved to a database table for admin configuration.
  */
 public final class PointsConfig {
@@ -20,6 +19,7 @@ public final class PointsConfig {
 
     /** Streak milestone bonuses. */
     public static final int STREAK_BONUS_3_DAYS = 10;
+
     public static final int STREAK_BONUS_7_DAYS = 25;
     public static final int STREAK_BONUS_30_DAYS = 100;
 }

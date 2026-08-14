@@ -16,7 +16,8 @@ public class CompilerSnippetController {
     private final CompilerSnippetService snippetService;
 
     @PostMapping
-    public ResponseEntity<SharedSnippetResponse> shareSnippet(@Valid @RequestBody ShareSnippetRequest request) {
+    public ResponseEntity<SharedSnippetResponse> shareSnippet(
+            @Valid @RequestBody ShareSnippetRequest request) {
         SharedSnippetResponse response = snippetService.shareSnippet(request);
         return ResponseEntity.ok(response);
     }
@@ -28,7 +29,8 @@ public class CompilerSnippetController {
     }
 
     @PostMapping("/execute")
-    public ResponseEntity<com.learnnow.compiler.dto.response.ExecuteCodeResponse> executeCode(@Valid @RequestBody com.learnnow.compiler.dto.request.ExecuteCodeRequest request) {
+    public ResponseEntity<com.learnnow.compiler.dto.response.ExecuteCodeResponse> executeCode(
+            @Valid @RequestBody com.learnnow.compiler.dto.request.ExecuteCodeRequest request) {
         return ResponseEntity.ok(snippetService.executeCode(request));
     }
 }

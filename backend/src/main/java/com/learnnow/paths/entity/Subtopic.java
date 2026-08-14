@@ -1,9 +1,9 @@
 package com.learnnow.paths.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "subtopics")
@@ -29,8 +29,7 @@ public class Subtopic {
     @Builder.Default
     private ContentStatus status = ContentStatus.PUBLISHED;
 
-    @Builder.Default
-    private int version = 1;
+    @Builder.Default private int version = 1;
 
     @Builder.Default
     @Column(nullable = false, length = 20)
@@ -59,7 +58,8 @@ public class Subtopic {
 
     @OneToMany(mappedBy = "subtopic", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private java.util.List<com.learnnow.admin.entity.ContentBlock> blocks = new java.util.ArrayList<>();
+    private java.util.List<com.learnnow.admin.entity.ContentBlock> blocks =
+            new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "subtopic", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

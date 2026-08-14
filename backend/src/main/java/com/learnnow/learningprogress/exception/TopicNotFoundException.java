@@ -7,4 +7,3 @@ public class TopicNotFoundException extends NotFoundException {
         super("topic_not_found");
     }
 }
-

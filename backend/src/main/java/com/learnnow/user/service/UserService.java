@@ -5,10 +5,9 @@ import com.learnnow.user.dto.request.*;
 import com.learnnow.user.dto.response.*;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 public class UserService {
@@ -20,17 +19,24 @@ public class UserService {
     }
 
     public UserDto getOrCreateUser(String id, String email) {
-        User user = userRepository.findById(id)
-                .orElseGet(() -> {
-                    User newUser = User.builder()
-                            .id(id)
-                            .email(email)
-                            .fullName(email != null && email.contains("@") ? email.split("@")[0] : "New Learner")
-                            .avatar(UUID.randomUUID().toString())
-                            .passwordHash("")
-                            .build();
-                    return userRepository.save(newUser);
-                });
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseGet(
+                                () -> {
+                                    User newUser =
+                                            User.builder()
+                                                    .id(id)
+                                                    .email(email)
+                                                    .fullName(
+                                                            email != null && email.contains("@")
+                                                                    ? email.split("@")[0]
+                                                                    : "New Learner")
+                                                    .avatar(UUID.randomUUID().toString())
+                                                    .passwordHash("")
+                                                    .build();
+                                    return userRepository.save(newUser);
+                                });
 
         return new UserDto(
                 user.getId(),
@@ -38,14 +44,15 @@ public class UserService {
                 user.getFullName(),
                 user.getAvatar(),
                 user.getRole(),
-                user.getBio()
-        );
+                user.getBio());
     }
 
     @Transactional
     public UserDto updateUser(String id, UpdateProfileRequest req) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("user_not_found"));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new NotFoundException("user_not_found"));
 
         if (req.fullName() != null && !req.fullName().isBlank()) {
             user.setFullName(req.fullName());
@@ -60,7 +67,6 @@ public class UserService {
                 updated.getFullName(),
                 updated.getAvatar(),
                 updated.getRole(),
-                updated.getBio()
-        );
+                updated.getBio());
     }
 }
