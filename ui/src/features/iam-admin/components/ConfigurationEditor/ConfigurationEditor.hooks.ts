@@ -26,6 +26,7 @@ export interface UseConfigurationEditorReturn {
     activeSubtopicIndex: number;
     setActiveSubtopicIndex: (i: number) => void;
     handleAddTopic: () => void;
+    handleAttachExistingTopic: (topic: AdminTopicData) => void;
     handleRemoveTopic: (index: number) => void;
     handleUpdateTopic: (index: number, field: keyof AdminTopicData, value: string) => void;
     handleAddSubtopic: (topicIndex: number) => void;
@@ -105,6 +106,12 @@ export const useConfigurationEditor = (
             }],
         };
         setTopics(prev => [...prev, newTopic]);
+        setActiveTopicIndex(topics.length);
+        setActiveSubtopicIndex(0);
+    }, [topics]);
+
+    const handleAttachExistingTopic = useCallback((topic: AdminTopicData) => {
+        setTopics(prev => [...prev, { ...topic, orderIndex: prev.length + 1 }]);
         setActiveTopicIndex(topics.length);
         setActiveSubtopicIndex(0);
     }, [topics]);
@@ -342,7 +349,7 @@ export const useConfigurationEditor = (
         topics,
         activeTopicIndex, setActiveTopicIndex,
         activeSubtopicIndex, setActiveSubtopicIndex,
-        handleAddTopic, handleRemoveTopic, handleUpdateTopic,
+        handleAddTopic, handleAttachExistingTopic, handleRemoveTopic, handleUpdateTopic,
         handleAddSubtopic, handleRemoveSubtopic, handleUpdateSubtopic,
         handleAddQuestion, handleRemoveQuestion, handleUpdateQuestion,
         handleAddOption, handleRemoveOption, handleUpdateOption,

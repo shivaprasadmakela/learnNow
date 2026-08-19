@@ -16,12 +16,12 @@ public interface PathRepository extends JpaRepository<Path, UUID> {
 
     java.util.Optional<Path> findByTitleIgnoreCase(String title);
 
-    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t WHERE p.status = :status")
+    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic WHERE p.status = :status")
     List<Path> findAllWithTopicsByStatus(@Param("status") ContentStatus status);
 
-    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t ORDER BY p.title ASC")
+    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic ORDER BY p.title ASC")
     List<Path> findAllWithTopics();
 
-    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.topics t WHERE p.id = :id")
+    @Query("SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic WHERE p.id = :id")
     java.util.Optional<Path> findByIdWithTopics(@Param("id") UUID id);
 }

@@ -41,5 +41,13 @@ public class Path {
             orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     @Builder.Default
-    private List<Topic> topics = new ArrayList<>();
+    private List<PathTopic> pathTopics = new ArrayList<>();
+
+    public List<Topic> getTopics() {
+        if (pathTopics == null) return List.of();
+        return pathTopics.stream()
+                .map(PathTopic::getTopic)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
 }

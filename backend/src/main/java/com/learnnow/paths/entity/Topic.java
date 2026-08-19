@@ -42,6 +42,11 @@ public class Topic {
     @JsonIgnore
     private Path path;
 
+    @OneToMany(mappedBy = "topic")
+    @JsonIgnore
+    @Builder.Default
+    private List<PathTopic> pathTopics = new ArrayList<>();
+
     @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     @Builder.Default

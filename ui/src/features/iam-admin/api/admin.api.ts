@@ -138,4 +138,10 @@ export const deleteAdminPath = async (id: string): Promise<void> => {
     if (!res.ok) throw new Error('Failed to delete path');
 };
 
+export const fetchAdminTopicsLibrary = async (): Promise<AdminTopicData[]> => {
+    const res = await apiFetch('/api/admin/topics');
+    if (!res.ok) throw new Error('Failed to fetch admin topics library');
+    return res.json();
+};
+
 

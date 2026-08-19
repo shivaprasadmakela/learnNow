@@ -180,19 +180,7 @@ public class CatalogService {
 
                             List<SubtopicDto> subtopics =
                                     topic.getSubtopics().stream()
-                                            .filter(
-                                                    st ->
-                                                            st.getStatus()
-                                                                            == ContentStatus
-                                                                                    .PUBLISHED
-                                                                    || topic.getStatus()
-                                                                            == ContentStatus
-                                                                                    .PUBLISHED
-                                                                    || (topic.getPath() != null
-                                                                            && topic.getPath()
-                                                                                            .getStatus()
-                                                                                    == ContentStatus
-                                                                                            .PUBLISHED))
+                                            .sorted(java.util.Comparator.comparingInt(Subtopic::getOrderIndex))
                                             .map(
                                                     st -> {
                                                         List<SubtopicDto.QuizQuestionDto>
@@ -353,7 +341,7 @@ public class CatalogService {
                                                     : 0);
 
                             int totalMins = subtopics.stream()
-                                    .mapToInt(st -> st.getEstimatedMinutes() > 0 ? st.getEstimatedMinutes() : 5)
+                                    .mapToInt(st -> st.estimatedMinutes() > 0 ? st.estimatedMinutes() : 5)
                                     .sum();
                             String computedDuration = totalMins >= 60
                                     ? (totalMins % 60 == 0

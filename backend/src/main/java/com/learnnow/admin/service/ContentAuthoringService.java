@@ -49,6 +49,7 @@ public class ContentAuthoringService {
     private final PathRepository pathRepository;
     private final PathDao pathDao;
     private final TopicRepository topicRepository;
+    private final PathTopicRepository pathTopicRepository;
     private final SubtopicRepository subtopicRepository;
     private final ContentBlockRepository contentBlockRepository;
     private final QuizQuestionRepository quizQuestionRepository;
@@ -177,34 +178,33 @@ public class ContentAuthoringService {
                 request.category() != null ? request.category() : DEFAULT_CATEGORY_BACKEND);
         path.setManagedBy(request.managedBy() != null ? request.managedBy() : DEFAULT_MANAGED_BY);
         path.setStatus(parseStatus(request.status()));
+        Path savedPath = pathRepository.save(path);
 
         if (request.topics() != null) {
-            Map<UUID, Topic> existingTopicsMap = new HashMap<>();
-            if (path.getTopics() != null) {
-                for (Topic t : path.getTopics()) {
-                    if (t.getId() != null) {
-                        existingTopicsMap.put(t.getId(), t);
+            Map<UUID, PathTopic> existingPathTopicsMap = new HashMap<>();
+            if (savedPath.getPathTopics() != null) {
+                for (PathTopic pt : savedPath.getPathTopics()) {
+                    if (pt.getTopic() != null && pt.getTopic().getId() != null) {
+                        existingPathTopicsMap.put(pt.getTopic().getId(), pt);
                     }
                 }
             }
 
-            List<Topic> updatedTopicsList = new ArrayList<>();
+            List<PathTopic> updatedPathTopicsList = new ArrayList<>();
             int tIdx = 1;
 
             for (AdminPathDto.AdminTopicDto topicReq : request.topics()) {
                 Topic topic;
-                if (topicReq.id() != null && existingTopicsMap.containsKey(topicReq.id())) {
-                    topic = existingTopicsMap.remove(topicReq.id());
+                if (topicReq.id() != null && topicRepository.existsById(topicReq.id())) {
+                    topic = topicRepository.findById(topicReq.id()).orElseThrow();
                 } else {
                     topic = new Topic();
-                    topic.setPath(path);
                 }
 
                 topic.setTitle(topicReq.title());
                 topic.setDescription(topicReq.description());
                 topic.setCategory(topicReq.category() != null ? topicReq.category() : "Topic");
                 topic.setDuration(topicReq.duration() != null ? topicReq.duration() : "1 hour");
-                topic.setOrderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++);
                 topic.setStatus(parseStatus(topicReq.status()));
 
                 if (topicReq.subtopics() != null) {
@@ -218,8 +218,6 @@ public class ContentAuthoringService {
                     }
 
                     List<Subtopic> updatedSubtopicsList = new ArrayList<>();
-                    int stIdx = 1;
-
                     for (AdminPathDto.AdminSubtopicDto stReq : topicReq.subtopics()) {
                         String prereqsJson = "[]";
                         if (stReq.prerequisites() != null) {
@@ -240,19 +238,12 @@ public class ContentAuthoringService {
 
                         subtopic.setTitle(stReq.title());
                         subtopic.setContent(stReq.content());
-                        subtopic.setOrderIndex(
-                                stReq.orderIndex() > 0 ? stReq.orderIndex() : stIdx++);
+                        subtopic.setOrderIndex(stReq.orderIndex());
                         subtopic.setStatus(parseStatus(stReq.status()));
                         subtopic.setLevel(stReq.level() != null ? stReq.level() : "beginner");
                         subtopic.setTrack(stReq.track() != null ? stReq.track() : "concept");
                         subtopic.setPrerequisites(prereqsJson);
                         subtopic.setVideoUrl(stReq.videoUrl());
-                        subtopic.setEstimatedMinutes(
-                                stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0
-                                        ? stReq.estimatedMinutes()
-                                        : 5);
-
-                        // Code Snippets in-place update
                         if (stReq.codeSnippets() != null) {
                             Map<String, SubtopicCodeSnippet> existingSnippetsMap = new HashMap<>();
                             if (subtopic.getCodeSnippets() != null) {
@@ -371,18 +362,34 @@ public class ContentAuthoringService {
                     topic.getSubtopics().addAll(updatedSubtopicsList);
                 }
 
-                updatedTopicsList.add(topic);
+                Topic savedTopic = topicRepository.save(topic);
+
+                PathTopic pathTopic;
+                if (existingPathTopicsMap.containsKey(savedTopic.getId())) {
+                    pathTopic = existingPathTopicsMap.remove(savedTopic.getId());
+                    pathTopic.setOrderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++);
+                } else {
+                    pathTopic = PathTopic.builder()
+                            .id(new PathTopicId(savedPath.getId(), savedTopic.getId()))
+                            .path(savedPath)
+                            .topic(savedTopic)
+                            .orderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++)
+                            .build();
+                }
+
+                updatedPathTopicsList.add(pathTopic);
             }
 
-            if (path.getTopics() == null) {
-                path.setTopics(new ArrayList<>());
+            if (savedPath.getPathTopics() == null) {
+                savedPath.setPathTopics(new ArrayList<>());
             }
-            path.getTopics().clear();
-            path.getTopics().addAll(updatedTopicsList);
+            savedPath.getPathTopics().clear();
+            savedPath.getPathTopics().addAll(updatedPathTopicsList);
+
+            savedPath = pathRepository.save(savedPath);
         }
 
-        Path saved = pathRepository.save(path);
-        return toAdminPathDto(saved);
+        return toAdminPathDto(savedPath);
     }
 
     @Transactional
@@ -394,6 +401,32 @@ public class ContentAuthoringService {
         // entity tree in a single round-trip, avoiding Hibernate's N+1 cascade
         // loading storm (which loads every child entity before deleting).
         pathDao.deletePathNative(pathId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminPathDto.AdminTopicDto> getAllAdminTopics() {
+        return topicRepository.findAll().stream().map(this::toAdminTopicDto).toList();
+    }
+
+    @Transactional
+    public void attachTopicToPath(UUID pathId, UUID topicId, Integer orderIndex) {
+        Path path = pathRepository.findById(pathId).orElseThrow(() -> new com.learnnow.common.exception.NotFoundException("path_not_found"));
+        Topic topic = topicRepository.findById(topicId).orElseThrow(() -> new com.learnnow.common.exception.NotFoundException("topic_not_found"));
+
+        int index = (orderIndex != null && orderIndex > 0) ? orderIndex : (path.getPathTopics() != null ? path.getPathTopics().size() + 1 : 1);
+        com.learnnow.paths.entity.PathTopic pt = com.learnnow.paths.entity.PathTopic.builder()
+                .id(new com.learnnow.paths.entity.PathTopicId(pathId, topicId))
+                .path(path)
+                .topic(topic)
+                .orderIndex(index)
+                .build();
+
+        pathTopicRepository.save(pt);
+    }
+
+    @Transactional
+    public void unlinkTopicFromPath(UUID pathId, UUID topicId) {
+        pathTopicRepository.deleteByIdPathIdAndIdTopicId(pathId, topicId);
     }
 
     @Transactional(readOnly = true)
@@ -849,185 +882,7 @@ public class ContentAuthoringService {
     private AdminPathDto toAdminPathDto(Path path) {
         List<AdminPathDto.AdminTopicDto> topics =
                 path.getTopics().stream()
-                        .sorted(
-                                Comparator.<Topic>comparingInt(
-                                        t -> t.getOrderIndex() != null ? t.getOrderIndex() : 0))
-                        .map(
-                                t -> {
-                                    List<AdminPathDto.AdminSubtopicDto> subtopics =
-                                            t.getSubtopics().stream()
-                                                    .sorted(
-                                                            Comparator.comparingInt(
-                                                                    st -> st.getOrderIndex()))
-                                                    .map(
-                                                            st -> {
-                                                                List<
-                                                                                AdminPathDto
-                                                                                        .AdminQuizQuestionDto>
-                                                                        questions =
-                                                                                st.getBlocks()
-                                                                                                != null
-                                                                                        ? st
-                                                                                                .getBlocks()
-                                                                                                .stream()
-                                                                                                .filter(
-                                                                                                        b ->
-                                                                                                                "quiz"
-                                                                                                                                .equalsIgnoreCase(
-                                                                                                                                        b
-                                                                                                                                                .getType())
-                                                                                                                        && b
-                                                                                                                                        .getQuestions()
-                                                                                                                                != null)
-                                                                                                .flatMap(
-                                                                                                        b ->
-                                                                                                                b
-                                                                                                                        .getQuestions()
-                                                                                                                        .stream())
-                                                                                                .map(
-                                                                                                        q -> {
-                                                                                                            List<
-                                                                                                                            String>
-                                                                                                                    optsList =
-                                                                                                                            List
-                                                                                                                                    .of();
-                                                                                                            if (q
-                                                                                                                            .getOptions()
-                                                                                                                    != null) {
-                                                                                                                try {
-                                                                                                                    optsList =
-                                                                                                                            objectMapper
-                                                                                                                                    .readValue(
-                                                                                                                                            q
-                                                                                                                                                    .getOptions(),
-                                                                                                                                            new com
-                                                                                                                                                            .fasterxml
-                                                                                                                                                            .jackson
-                                                                                                                                                            .core
-                                                                                                                                                            .type
-                                                                                                                                                            .TypeReference<
-                                                                                                                                                    List<
-                                                                                                                                                            String>>() {});
-                                                                                                                } catch (
-                                                                                                                        Exception
-                                                                                                                                ignored) {
-                                                                                                                }
-                                                                                                            }
-                                                                                                            return new AdminPathDto
-                                                                                                                    .AdminQuizQuestionDto(
-                                                                                                                    q
-                                                                                                                            .getId(),
-                                                                                                                    q
-                                                                                                                            .getKind(),
-                                                                                                                    q
-                                                                                                                            .getPrompt(),
-                                                                                                                    optsList,
-                                                                                                                    q
-                                                                                                                            .getCorrectAnswer(),
-                                                                                                                    q
-                                                                                                                            .getExplanation(),
-                                                                                                                    q
-                                                                                                                            .getPoints());
-                                                                                                        })
-                                                                                                .toList()
-                                                                                        : List.of();
-
-                                                                List<String> prereqs = List.of();
-                                                                if (st.getPrerequisites() != null) {
-                                                                    try {
-                                                                        prereqs =
-                                                                                objectMapper
-                                                                                        .readValue(
-                                                                                                st
-                                                                                                        .getPrerequisites(),
-                                                                                                new com
-                                                                                                                .fasterxml
-                                                                                                                .jackson
-                                                                                                                .core
-                                                                                                                .type
-                                                                                                                .TypeReference<
-                                                                                                        List<
-                                                                                                                String>>() {});
-                                                                    } catch (Exception ignored) {
-                                                                    }
-                                                                }
-
-                                                                List<
-                                                                                AdminPathDto
-                                                                                        .AdminCodeSnippetDto>
-                                                                        snippets =
-                                                                                st.getCodeSnippets()
-                                                                                                != null
-                                                                                        ? st
-                                                                                                .getCodeSnippets()
-                                                                                                .stream()
-                                                                                                .sorted(
-                                                                                                        java
-                                                                                                                .util
-                                                                                                                .Comparator
-                                                                                                                .comparingInt(
-                                                                                                                        SubtopicCodeSnippet
-                                                                                                                                ::getOrderIndex))
-                                                                                                .map(
-                                                                                                        sn ->
-                                                                                                                new AdminPathDto
-                                                                                                                        .AdminCodeSnippetDto(
-                                                                                                                        sn
-                                                                                                                                .getId(),
-                                                                                                                        sn
-                                                                                                                                .getLanguage(),
-                                                                                                                        sn
-                                                                                                                                .getLabel(),
-                                                                                                                        sn
-                                                                                                                                .getCode(),
-                                                                                                                        sn
-                                                                                                                                .getExpectedOutput(),
-                                                                                                                        sn
-                                                                                                                                .isRunnable(),
-                                                                                                                        sn
-                                                                                                                                .isEditable(),
-                                                                                                                        sn
-                                                                                                                                .getOrderIndex()))
-                                                                                                .toList()
-                                                                                        : List.of();
-
-                                                                return new AdminPathDto
-                                                                        .AdminSubtopicDto(
-                                                                        st.getId(),
-                                                                        st.getTitle(),
-                                                                        st.getContent(),
-                                                                        st.getOrderIndex(),
-                                                                        st.getStatus() != null
-                                                                                ? st.getStatus()
-                                                                                        .name()
-                                                                                : "DRAFT",
-                                                                        st.getLevel() != null
-                                                                                ? st.getLevel()
-                                                                                : "beginner",
-                                                                        st.getTrack() != null
-                                                                                ? st.getTrack()
-                                                                                : "concept",
-                                                                        prereqs,
-                                                                        st.getVideoUrl(),
-                                                                        st.getEstimatedMinutes() > 0
-                                                                                ? st
-                                                                                        .getEstimatedMinutes()
-                                                                                : 5,
-                                                                        snippets,
-                                                                        questions);
-                                                            })
-                                                    .toList();
-
-                                    return new AdminPathDto.AdminTopicDto(
-                                            t.getId(),
-                                            t.getTitle(),
-                                            t.getDescription(),
-                                            t.getCategory(),
-                                            t.getDuration(),
-                                            t.getOrderIndex() != null ? t.getOrderIndex() : 1,
-                                            t.getStatus() != null ? t.getStatus().name() : "DRAFT",
-                                            subtopics);
-                                })
+                        .map(this::toAdminTopicDto)
                         .toList();
 
         return new AdminPathDto(
@@ -1038,6 +893,105 @@ public class ContentAuthoringService {
                 path.getManagedBy(),
                 path.getStatus() != null ? path.getStatus().name() : "DRAFT",
                 topics);
+    }
+
+    private AdminPathDto.AdminTopicDto toAdminTopicDto(Topic t) {
+        List<AdminPathDto.AdminSubtopicDto> subtopics =
+                t.getSubtopics() != null
+                        ? t.getSubtopics().stream()
+                                .sorted(Comparator.comparingInt(st -> st.getOrderIndex()))
+                                .map(
+                                        st -> {
+                                            List<AdminPathDto.AdminQuizQuestionDto> questions =
+                                                    st.getBlocks() != null
+                                                            ? st.getBlocks().stream()
+                                                                    .filter(
+                                                                            b ->
+                                                                                    "quiz"
+                                                                                            .equalsIgnoreCase(
+                                                                                                    b.getType())
+                                                                                            && b.getQuestions()
+                                                                                                    != null)
+                                                                    .flatMap(b -> b.getQuestions().stream())
+                                                                    .map(
+                                                                            q -> {
+                                                                                List<String> optsList = List.of();
+                                                                                if (q.getOptions() != null) {
+                                                                                    try {
+                                                                                        optsList =
+                                                                                                objectMapper.readValue(
+                                                                                                        q.getOptions(),
+                                                                                                        new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                                                                                    } catch (Exception ignored) {
+                                                                                    }
+                                                                                }
+                                                                                return new AdminPathDto.AdminQuizQuestionDto(
+                                                                                        q.getId(),
+                                                                                        q.getKind(),
+                                                                                        q.getPrompt(),
+                                                                                        optsList,
+                                                                                        q.getCorrectAnswer(),
+                                                                                        q.getExplanation(),
+                                                                                        q.getPoints());
+                                                                            })
+                                                                    .toList()
+                                                            : List.of();
+
+                                            List<String> prereqs = List.of();
+                                            if (st.getPrerequisites() != null) {
+                                                try {
+                                                    prereqs =
+                                                            objectMapper.readValue(
+                                                                    st.getPrerequisites(),
+                                                                    new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+                                                } catch (Exception ignored) {
+                                                }
+                                            }
+
+                                            List<AdminPathDto.AdminCodeSnippetDto> snippets =
+                                                    st.getCodeSnippets() != null
+                                                            ? st.getCodeSnippets().stream()
+                                                                    .sorted(Comparator.comparingInt(SubtopicCodeSnippet::getOrderIndex))
+                                                                    .map(
+                                                                            sn ->
+                                                                                    new AdminPathDto.AdminCodeSnippetDto(
+                                                                                            sn.getId(),
+                                                                                            sn.getLanguage(),
+                                                                                            sn.getLabel(),
+                                                                                            sn.getCode(),
+                                                                                            sn.getExpectedOutput(),
+                                                                                            sn.isRunnable(),
+                                                                                            sn.isEditable(),
+                                                                                            sn.getOrderIndex()))
+                                                                    .toList()
+                                                            : List.of();
+
+                                            return new AdminPathDto.AdminSubtopicDto(
+                                                    st.getId(),
+                                                    st.getTitle(),
+                                                    st.getContent(),
+                                                    st.getOrderIndex(),
+                                                    st.getStatus() != null ? st.getStatus().name() : "DRAFT",
+                                                    st.getLevel() != null ? st.getLevel() : "beginner",
+                                                    st.getTrack() != null ? st.getTrack() : "concept",
+                                                    prereqs,
+                                                    st.getVideoUrl(),
+                                                    st.getEstimatedMinutes() > 0 ? st.getEstimatedMinutes() : 5,
+                                                    snippets,
+                                                    questions);
+                                        })
+                                .toList()
+                        : List.of();
+
+        return new AdminPathDto.AdminTopicDto(
+                t.getId(),
+                t.getTitle(),
+                t.getDescription(),
+                t.getCategory(),
+                t.getDuration(),
+                t.getOrderIndex() != null ? t.getOrderIndex() : 0,
+                t.getStatus() != null ? t.getStatus().name() : "DRAFT",
+                subtopics);
     }
 
     private AdminPathDto toAdminPathSummaryDto(Path path) {

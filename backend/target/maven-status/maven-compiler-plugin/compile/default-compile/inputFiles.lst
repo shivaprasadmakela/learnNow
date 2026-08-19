@@ -105,10 +105,13 @@
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/dto/response/TopicSummaryDto.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/entity/ContentStatus.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/entity/Path.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/entity/PathTopic.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/entity/PathTopicId.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/entity/Subtopic.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/entity/SubtopicCodeSnippet.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/entity/Topic.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/repository/PathRepository.java
+/Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/repository/PathTopicRepository.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/repository/SubtopicRepository.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/repository/TopicRepository.java
 /Users/shivaprasad/Documents/Projects/learnNow/backend/src/main/java/com/learnnow/paths/service/CatalogService.java
