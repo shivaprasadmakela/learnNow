@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ChevronRight, CheckCircle2, Check, ArrowRight, Play, BookOpen, Clock, Award } from 'lucide-react';
+import { ChevronRight, Check, ArrowRight, Play, BookOpen, Clock, Award } from 'lucide-react';
 import styles from './TopicCardList.module.css';
 import pageStyles from '../../pages/TopicsPage/TopicsPage.module.css';
 import { LearningCard } from '../../../../shared/components/cards';
 import { CardBadge } from '../../../../shared/components/cards/LearningCard/components/CardBadge';
 import { CardActionArrow } from '../../../../shared/components/cards/LearningCard/components/CardActionArrow';
+import { CardCompletedBadge } from '../../../../shared/components/cards/LearningCard/components/CardCompletedBadge';
 import { useBookmarks } from '../../../notes';
 import { fetchTopicDetails, type SubtopicData } from '../../../../shared/api/profile.api';
 import type { TopicCardListProps } from './TopicCardList.types';
@@ -115,7 +116,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({ topics, viewMode, 
 
                                 <div className={styles.progressRingWrapper}>
                                     {topic.isCompleted ? (
-                                        <CheckCircle2 size={22} className={styles.completedIcon} />
+                                        <CardCompletedBadge />
                                     ) : (
                                         <svg className={styles.progressRingSvg} width="24" height="24" viewBox="0 0 36 36">
                                             <path

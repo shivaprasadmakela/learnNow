@@ -229,6 +229,18 @@ export default function App() {
                                 onToggleComplete={handleToggleTopicComplete}
                                 onToggleSubtopicComplete={handleToggleSubtopicComplete}
                                 onSelectNextTopic={handleSelectNextTopic}
+                                nextTopicTitle={(() => {
+                                    if (!activeTopic || !courses) return undefined;
+                                    for (const course of courses) {
+                                        if (course.topics && course.topics.length > 0) {
+                                            const idx = course.topics.findIndex(t => String(t.id) === String(activeTopic.id));
+                                            if (idx >= 0 && idx < course.topics.length - 1) {
+                                                return course.topics[idx + 1].title;
+                                            }
+                                        }
+                                    }
+                                    return undefined;
+                                })()}
                                 onOpenFullCompiler={(code, lang) => {
                                     const langId = lang.toLowerCase() === 'javascript' ? 'js' : lang.toLowerCase();
                                     localStorage.setItem(`compiler_draft_${langId}`, code);

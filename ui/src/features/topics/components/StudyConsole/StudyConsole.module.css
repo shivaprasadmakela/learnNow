@@ -50,6 +50,33 @@
     font-size: 0.75rem;
 }
 
+.headerNotesBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.headerNotesBtn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.headerNotesBtnActive {
+    border-color: var(--tech-blue);
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--tech-blue);
+}
+
 .categoryBadge {
     background: var(--accent-blue-light);
     color: var(--tech-blue);
@@ -170,6 +197,11 @@
     background: var(--bg-tertiary);
     border-left-color: var(--tech-blue);
     color: var(--tech-blue);
+    font-weight: 700;
+}
+
+.tocItemActive .tocName {
+    font-weight: 700;
 }
 
 .nodeCompletedBadge {
@@ -800,6 +832,72 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* Continuous Inline Subtopic Feed */
+.subtopicBlock {
+    padding-bottom: 3rem;
+    margin-bottom: 3rem;
+    border-bottom: 2px dashed var(--border-color);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.subtopicBlock:last-child {
+    border-bottom: none;
+    padding-bottom: 1rem;
+    margin-bottom: 0;
+}
+
+.readMoreContainer {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+}
+
+.readMoreBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(135deg, var(--tech-blue), var(--accent-primary, #6366f1));
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    transition: all 0.25s ease;
+}
+
+.readMoreBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+
+.readMoreBtn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
+.readMoreCompletedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--tech-green);
+    background: rgba(34, 197, 94, 0.1);
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .playgroundActionBtn {

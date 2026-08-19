@@ -4,6 +4,7 @@ import styles from './SubtopicNotesPanel.module.css';
 
 interface SubtopicNotesPanelProps {
     isOpen: boolean;
+    title?: string;
     content: string;
     onChange: (text: string) => void;
     onSave: () => void;
@@ -14,6 +15,7 @@ interface SubtopicNotesPanelProps {
 
 export const SubtopicNotesPanel: React.FC<SubtopicNotesPanelProps> = ({
     isOpen,
+    title = 'Topic Notes',
     content,
     onChange,
     onSave,
@@ -36,12 +38,12 @@ export const SubtopicNotesPanel: React.FC<SubtopicNotesPanelProps> = ({
     return (
         <aside
             className={`${styles.notesSideSlider} ${isOpen ? styles.notesSideSliderOpen : ''}`}
-            aria-label="Subtopic Notes Slider"
+            aria-label="Notes Slider"
         >
             <div className={styles.notesPanelHeader}>
                 <div className={styles.notesPanelTitle}>
                     <FileText size={16} style={{ color: 'var(--tech-blue)' }} />
-                    <span>Subtopic Notes</span>
+                    <span>{title}</span>
                     {isLoading && (
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
                             <Loader2 size={12} className="animate-spin" /> Loading...

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-
-import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List, Copy, Code as CodeIcon, Terminal } from 'lucide-react';
+import { X, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List, Copy, Code as CodeIcon, Terminal } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
@@ -10,8 +9,9 @@ import { isExecutableLanguage, formatExecutableCode } from '../../../../shared/u
 import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCodeBlock';
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { LevelBadge, TrackBadge, DurationBadge } from '../../../../shared/components/ui/Badge';
-import { useSubtopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
+import { useTopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
 import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
+import { TopicCelebrationModal } from '../TopicCelebrationModal/TopicCelebrationModal';
 import styles from './StudyConsole.module.css';
 
 interface StudyConsoleProps {
@@ -20,6 +20,7 @@ interface StudyConsoleProps {
     onToggleComplete: () => Promise<void>;
     onToggleSubtopicComplete?: (subtopicId: string | number, completed: boolean) => Promise<void>;
     onSelectNextTopic?: () => void;
+    nextTopicTitle?: string;
     onOpenFullCompiler?: (code: string, language: string) => void;
     isUpdating: boolean;
 }
@@ -90,13 +91,14 @@ export function StudyConsole({
     onToggleComplete, 
     onToggleSubtopicComplete,
     onSelectNextTopic,
+    nextTopicTitle,
     onOpenFullCompiler,
     isUpdating
 }: StudyConsoleProps) {
     const subtopics = topic.subtopics || [];
 
-    // Inspect URL on mount to restore active subtopic index if URL contains subtopic slug
-    const [activeSubtopicIndex, setActiveSubtopicIndex] = useState<number>(() => {
+    // Calculate initial active subtopic index from URL parameters
+    const initialActiveIdx = (() => {
         if (typeof window !== 'undefined' && subtopics.length > 0) {
             const parts = window.location.pathname.split('/').filter(Boolean);
             if (parts.length >= 4 && parts[0] === 'paths') {
@@ -111,10 +113,25 @@ export function StudyConsole({
             }
         }
         return 0;
+    })();
+
+    const [activeSubtopicIndex, setActiveSubtopicIndex] = useState<number>(initialActiveIdx);
+
+    // Visible subtopic count in continuous scroll feed must include the clicked active subtopic
+    const [visibleCount, setVisibleCount] = useState<number>(() => {
+        if (subtopics.length === 0) return 0;
+        const firstUncompletedIdx = subtopics.findIndex(s => !s.isCompleted);
+        const baseUncompleted = firstUncompletedIdx === -1 ? subtopics.length : firstUncompletedIdx + 1;
+        return Math.max(1, initialActiveIdx + 1, baseUncompleted);
     });
+
+    // Track per-subtopic MCQ completion state
+    const [answeredQuizzesMap, setAnsweredQuizzesMap] = useState<Record<string | number, boolean>>({});
 
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(false);
+    const [isTopicCelebrationOpen, setIsTopicCelebrationOpen] = useState(false);
+
     const [playgroundDrawer, setPlaygroundDrawer] = useState<{
         isOpen: boolean;
         code: string;
@@ -135,19 +152,9 @@ export function StudyConsole({
     };
 
     const contentPaneRef = useRef<HTMLElement>(null);
-
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
 
-    const hasUnansweredQuizzes = Boolean(
-        activeSubtopic &&
-        !activeSubtopic.isCompleted &&
-        activeSubtopic.questions &&
-        activeSubtopic.questions.length > 0
-    );
-
-    const [isActiveSubtopicQuizzesAnswered, setIsActiveSubtopicQuizzesAnswered] = useState<boolean>(!hasUnansweredQuizzes);
-
-    // Sync browser URL to /paths/:pathSlug/:topicSlug/:subtopicSlug on subtopic change
+    // Sync URL slug
     useEffect(() => {
         if (typeof window === 'undefined' || !activeSubtopic) return;
         const parts = window.location.pathname.split('/').filter(Boolean);
@@ -163,58 +170,134 @@ export function StudyConsole({
         }
     }, [activeSubtopicIndex, activeSubtopic, topic.title]);
 
-    // Scroll back to top whenever the active subtopic changes
+    // Scroll to initial active subtopic on mount if specified in URL
     useEffect(() => {
-        contentPaneRef.current?.scrollTo({ top: 0, behavior: 'instant' });
-        setIsActiveSubtopicQuizzesAnswered(!hasUnansweredQuizzes);
-    }, [activeSubtopicIndex, hasUnansweredQuizzes]);
+        if (initialActiveIdx > 0 && subtopics[initialActiveIdx]) {
+            isManualScrollRef.current = true;
+            setTimeout(() => {
+                const elem = document.getElementById(`subtopic-${subtopics[initialActiveIdx].id}`);
+                if (elem) {
+                    elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                setTimeout(() => {
+                    isManualScrollRef.current = false;
+                }, 600);
+            }, 250);
+        }
+    }, []);
 
     const { isBookmarked, toggleBookmark } = useBookmarks();
-    const { content: noteContent, setContent: setNoteContent, saveStatus: noteSaveStatus, isLoading: isNoteLoading, saveNow } = useSubtopicNote(activeSubtopic?.id, isNotesDrawerOpen);
+    
+    // Topic-Level Generic Notes Hook
+    const {
+        content: topicNoteContent,
+        setContent: setTopicNoteContent,
+        saveStatus: topicNoteSaveStatus,
+        isLoading: isTopicNoteLoading,
+        saveNow: saveTopicNoteNow
+    } = useTopicNote(topic.id, isNotesDrawerOpen);
 
     const completedSubtopicsCount = subtopics.filter((s: SubtopicData) => s.isCompleted).length;
-    const allSubtopicsCompleted = subtopics.length > 0 && subtopics.every((s: SubtopicData) => s.isCompleted);
-    const isTopicCompleteDisabled = isUpdating || topic.isCompleted || !allSubtopicsCompleted;
 
     const computedPercentage = topic.isCompleted ? 100 : (
         subtopics.length > 0 ? Math.round((completedSubtopicsCount / subtopics.length) * 100) : (topic.progressPercentage || 0)
     );
 
+    const isManualScrollRef = useRef(false);
+
+    // Scroll spy: Dynamically highlight the active subtopic in Table of Contents based on scroll position
+    useEffect(() => {
+        const pane = contentPaneRef.current;
+        if (!pane || subtopics.length === 0) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (isManualScrollRef.current) return;
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const idStr = entry.target.id.replace('subtopic-', '');
+                        const matchedIdx = subtopics.findIndex(s => String(s.id) === idStr);
+                        if (matchedIdx !== -1) {
+                            setActiveSubtopicIndex(matchedIdx);
+                        }
+                    }
+                });
+            },
+            {
+                root: pane,
+                rootMargin: '-10% 0px -65% 0px',
+                threshold: 0
+            }
+        );
+
+        const rendered = subtopics.slice(0, Math.max(1, visibleCount));
+        rendered.forEach(st => {
+            const elem = document.getElementById(`subtopic-${st.id}`);
+            if (elem) observer.observe(elem);
+        });
+
+        return () => observer.disconnect();
+    }, [visibleCount, subtopics]);
+
     const handleSubtopicChange = (index: number) => {
         if (index >= 0 && index < subtopics.length) {
+            isManualScrollRef.current = true;
+            if (index >= visibleCount) {
+                setVisibleCount(index + 1);
+            }
             setActiveSubtopicIndex(index);
             setIsTocOpen(false);
+
+            setTimeout(() => {
+                const elem = document.getElementById(`subtopic-${subtopics[index].id}`);
+                if (elem) {
+                    elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                setTimeout(() => {
+                    isManualScrollRef.current = false;
+                }, 600);
+            }, 100);
         }
     };
 
-    const handleNext = () => {
-        if (activeSubtopicIndex < subtopics.length - 1) {
-            handleSubtopicChange(activeSubtopicIndex + 1);
+    const handleReadMore = async (subtopic: SubtopicData, index: number) => {
+        // Check if completing this subtopic leaves 0 uncompleted subtopics in the topic
+        const remainingUncompleted = subtopics.filter(s => !s.isCompleted && String(s.id) !== String(subtopic.id));
+        const isTopicNowFullyCompleted = remainingUncompleted.length === 0;
+
+        if (onToggleSubtopicComplete && !subtopic.isCompleted) {
+            await onToggleSubtopicComplete(subtopic.id, true);
+        }
+
+        if (isTopicNowFullyCompleted) {
+            if (!topic.isCompleted) {
+                await onToggleComplete();
+            }
+            setIsTopicCelebrationOpen(true);
+        } else {
+            const nextIndex = index + 1;
+            if (nextIndex < subtopics.length) {
+                isManualScrollRef.current = true;
+                setVisibleCount(prev => Math.max(prev, nextIndex + 1));
+                setActiveSubtopicIndex(nextIndex);
+
+                setTimeout(() => {
+                    const nextElem = document.getElementById(`subtopic-${subtopics[nextIndex].id}`);
+                    if (nextElem) {
+                        nextElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                    setTimeout(() => {
+                        isManualScrollRef.current = false;
+                    }, 600);
+                }, 120);
+            }
         }
     };
 
-    const handlePrev = () => {
-        if (activeSubtopicIndex > 0) {
-            handleSubtopicChange(activeSubtopicIndex - 1);
-        }
-    };
-
-    const handleSubtopicReadToggle = async (subtopicId: string | number, currentlyCompleted: boolean) => {
-        if (currentlyCompleted) return;
-        if (onToggleSubtopicComplete) {
-            await onToggleSubtopicComplete(subtopicId, true);
-        }
-    };
-
-    const handleTopicCompleteToggle = async () => {
-        if (topic.isCompleted) return;
-        await onToggleComplete();
-    };
-
-    const renderContent = (content: string) => {
+    const renderContent = (content: string, currentSubtopic: SubtopicData) => {
         if (!content) return null;
 
-        const snippetMap = new Map((activeSubtopic?.codeSnippets || []).map(s => [s.id, s]));
+        const snippetMap = new Map((currentSubtopic.codeSnippets || []).map(s => [s.id, s]));
 
         const processedContent = content.replace(/\{\{snippet:([^}]+)\}\}/g, (_, id) => {
             const cleanId = id.trim();
@@ -303,6 +386,8 @@ export function StudyConsole({
         );
     };
 
+    const renderedSubtopics = subtopics.slice(0, Math.max(1, visibleCount));
+
     return (
         <div className={styles.studyOverlay}>
             {/* Header section */}
@@ -326,6 +411,16 @@ export function StudyConsole({
                                 onToggle={() => toggleBookmark(topic.id)}
                                 showLabel={false}
                             />
+                            <button
+                                type="button"
+                                className={`${styles.headerNotesBtn} ${isNotesDrawerOpen ? styles.headerNotesBtnActive : ''}`}
+                                onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}
+                                title="Topic Notes"
+                            >
+                                <FileText size={14} />
+                                <span>Notes</span>
+                                {Boolean(topicNoteContent.trim()) && <span className={styles.subtopicNoteDot} />}
+                            </button>
                         </div>
                         <div className={styles.metaRow}>
                             <span className={styles.categoryBadge}>{topic.category}</span>
@@ -401,152 +496,154 @@ export function StudyConsole({
                     </ul>
                 </aside>
 
-                {/* Main reading content pane */}
+                {/* Main continuous reading content pane */}
                 <main className={styles.contentPane} ref={contentPaneRef}>
-                    {activeSubtopic ? (
+                    {subtopics.length > 0 ? (
                         <div className={isNotesDrawerOpen ? styles.contentFlexLayout : ''}>
-                            <article className={styles.article}>
-                                <div className={styles.subtopicHeaderRow}>
-                                    <div>
-                                        <h1 className={styles.sectionTitle}>{activeSubtopic.title}</h1>
-                                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center' }}>
-                                            <LevelBadge level={activeSubtopic.level} />
-                                            {activeSubtopic.track && <TrackBadge track={activeSubtopic.track} />}
-                                            <DurationBadge minutes={activeSubtopic.estimatedMinutes || 5} />
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className={`${styles.subtopicNotesBtn} ${isNotesDrawerOpen ? styles.subtopicNotesBtnActive : ''}`}
-                                        onClick={() => setIsNotesDrawerOpen(!isNotesDrawerOpen)}
-                                        title="Toggle Subtopic Notes"
-                                    >
-                                        <FileText size={15} />
-                                        <span>Notes</span>
-                                        {Boolean(noteContent.trim()) && <span className={styles.subtopicNoteDot} />}
-                                    </button>
-                                </div>
-
-                                {(() => {
-                                    const uncompletedPrereqs = (activeSubtopic.prerequisites || [])
-                                        .map(reqId => {
-                                            const match = subtopics.find(s => {
-                                                const sId = String(s.id).toLowerCase();
-                                                const rId = String(reqId).toLowerCase();
-                                                if (sId === rId) return true;
-
-                                                const sClean = s.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-                                                const rClean = rId.replace(/[^a-z0-9]/g, '');
-                                                if (sClean && rClean && (rClean.includes(sClean) || sClean.includes(rClean))) return true;
-
-                                                return false;
-                                            });
-
-                                            return {
-                                                title: match ? match.title : reqId.replace(/-/g, ' '),
-                                                isCompleted: match ? Boolean(match.isCompleted) : false
-                                            };
-                                        })
-                                        .filter(req => !req.isCompleted);
-
-                                    if (uncompletedPrereqs.length === 0) return null;
+                            <div className={styles.article}>
+                                {renderedSubtopics.map((st: SubtopicData, index: number) => {
+                                    const hasQuizzes = Boolean(st.questions && st.questions.length > 0);
+                                    const isQuizPassed = Boolean(answeredQuizzesMap[st.id]);
+                                    const canReadMore = !hasQuizzes || isQuizPassed;
 
                                     return (
-                                        <div className={styles.prereqBanner}>
-                                            <strong>📌 Prerequisites:</strong> Recommended reading first:{' '}
-                                            {uncompletedPrereqs.map(r => r.title).join(', ')}
-                                        </div>
+                                        <article
+                                            key={st.id || index}
+                                            id={`subtopic-${st.id}`}
+                                            className={styles.subtopicBlock}
+                                        >
+                                            <div className={styles.subtopicHeaderRow}>
+                                                <div>
+                                                    <h1 className={styles.sectionTitle}>{st.title}</h1>
+                                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center' }}>
+                                                        <LevelBadge level={st.level} />
+                                                        {st.track && <TrackBadge track={st.track} />}
+                                                        <DurationBadge minutes={st.estimatedMinutes || 5} />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {(() => {
+                                                const uncompletedPrereqs = (st.prerequisites || [])
+                                                    .map(reqId => {
+                                                        const match = subtopics.find(s => {
+                                                            const sId = String(s.id).toLowerCase();
+                                                            const rId = String(reqId).toLowerCase();
+                                                            if (sId === rId) return true;
+
+                                                            const sClean = s.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                                            const rClean = rId.replace(/[^a-z0-9]/g, '');
+                                                            if (sClean && rClean && (rClean.includes(sClean) || sClean.includes(rClean))) return true;
+
+                                                            return false;
+                                                        });
+
+                                                        return {
+                                                            title: match ? match.title : reqId.replace(/-/g, ' '),
+                                                            isCompleted: match ? Boolean(match.isCompleted) : false
+                                                        };
+                                                    })
+                                                    .filter(req => !req.isCompleted);
+
+                                                if (uncompletedPrereqs.length === 0) return null;
+
+                                                return (
+                                                    <div className={styles.prereqBanner}>
+                                                        <strong>📌 Prerequisites:</strong> Recommended reading first:{' '}
+                                                        {uncompletedPrereqs.map(r => r.title).join(', ')}
+                                                    </div>
+                                                );
+                                            })()}
+
+                                            {st.videoUrl && (
+                                                <YouTubeEmbed url={st.videoUrl} />
+                                            )}
+
+                                            <div className={styles.articleBody}>
+                                                {renderContent(st.content, st)}
+                                                {st.questions && st.questions.length > 0 && (
+                                                    <div className={styles.mcqSection}>
+                                                        <div className={styles.mcqSectionHeader}>
+                                                            <i className="fa-solid fa-circle-question" aria-hidden="true" />
+                                                            <span>Concept Check</span>
+                                                            <span className={styles.mcqCount}>{st.questions.length} Question{st.questions.length > 1 ? 's' : ''}</span>
+                                                        </div>
+                                                        <div style={{ padding: '24px' }}>
+                                                            <ContentRenderer
+                                                                hideHeader={true}
+                                                                isSubtopicCompleted={Boolean(st.isCompleted)}
+                                                                blocks={[{
+                                                                    id: `quiz-${st.id || index}`,
+                                                                    orderIndex: 1,
+                                                                    type: 'quiz',
+                                                                    questions: st.questions.map((q, qIdx) => ({
+                                                                        id: q.id || `q-${st.id || index}-${qIdx}`,
+                                                                        kind: q.kind || 'mcq',
+                                                                        prompt: q.prompt,
+                                                                        options: q.options,
+                                                                        correctAnswer: q.correctAnswer,
+                                                                        explanation: q.explanation,
+                                                                        points: q.points,
+                                                                    })),
+                                                                }]}
+                                                                onAllQuizzesAnsweredChange={(allAnswered) => {
+                                                                    setAnsweredQuizzesMap(prev => ({ ...prev, [st.id]: allAnswered }));
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Progressive Read More / Completion Container */}
+                                            <div className={styles.readMoreContainer}>
+                                                {st.isCompleted ? (
+                                                    <div className={styles.readMoreCompletedBadge}>
+                                                        <CheckCircle2 size={16} /> Section Completed (+5 pts)
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className={styles.readMoreBtn}
+                                                        disabled={isUpdating || !canReadMore}
+                                                        onClick={() => handleReadMore(st, index)}
+                                                        title={
+                                                            !canReadMore
+                                                                ? 'Answer all MCQs in this section first'
+                                                                : index === subtopics.length - 1
+                                                                    ? 'Complete Topic'
+                                                                    : 'Continue to Next Subtopic'
+                                                        }
+                                                    >
+                                                        {index === subtopics.length - 1 ? (
+                                                            <>
+                                                                <Check size={18} />
+                                                                Complete Topic (+10 pts)
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                Read More & Continue
+                                                                <ChevronRight size={18} />
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </article>
                                     );
-                                })()}
+                                })}
+                            </div>
 
-                                {activeSubtopic.videoUrl && (
-                                    <YouTubeEmbed url={activeSubtopic.videoUrl} />
-                                )}
-
-                                <div className={styles.articleBody}>
-                                    {renderContent(activeSubtopic.content)}
-                                    {activeSubtopic.questions && activeSubtopic.questions.length > 0 && (
-                                        <div className={styles.mcqSection}>
-                                            <div className={styles.mcqSectionHeader}>
-                                                <i className="fa-solid fa-circle-question" aria-hidden="true" />
-                                                <span>Concept Check</span>
-                                                <span className={styles.mcqCount}>{activeSubtopic.questions.length} Question{activeSubtopic.questions.length > 1 ? 's' : ''}</span>
-                                            </div>
-                                            <div style={{ padding: '24px' }}>
-                                            <ContentRenderer
-                                                hideHeader={true}
-                                                isSubtopicCompleted={Boolean(activeSubtopic.isCompleted)}
-                                                blocks={[{
-                                                    id: `quiz-${activeSubtopic.id || activeSubtopicIndex}`,
-                                                    orderIndex: 1,
-                                                    type: 'quiz',
-                                                    questions: activeSubtopic.questions.map((q, qIdx) => ({
-                                                        id: q.id || `q-${activeSubtopic.id || activeSubtopicIndex}-${qIdx}`,
-                                                        kind: q.kind || 'mcq',
-                                                        prompt: q.prompt,
-                                                        options: q.options,
-                                                        correctAnswer: q.correctAnswer,
-                                                        explanation: q.explanation,
-                                                        points: q.points,
-                                                    })),
-                                                }]}
-                                                onAllQuizzesAnsweredChange={setIsActiveSubtopicQuizzesAnswered}
-                                            />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Subtopic Explicit Mark as Completed Action */}
-                                <div style={{
-                                    marginTop: '32px',
-                                    paddingTop: '20px',
-                                    borderTop: '1px solid var(--border-color)',
-                                    display: 'flex',
-                                    justifyContent: 'flex-end'
-                                }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSubtopicReadToggle(activeSubtopic.id, !!activeSubtopic.isCompleted)}
-                                        disabled={isUpdating || Boolean(activeSubtopic.isCompleted) || !isActiveSubtopicQuizzesAnswered}
-                                        title={
-                                            activeSubtopic.isCompleted
-                                                ? 'Section already completed'
-                                                : !isActiveSubtopicQuizzesAnswered
-                                                    ? 'Answer all MCQs in this section first'
-                                                    : 'Mark section as read (+5 pts)'
-                                        }
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 20px',
-                                            borderRadius: '8px',
-                                            border: activeSubtopic.isCompleted ? '1px solid var(--tech-green)' : '1px solid var(--tech-blue)',
-                                            backgroundColor: activeSubtopic.isCompleted ? 'rgba(34, 197, 94, 0.1)' : 'var(--tech-blue)',
-                                            color: activeSubtopic.isCompleted ? 'var(--tech-green)' : '#ffffff',
-                                            fontWeight: 600,
-                                            fontSize: '0.9rem',
-                                            cursor: (activeSubtopic.isCompleted || !isActiveSubtopicQuizzesAnswered) ? 'not-allowed' : 'pointer',
-                                            opacity: (!activeSubtopic.isCompleted && !isActiveSubtopicQuizzesAnswered) ? 0.6 : 1,
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        <CheckCircle2 size={16} />
-                                        {activeSubtopic.isCompleted ? 'Completed (+5 pts)' : 'Mark section as read (+5 pts)'}
-                                    </button>
-                                </div>
-                            </article>
-
-                            {/* In-pane corner slider Subtopic Notes Panel */}
+                            {/* In-pane corner slider Topic Notes Panel */}
                             <SubtopicNotesPanel
                                 isOpen={isNotesDrawerOpen}
-                                content={noteContent}
-                                onChange={setNoteContent}
-                                onSave={saveNow}
+                                title={`${topic.title} Notes`}
+                                content={topicNoteContent}
+                                onChange={setTopicNoteContent}
+                                onSave={saveTopicNoteNow}
                                 onClose={() => setIsNotesDrawerOpen(false)}
-                                saveStatus={noteSaveStatus}
-                                isLoading={isNoteLoading}
+                                saveStatus={topicNoteSaveStatus}
+                                isLoading={isTopicNoteLoading}
                             />
 
                             {/* In-pane side slider Code Playground Panel */}
@@ -566,59 +663,22 @@ export function StudyConsole({
                 </main>
             </div>
 
-            {/* Sticky study footer */}
-            <footer className={styles.studyFooter}>
-                <button 
-                    className={styles.navBtn} 
-                    onClick={handlePrev} 
-                    disabled={activeSubtopicIndex === 0}
-                >
-                    <ChevronLeft size={18} />
-                    Previous
-                </button>
-
-                <button
-                    className={`${styles.completeBtn} ${topic.isCompleted ? styles.completeBtnActive : ''}`}
-                    onClick={handleTopicCompleteToggle}
-                    disabled={isTopicCompleteDisabled}
-                    title={
-                        topic.isCompleted
-                            ? 'Topic completed'
-                            : !allSubtopicsCompleted
-                                ? `Complete all ${subtopics.length} sections to enable topic completion (${completedSubtopicsCount}/${subtopics.length} done)`
-                                : undefined
+            {/* Topic Completion Celebration Modal Overlay */}
+            <TopicCelebrationModal
+                isOpen={isTopicCelebrationOpen}
+                topicTitle={topic.title}
+                problemsCount={subtopics.length}
+                nextTopicTitle={nextTopicTitle}
+                onContinueNextTopic={() => {
+                    setIsTopicCelebrationOpen(false);
+                    if (onSelectNextTopic) {
+                        onSelectNextTopic();
+                    } else {
+                        onClose();
                     }
-                >
-                    {topic.isCompleted ? (
-                        <>
-                            <Check size={16} />
-                            Topic Completed!
-                        </>
-                    ) : (
-                        `Mark Entire Topic as Completed (${completedSubtopicsCount}/${subtopics.length})`
-                    )}
-                </button>
-
-                {activeSubtopicIndex === subtopics.length - 1 && onSelectNextTopic ? (
-                    <button 
-                        className={`${styles.navBtn} ${styles.nextTopicBtn}`} 
-                        onClick={onSelectNextTopic}
-                        title="Proceed to Next Topic in Path"
-                    >
-                        Next Topic
-                        <ChevronRight size={18} />
-                    </button>
-                ) : (
-                    <button 
-                        className={styles.navBtn} 
-                        onClick={handleNext} 
-                        disabled={subtopics.length === 0 || activeSubtopicIndex === subtopics.length - 1}
-                    >
-                        Next
-                        <ChevronRight size={18} />
-                    </button>
-                )}
-            </footer>
+                }}
+                onClose={() => setIsTopicCelebrationOpen(false)}
+            />
         </div>
     );
 }

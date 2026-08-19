@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { fetchSubtopicNote, saveSubtopicNote } from '../api/notes.api';
+import { fetchEntityNote, saveEntityNote } from '../api/notes.api';
 
-export function useSubtopicNote(subtopicId?: string | number, enabled: boolean = true) {
+export function useEntityNote(entityType: string = 'topic', entityId?: string | number, enabled: boolean = true) {
     const [content, setContent] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const isFirstRender = useRef(true);
     const lastSavedContent = useRef('');
-    const idString = subtopicId ? String(subtopicId) : '';
+    const idString = entityId ? String(entityId) : '';
 
-    // Load note on subtopic change when enabled
+    // Load note on entity change when enabled
     useEffect(() => {
         if (!idString || !enabled) {
             if (!idString) {
@@ -24,7 +24,7 @@ export function useSubtopicNote(subtopicId?: string | number, enabled: boolean =
         setIsLoading(true);
         isFirstRender.current = true;
 
-        fetchSubtopicNote(idString)
+        fetchEntityNote(entityType, idString)
             .then(note => {
                 if (isMounted) {
                     const loadedText = note.content || '';
@@ -51,20 +51,20 @@ export function useSubtopicNote(subtopicId?: string | number, enabled: boolean =
         return () => {
             isMounted = false;
         };
-    }, [idString, enabled]);
+    }, [entityType, idString, enabled]);
 
     // Manual Save action (only executed when user explicitly clicks Save button)
     const performSave = useCallback(async (textToSave: string) => {
         if (!idString) return;
         setSaveStatus('saving');
         try {
-            await saveSubtopicNote(idString, textToSave);
+            await saveEntityNote(entityType, idString, textToSave);
             lastSavedContent.current = textToSave;
             setSaveStatus('saved');
         } catch {
             setSaveStatus('error');
         }
-    }, [idString]);
+    }, [entityType, idString]);
 
     const handleChange = (newContent: string) => {
         setContent(newContent);
@@ -78,4 +78,12 @@ export function useSubtopicNote(subtopicId?: string | number, enabled: boolean =
         saveStatus,
         saveNow: () => performSave(content)
     };
+}
+
+export function useTopicNote(topicId?: string | number, enabled: boolean = true) {
+    return useEntityNote('topic', topicId, enabled);
+}
+
+export function useSubtopicNote(subtopicId?: string | number, enabled: boolean = true) {
+    return useEntityNote('subtopic', subtopicId, enabled);
 }
