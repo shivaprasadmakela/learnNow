@@ -14,6 +14,7 @@ const ConfigurationEditor = React.lazy(() => import('../../features/iam-admin').
 const CourseImporter = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.CourseImporter })));
 const CompilerPage = React.lazy(() => import('../../features/compiler').then(m => ({ default: m.CompilerPage })));
 const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
+import { fetchAdminPathById, saveAdminPath } from '../../features/iam-admin/api/admin.api';
 
 
 
@@ -136,13 +137,58 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
 
                 {activeView === 'TOPICS' && (
                     <TopicsPage
+                        pathId={selectedPath?.id}
                         pathTitle={selectedPath?.title || 'Learning Path'}
                         description={selectedPath?.description}
                         managedBy={selectedPath?.managedBy || 'learnNow Team'}
                         activitiesCount={selectedPath?.topics?.length}
                         topics={selectedPath?.topics || []}
                         progressPercent={selectedPath?.progressPercentage || 0}
+                        isAdmin={isAdmin}
                         onSelectTopic={handleSelectTopic}
+                        onAddTopicToPath={async (topicData) => {
+                            if (!selectedPath || !selectedPath.id) return false;
+                            try {
+                                const fullPath = await fetchAdminPathById(String(selectedPath.id));
+                                const updatedTopics = [...(fullPath.topics || []), {
+                                    ...topicData,
+                                    orderIndex: (fullPath.topics?.length || 0) + 1
+                                }];
+                                await saveAdminPath({ ...fullPath, topics: updatedTopics });
+                                refreshUserData(true);
+                                return true;
+                            } catch (err) {
+                                console.error('Failed to add topic to path:', err);
+                                return false;
+                            }
+                        }}
+                        onAddSubtopicToTopic={async (targetTopicId, subtopicData) => {
+                            if (!selectedPath || !selectedPath.id) return false;
+                            try {
+                                const fullPath = await fetchAdminPathById(String(selectedPath.id));
+                                const targetIdx = fullPath.topics?.findIndex(t => String(t.id) === String(targetTopicId));
+                                if (targetIdx === undefined || targetIdx === -1) return false;
+
+                                const targetTopic = fullPath.topics[targetIdx];
+                                const items = Array.isArray(subtopicData) ? subtopicData : [subtopicData];
+                                const newSubs = items.map((s: any, idx: number) => ({
+                                    ...s,
+                                    orderIndex: (targetTopic.subtopics?.length || 0) + idx + 1
+                                }));
+
+                                fullPath.topics[targetIdx] = {
+                                    ...targetTopic,
+                                    subtopics: [...(targetTopic.subtopics || []), ...newSubs]
+                                };
+
+                                await saveAdminPath(fullPath);
+                                refreshUserData(true);
+                                return true;
+                            } catch (err) {
+                                console.error('Failed to add subtopic:', err);
+                                return false;
+                            }
+                        }}
                     />
                 )}
 

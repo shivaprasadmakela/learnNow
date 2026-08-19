@@ -25,7 +25,10 @@ export interface UseConfigurationEditorReturn {
     setActiveTopicIndex: (i: number) => void;
     activeSubtopicIndex: number;
     setActiveSubtopicIndex: (i: number) => void;
-    handleAddTopic: () => void;
+    handleAddTopic: (customTopic?: AdminTopicData) => void;
+    handleAddTopicFromJson: (jsonInput: string) => boolean;
+    handleMoveTopicUp: (index: number) => void;
+    handleMoveTopicDown: (index: number) => void;
     handleAttachExistingTopic: (topic: AdminTopicData) => void;
     handleRemoveTopic: (index: number) => void;
     handleUpdateTopic: (index: number, field: keyof AdminTopicData, value: string) => void;
@@ -90,8 +93,11 @@ export const useConfigurationEditor = (
         };
     }, []);
 
-    const handleAddTopic = useCallback(() => {
-        const newTopic: AdminTopicData = {
+    const handleAddTopic = useCallback((customTopic?: AdminTopicData) => {
+        const newTopic: AdminTopicData = customTopic ? {
+            ...customTopic,
+            orderIndex: topics.length + 1
+        } : {
             title: `New Topic ${topics.length + 1}`,
             description: 'Topic overview and learning goals.',
             category: 'Topic',
@@ -109,6 +115,83 @@ export const useConfigurationEditor = (
         setActiveTopicIndex(topics.length);
         setActiveSubtopicIndex(0);
     }, [topics]);
+
+    const handleAddTopicFromJson = useCallback((jsonInput: string) => {
+        try {
+            const parsed = JSON.parse(jsonInput);
+            const topicObj = Array.isArray(parsed) ? parsed[0] : parsed;
+
+            if (!topicObj || typeof topicObj !== 'object' || !topicObj.title) {
+                showToast('JSON must include at least a "title" field.', 'error');
+                return false;
+            }
+
+            const newTopic: AdminTopicData = {
+                id: topicObj.id,
+                title: String(topicObj.title || 'Imported Topic'),
+                description: String(topicObj.description || ''),
+                category: String(topicObj.category || 'Topic'),
+                level: topicObj.level || 'Beginner',
+                track: topicObj.track || 'conceptual',
+                duration: String(topicObj.duration || '30 mins'),
+                orderIndex: topics.length + 1,
+                status: topicObj.status || 'DRAFT',
+                subtopics: Array.isArray(topicObj.subtopics) ? topicObj.subtopics.map((s: any, idx: number) => ({
+                    id: s.id,
+                    title: String(s.title || `Section ${idx + 1}`),
+                    content: String(s.content || ''),
+                    orderIndex: s.orderIndex || idx + 1,
+                    level: s.level || 'Beginner',
+                    track: s.track || 'conceptual',
+                    estimatedMinutes: s.estimatedMinutes || 5,
+                    videoUrl: s.videoUrl || '',
+                    status: s.status || 'DRAFT',
+                    questions: Array.isArray(s.questions) ? s.questions : [],
+                    codeSnippets: Array.isArray(s.codeSnippets) ? s.codeSnippets : []
+                })) : [{
+                    title: 'Introduction & Overview',
+                    content: '### Section Overview\n\nAdd content details.',
+                    orderIndex: 1,
+                    status: 'DRAFT'
+                }]
+            };
+
+            setTopics(prev => [...prev, newTopic]);
+            setActiveTopicIndex(topics.length);
+            setActiveSubtopicIndex(0);
+            showToast(`Topic "${newTopic.title}" imported successfully!`, 'success');
+            return true;
+        } catch (err: any) {
+            showToast(`Invalid Topic JSON: ${err.message || 'Syntax error'}`, 'error');
+            return false;
+        }
+    }, [topics, showToast]);
+
+    const handleMoveTopicUp = useCallback((index: number) => {
+        if (index <= 0) return;
+        setTopics(prev => {
+            const next = [...prev];
+            const temp = next[index - 1];
+            next[index - 1] = next[index];
+            next[index] = temp;
+            next.forEach((t, i) => { t.orderIndex = i + 1; });
+            return next;
+        });
+        setActiveTopicIndex(prev => prev === index ? index - 1 : (prev === index - 1 ? index : prev));
+    }, []);
+
+    const handleMoveTopicDown = useCallback((index: number) => {
+        setTopics(prev => {
+            if (index >= prev.length - 1) return prev;
+            const next = [...prev];
+            const temp = next[index + 1];
+            next[index + 1] = next[index];
+            next[index] = temp;
+            next.forEach((t, i) => { t.orderIndex = i + 1; });
+            return next;
+        });
+        setActiveTopicIndex(prev => prev === index ? index + 1 : (prev === index + 1 ? index : prev));
+    }, []);
 
     const handleAttachExistingTopic = useCallback((topic: AdminTopicData) => {
         setTopics(prev => [...prev, { ...topic, orderIndex: prev.length + 1 }]);
@@ -349,7 +432,7 @@ export const useConfigurationEditor = (
         topics,
         activeTopicIndex, setActiveTopicIndex,
         activeSubtopicIndex, setActiveSubtopicIndex,
-        handleAddTopic, handleAttachExistingTopic, handleRemoveTopic, handleUpdateTopic,
+        handleAddTopic, handleAddTopicFromJson, handleMoveTopicUp, handleMoveTopicDown, handleAttachExistingTopic, handleRemoveTopic, handleUpdateTopic,
         handleAddSubtopic, handleRemoveSubtopic, handleUpdateSubtopic,
         handleAddQuestion, handleRemoveQuestion, handleUpdateQuestion,
         handleAddOption, handleRemoveOption, handleUpdateOption,

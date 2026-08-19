@@ -24,6 +24,8 @@ export interface AdminTopicData {
     title: string;
     description: string;
     category: string;
+    level?: string;
+    track?: string;
     duration: string;
     orderIndex?: number;
     status: 'DRAFT' | 'PUBLISHED';

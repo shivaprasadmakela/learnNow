@@ -26,7 +26,7 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
         topics,
         activeTopicIndex, setActiveTopicIndex,
         activeSubtopicIndex, setActiveSubtopicIndex,
-        handleAddTopic, handleAttachExistingTopic, handleRemoveTopic, handleUpdateTopic,
+        handleAddTopic, handleAddTopicFromJson, handleMoveTopicUp, handleMoveTopicDown, handleAttachExistingTopic, handleRemoveTopic, handleUpdateTopic,
         handleAddSubtopic, handleRemoveSubtopic, handleUpdateSubtopic,
         handleAddQuestion, handleRemoveQuestion, handleUpdateQuestion,
         handleAddOption, handleRemoveOption, handleUpdateOption,
@@ -130,8 +130,11 @@ export const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({
                             setActiveSubtopicIndex(sIdx);
                         }}
                         onAddTopic={handleAddTopic}
+                        onImportTopicJson={handleAddTopicFromJson}
                         onAttachExistingTopic={handleAttachExistingTopic}
                         onRemoveTopic={handleRemoveTopic}
+                        onMoveTopicUp={handleMoveTopicUp}
+                        onMoveTopicDown={handleMoveTopicDown}
                         onUpdateTopicTitle={(tIdx, value) => handleUpdateTopic(tIdx, 'title', value)}
                         onUpdateTopicDescription={(tIdx, value) => handleUpdateTopic(tIdx, 'description', value)}
                         onAddSubtopic={handleAddSubtopic}

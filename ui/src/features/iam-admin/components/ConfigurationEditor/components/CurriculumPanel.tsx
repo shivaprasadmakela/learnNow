@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Library } from 'lucide-react';
+import { Plus, Trash2, Library, ChevronUp, ChevronDown } from 'lucide-react';
 import styles from './CurriculumPanel.module.css';
 import type { AdminTopicData } from '../../../api/admin.api';
 import { AttachTopicModal } from './AttachTopicModal';
+import { CreateTopicModal } from './CreateTopicModal';
 
 interface CurriculumPanelProps {
     topics: AdminTopicData[];
     activeTopicIndex: number;
     activeSubtopicIndex: number;
     onSelectSubtopic: (topicIdx: number, subtopicIdx: number) => void;
-    onAddTopic: () => void;
+    onAddTopic: (topic?: AdminTopicData) => void;
+    onImportTopicJson?: (jsonInput: string) => boolean;
     onAttachExistingTopic?: (topic: AdminTopicData) => void;
     onRemoveTopic: (topicIdx: number) => void;
+    onMoveTopicUp?: (topicIdx: number) => void;
+    onMoveTopicDown?: (topicIdx: number) => void;
     onUpdateTopicTitle: (topicIdx: number, value: string) => void;
     onUpdateTopicDescription: (topicIdx: number, value: string) => void;
     onAddSubtopic: (topicIdx: number) => void;
@@ -29,14 +33,18 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
     activeSubtopicIndex,
     onSelectSubtopic,
     onAddTopic,
+    onImportTopicJson,
     onAttachExistingTopic,
     onRemoveTopic,
+    onMoveTopicUp,
+    onMoveTopicDown,
     onUpdateTopicTitle,
     onUpdateTopicDescription,
     onAddSubtopic,
     onRemoveSubtopic,
 }) => {
     const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const existingTopicIds = topics.map(t => t.id).filter((id): id is string => Boolean(id));
 
@@ -59,7 +67,7 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
                             <Library size={13} /> Library
                         </button>
                     )}
-                    <button type="button" className={styles.addTopicBtn} onClick={onAddTopic}>
+                    <button type="button" className={styles.addTopicBtn} onClick={() => setIsCreateModalOpen(true)}>
                         <Plus size={14} /> Topic
                     </button>
                 </div>
@@ -75,7 +83,29 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
                     {topics.map((topic, tIdx) => (
                         <li key={tIdx} className={styles.topicItem}>
                             <div className={styles.topicRow}>
-                                <i className="fa-solid fa-dove" style={{ marginRight: '6px', fontSize: '0.85rem', color: 'var(--tech-blue)' }} aria-hidden="true" />
+                                {/* Topic Reordering Controls */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <button
+                                        type="button"
+                                        className={styles.reorderBtn}
+                                        onClick={() => onMoveTopicUp && onMoveTopicUp(tIdx)}
+                                        disabled={tIdx === 0}
+                                        title="Move Topic Up"
+                                    >
+                                        <ChevronUp size={12} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.reorderBtn}
+                                        onClick={() => onMoveTopicDown && onMoveTopicDown(tIdx)}
+                                        disabled={tIdx === topics.length - 1}
+                                        title="Move Topic Down"
+                                    >
+                                        <ChevronDown size={12} />
+                                    </button>
+                                </div>
+
+                                <i className="fa-solid fa-dove" style={{ marginRight: '4px', fontSize: '0.85rem', color: 'var(--tech-blue)' }} aria-hidden="true" />
                                 <input
                                     type="text"
                                     className={styles.topicTitleInput}
@@ -141,18 +171,21 @@ export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({
                 </ul>
             )}
 
+            {/* Create Topic Modal (Form vs Raw JSON import) */}
+            <CreateTopicModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onCreateTopic={(newTopic) => onAddTopic(newTopic)}
+                onImportTopicJson={(jsonInput) => onImportTopicJson ? onImportTopicJson(jsonInput) : false}
+            />
+
+            {/* Attach Existing Topic Library Modal */}
             {onAttachExistingTopic && (
                 <AttachTopicModal
                     isOpen={isAttachModalOpen}
                     onClose={() => setIsAttachModalOpen(false)}
                     existingTopicIds={existingTopicIds}
                     onAttachTopic={onAttachExistingTopic}
-                    onUnlinkTopic={(topicId) => {
-                        const idx = topics.findIndex(t => t.id === topicId);
-                        if (idx !== -1) {
-                            onRemoveTopic(idx);
-                        }
-                    }}
                 />
             )}
         </section>

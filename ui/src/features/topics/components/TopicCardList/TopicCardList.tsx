@@ -12,18 +12,18 @@ import type { TopicCardListProps } from './TopicCardList.types';
 
 export const TopicCardList: React.FC<TopicCardListProps> = ({ topics, viewMode, onTopicClick }) => {
     const { isBookmarked, toggleBookmark } = useBookmarks();
-    const [expandedTopics, setExpandedTopics] = useState<Record<number, boolean>>({});
-    const [topicSubtopics, setTopicSubtopics] = useState<Record<number, SubtopicData[]>>({});
-    const [loadingTopics, setLoadingTopics] = useState<Record<number, boolean>>({});
+    const [expandedTopics, setExpandedTopics] = useState<Record<string | number, boolean>>({});
+    const [topicSubtopics, setTopicSubtopics] = useState<Record<string | number, SubtopicData[]>>({});
+    const [loadingTopics, setLoadingTopics] = useState<Record<string | number, boolean>>({});
 
-    const toggleExpand = async (topicId: number, e: React.MouseEvent) => {
+    const toggleExpand = async (topicId: string | number, e: React.MouseEvent) => {
         e.stopPropagation();
         const currentlyExpanded = Boolean(expandedTopics[topicId]);
         setExpandedTopics(prev => ({ ...prev, [topicId]: !currentlyExpanded }));
 
         // Lazily fetch subtopics if expanding and not already loaded
         if (!currentlyExpanded && !topicSubtopics[topicId]) {
-            const existing = topics.find(t => t.id === topicId)?.subtopics;
+            const existing = topics.find(t => String(t.id) === String(topicId))?.subtopics;
             if (existing && existing.length > 0) {
                 setTopicSubtopics(prev => ({ ...prev, [topicId]: existing }));
             } else {
@@ -153,7 +153,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({ topics, viewMode, 
                                 ) : subtopics.length > 0 ? (
                                     (() => {
                                         const lastCompletedIdx = subtopics.reduce(
-                                            (acc, st, idx) => (st.isCompleted ? idx : acc),
+                                            (acc: number, st: SubtopicData, idx: number) => (st.isCompleted ? idx : acc),
                                             -1
                                         );
                                         const progressPct =
@@ -174,7 +174,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({ topics, viewMode, 
                                                     />
                                                 )}
 
-                                                {subtopics.map((st, stIdx) => {
+                                                {subtopics.map((st: SubtopicData, stIdx: number) => {
                                                     const stCompleted = Boolean(st.isCompleted);
                                                     return (
                                                         <div
