@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { fetchTopicDetails } from '../../shared/api';
+import { fetchTopicDetails, invalidatePathsCache } from '../../shared/api';
 import type { TopicDetails } from '../../shared/api';
 import { useRecordActivity } from '../../features/activity';
 import type { Course } from '../../types';
@@ -18,7 +18,8 @@ interface UseTopicSessionOptions {
     courses: Course[];
     changeView: (view: ViewState, pathSlug?: string, topicSlug?: string) => void;
     showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
-    refreshUserData: () => Promise<void>;
+    refreshUserData: (force?: boolean) => Promise<void>;
+    loadTopicsForPath?: (pathId: number | string) => Promise<void>;
 }
 
 export const useTopicSession = ({
@@ -26,7 +27,8 @@ export const useTopicSession = ({
     courses,
     changeView,
     showToast,
-    refreshUserData
+    refreshUserData,
+    loadTopicsForPath
 }: UseTopicSessionOptions) => {
     const [activeTopicId, setActiveTopicId] = useState<string | number | null>(null);
     const [activeTopic, setActiveTopic] = useState<TopicDetails | null>(null);
@@ -37,7 +39,7 @@ export const useTopicSession = ({
 
     const fetchingRef = useRef<string | number | null>(null);
 
-    const handleSelectTopic = useCallback(async (id: string | number) => {
+    const handleSelectTopic = useCallback(async (id: string | number, subtopicId?: string | number, subtopicTitle?: string) => {
         if (!isLoggedIn) {
             changeView('LOGIN');
             return;
@@ -50,9 +52,16 @@ export const useTopicSession = ({
         setIsStudyLoading(true);
 
         const parentCourse = courses.find(c => c.topics?.some(s => s.id === id));
-        const sub = parentCourse?.topics?.find(s => s.id === id);
-        if (parentCourse && sub) {
-            changeView('STUDY', slugify(parentCourse.title), slugify(sub.title));
+        const topicObj = parentCourse?.topics?.find(s => s.id === id);
+
+        const pathSlug = parentCourse ? slugify(parentCourse.title) : 'path';
+        const topicSlug = topicObj ? slugify(topicObj.title) : 'topic';
+        const subSlug = subtopicTitle ? slugify(subtopicTitle) : (subtopicId ? String(subtopicId) : null);
+
+        if (subSlug) {
+            changeView('STUDY', pathSlug, `${topicSlug}/${subSlug}`);
+        } else if (parentCourse && topicObj) {
+            changeView('STUDY', pathSlug, topicSlug);
         } else {
             changeView('STUDY', 'path', 'topic');
         }
@@ -60,8 +69,12 @@ export const useTopicSession = ({
         try {
             const details = await fetchTopicDetails(id);
             setActiveTopic(details);
-            if (details.title && (!parentCourse || !sub)) {
-                changeView('STUDY', 'path', slugify(details.title));
+            if (details.title && (!parentCourse || !topicObj)) {
+                if (subSlug) {
+                    changeView('STUDY', 'path', `${slugify(details.title)}/${subSlug}`);
+                } else {
+                    changeView('STUDY', 'path', slugify(details.title));
+                }
             }
         } catch (err) {
             console.error("Failed to load topic details", err);
@@ -137,7 +150,13 @@ export const useTopicSession = ({
 
             const details = await fetchTopicDetails(activeTopicId);
             setActiveTopic(details);
-            await refreshUserData();
+            invalidatePathsCache();
+            await refreshUserData(true);
+
+            const parentCourse = courses.find(c => c.topics?.some(s => s.id === activeTopicId));
+            if (parentCourse && loadTopicsForPath) {
+                await loadTopicsForPath(parentCourse.id);
+            }
 
             showToast(nextCompleted ? "Topic marked as completed! (+20 bonus points)" : "Topic marked as incomplete.", "success");
         } catch (err) {
@@ -156,7 +175,13 @@ export const useTopicSession = ({
 
             const details = await fetchTopicDetails(activeTopicId);
             setActiveTopic(details);
-            await refreshUserData();
+            invalidatePathsCache();
+            await refreshUserData(true);
+
+            const parentCourse = courses.find(c => c.topics?.some(s => s.id === activeTopicId));
+            if (parentCourse && loadTopicsForPath) {
+                await loadTopicsForPath(parentCourse.id);
+            }
 
             showToast(completed ? "Section marked as read! (+5 points)" : "Section unmarked.", "success");
         } catch (err) {

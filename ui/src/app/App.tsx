@@ -52,7 +52,8 @@ export default function App() {
         courses,
         changeView,
         showToast,
-        refreshUserData
+        refreshUserData,
+        loadTopicsForPath
     });
 
     const slugify = (text: string) =>
@@ -163,7 +164,16 @@ export default function App() {
         return <Loader variant="fullScreen" showColdStartFunnyMessages={true} />;
     }
 
-    const selectedPath = (selectedPathId ? courses.find(c => c.id === selectedPathId) : null) || courses[0];
+    const rawSelectedPath = (selectedPathId ? courses.find(c => c.id === selectedPathId) : null) || courses[0];
+    const selectedPathTopics = rawSelectedPath?.topics || [];
+    const computedPathProgress = selectedPathTopics.length > 0
+        ? Math.round(selectedPathTopics.reduce((acc: number, t: any) => acc + (t.isCompleted ? 100 : (t.progressPercentage || 0)), 0) / selectedPathTopics.length)
+        : (rawSelectedPath?.progressPercentage || 0);
+
+    const selectedPath = rawSelectedPath ? {
+        ...rawSelectedPath,
+        progressPercentage: computedPathProgress
+    } : courses[0];
 
     return (
         <div className={`${styles.appRoot} ${theme === 'dark' ? 'dark-theme' : ''}`}>
@@ -219,6 +229,11 @@ export default function App() {
                                 onToggleComplete={handleToggleTopicComplete}
                                 onToggleSubtopicComplete={handleToggleSubtopicComplete}
                                 onSelectNextTopic={handleSelectNextTopic}
+                                onOpenFullCompiler={(code, lang) => {
+                                    const langId = lang.toLowerCase() === 'javascript' ? 'js' : lang.toLowerCase();
+                                    localStorage.setItem(`compiler_draft_${langId}`, code);
+                                    changeView('COMPILER');
+                                }}
                                 isUpdating={isStudyUpdating}
                             />
                         </Suspense>

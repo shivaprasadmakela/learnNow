@@ -6,6 +6,8 @@ import com.learnnow.paths.service.CatalogService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,24 +23,29 @@ public class PathController {
         this.catalogService = catalogService;
     }
 
-    /** Get all paths (metadata only, without eager topics). */
+    /** Get all paths (metadata + progress for authenticated user). */
     @GetMapping
-    public ResponseEntity<List<PathSummaryDto>> getAllPaths() {
-        return ResponseEntity.ok(catalogService.getAllPaths());
+    public ResponseEntity<List<PathSummaryDto>> getAllPaths(@AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt != null ? jwt.getSubject() : null;
+        return ResponseEntity.ok(catalogService.getAllPaths(userId));
     }
 
     /** Get single path details including its topics. */
     @GetMapping("/{pathId}")
-    public ResponseEntity<PathSummaryDto> getPathDetails(@PathVariable UUID pathId) {
+    public ResponseEntity<PathSummaryDto> getPathDetails(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID pathId) {
+        String userId = jwt != null ? jwt.getSubject() : null;
         return catalogService
-                .getPathDetails(pathId)
+                .getPathDetails(pathId, userId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     /** Get topics for a specific path. */
     @GetMapping("/{pathId}/topics")
-    public ResponseEntity<List<TopicSummaryDto>> getTopicsForPath(@PathVariable UUID pathId) {
-        return ResponseEntity.ok(catalogService.getTopicsForPath(pathId));
+    public ResponseEntity<List<TopicSummaryDto>> getTopicsForPath(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID pathId) {
+        String userId = jwt != null ? jwt.getSubject() : null;
+        return ResponseEntity.ok(catalogService.getTopicsForPath(pathId, userId));
     }
 }

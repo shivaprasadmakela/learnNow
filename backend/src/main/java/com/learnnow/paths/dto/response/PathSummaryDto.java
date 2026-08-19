@@ -9,4 +9,15 @@ public record PathSummaryDto(
         String description,
         String category,
         String managedBy,
-        List<TopicSummaryDto> topics) {}
+        int progressPercentage,
+        List<TopicSummaryDto> topics) {
+    public PathSummaryDto(
+            UUID id,
+            String title,
+            String description,
+            String category,
+            String managedBy,
+            List<TopicSummaryDto> topics) {
+        this(id, title, description, category, managedBy, 0, topics);
+    }
+}

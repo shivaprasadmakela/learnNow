@@ -172,6 +172,30 @@
     color: var(--tech-blue);
 }
 
+.nodeCompletedBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--tech-blue, #6366f1);
+    color: #ffffff;
+    box-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
+    flex-shrink: 0;
+}
+
+.nodePendingBadge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bg-card, var(--bg-primary, #ffffff));
+    border: 2px solid var(--border-color, #e2e8f0);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 .tocIndex {
     background: var(--border-color);
     color: var(--text-secondary);
@@ -694,5 +718,130 @@
     background-color: #2563eb !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.copyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--bg-primary, #0f172a);
+    color: var(--text-secondary, #9ca3af);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copyBtn:hover {
+    border-color: var(--tech-blue, #3b82f6);
+    color: #ffffff;
+}
+
+.imageWrapper {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.contentImage {
+    max-width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.imageCaption {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary, #9ca3af);
+    font-style: italic;
+    text-align: center;
+}
+
+.codeBlockWrapper {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-primary);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.codeBlockWrapper:hover {
+    border-color: var(--tech-blue);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.codeBlockHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.codeBlockLangBadge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent-blue-text, var(--tech-blue));
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+}
+
+.codeBlockActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.playgroundActionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--accent-blue-light, rgba(59, 130, 246, 0.12));
+    color: var(--accent-blue-text, var(--tech-blue));
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.playgroundActionBtn:hover {
+    background: var(--tech-blue);
+    color: #ffffff;
+    border-color: var(--tech-blue);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.codePreBlock {
+    margin: 0 !important;
+    padding: 18px 20px !important;
+    background: var(--bg-primary) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: 'Fira Code', 'Consolas', monospace !important;
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+    color: var(--text-primary) !important;
+    overflow-x: auto;
+}
+
+.codePreBlock code {
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    font-family: inherit !important;
+    color: inherit !important;
 }
 

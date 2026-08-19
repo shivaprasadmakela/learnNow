@@ -1,6 +1,7 @@
 package com.learnnow.paths.service;
 
 import com.learnnow.learningprogress.entity.UserSubtopicProgress;
+import com.learnnow.learningprogress.entity.UserTopicProgress;
 import com.learnnow.learningprogress.enums.ProgressStatus;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
@@ -12,6 +13,8 @@ import com.learnnow.paths.dto.response.SubtopicDto;
 import com.learnnow.paths.dto.response.TopicDetailDto;
 import com.learnnow.paths.dto.response.TopicSummaryDto;
 import com.learnnow.paths.entity.ContentStatus;
+import com.learnnow.paths.entity.Subtopic;
+import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
 import com.learnnow.paths.repository.TopicRepository;
 import java.util.List;
@@ -51,47 +54,108 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public List<PathSummaryDto> getAllPaths() {
+        return getAllPaths(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PathSummaryDto> getAllPaths(String userId) {
         return pathRepository.findByStatus(ContentStatus.PUBLISHED).stream()
                 .map(
-                        path ->
-                                new PathSummaryDto(
-                                        path.getId(),
-                                        path.getTitle(),
-                                        path.getDescription(),
-                                        path.getCategory(),
-                                        path.getManagedBy(),
-                                        List.of()))
+                        path -> {
+                            List<TopicSummaryDto> topics = getTopicsForPath(path.getId(), userId);
+                            int pathPct = 0;
+                            if (!topics.isEmpty()) {
+                                double sumPct = topics.stream().mapToInt(TopicSummaryDto::progressPercentage).sum();
+                                pathPct = (int) Math.round(sumPct / topics.size());
+                            }
+                            return new PathSummaryDto(
+                                    path.getId(),
+                                    path.getTitle(),
+                                    path.getDescription(),
+                                    path.getCategory(),
+                                    path.getManagedBy(),
+                                    pathPct,
+                                    topics);
+                        })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<TopicSummaryDto> getTopicsForPath(UUID pathId) {
-        return topicRepository.findByPathIdAndStatus(pathId, ContentStatus.PUBLISHED).stream()
-                .map(
-                        t ->
-                                new TopicSummaryDto(
-                                        t.getId(),
-                                        t.getTitle(),
-                                        t.getDescription(),
-                                        t.getCategory(),
-                                        t.getDuration(),
-                                        false))
+        return getTopicsForPath(pathId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TopicSummaryDto> getTopicsForPath(UUID pathId, String userId) {
+        List<Topic> topics = topicRepository.findByPathIdAndStatus(pathId, ContentStatus.PUBLISHED);
+        if (userId == null || userId.isBlank()) {
+            return topics.stream()
+                    .map(t -> new TopicSummaryDto(t.getId(), t.getTitle(), t.getDescription(), t.getCategory(), t.getDuration(), false, 0))
+                    .toList();
+        }
+
+        List<UserTopicProgress> topicProgresses = topicProgressRepository.findByUserId(userId);
+        Map<UUID, ProgressStatus> topicStatusMap = topicProgresses.stream()
+                .collect(Collectors.toMap(UserTopicProgress::getTopicId, UserTopicProgress::getStatus, (a, b) -> a));
+
+        List<UserSubtopicProgress> subProgresses = subtopicProgressRepository.findByUserId(userId);
+        Map<UUID, Boolean> subtopicCompletionMap = subProgresses.stream()
+                .filter(UserSubtopicProgress::isCompleted)
+                .collect(Collectors.toMap(UserSubtopicProgress::getSubtopicId, sp -> true, (a, b) -> a));
+
+        return topics.stream()
+                .map(t -> {
+                    boolean isCompleted = topicStatusMap.get(t.getId()) == ProgressStatus.COMPLETED;
+                    int pct = 0;
+                    if (isCompleted) {
+                        pct = 100;
+                    } else {
+                        List<Subtopic> subtopics = t.getSubtopics();
+                        if (subtopics != null && !subtopics.isEmpty()) {
+                            long completedCount = subtopics.stream()
+                                    .filter(st -> Boolean.TRUE.equals(subtopicCompletionMap.get(st.getId())))
+                                    .count();
+                            pct = (int) Math.round((double) completedCount * 100 / subtopics.size());
+                        }
+                    }
+                    return new TopicSummaryDto(
+                            t.getId(),
+                            t.getTitle(),
+                            t.getDescription(),
+                            t.getCategory(),
+                            t.getDuration(),
+                            isCompleted,
+                            pct);
+                })
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Optional<PathSummaryDto> getPathDetails(UUID pathId) {
+        return getPathDetails(pathId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PathSummaryDto> getPathDetails(UUID pathId, String userId) {
         return pathRepository
                 .findById(pathId)
                 .map(
-                        path ->
-                                new PathSummaryDto(
-                                        path.getId(),
-                                        path.getTitle(),
-                                        path.getDescription(),
-                                        path.getCategory(),
-                                        path.getManagedBy(),
-                                        getTopicsForPath(pathId)));
+                        path -> {
+                            List<TopicSummaryDto> topics = getTopicsForPath(pathId, userId);
+                            int pathPct = 0;
+                            if (!topics.isEmpty()) {
+                                double sumPct = topics.stream().mapToInt(TopicSummaryDto::progressPercentage).sum();
+                                pathPct = (int) Math.round(sumPct / topics.size());
+                            }
+                            return new PathSummaryDto(
+                                    path.getId(),
+                                    path.getTitle(),
+                                    path.getDescription(),
+                                    path.getCategory(),
+                                    path.getManagedBy(),
+                                    pathPct,
+                                    topics);
+                        });
     }
 
     @Transactional(readOnly = true)
@@ -288,12 +352,21 @@ public class CatalogService {
                                                                     / totalSubtopics)
                                                     : 0);
 
+                            int totalMins = subtopics.stream()
+                                    .mapToInt(st -> st.getEstimatedMinutes() > 0 ? st.getEstimatedMinutes() : 5)
+                                    .sum();
+                            String computedDuration = totalMins >= 60
+                                    ? (totalMins % 60 == 0
+                                            ? (totalMins / 60) + (totalMins / 60 == 1 ? " hour" : " hours")
+                                            : (totalMins / 60) + "h " + (totalMins % 60) + "m")
+                                    : (totalMins > 0 ? totalMins + " mins" : (topic.getDuration() != null ? topic.getDuration() : "15 mins"));
+
                             return new TopicDetailDto(
                                     topic.getId(),
                                     topic.getTitle(),
                                     topic.getDescription(),
                                     topic.getCategory(),
-                                    topic.getDuration(),
+                                    computedDuration,
                                     topicCompleted,
                                     progressPercentage,
                                     subtopics);

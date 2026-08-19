@@ -31,7 +31,7 @@ interface AppViewRendererProps {
     signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
     signInWithGoogle?: (idToken: string) => Promise<unknown>;
     handleSelectPath: (pathId: number) => void;
-    handleSelectTopic: (topicId: number) => void;
+    handleSelectTopic: (topicId: number | string, subtopicId?: number | string, subtopicTitle?: string) => void;
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
     handleViewChange: (view: any) => void;
     changeView: (view: any, slug?: string) => void;

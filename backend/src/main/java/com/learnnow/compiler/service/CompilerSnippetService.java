@@ -52,10 +52,14 @@ public class CompilerSnippetService {
 
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest request) {
         int languageId = mapLanguageToJudge0Id(request.getLanguage());
+        String code = request.getCode();
+        if ("java".equalsIgnoreCase(request.getLanguage())) {
+            code = prepareJavaSourceCode(code);
+        }
 
         Map<String, Object> body = new HashMap<>();
         body.put(KEY_LANGUAGE_ID, languageId);
-        body.put(KEY_SOURCE_CODE, request.getCode());
+        body.put(KEY_SOURCE_CODE, code);
         if (request.getStdin() != null && !request.getStdin().isBlank()) {
             body.put(KEY_STDIN, request.getStdin());
         }
@@ -220,5 +224,24 @@ public class CompilerSnippetService {
                 .code(snippet.getCode())
                 .createdAt(snippet.getCreatedAt())
                 .build();
+    }
+
+    private String prepareJavaSourceCode(String code) {
+        if (code == null || code.isBlank()) return code;
+        String trimmed = code.trim();
+        boolean hasClassOrInterface = trimmed.contains("class ") || trimmed.contains("interface ")
+                || trimmed.contains("enum ") || trimmed.contains("record ");
+        boolean hasMain = trimmed.contains("main(");
+
+        if (!hasClassOrInterface && !hasMain) {
+            String indented = "        " + trimmed.replace("\n", "\n        ");
+            return "public class Main {\n    public static void main(String[] args) {\n" + indented + "\n    }\n}";
+        }
+
+        if (trimmed.contains("public class ") && !trimmed.contains("public class Main")) {
+            return trimmed.replaceAll("public\\s+class\\s+[A-Za-z0-9_]+", "public class Main");
+        }
+
+        return trimmed;
     }
 }

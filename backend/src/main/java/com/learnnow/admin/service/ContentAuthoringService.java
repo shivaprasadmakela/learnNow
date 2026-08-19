@@ -795,19 +795,35 @@ public class ContentAuthoringService {
 
         List<QuizQuestion> quizQuestions = new ArrayList<>();
         for (ImportCourseRequest.ImportQuestionRequest qReq : questions) {
+            String prompt = qReq.prompt();
+            if (prompt == null || prompt.isBlank()) continue;
+
             counts.questions++;
             String optionsJson = "[]";
-            if (qReq.options() != null) {
+            if (qReq.options() != null && !qReq.options().isEmpty()) {
                 try {
                     optionsJson = objectMapper.writeValueAsString(qReq.options());
                 } catch (Exception ignored) {
                 }
             }
+
+            String kind = qReq.kind();
+            if (kind == null || kind.isBlank()) {
+                if (qReq.options() != null && !qReq.options().isEmpty()) {
+                    kind = "mcq";
+                } else if (qReq.correctAnswer() != null
+                        && ("true".equalsIgnoreCase(qReq.correctAnswer()) || "false".equalsIgnoreCase(qReq.correctAnswer()))) {
+                    kind = "true_false";
+                } else {
+                    kind = "fill_blank";
+                }
+            }
+
             QuizQuestion q =
                     QuizQuestion.builder()
                             .block(block)
-                            .kind(qReq.kind() != null ? qReq.kind() : "mcq")
-                            .prompt(qReq.prompt())
+                            .kind(kind)
+                            .prompt(prompt)
                             .options(optionsJson)
                             .correctAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "")
                             .explanation(qReq.explanation())
@@ -815,8 +831,10 @@ public class ContentAuthoringService {
                             .build();
             quizQuestions.add(q);
         }
-        block.setQuestions(quizQuestions);
-        subtopic.getBlocks().add(block);
+        if (!quizQuestions.isEmpty()) {
+            block.setQuestions(quizQuestions);
+            subtopic.getBlocks().add(block);
+        }
     }
 
     private ContentStatus parseStatus(String status) {

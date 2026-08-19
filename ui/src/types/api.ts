@@ -6,5 +6,6 @@ export interface PathData {
     description: string;
     category: string;
     managedBy: string;
+    progressPercentage?: number;
     topics?: Topic[];
 }

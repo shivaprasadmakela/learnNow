@@ -1,18 +1,17 @@
 .notesSideSlider {
-    position: absolute;
-    top: 0;
+    position: fixed;
+    top: 64px;
+    bottom: 64px;
     right: 0;
     width: 380px;
     max-width: 85%;
+    height: calc(100vh - 128px);
     background: var(--bg-primary);
     border-left: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    border-bottom-left-radius: 12px;
     box-shadow: -8px 8px 24px rgba(0, 0, 0, 0.15);
-    z-index: 20;
+    z-index: 95;
     display: flex;
     flex-direction: column;
-    max-height: calc(100vh - 120px);
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -97,10 +97,12 @@ export interface CodeSnippetItem {
 
 export interface QuizQuestionDto {
     id?: string;
-    kind: 'mcq' | 'true_false' | 'fill_blank';
-    prompt: string;
-    options: string[];
-    correctAnswer: string;
+    kind?: 'mcq' | 'true_false' | 'fill_blank' | string;
+    prompt?: string;
+    question?: string;
+    options?: string[];
+    correctAnswer?: string;
+    answer?: string;
     explanation?: string;
     points?: number;
 }

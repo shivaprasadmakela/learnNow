@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MonacoEditorPane } from '../../../features/compiler/components/MonacoEditorPane/MonacoEditorPane';
 import { CompilerOutputPane } from '../../../features/compiler/components/CompilerOutputPane/CompilerOutputPane';
 import { useCodeExecution } from '../../../features/compiler/hooks/useCodeExecution';
-import { Play, RotateCcw, Copy, Check } from 'lucide-react';
+import { Play, RotateCcw, Copy, Check, ExternalLink } from 'lucide-react';
 import styles from './CodePlayground.module.css';
 
 export interface CodePlaygroundProps {
@@ -10,13 +10,15 @@ export interface CodePlaygroundProps {
     language?: string;
     title?: string;
     onCodeChange?: (code: string) => void;
+    onOpenFullEditor?: (code: string, language: string) => void;
 }
 
 export const CodePlayground: React.FC<CodePlaygroundProps> = ({
     initialCode,
     language = 'javascript',
     title = 'VS Code Monaco Compiler',
-    onCodeChange
+    onCodeChange,
+    onOpenFullEditor
 }) => {
     const [code, setCode] = useState<string>(initialCode);
     const [stdin, setStdin] = useState<string>('');
@@ -40,6 +42,16 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
         setTimeout(() => setIsCopied(false), 2000);
     };
 
+    const handleOpenFull = () => {
+        if (onOpenFullEditor) {
+            onOpenFullEditor(code, language);
+        } else if (typeof window !== 'undefined') {
+            const langId = language.toLowerCase() === 'javascript' ? 'js' : language.toLowerCase();
+            localStorage.setItem(`compiler_draft_${langId}`, code);
+            window.location.href = `/compiler/${langId}`;
+        }
+    };
+
     return (
         <div className={styles.playgroundCard}>
             <div className={styles.playgroundHeader}>
@@ -51,6 +63,9 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                     </button>
                     <button type="button" className={styles.btn} onClick={handleReset} title="Reset template">
                         <RotateCcw size={13} /> Reset
+                    </button>
+                    <button type="button" className={styles.btn} onClick={handleOpenFull} title="Open in full playground editor">
+                        <ExternalLink size={13} /> Full Editor
                     </button>
                     <button type="button" className={`${styles.btn} ${styles.runBtn}`} onClick={handleRun} disabled={isRunning} title="Run Code">
                         <Play size={13} /> {isRunning ? 'Running…' : 'Run'}

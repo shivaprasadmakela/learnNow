@@ -13,38 +13,42 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
     return (
         <div className={styles.heroBannerWrapper}>
             <div className={styles.heroBanner}>
-                {/* Top content: left info */}
-                <div className={styles.heroTopContent}>
-                    {/* Left: Badge, Title, Description, Details */}
-                    <div className={styles.heroLeft}>
-                        <div className={styles.heroBadge}>
+                {/* Left Side: Badge, Title, Meta */}
+                <div className={styles.heroLeft}>
+                    <div className={styles.heroHeaderInline}>
+                        <span className={styles.heroBadge}>
                             <i className="fa-solid fa-dragon" style={{ marginRight: '6px' }} aria-hidden="true" />
                             Path
-                        </div>
+                        </span>
                         <h1 className={styles.heroTitle}>{pathTitle}</h1>
-                        {description && <p className={styles.heroDescription}>{description}</p>}
-                        <div className={styles.metaRow}>
-                            <span className={styles.metaDetail}>Managed by {managedBy}</span>
+                    </div>
+
+                    {description && <p className={styles.heroDescription}>{description}</p>}
+
+                    <div className={styles.metaRow}>
+                        {managedBy && <span className={styles.metaDetail}>Managed by {managedBy}</span>}
+                        {typeof activitiesCount === 'number' && (
                             <span className={styles.metaDetail}>{activitiesCount} {activitiesCount === 1 ? 'topic' : 'topics'}</span>
-                        </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Bottom CTA + Progress */}
-                <div className={styles.progressRow}>
-                    <button className={styles.continueButton} onClick={onContinueClick}>
-                        <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.9rem' }} aria-hidden="true" />
-                        {progressPercent > 0 ? 'Continue' : 'Start'}
-                    </button>
-                    <div className={styles.progressBarContainer}>
-                        <div className={styles.progressTrack} title={`Overall Progress in this module: ${progressPercent}%`}>
-                            <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
+                {/* Right Side: Progress & Action */}
+                <div className={styles.heroRightAction}>
+                    <div className={styles.heroProgressBlock}>
+                        <div className={styles.progressTextRow}>
+                            <span className={styles.progressLabel}>Overall Progress</span>
+                            <span className={styles.progressVal}>{progressPercent}%</span>
+                        </div>
+                        <div className={styles.progressBarTrack}>
+                            <div className={styles.progressBarFill} style={{ width: `${progressPercent}%` }} />
                         </div>
                     </div>
-                    <span className={styles.overallProgressBadge}>
-                        <i className="fa-solid fa-chart-line" aria-hidden="true" />
-                        Overall Progress in this module: {progressPercent}%
-                    </span>
+
+                    <button className={styles.continueButton} onClick={onContinueClick}>
+                        {progressPercent > 0 ? 'Continue' : 'Start Path'}
+                        <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px', fontSize: '0.85rem' }} aria-hidden="true" />
+                    </button>
                 </div>
             </div>
         </div>

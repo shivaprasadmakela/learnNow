@@ -22,9 +22,21 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
 
     const loadTopicsForPath = useCallback(async (pathId: number | string) => {
         try {
-            const topics = await fetchTopicsByPath(pathId);
-            if (topics) {
-                setCourses(prev => prev.map(c => String(c.id) === String(pathId) ? { ...c, topics } : c));
+            const rawTopics = await fetchTopicsByPath(pathId);
+            if (rawTopics) {
+                const topics = rawTopics.map((t: any) => ({
+                    ...t,
+                    progressPercentage: t.isCompleted ? 100 : (t.progressPercentage || 0)
+                }));
+                setCourses(prev => prev.map(c => {
+                    if (String(c.id) === String(pathId)) {
+                        const pathPct = topics.length > 0
+                            ? Math.round(topics.reduce((acc: number, t: any) => acc + (t.isCompleted ? 100 : (t.progressPercentage || 0)), 0) / topics.length)
+                            : (c.progressPercentage || 0);
+                        return { ...c, topics, progressPercentage: pathPct };
+                    }
+                    return c;
+                }));
             }
         } catch (err) {
             console.error("Failed to load topics for path", err);
@@ -57,21 +69,32 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         setIsCoursesLoading(true);
         try {
             if (isLoggedIn) {
-                const fetchedPaths = await fetchPaths();
+                const fetchedPaths = await fetchPaths(force);
 
                 if (fetchedPaths) {
-                    const mapped: Course[] = fetchedPaths.map(p => ({
-                        id: p.id,
-                        title: p.title,
-                        description: p.description,
-                        category: p.category,
-                        duration: '10 hours',
-                        level: 'Intermediate',
-                        imageUrl: 'https://placeholder.co/ml',
-                        managedBy: p.managedBy,
-                        progressPercentage: 0,
-                        topics: p.topics
-                    }));
+                    const mapped: Course[] = fetchedPaths.map(p => {
+                        const topics = (p.topics || []).map((t: any) => ({
+                            ...t,
+                            progressPercentage: t.isCompleted ? 100 : (t.progressPercentage || 0)
+                        }));
+                        const calculatedPathPct = p.progressPercentage || (
+                            topics.length > 0
+                                ? Math.round(topics.reduce((acc: number, t: any) => acc + (t.isCompleted ? 100 : (t.progressPercentage || 0)), 0) / topics.length)
+                                : 0
+                        );
+                        return {
+                            id: p.id,
+                            title: p.title,
+                            description: p.description,
+                            category: p.category,
+                            duration: '10 hours',
+                            level: 'Intermediate',
+                            imageUrl: 'https://placeholder.co/ml',
+                            managedBy: p.managedBy,
+                            progressPercentage: calculatedPathPct,
+                            topics: topics
+                        };
+                    });
                     setCourses(mapped);
                 }
             } else {
@@ -86,6 +109,7 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
                         level: 'Intermediate',
                         imageUrl: 'https://placeholder.co/ml',
                         managedBy: p.managedBy,
+                        progressPercentage: 0,
                         topics: p.topics
                     }));
                     setCourses(mapped);

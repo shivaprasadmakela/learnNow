@@ -16,13 +16,13 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
     onSelectTopic
 }) => {
     const { showToast } = useToast();
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
     const dynamicCount = typeof activitiesCount === 'number' ? activitiesCount : (topics ? topics.length : 0);
 
-    const handleTopicClick = (id: number, title: string) => {
+    const handleTopicClick = (id: number, title: string, subtopicId?: number | string, subtopicTitle?: string) => {
         if (onSelectTopic) {
-            onSelectTopic(id);
+            onSelectTopic(id, subtopicId, subtopicTitle);
         } else {
             showToast(`"${title}" workspace lessons are launching soon!`, 'info');
         }
@@ -38,25 +38,29 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
 
     return (
         <div className={styles.container}>
-            <TopicHeroBanner
-                pathTitle={pathTitle}
-                description={description}
-                managedBy={managedBy}
-                activitiesCount={dynamicCount}
-                progressPercent={progressPercent}
-                onContinueClick={handleContinueClick}
-            />
+            <div className={styles.headerSection}>
+                <TopicHeroBanner
+                    pathTitle={pathTitle}
+                    description={description}
+                    managedBy={managedBy}
+                    activitiesCount={dynamicCount}
+                    progressPercent={progressPercent}
+                    onContinueClick={handleContinueClick}
+                />
 
-            <ViewModeToggle
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-            />
+                <ViewModeToggle
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                />
+            </div>
 
-            <TopicCardList
-                topics={topics}
-                viewMode={viewMode}
-                onTopicClick={handleTopicClick}
-            />
+            <div className={styles.listScrollArea}>
+                <TopicCardList
+                    topics={topics}
+                    viewMode={viewMode}
+                    onTopicClick={handleTopicClick}
+                />
+            </div>
         </div>
     );
 };

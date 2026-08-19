@@ -1,0 +1,58 @@
+.mermaidWrapper {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    background: var(--bg-card, #111827);
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.mermaidHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg-secondary, #1f2937);
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.mermaidBadge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--tech-blue, #3b82f6);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+}
+
+.mermaidSvgContainer {
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: auto;
+    background: #0d1117;
+}
+
+.mermaidSvgContainer svg {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+.mermaidFallback {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    background: #0d1117;
+    overflow: hidden;
+}
+
+.mermaidPre {
+    padding: 16px;
+    margin: 0;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #e5e7eb;
+    overflow-x: auto;
+}

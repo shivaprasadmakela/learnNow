@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List, Copy, Code as CodeIcon, Terminal } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
-import { CodePlayground } from '../../../../shared/components/code-playground';
+import { MermaidDiagram } from '../../../../shared/components/mermaid';
+import { isExecutableLanguage, formatExecutableCode } from '../../../../shared/utils/codeWrapper';
 import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCodeBlock';
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { LevelBadge, TrackBadge, DurationBadge } from '../../../../shared/components/ui/Badge';
 import { useSubtopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
+import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
 import styles from './StudyConsole.module.css';
 
 interface StudyConsoleProps {
@@ -18,6 +20,7 @@ interface StudyConsoleProps {
     onToggleComplete: () => Promise<void>;
     onToggleSubtopicComplete?: (subtopicId: string | number, completed: boolean) => Promise<void>;
     onSelectNextTopic?: () => void;
+    onOpenFullCompiler?: (code: string, language: string) => void;
     isUpdating: boolean;
 }
 
@@ -28,12 +31,66 @@ const slugify = (text: string) => {
         .replace(/(^-|-$)+/g, '');
 };
 
+const StudyCodeBlock: React.FC<{
+    codeString: string;
+    preparedCode: string;
+    lang: string;
+    executable: boolean;
+    onOpenPlayground: (code: string, language: string) => void;
+}> = ({ codeString, preparedCode, lang, executable, onOpenPlayground }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(codeString);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className={styles.codeBlockWrapper}>
+            <div className={styles.codeBlockHeader}>
+                <span className={styles.codeBlockLangBadge}>
+                    <CodeIcon size={13} style={{ marginRight: '6px' }} />
+                    {lang ? lang.toUpperCase() : 'CODE'}
+                </span>
+                <div className={styles.codeBlockActions}>
+                    <button
+                        type="button"
+                        className={styles.copyBtn}
+                        onClick={handleCopy}
+                        title="Copy code"
+                    >
+                        {copied ? <Check size={13} style={{ color: '#22c55e' }} /> : <Copy size={13} />}
+                        <span>{copied ? 'Copied' : 'Copy'}</span>
+                    </button>
+                    {executable && (
+                        <button
+                            type="button"
+                            className={styles.playgroundActionBtn}
+                            onClick={() => onOpenPlayground(preparedCode, lang)}
+                            title="Try in Playground Side Panel"
+                        >
+                            <Terminal size={13} />
+                            <span>⚡ Try in Playground</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <pre className={styles.codePreBlock}>
+                <code>{codeString}</code>
+            </pre>
+        </div>
+    );
+};
+
 export function StudyConsole({ 
     topic, 
     onClose, 
     onToggleComplete, 
     onToggleSubtopicComplete,
     onSelectNextTopic,
+    onOpenFullCompiler,
     isUpdating
 }: StudyConsoleProps) {
     const subtopics = topic.subtopics || [];
@@ -58,7 +115,25 @@ export function StudyConsole({
 
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(false);
-    const [activePlaygrounds, setActivePlaygrounds] = useState<Record<string, boolean>>({});
+    const [playgroundDrawer, setPlaygroundDrawer] = useState<{
+        isOpen: boolean;
+        code: string;
+        language: string;
+    }>({
+        isOpen: false,
+        code: '',
+        language: 'java'
+    });
+
+    const handleOpenPlaygroundDrawer = (code: string, language: string) => {
+        setIsNotesDrawerOpen(false);
+        setPlaygroundDrawer({
+            isOpen: true,
+            code,
+            language: language || 'java'
+        });
+    };
+
     const contentPaneRef = useRef<HTMLElement>(null);
 
     const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
@@ -136,27 +211,6 @@ export function StudyConsole({
         await onToggleComplete();
     };
 
-    const togglePlayground = (snippetKey: string) => {
-        setActivePlaygrounds(prev => ({ ...prev, [snippetKey]: !prev[snippetKey] }));
-    };
-
-    /** Map common markdown fence aliases to canonical Monaco / executor language IDs */
-    const normalizeLanguage = (alias: string): string => {
-        const map: Record<string, string> = {
-            js: 'javascript',
-            ts: 'typescript',
-            py: 'python',
-            rb: 'ruby',
-            sh: 'shell',
-            bash: 'shell',
-            cs: 'csharp',
-            'c++': 'cpp',
-            kt: 'kotlin',
-            rs: 'rust',
-        };
-        return map[alias.toLowerCase()] ?? alias.toLowerCase();
-    };
-
     const renderContent = (content: string) => {
         if (!content) return null;
 
@@ -178,6 +232,12 @@ export function StudyConsole({
                     p: ({ children }: { children?: React.ReactNode }) => <p className={styles.paragraph}>{children}</p>,
                     ul: ({ children }: { children?: React.ReactNode }) => <ul className={styles.list}>{children}</ul>,
                     ol: ({ children }: { children?: React.ReactNode }) => <ol className={styles.list}>{children}</ol>,
+                    img: ({ src, alt }: { src?: string; alt?: string }) => (
+                        <div className={styles.imageWrapper}>
+                            <img src={src} alt={alt || 'Content visual'} className={styles.contentImage} loading="lazy" />
+                            {alt && <span className={styles.imageCaption}>{alt}</span>}
+                        </div>
+                    ),
                     table: ({ children }: { children?: React.ReactNode }) => (
                         <div className={styles.tableWrapper}>
                             <table className={styles.table}>{children}</table>
@@ -218,34 +278,22 @@ export function StudyConsole({
                             return <code className="inline-code" {...rest}>{children}</code>;
                         }
 
-                        const snippetKey = `${lang}-${codeString.slice(0, 20)}`;
-                        const isOpen = Boolean(activePlaygrounds[snippetKey]);
+                        const cleanLang = (lang || '').trim().toLowerCase();
+                        if (cleanLang === 'mermaid') {
+                            return <MermaidDiagram chart={codeString} />;
+                        }
+
+                        const executable = isExecutableLanguage(cleanLang);
+                        const preparedCode = executable ? formatExecutableCode(codeString, cleanLang) : codeString;
 
                         return (
-                            <div className={styles.codeSection}>
-                                <div className={styles.codeSectionHeader}>
-                                    <span className={styles.codeSectionLabel}>
-                                        <i className="fa-solid fa-code" aria-hidden="true" style={{ marginRight: '6px' }} />
-                                        Code Example ({lang || 'text'})
-                                    </span>
-                                    <button
-                                        type="button"
-                                        className={`${styles.playgroundToggleBtn} ${isOpen ? styles.playgroundToggleBtnActive : ''}`}
-                                        onClick={() => togglePlayground(snippetKey)}
-                                    >
-                                        {isOpen ? '✕ Hide Playground' : '⚡ Try in Playground'}
-                                    </button>
-                                </div>
-
-                                {isOpen ? (
-                                    <CodePlayground initialCode={codeString} language={normalizeLanguage(lang || 'javascript')} />
-                                ) : (
-                                    <pre className={styles.codeBlock}>
-                                        {lang && <span className={styles.codeLang}>{lang}</span>}
-                                        <code>{codeString}</code>
-                                    </pre>
-                                )}
-                            </div>
+                            <StudyCodeBlock
+                                codeString={codeString}
+                                preparedCode={preparedCode}
+                                lang={cleanLang}
+                                executable={executable}
+                                onOpenPlayground={handleOpenPlaygroundDrawer}
+                            />
                         );
                     }
                 }}
@@ -283,7 +331,15 @@ export function StudyConsole({
                             <span className={styles.categoryBadge}>{topic.category}</span>
                             <span className={styles.durationRow}>
                                 <Clock size={13} />
-                                {topic.duration}
+                                {(() => {
+                                    const totalTopicMinutes = subtopics.reduce((acc, st) => acc + (st.estimatedMinutes || 5), 0);
+                                    if (totalTopicMinutes >= 60) {
+                                        return totalTopicMinutes % 60 === 0
+                                            ? `${totalTopicMinutes / 60} ${totalTopicMinutes / 60 === 1 ? 'hour' : 'hours'}`
+                                            : `${Math.floor(totalTopicMinutes / 60)}h ${totalTopicMinutes % 60}m`;
+                                    }
+                                    return totalTopicMinutes > 0 ? `${totalTopicMinutes} mins` : (topic.duration || '15 mins');
+                                })()}
                             </span>
                         </div>
                     </div>
@@ -329,11 +385,13 @@ export function StudyConsole({
                                         width: '100%'
                                     }}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         {sec.isCompleted ? (
-                                            <CheckCircle2 size={14} style={{ color: 'var(--tech-green)' }} />
+                                            <div className={styles.nodeCompletedBadge}>
+                                                <Check size={14} strokeWidth={3} />
+                                            </div>
                                         ) : (
-                                            <span className={styles.tocIndex}>{idx + 1}</span>
+                                            <div className={styles.nodePendingBadge} />
                                         )}
                                         <span className={styles.tocName}>{sec.title}</span>
                                     </div>
@@ -489,6 +547,15 @@ export function StudyConsole({
                                 onClose={() => setIsNotesDrawerOpen(false)}
                                 saveStatus={noteSaveStatus}
                                 isLoading={isNoteLoading}
+                            />
+
+                            {/* In-pane side slider Code Playground Panel */}
+                            <PlaygroundSidePanel
+                                isOpen={playgroundDrawer.isOpen}
+                                initialCode={playgroundDrawer.code}
+                                language={playgroundDrawer.language}
+                                onClose={() => setPlaygroundDrawer(prev => ({ ...prev, isOpen: false }))}
+                                onOpenFullCompiler={onOpenFullCompiler}
                             />
                         </div>
                     ) : (
