@@ -123,7 +123,7 @@ export interface SubtopicData {
 }
 
 export interface TopicDetails {
-    id: number;
+    id: number | string;
     title: string;
     description: string;
     category: string;

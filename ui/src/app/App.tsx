@@ -189,8 +189,8 @@ export default function App() {
                     isLoggedIn={isLoggedIn}
                     signOut={signOut}
                     onOpenSettings={() => setIsEditingProfile(true)}
-                    points={userPoints}
-                    streak={userStreak}
+                    points={profile?.gemsCount ?? profile?.points ?? userPoints}
+                    streak={profile?.streakCount ?? userStreak}
                 />
             )}
 

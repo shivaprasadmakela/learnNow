@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, Eye, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Eye, X } from 'lucide-react';
 import styles from './CoursePreviewModal.module.css';
-import type { AdminTopicData, QuizQuestionDto } from '../../api/admin.api';
-import { ContentRenderer, type ContentBlockItem } from '../../../../shared/components/content-renderer/ContentRenderer';
+import type { AdminTopicData } from '../../api/admin.api';
+import type { TopicDetails } from '../../../../shared/api/profile.api';
+import { StudyConsole } from '../../../topics/components/StudyConsole/StudyConsole';
 
 interface CoursePreviewModalProps {
     title: string;
@@ -10,61 +11,76 @@ interface CoursePreviewModalProps {
     topics: AdminTopicData[];
 }
 
-interface SubtopicEntry {
-    topicIdx: number;
-    topicTitle: string;
-    subtopicIdx: number;
-    subtopicTitle: string;
-    content: string;
-    questions?: QuizQuestionDto[];
-}
-
-function flattenSubtopics(topics: AdminTopicData[]): SubtopicEntry[] {
-    const entries: SubtopicEntry[] = [];
-    topics.forEach((topic, tIdx) => {
-        (topic.subtopics || []).forEach((sub, sIdx) => {
-            entries.push({
-                topicIdx: tIdx,
-                topicTitle: topic.title,
-                subtopicIdx: sIdx,
-                subtopicTitle: sub.title,
-                content: sub.content,
-                questions: sub.questions,
-            });
-        });
-    });
-    return entries;
-}
-
-export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ title, managedBy: _managedBy, topics }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [activeIndex, setActiveIndex] = useState(0);
-
-    const entries = flattenSubtopics(topics);
-    const active = entries[activeIndex];
-
-    const activeBlocks: ContentBlockItem[] = active ? [
-        ...(active.content ? [{
-            id: `preview-md-${active.topicIdx}-${active.subtopicIdx}`,
-            orderIndex: 1,
-            type: 'markdown' as const,
-            body: active.content,
-        }] : []),
-        ...(active.questions && active.questions.length > 0 ? [{
-            id: `preview-quiz-${active.topicIdx}-${active.subtopicIdx}`,
-            orderIndex: 2,
-            type: 'quiz' as const,
-            questions: active.questions.map((q, idx) => ({
-                id: q.id || `q-${idx}`,
-                kind: q.kind as any,
+const adaptAdminTopicToDetails = (topic: AdminTopicData, topicIdx: number): TopicDetails => {
+    return {
+        id: topic.id || `preview-topic-${topicIdx}`,
+        title: topic.title || 'Untitled Topic',
+        description: topic.description || 'Topic overview and learning goals.',
+        category: topic.category || 'Backend',
+        duration: topic.duration || '30 mins',
+        isCompleted: false,
+        progressPercentage: 0,
+        subtopics: (topic.subtopics || []).map((sub, sIdx) => ({
+            id: sub.id || `preview-sub-${topicIdx}-${sIdx}`,
+            title: sub.title || `Section ${sIdx + 1}`,
+            content: sub.content || '',
+            orderIndex: sub.orderIndex || sIdx + 1,
+            isCompleted: false,
+            questions: sub.questions ? sub.questions.map((q, qIdx) => ({
+                id: q.id || `q-${sIdx}-${qIdx}`,
+                kind: q.kind,
                 prompt: q.prompt,
-                options: q.options,
-                correctAnswer: q.correctAnswer,
+                question: q.prompt,
+                options: q.options || [],
+                correctAnswer: q.correctAnswer || '',
+                answer: q.correctAnswer || '',
                 explanation: q.explanation,
-                points: q.points,
-            })),
-        }] : [])
-    ] : [];
+                points: q.points || 10,
+            })) : [],
+        })),
+    };
+};
+
+export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ topics }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [activeTopicIdx, setActiveTopicIdx] = useState(0);
+
+    if (!isOpen) {
+        return (
+            <button type="button" className={styles.triggerBtn} onClick={() => setIsOpen(true)}>
+                <Eye size={15} /> Preview
+            </button>
+        );
+    }
+
+    if (!topics || topics.length === 0) {
+        return (
+            <>
+                <button type="button" className={styles.triggerBtn} onClick={() => setIsOpen(true)}>
+                    <Eye size={15} /> Preview
+                </button>
+                <div className={styles.overlay} onClick={() => setIsOpen(false)}>
+                    <div className={styles.previewModalWrapper} style={{ height: 'auto', maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+                        <div className={styles.previewHeaderBar}>
+                            <span className={styles.previewBadge}>
+                                <Eye size={14} /> Course Preview
+                            </span>
+                            <button type="button" className={styles.modalCloseBtn} onClick={() => setIsOpen(false)}>
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className={styles.emptyState}>
+                            <p>No topics available to preview. Add at least one topic with subtopics in the Curriculum panel.</p>
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    const currentTopicData = topics[activeTopicIdx] || topics[0];
+    const previewTopic = adaptAdminTopicToDetails(currentTopicData, activeTopicIdx);
+    const nextTopic = topics[activeTopicIdx + 1];
 
     return (
         <>
@@ -72,112 +88,57 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ title, m
                 <Eye size={15} /> Preview
             </button>
 
-            {isOpen && (
-                <div
-                    className={styles.overlay}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Course Preview"
-                    onClick={e => { if (e.target === e.currentTarget) setIsOpen(false); }}
-                >
-                    <div className={styles.modal}>
-
-                        {/* ── Header ───────────────────────────────────── */}
-                        <div className={styles.modalHeader}>
-                            <div className={styles.modalTitle}>
-                                <Eye size={16} className={styles.titleIcon} />
-                                <span>{title || 'Untitled Course'}</span>
-                            </div>
-                            <button type="button" className={styles.closeBtn} onClick={() => setIsOpen(false)} aria-label="Close">
-                                <X size={18} />
-                            </button>
+            {/* Windowed Modal Overlay Container */}
+            <div className={styles.overlay} onClick={() => setIsOpen(false)}>
+                <div className={styles.previewModalWrapper} onClick={e => e.stopPropagation()}>
+                    {/* Top Preview Header Bar */}
+                    <div className={styles.previewHeaderBar}>
+                        <div className={styles.previewBadge}>
+                            <Eye size={14} />
+                            <span>Admin Live Preview Mode</span>
                         </div>
 
-                        {/* ── Body ─────────────────────────────────────── */}
-                        {entries.length === 0 ? (
-                            <div className={styles.emptyState}>
-                                <p>Add topics with subtopics to preview the course.</p>
-                            </div>
-                        ) : (
-                            <div className={styles.consoleView}>
-
-                                {/* TOC Sidebar */}
-                                <aside className={styles.toc}>
-                                    <p className={styles.tocLabel}>Table of Contents</p>
-                                    {topics.map((topic, tIdx) => (
-                                        <div key={tIdx} className={styles.tocGroup}>
-                                            <p className={styles.tocGroupTitle}>{topic.title}</p>
-                                            <ul className={styles.tocList}>
-                                                {(topic.subtopics || []).map((sub, sIdx) => {
-                                                    const flatIdx = entries.findIndex(
-                                                        e => e.topicIdx === tIdx && e.subtopicIdx === sIdx
-                                                    );
-                                                    return (
-                                                        <li key={sIdx}>
-                                                            <button
-                                                                type="button"
-                                                                className={`${styles.tocItem} ${flatIdx === activeIndex ? styles.tocItemActive : ''}`}
-                                                                onClick={() => setActiveIndex(flatIdx)}
-                                                            >
-                                                                {flatIdx === activeIndex
-                                                                    ? <CheckCircle2 size={13} className={styles.tocCheck} />
-                                                                    : <span className={styles.tocNum}>{sIdx + 1}</span>
-                                                                }
-                                                                <span>{sub.title}</span>
-                                                            </button>
-                                                        </li>
-                                                    );
-                                                })}
-                                            </ul>
-                                        </div>
+                        {topics.length > 1 && (
+                            <div className={styles.topicSelectGroup}>
+                                <label>Select Topic:</label>
+                                <select
+                                    value={activeTopicIdx}
+                                    onChange={e => setActiveTopicIdx(Number(e.target.value))}
+                                    className={styles.topicSelect}
+                                >
+                                    {topics.map((t, idx) => (
+                                        <option key={idx} value={idx}>
+                                            {idx + 1}. {t.title}
+                                        </option>
                                     ))}
-                                </aside>
-
-                                {/* Reading Pane — only active subtopic */}
-                                <main className={styles.readingPane}>
-                                    {active ? (
-                                        <article className={styles.article}>
-                                            <h1 className={styles.articleTitle}>{active.subtopicTitle}</h1>
-                                            <div className={styles.articleBody}>
-                                                <ContentRenderer blocks={activeBlocks} />
-                                            </div>
-                                        </article>
-                                    ) : (
-                                        <div className={styles.emptyState}>
-                                            <p>Select a section from the sidebar.</p>
-                                        </div>
-                                    )}
-                                </main>
+                                </select>
                             </div>
                         )}
 
-                        {/* ── Footer Nav ───────────────────────────────── */}
-                        {entries.length > 0 && (
-                            <div className={styles.consoleFooter}>
-                                <button
-                                    type="button"
-                                    className={styles.navBtn}
-                                    onClick={() => setActiveIndex(i => Math.max(0, i - 1))}
-                                    disabled={activeIndex === 0}
-                                >
-                                    <ChevronLeft size={16} /> Previous
-                                </button>
-                                <span className={styles.navProgress}>
-                                    {activeIndex + 1} / {entries.length} sections
-                                </span>
-                                <button
-                                    type="button"
-                                    className={styles.navBtn}
-                                    onClick={() => setActiveIndex(i => Math.min(entries.length - 1, i + 1))}
-                                    disabled={activeIndex === entries.length - 1}
-                                >
-                                    Next <ChevronRight size={16} />
-                                </button>
-                            </div>
-                        )}
+                        <button
+                            type="button"
+                            className={styles.modalCloseBtn}
+                            onClick={() => setIsOpen(false)}
+                            title="Close Preview"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* Scoped StudyConsole Console View */}
+                    <div className={styles.consoleContainer}>
+                        <StudyConsole
+                            topic={previewTopic}
+                            onClose={() => setIsOpen(false)}
+                            onToggleComplete={async () => {}}
+                            onToggleSubtopicComplete={async () => {}}
+                            onSelectNextTopic={nextTopic ? () => setActiveTopicIdx(prev => prev + 1) : undefined}
+                            nextTopicTitle={nextTopic?.title}
+                            isUpdating={false}
+                        />
                     </div>
                 </div>
-            )}
+            </div>
         </>
     );
 };

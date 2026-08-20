@@ -5,4 +5,7 @@ export interface UserProfile {
     avatar: string;
     role: string;
     bio: string;
+    streakCount?: number;
+    gemsCount?: number;
+    points?: number;
 }
