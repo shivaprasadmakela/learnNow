@@ -1,81 +1,172 @@
 # learnNow Platform
 
-Welcome to the interactive learning and code integration platform. This repository is built using a feature-based architecture consisting of a **React + Vite** frontend and a **Java Spring Boot** backend.
+An interactive learning platform for engineering topics: guided paths, hands-on labs,
+notes, quizzes, and a built-in multi-language code playground.
+
+- **Backend** — Java 21 / Spring Boot, PostgreSQL, Flyway. REST API on `:8080`.
+- **Frontend** — React 19 + TypeScript + Vite, CSS Modules. Dev server on `:5173`.
 
 ---
 
-## 🏗️ Tech Stack & Architecture
+## Prerequisites
 
-### Backend
-*   **Java Spring Boot**: Exposes REST APIs on port `8080`.
-*   **Database & Migrations**: PostgreSQL database named `learnnow` with schema versioning managed via **Flyway**.
-*   **Security & JWT Auth**: Custom JWT authentication signed with a symmetric HMAC-SHA256 signature key. Passwords are hashed using BCrypt.
-*   **Email Verification**: Integrated with **Resend** (prints email verification links directly to local server logs in development for sandboxed testing).
-*   **Package Structure**: Organised around clean domains (e.g. `com.learnnow.user` for user profiles and `com.learnnow.paths` for course pathways).
-
-### Frontend
-*   **React + TypeScript + Vite**: Development client running on `http://localhost:5173/`.
-*   **CSS Modules**: Modular, scope-safe styling.
-*   **Route Security**: Public paths list (`PATHS` view) with secure, login-guarded path detail views (`ROADMAP` and `STUDY` console) that automatically redirect unauthenticated users to the login page.
+| Tool | Version | Notes |
+|---|---|---|
+| JDK | **21** | Matches `<java.version>` in `backend/pom.xml`. |
+| Node.js | 20+ | |
+| PostgreSQL | 14+ | Listening on `5432`. |
+| Docker | any recent | Only for running integration tests. |
 
 ---
 
-## 📂 Repository Structure
+## Getting started
 
-```text
-bugfix/
-├── backend/                # Spring Boot REST API (Port 8080)
-│   ├── src/main/java/      # Feature-packaged code (user, paths, common/security)
-│   ├── src/main/resources/ # Configuration & db/migration scripts
-│   └── pom.xml             # Maven dependencies
-├── ui/                     # React + TypeScript + Vite Client (Port 5173)
-│   ├── src/features/       # Feature-specific modules (auth, dashboard, roadmap)
-│   ├── src/shared/         # Shared API utilities, UI widgets, and global hooks
-│   └── package.json        # Frontend configuration
-├── run.sh                  # Automation script to start both backend & frontend
-├── stop.sh                 # Automation script to stop port processes
-└── README.md               # Main instructions (this file)
-```
+### 1. Create the database
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-*   Java Development Kit (JDK) 17 or higher
-*   Node.js (v18+) & npm
-*   PostgreSQL running locally on port `5432`
-
-### Setup Database
-Before starting the application, ensure a database named `learnnow` exists in your local PostgreSQL:
 ```sql
 CREATE DATABASE learnnow;
 ```
 
-### Start Both Servers (Recommended)
-You can start the compilation, database migrations, and development servers using the provided shell script in the root directory:
+### 2. Configure the environment
+
+Every secret is supplied through the environment. There are **no credential defaults
+in the source tree**, so the application will refuse to start until these are set —
+that is deliberate, and it is what stops a development secret from following a build
+into production.
+
 ```bash
-chmod +x run.sh stop.sh
+cp .env.example .env
+```
+
+Then fill it in. `run.sh` loads `.env` automatically.
+
+| Variable | Required | Purpose |
+|---|:--:|---|
+| `SPRING_DATASOURCE_URL` | | Defaults to `jdbc:postgresql://localhost:5432/learnnow`. |
+| `SPRING_DATASOURCE_USERNAME` | ✔ | Database user. |
+| `SPRING_DATASOURCE_PASSWORD` | ✔ | Database password. |
+| `JWT_SECRET` | ✔ | Access-token signing key. **Minimum 32 bytes** — startup fails below that. Generate with `openssl rand -base64 32`. |
+| `GOOGLE_CLIENT_ID` | ✔ | OAuth client id. Enforced as the ID token audience; Google sign-in is refused without it. |
+| `RESEND_API_KEY` | ✔ | Transactional email. |
+| `RESEND_FROM_ADDRESS` | ✔ | Verified sender address. |
+| `RAZORPAY_KEY_ID` | ✔ | Payment gateway key. |
+| `RAZORPAY_KEY_SECRET` | ✔ | Payment gateway secret. |
+| `RAZORPAY_WEBHOOK_SECRET` | | Required to accept payment webhooks; without it they are rejected. |
+| `APP_BASE_URL` | ✔ | Public frontend origin, used to build email links. |
+| `ALLOWED_ORIGINS` | ✔ | Comma-separated **exact** origins. Wildcards are rejected at startup. |
+| `ADMIN_BOOTSTRAP_EMAIL` | | Promotes this existing account to `ADMIN` on startup. |
+| `ACCESS_TOKEN_TTL_MINUTES` | | Access-token lifetime. Default 30. |
+| `PAYMENTS_MOCK_ENABLED` | | **Local only.** Accepts payment signatures without verifying them. |
+
+The frontend reads two variables of its own, from `ui/.env`:
+
+```
+VITE_BACKEND_URL=          # leave blank to use the Vite dev proxy
+VITE_GOOGLE_CLIENT_ID=
+```
+
+### 3. Run
+
+```bash
 ./run.sh
 ```
-This automatically compiles the Java backend, boots the Spring Boot server on port `8080`, seeds the default learning tracks, and runs the Vite client dev server on `http://localhost:5173/`.
 
-### Stop Both Servers
-To terminate all background processes binding ports `8080` and `5173`:
+Starts the backend on `:8080` (applying Flyway migrations) and the Vite dev server on
+`:5173`. `./stop.sh` terminates both.
+
+---
+
+## Profiles
+
+The active profile comes from `SPRING_PROFILES_ACTIVE` and is **not** defaulted in
+`application.properties`. `run.sh` sets `local`; the Dockerfile pins `prod`.
+
+| Profile | Flyway | Payment mock | Credentials |
+|---|---|---|---|
+| `local` | Relaxed — baseline and repair permitted | Allowed | From `.env` |
+| `prod` | Strict validation only | Impossible | From the environment / secret manager |
+
+---
+
+## Testing
+
 ```bash
-./stop.sh
+cd backend && mvn verify     # unit + integration tests, plus spotless:check
+cd ui && npm test            # Vitest
+cd ui && npm run typecheck   # tsc
+cd ui && npm run lint        # ESLint
+```
+
+Integration tests run against a throwaway PostgreSQL container via Testcontainers, so
+they need a reachable Docker daemon. **Without one they are skipped, not failed** — CI
+asserts Docker is present so they cannot be silently skipped there.
+
+If Testcontainers cannot find your daemon (common with Colima or a stale
+`~/.testcontainers.properties`), point it at the right socket:
+
+```bash
+export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
 ```
 
 ---
 
-## 🧪 Testing the Authentication Flow
-1. Go to `http://localhost:5173/` and click **Create account**.
-2. Register with your details.
-3. Fetch the verification link printed in the backend console logs.
-4. Paste the link into your browser to verify the account.
-5. Log in with your email and password to gain full access to the learning console.
+## Operations
+
+- `GET /api/health` — public check; opens a database connection and returns `503` if
+  the database is unreachable.
+- `GET /actuator/health/readiness` and `/liveness` on the management port (`8081` by
+  default) — point orchestrator probes at these. Keep the management port private.
+- `GET /swagger-ui.html` — generated API documentation.
+
+Token cleanup (expired verification, reset, and refresh tokens) runs nightly at 03:15.
 
 ---
 
-## 🤝 Contributing Guide
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our coding standards, branch conventions, and layout structures when introducing new modules or fixing bugs.
+## Repository layout
+
+```text
+learnNow/
+├── backend/
+│   ├── src/main/java/com/learnnow/
+│   │   ├── admin/            # content authoring, course import
+│   │   ├── common/           # config, security, exception handling
+│   │   ├── compiler/         # code execution and shared snippets
+│   │   ├── donations/        # Razorpay checkout and webhooks
+│   │   ├── learningprogress/ # progress, streaks, points, quizzes
+│   │   ├── notes/            # notes and bookmarks
+│   │   ├── paths/            # paths, topics, subtopics, catalog
+│   │   └── user/             # accounts, auth, sessions
+│   ├── src/main/resources/db/migration/   # Flyway migrations
+│   └── pom.xml
+├── ui/
+│   └── src/
+│       ├── app/              # shell, routing, top-level hooks
+│       ├── features/         # one folder per feature
+│       ├── shared/           # API client, UI kit, hooks
+│       └── styles/           # design tokens and themes
+├── .github/workflows/        # CI and scheduled dependency audit
+├── Dockerfile
+├── run.sh / stop.sh
+└── .env.example
+```
+
+---
+
+## Security notes
+
+- Access tokens are short-lived; renewal goes through `POST /api/auth/refresh`, which
+  rotates the refresh token. `POST /api/auth/logout` revokes it. Resetting a password
+  revokes every session.
+- Code execution (`/api/compiler/**`) requires authentication and is rate limited.
+- Authentication, email-sending, payment, and quiz endpoints are rate limited per tier.
+  Limits are per instance — put real limiting at the gateway before scaling out.
+- The client IP comes from Spring's `ForwardedHeaderFilter`
+  (`server.forward-headers-strategy=framework`), so `X-Forwarded-For` is only trusted
+  from your own proxy. Make sure a proxy actually sets it in production.
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). `mvn verify` fails on unformatted Java — run
+`mvn spotless:apply` before committing.
