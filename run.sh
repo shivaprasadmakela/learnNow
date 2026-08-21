@@ -1,9 +1,28 @@
 #!/bin/bash
 
-# Load local environment variables from .env if present
+# Load local environment variables. There are no credential defaults in the source
+# tree any more, so .env is required rather than optional.
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+    set -a
+    # shellcheck disable=SC1091
+    . ./.env
+    set +a
+else
+    echo "Error: .env not found."
+    echo "Copy the template and fill it in:  cp .env.example .env"
+    exit 1
 fi
+
+# The active profile is no longer defaulted in application.properties, so that a
+# development profile cannot follow a build into production.
+export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-local}"
+
+for required in JWT_SECRET GOOGLE_CLIENT_ID SPRING_DATASOURCE_USERNAME SPRING_DATASOURCE_PASSWORD; do
+    if [ -z "${!required}" ]; then
+        echo "Error: $required is not set in .env (see .env.example)."
+        exit 1
+    fi
+done
 
 # Function to clean up background processes on exit
 cleanup() {
