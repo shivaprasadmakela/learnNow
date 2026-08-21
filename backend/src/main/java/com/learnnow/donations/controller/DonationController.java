@@ -4,6 +4,7 @@ import com.learnnow.donations.dto.request.DonationRequest;
 import com.learnnow.donations.dto.request.PaymentVerificationRequest;
 import com.learnnow.donations.dto.response.DonationResponse;
 import com.learnnow.donations.service.RazorpayService;
+import com.razorpay.RazorpayException;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +22,12 @@ public class DonationController {
     private final RazorpayService razorpayService;
 
     @PostMapping("/create-order")
-    public ResponseEntity<DonationResponse> createOrder(
-            @Valid @RequestBody DonationRequest request) {
-        try {
-            DonationResponse response = razorpayService.createDonationOrder(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error creating donation order", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<DonationResponse> createOrder(@Valid @RequestBody DonationRequest request)
+            throws RazorpayException {
+        // Gateway failures propagate to the global handler, which logs them and returns a
+        // 502 with a diagnosable code. Swallowing them here made an outage and a bad
+        // request indistinguishable to the client.
+        return ResponseEntity.ok(razorpayService.createDonationOrder(request));
     }
 
     @PostMapping("/verify")
