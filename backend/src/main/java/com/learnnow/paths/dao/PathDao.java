@@ -18,7 +18,8 @@ public class PathDao {
     public List<Path> findAllWithTopics() {
         return entityManager
                 .createQuery(
-                        "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic ORDER BY p.title ASC",
+                        "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN"
+                                + " FETCH pt.topic ORDER BY p.title ASC",
                         Path.class)
                 .getResultList();
     }
@@ -27,7 +28,8 @@ public class PathDao {
     public Optional<Path> findByIdWithTopics(UUID id) {
         return entityManager
                 .createQuery(
-                        "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic WHERE p.id = :id",
+                        "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN"
+                                + " FETCH pt.topic WHERE p.id = :id",
                         Path.class)
                 .setParameter("id", id)
                 .getResultList()
@@ -43,7 +45,8 @@ public class PathDao {
         List<Path> paths =
                 entityManager
                         .createQuery(
-                                "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic WHERE p.id = :id",
+                                "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT"
+                                        + " JOIN FETCH pt.topic WHERE p.id = :id",
                                 Path.class)
                         .setParameter("id", id)
                         .getResultList();
@@ -53,13 +56,15 @@ public class PathDao {
         }
 
         Path path = paths.get(0);
-        List<UUID> topicIds = path.getTopics().stream().map(com.learnnow.paths.entity.Topic::getId).toList();
+        List<UUID> topicIds =
+                path.getTopics().stream().map(com.learnnow.paths.entity.Topic::getId).toList();
 
         if (!topicIds.isEmpty()) {
             // Step 1: Eagerly fetch subtopics for all topics of this path
             entityManager
                     .createQuery(
-                            "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st WHERE t.id IN :topicIds",
+                            "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st WHERE"
+                                    + " t.id IN :topicIds",
                             com.learnnow.paths.entity.Topic.class)
                     .setParameter("topicIds", topicIds)
                     .getResultList();
@@ -128,7 +133,8 @@ public class PathDao {
     public List<Path> findAllWithTopicsByStatus(ContentStatus status) {
         return entityManager
                 .createQuery(
-                        "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic WHERE p.status = :status",
+                        "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN"
+                                + " FETCH pt.topic WHERE p.status = :status",
                         Path.class)
                 .setParameter("status", status)
                 .getResultList();

@@ -13,8 +13,7 @@ import lombok.*;
 @ToString(exclude = {"path", "topic"})
 public class PathTopic {
 
-    @EmbeddedId
-    private PathTopicId id;
+    @EmbeddedId private PathTopicId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("pathId")

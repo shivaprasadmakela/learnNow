@@ -65,7 +65,10 @@ public class CatalogService {
                             List<TopicSummaryDto> topics = getTopicsForPath(path.getId(), userId);
                             int pathPct = 0;
                             if (!topics.isEmpty()) {
-                                double sumPct = topics.stream().mapToInt(TopicSummaryDto::progressPercentage).sum();
+                                double sumPct =
+                                        topics.stream()
+                                                .mapToInt(TopicSummaryDto::progressPercentage)
+                                                .sum();
                                 pathPct = (int) Math.round(sumPct / topics.size());
                             }
                             return new PathSummaryDto(
@@ -90,43 +93,76 @@ public class CatalogService {
         List<Topic> topics = topicRepository.findByPathIdAndStatus(pathId, ContentStatus.PUBLISHED);
         if (userId == null || userId.isBlank()) {
             return topics.stream()
-                    .map(t -> new TopicSummaryDto(t.getId(), t.getTitle(), t.getDescription(), t.getCategory(), t.getDuration(), false, 0))
+                    .map(
+                            t ->
+                                    new TopicSummaryDto(
+                                            t.getId(),
+                                            t.getTitle(),
+                                            t.getDescription(),
+                                            t.getCategory(),
+                                            t.getDuration(),
+                                            false,
+                                            0))
                     .toList();
         }
 
         List<UserTopicProgress> topicProgresses = topicProgressRepository.findByUserId(userId);
-        Map<UUID, ProgressStatus> topicStatusMap = topicProgresses.stream()
-                .collect(Collectors.toMap(UserTopicProgress::getTopicId, UserTopicProgress::getStatus, (a, b) -> a));
+        Map<UUID, ProgressStatus> topicStatusMap =
+                topicProgresses.stream()
+                        .collect(
+                                Collectors.toMap(
+                                        UserTopicProgress::getTopicId,
+                                        UserTopicProgress::getStatus,
+                                        (a, b) -> a));
 
         List<UserSubtopicProgress> subProgresses = subtopicProgressRepository.findByUserId(userId);
-        Map<UUID, Boolean> subtopicCompletionMap = subProgresses.stream()
-                .filter(UserSubtopicProgress::isCompleted)
-                .collect(Collectors.toMap(UserSubtopicProgress::getSubtopicId, sp -> true, (a, b) -> a));
+        Map<UUID, Boolean> subtopicCompletionMap =
+                subProgresses.stream()
+                        .filter(UserSubtopicProgress::isCompleted)
+                        .collect(
+                                Collectors.toMap(
+                                        UserSubtopicProgress::getSubtopicId,
+                                        sp -> true,
+                                        (a, b) -> a));
 
         return topics.stream()
-                .map(t -> {
-                    boolean isCompleted = topicStatusMap.get(t.getId()) == ProgressStatus.COMPLETED;
-                    int pct = 0;
-                    if (isCompleted) {
-                        pct = 100;
-                    } else {
-                        List<Subtopic> subtopics = t.getSubtopics();
-                        if (subtopics != null && !subtopics.isEmpty()) {
-                            long completedCount = subtopics.stream()
-                                    .filter(st -> Boolean.TRUE.equals(subtopicCompletionMap.get(st.getId())))
-                                    .count();
-                            pct = (int) Math.round((double) completedCount * 100 / subtopics.size());
-                        }
-                    }
-                    return new TopicSummaryDto(
-                            t.getId(),
-                            t.getTitle(),
-                            t.getDescription(),
-                            t.getCategory(),
-                            t.getDuration(),
-                            isCompleted,
-                            pct);
-                })
+                .map(
+                        t -> {
+                            boolean isCompleted =
+                                    topicStatusMap.get(t.getId()) == ProgressStatus.COMPLETED;
+                            int pct = 0;
+                            if (isCompleted) {
+                                pct = 100;
+                            } else {
+                                List<Subtopic> subtopics = t.getSubtopics();
+                                if (subtopics != null && !subtopics.isEmpty()) {
+                                    long completedCount =
+                                            subtopics.stream()
+                                                    .filter(
+                                                            st ->
+                                                                    Boolean.TRUE.equals(
+                                                                            subtopicCompletionMap
+                                                                                    .get(
+                                                                                            st
+                                                                                                    .getId())))
+                                                    .count();
+                                    pct =
+                                            (int)
+                                                    Math.round(
+                                                            (double) completedCount
+                                                                    * 100
+                                                                    / subtopics.size());
+                                }
+                            }
+                            return new TopicSummaryDto(
+                                    t.getId(),
+                                    t.getTitle(),
+                                    t.getDescription(),
+                                    t.getCategory(),
+                                    t.getDuration(),
+                                    isCompleted,
+                                    pct);
+                        })
                 .toList();
     }
 
@@ -144,7 +180,10 @@ public class CatalogService {
                             List<TopicSummaryDto> topics = getTopicsForPath(pathId, userId);
                             int pathPct = 0;
                             if (!topics.isEmpty()) {
-                                double sumPct = topics.stream().mapToInt(TopicSummaryDto::progressPercentage).sum();
+                                double sumPct =
+                                        topics.stream()
+                                                .mapToInt(TopicSummaryDto::progressPercentage)
+                                                .sum();
                                 pathPct = (int) Math.round(sumPct / topics.size());
                             }
                             return new PathSummaryDto(
@@ -180,7 +219,9 @@ public class CatalogService {
 
                             List<SubtopicDto> subtopics =
                                     topic.getSubtopics().stream()
-                                            .sorted(java.util.Comparator.comparingInt(Subtopic::getOrderIndex))
+                                            .sorted(
+                                                    java.util.Comparator.comparingInt(
+                                                            Subtopic::getOrderIndex))
                                             .map(
                                                     st -> {
                                                         List<SubtopicDto.QuizQuestionDto>
@@ -340,14 +381,30 @@ public class CatalogService {
                                                                     / totalSubtopics)
                                                     : 0);
 
-                            int totalMins = subtopics.stream()
-                                    .mapToInt(st -> st.estimatedMinutes() > 0 ? st.estimatedMinutes() : 5)
-                                    .sum();
-                            String computedDuration = totalMins >= 60
-                                    ? (totalMins % 60 == 0
-                                            ? (totalMins / 60) + (totalMins / 60 == 1 ? " hour" : " hours")
-                                            : (totalMins / 60) + "h " + (totalMins % 60) + "m")
-                                    : (totalMins > 0 ? totalMins + " mins" : (topic.getDuration() != null ? topic.getDuration() : "15 mins"));
+                            int totalMins =
+                                    subtopics.stream()
+                                            .mapToInt(
+                                                    st ->
+                                                            st.estimatedMinutes() > 0
+                                                                    ? st.estimatedMinutes()
+                                                                    : 5)
+                                            .sum();
+                            String computedDuration =
+                                    totalMins >= 60
+                                            ? (totalMins % 60 == 0
+                                                    ? (totalMins / 60)
+                                                            + (totalMins / 60 == 1
+                                                                    ? " hour"
+                                                                    : " hours")
+                                                    : (totalMins / 60)
+                                                            + "h "
+                                                            + (totalMins % 60)
+                                                            + "m")
+                                            : (totalMins > 0
+                                                    ? totalMins + " mins"
+                                                    : (topic.getDuration() != null
+                                                            ? topic.getDuration()
+                                                            : "15 mins"));
 
                             return new TopicDetailDto(
                                     topic.getId(),

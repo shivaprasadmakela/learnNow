@@ -5,18 +5,31 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.0</version>
+		<version>3.3.13</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.learnnow</groupId>
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>backend</name>
-	<description>Bugfix Backend Service</description>
+	<description>learnNow learning platform API</description>
 	<properties>
 		<java.version>21</java.version>
 		<lombok.version>1.18.46</lombok.version>
 		<flyway.version>10.17.0</flyway.version>
+		<razorpay.version>1.4.8</razorpay.version>
+		<springdoc.version>2.6.0</springdoc.version>
+		<google-api-client.version>2.7.0</google-api-client.version>
+		<!-- Overridden above Boot 3.3.13's managed versions (Mockito 5.11 /
+		     ByteBuddy 1.14) so mocking works on modern JDKs. The previous
+		     -Dnet.bytebuddy.experimental=true surefire flag was a workaround for
+		     exactly this and silently stopped working on newer runtimes. -->
+		<mockito.version>5.18.0</mockito.version>
+		<byte-buddy.version>1.17.8</byte-buddy.version>
+		<!-- Above Boot 3.3.13's managed 1.19.x, whose bundled docker-java negotiates
+		     Docker API 1.32. Modern daemons (Colima, current Docker Desktop) require
+		     at least 1.40 and reject it outright. -->
+		<testcontainers.version>1.20.4</testcontainers.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -48,11 +61,31 @@
 		<dependency>
 			<groupId>com.google.api-client</groupId>
 			<artifactId>google-api-client</artifactId>
-			<version>2.4.0</version>
+			<version>${google-api-client.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Integration tests run against a throwaway Postgres container rather than
+		     a developer's local database. The migrations use Postgres-specific
+		     features (JSONB, gen_random_uuid, TIMESTAMPTZ) so an in-memory
+		     substitute cannot exercise them, and depending on a local instance
+		     meant the tests only passed on one machine. -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -72,7 +105,20 @@
 		<dependency>
 			<groupId>com.razorpay</groupId>
 			<artifactId>razorpay-java</artifactId>
-			<version>1.4.8</version>
+			<version>${razorpay.version}</version>
+		</dependency>
+		<!-- Readiness/liveness probes and metrics. Health previously returned a
+		     hardcoded UP without checking the database. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<!-- Generated API documentation, so the 31 endpoints are discoverable
+		     without reading controllers. -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -102,7 +148,9 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<argLine>-Dnet.bytebuddy.experimental=true</argLine>
+					<!-- Mockito attaches its agent at runtime; declaring it keeps this
+					     working once dynamic agent loading is refused by default. -->
+					<argLine>-XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -117,6 +165,30 @@
 							<reflowLongStrings>true</reflowLongStrings>
 						</googleJavaFormat>
 					</java>
+				</configuration>
+				<!-- Bound to validate so the build fails on unformatted code.
+				     Without an execution the plugin was configured but never ran,
+				     and formatting had already drifted in several files. -->
+				<executions>
+					<execution>
+						<id>spotless-check</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Dependency vulnerability scanning. Run explicitly:
+			     mvn dependency-check:check -Powasp -->
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>10.0.4</version>
+				<configuration>
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+					<skipProvidedScope>true</skipProvidedScope>
+					<skipTestScope>true</skipTestScope>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -16,11 +16,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ContentAuthoringService {
@@ -219,14 +221,8 @@ public class ContentAuthoringService {
 
                     List<Subtopic> updatedSubtopicsList = new ArrayList<>();
                     for (AdminPathDto.AdminSubtopicDto stReq : topicReq.subtopics()) {
-                        String prereqsJson = "[]";
-                        if (stReq.prerequisites() != null) {
-                            try {
-                                prereqsJson =
-                                        objectMapper.writeValueAsString(stReq.prerequisites());
-                            } catch (Exception ignored) {
-                            }
-                        }
+                        String prereqsJson =
+                                serializeStringList(stReq.prerequisites(), "prerequisites");
 
                         Subtopic subtopic;
                         if (stReq.id() != null && existingSubtopicsMap.containsKey(stReq.id())) {
@@ -320,14 +316,8 @@ public class ContentAuthoringService {
                             }
                             List<QuizQuestion> updatedQuestionsList = new ArrayList<>();
                             for (AdminPathDto.AdminQuizQuestionDto qReq : stReq.questions()) {
-                                String optionsJson = "[]";
-                                if (qReq.options() != null) {
-                                    try {
-                                        optionsJson =
-                                                objectMapper.writeValueAsString(qReq.options());
-                                    } catch (Exception ignored) {
-                                    }
-                                }
+                                String optionsJson =
+                                        serializeStringList(qReq.options(), "quiz options");
                                 QuizQuestion q;
                                 if (qReq.id() != null
                                         && existingQuestionsMap.containsKey(qReq.id())) {
@@ -367,14 +357,19 @@ public class ContentAuthoringService {
                 PathTopic pathTopic;
                 if (existingPathTopicsMap.containsKey(savedTopic.getId())) {
                     pathTopic = existingPathTopicsMap.remove(savedTopic.getId());
-                    pathTopic.setOrderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++);
+                    pathTopic.setOrderIndex(
+                            topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++);
                 } else {
-                    pathTopic = PathTopic.builder()
-                            .id(new PathTopicId(savedPath.getId(), savedTopic.getId()))
-                            .path(savedPath)
-                            .topic(savedTopic)
-                            .orderIndex(topicReq.orderIndex() > 0 ? topicReq.orderIndex() : tIdx++)
-                            .build();
+                    pathTopic =
+                            PathTopic.builder()
+                                    .id(new PathTopicId(savedPath.getId(), savedTopic.getId()))
+                                    .path(savedPath)
+                                    .topic(savedTopic)
+                                    .orderIndex(
+                                            topicReq.orderIndex() > 0
+                                                    ? topicReq.orderIndex()
+                                                    : tIdx++)
+                                    .build();
                 }
 
                 updatedPathTopicsList.add(pathTopic);
@@ -410,18 +405,42 @@ public class ContentAuthoringService {
 
     @Transactional
     public void attachTopicToPath(UUID pathId, UUID topicId, Integer orderIndex) {
-        Path path = pathRepository.findById(pathId).orElseThrow(() -> new com.learnnow.common.exception.NotFoundException("path_not_found"));
-        Topic topic = topicRepository.findById(topicId).orElseThrow(() -> new com.learnnow.common.exception.NotFoundException("topic_not_found"));
+        Path path =
+                pathRepository
+                        .findById(pathId)
+                        .orElseThrow(
+                                () ->
+                                        new com.learnnow.common.exception.NotFoundException(
+                                                "path_not_found"));
+        Topic topic =
+                topicRepository
+                        .findById(topicId)
+                        .orElseThrow(
+                                () ->
+                                        new com.learnnow.common.exception.NotFoundException(
+                                                "topic_not_found"));
 
-        int index = (orderIndex != null && orderIndex > 0) ? orderIndex : (path.getPathTopics() != null ? path.getPathTopics().size() + 1 : 1);
-        com.learnnow.paths.entity.PathTopic pt = com.learnnow.paths.entity.PathTopic.builder()
-                .id(new com.learnnow.paths.entity.PathTopicId(pathId, topicId))
-                .path(path)
-                .topic(topic)
-                .orderIndex(index)
-                .build();
+        int index =
+                (orderIndex != null && orderIndex > 0)
+                        ? orderIndex
+                        : (path.getPathTopics() != null ? path.getPathTopics().size() + 1 : 1);
 
-        pathTopicRepository.save(pt);
+        PathTopic pathTopic =
+                PathTopic.builder()
+                        .id(new PathTopicId(pathId, topicId))
+                        .path(path)
+                        .topic(topic)
+                        .orderIndex(index)
+                        .build();
+        pathTopicRepository.save(pathTopic);
+
+        // Keep the legacy topics.path_id column populated for topics that have no other
+        // path yet. It is no longer read for progress tracking, but leaving it null broke
+        // every consumer that still dereferenced topic.getPath().
+        if (topic.getPath() == null) {
+            topic.setPath(path);
+            topicRepository.save(topic);
+        }
     }
 
     @Transactional
@@ -783,13 +802,29 @@ public class ContentAuthoringService {
         }
     }
 
-    private String serializePrerequisites(List<String> prerequisites) {
-        if (prerequisites == null) return "[]";
+    /**
+     * Serialises a small string list to JSON for a JSONB column.
+     *
+     * <p>Failures were previously swallowed and replaced with an empty array, so quiz options and
+     * prerequisites could vanish during an import with nothing recorded anywhere. The fallback is
+     * kept - one bad field should not abort a whole course import - but it is now visible.
+     */
+    private String serializeStringList(List<String> values, String fieldName) {
+        if (values == null || values.isEmpty()) return "[]";
         try {
-            return objectMapper.writeValueAsString(prerequisites);
-        } catch (Exception ignored) {
+            return objectMapper.writeValueAsString(values);
+        } catch (Exception e) {
+            log.warn(
+                    "Could not serialise {} ({} entries); storing an empty array",
+                    fieldName,
+                    values.size(),
+                    e);
             return "[]";
         }
+    }
+
+    private String serializePrerequisites(List<String> prerequisites) {
+        return serializeStringList(prerequisites, "prerequisites");
     }
 
     private void processCodeSnippets(
@@ -832,20 +867,15 @@ public class ContentAuthoringService {
             if (prompt == null || prompt.isBlank()) continue;
 
             counts.questions++;
-            String optionsJson = "[]";
-            if (qReq.options() != null && !qReq.options().isEmpty()) {
-                try {
-                    optionsJson = objectMapper.writeValueAsString(qReq.options());
-                } catch (Exception ignored) {
-                }
-            }
+            String optionsJson = serializeStringList(qReq.options(), "quiz options");
 
             String kind = qReq.kind();
             if (kind == null || kind.isBlank()) {
                 if (qReq.options() != null && !qReq.options().isEmpty()) {
                     kind = "mcq";
                 } else if (qReq.correctAnswer() != null
-                        && ("true".equalsIgnoreCase(qReq.correctAnswer()) || "false".equalsIgnoreCase(qReq.correctAnswer()))) {
+                        && ("true".equalsIgnoreCase(qReq.correctAnswer())
+                                || "false".equalsIgnoreCase(qReq.correctAnswer()))) {
                     kind = "true_false";
                 } else {
                     kind = "fill_blank";
@@ -881,9 +911,7 @@ public class ContentAuthoringService {
 
     private AdminPathDto toAdminPathDto(Path path) {
         List<AdminPathDto.AdminTopicDto> topics =
-                path.getTopics().stream()
-                        .map(this::toAdminTopicDto)
-                        .toList();
+                path.getTopics().stream().map(this::toAdminTopicDto).toList();
 
         return new AdminPathDto(
                 path.getId(),
@@ -908,31 +936,57 @@ public class ContentAuthoringService {
                                                                     .filter(
                                                                             b ->
                                                                                     "quiz"
-                                                                                            .equalsIgnoreCase(
-                                                                                                    b.getType())
-                                                                                            && b.getQuestions()
+                                                                                                    .equalsIgnoreCase(
+                                                                                                            b
+                                                                                                                    .getType())
+                                                                                            && b
+                                                                                                            .getQuestions()
                                                                                                     != null)
-                                                                    .flatMap(b -> b.getQuestions().stream())
+                                                                    .flatMap(
+                                                                            b ->
+                                                                                    b
+                                                                                            .getQuestions()
+                                                                                            .stream())
                                                                     .map(
                                                                             q -> {
-                                                                                List<String> optsList = List.of();
-                                                                                if (q.getOptions() != null) {
+                                                                                List<String>
+                                                                                        optsList =
+                                                                                                List
+                                                                                                        .of();
+                                                                                if (q.getOptions()
+                                                                                        != null) {
                                                                                     try {
                                                                                         optsList =
-                                                                                                objectMapper.readValue(
-                                                                                                        q.getOptions(),
-                                                                                                        new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
-                                                                                    } catch (Exception ignored) {
+                                                                                                objectMapper
+                                                                                                        .readValue(
+                                                                                                                q
+                                                                                                                        .getOptions(),
+                                                                                                                new com
+                                                                                                                                .fasterxml
+                                                                                                                                .jackson
+                                                                                                                                .core
+                                                                                                                                .type
+                                                                                                                                .TypeReference<
+                                                                                                                        List<
+                                                                                                                                String>>() {});
+                                                                                    } catch (
+                                                                                            Exception
+                                                                                                    ignored) {
                                                                                     }
                                                                                 }
-                                                                                return new AdminPathDto.AdminQuizQuestionDto(
+                                                                                return new AdminPathDto
+                                                                                        .AdminQuizQuestionDto(
                                                                                         q.getId(),
                                                                                         q.getKind(),
-                                                                                        q.getPrompt(),
+                                                                                        q
+                                                                                                .getPrompt(),
                                                                                         optsList,
-                                                                                        q.getCorrectAnswer(),
-                                                                                        q.getExplanation(),
-                                                                                        q.getPoints());
+                                                                                        q
+                                                                                                .getCorrectAnswer(),
+                                                                                        q
+                                                                                                .getExplanation(),
+                                                                                        q
+                                                                                                .getPoints());
                                                                             })
                                                                     .toList()
                                                             : List.of();
@@ -943,26 +997,46 @@ public class ContentAuthoringService {
                                                     prereqs =
                                                             objectMapper.readValue(
                                                                     st.getPrerequisites(),
-                                                                    new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
-                                                } catch (Exception ignored) {
+                                                                    new com.fasterxml.jackson.core
+                                                                                    .type
+                                                                                    .TypeReference<
+                                                                            List<String>>() {});
+                                                } catch (Exception e) {
+                                                    log.warn(
+                                                            "Could not parse stored prerequisites"
+                                                                    + " for subtopic {}",
+                                                            st.getId(),
+                                                            e);
                                                 }
                                             }
 
                                             List<AdminPathDto.AdminCodeSnippetDto> snippets =
                                                     st.getCodeSnippets() != null
                                                             ? st.getCodeSnippets().stream()
-                                                                    .sorted(Comparator.comparingInt(SubtopicCodeSnippet::getOrderIndex))
+                                                                    .sorted(
+                                                                            Comparator.comparingInt(
+                                                                                    SubtopicCodeSnippet
+                                                                                            ::getOrderIndex))
                                                                     .map(
                                                                             sn ->
-                                                                                    new AdminPathDto.AdminCodeSnippetDto(
-                                                                                            sn.getId(),
-                                                                                            sn.getLanguage(),
-                                                                                            sn.getLabel(),
-                                                                                            sn.getCode(),
-                                                                                            sn.getExpectedOutput(),
-                                                                                            sn.isRunnable(),
-                                                                                            sn.isEditable(),
-                                                                                            sn.getOrderIndex()))
+                                                                                    new AdminPathDto
+                                                                                            .AdminCodeSnippetDto(
+                                                                                            sn
+                                                                                                    .getId(),
+                                                                                            sn
+                                                                                                    .getLanguage(),
+                                                                                            sn
+                                                                                                    .getLabel(),
+                                                                                            sn
+                                                                                                    .getCode(),
+                                                                                            sn
+                                                                                                    .getExpectedOutput(),
+                                                                                            sn
+                                                                                                    .isRunnable(),
+                                                                                            sn
+                                                                                                    .isEditable(),
+                                                                                            sn
+                                                                                                    .getOrderIndex()))
                                                                     .toList()
                                                             : List.of();
 
@@ -971,12 +1045,20 @@ public class ContentAuthoringService {
                                                     st.getTitle(),
                                                     st.getContent(),
                                                     st.getOrderIndex(),
-                                                    st.getStatus() != null ? st.getStatus().name() : "DRAFT",
-                                                    st.getLevel() != null ? st.getLevel() : "beginner",
-                                                    st.getTrack() != null ? st.getTrack() : "concept",
+                                                    st.getStatus() != null
+                                                            ? st.getStatus().name()
+                                                            : "DRAFT",
+                                                    st.getLevel() != null
+                                                            ? st.getLevel()
+                                                            : "beginner",
+                                                    st.getTrack() != null
+                                                            ? st.getTrack()
+                                                            : "concept",
                                                     prereqs,
                                                     st.getVideoUrl(),
-                                                    st.getEstimatedMinutes() > 0 ? st.getEstimatedMinutes() : 5,
+                                                    st.getEstimatedMinutes() > 0
+                                                            ? st.getEstimatedMinutes()
+                                                            : 5,
                                                     snippets,
                                                     questions);
                                         })

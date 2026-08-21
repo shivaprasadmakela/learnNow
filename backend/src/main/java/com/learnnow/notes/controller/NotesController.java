@@ -15,7 +15,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/me")
+@RequestMapping("/api/me") // notes + bookmarks; progress lives in MeController
 @RequiredArgsConstructor
 public class NotesController {
 
