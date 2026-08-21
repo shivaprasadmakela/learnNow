@@ -28,12 +28,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
-@ActiveProfiles("local")
-public class DashboardIntegrationTest {
+public class DashboardIntegrationTest extends com.learnnow.AbstractIntegrationTest {
 
     @Autowired private DashboardService dashboardService;
 
@@ -176,7 +174,7 @@ public class DashboardIntegrationTest {
                             .fullName("Streak Tester")
                             .build());
         }
-        
+
         topicProgressRepository.findAll().stream()
                 .filter(tp -> tp.getUserId().equals(testUserId))
                 .forEach(tp -> topicProgressRepository.delete(tp));
