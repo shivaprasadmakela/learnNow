@@ -3,6 +3,7 @@ package com.learnnow.common.config;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -22,7 +23,14 @@ public class StartupConfigValidator {
     /** HS256 requires a key of at least 256 bits. */
     private static final int MIN_JWT_SECRET_BYTES = 32;
 
-    private static final String LOCAL_PROFILE = "local";
+    /**
+     * Profiles in which the payment mock is permitted.
+     *
+     * <p>"test" belongs here alongside "local": the integration suite boots the real application
+     * context and has no gateway credentials, so it must be allowed to mock. Anything not on this
+     * list is treated as an environment that could take real money.
+     */
+    private static final List<String> MOCK_PERMITTED_PROFILES = List.of("local", "test");
 
     private final Environment environment;
 
@@ -47,18 +55,19 @@ public class StartupConfigValidator {
 
     @PostConstruct
     void validate() {
-        boolean isLocal = Arrays.asList(environment.getActiveProfiles()).contains(LOCAL_PROFILE);
+        List<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
+        boolean mockPermitted = activeProfiles.stream().anyMatch(MOCK_PERMITTED_PROFILES::contains);
 
         validateJwtSecret();
         validateCorsOrigins();
         validateGoogleClientId();
 
-        if (!isLocal) {
+        if (!mockPermitted) {
             validateProductionPayments();
         } else if (paymentsMockEnabled) {
             log.warn(
                     "Payment mock is ENABLED. Payment signatures are accepted without"
-                            + " verification. This is only valid for local development.");
+                            + " verification. Valid only for local development and tests.");
         }
 
         log.info(
@@ -156,7 +165,9 @@ public class StartupConfigValidator {
     private void validateProductionPayments() {
         if (paymentsMockEnabled) {
             throw new IllegalStateException(
-                    "app.payments.mock-enabled must be false outside the local profile.");
+                    "app.payments.mock-enabled must be false outside the "
+                            + MOCK_PERMITTED_PROFILES
+                            + " profiles.");
         }
         if (razorpayKeyId == null
                 || razorpayKeyId.isBlank()

@@ -77,6 +77,12 @@ public class SecurityConfig {
                                         // Auth flows
                                         .requestMatchers("/api/auth/**", "/api/health", "/error")
                                         .permitAll()
+                                        // Liveness and readiness only. Orchestrator probes
+                                        // cannot present a token, and details are hidden by
+                                        // management.endpoint.health.show-details=never. The
+                                        // rest of /actuator stays authenticated.
+                                        .requestMatchers("/actuator/health/**")
+                                        .permitAll()
                                         // Donation checkout is open to guests; the webhook is
                                         // authenticated by its Razorpay signature, not by a JWT.
                                         .requestMatchers("/api/donations/**")

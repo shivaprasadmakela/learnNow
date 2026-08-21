@@ -23,10 +23,11 @@ USER app
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_TOOL_OPTIONS="-XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:MaxRAMPercentage=70.0"
 
+# Cloud Run supplies PORT and routes only that one port.
 EXPOSE 8080
-EXPOSE 8081
 
+# Ignored by Cloud Run (which uses its own probes) but correct for `docker run`.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD wget -qO- http://localhost:8081/actuator/health/readiness || exit 1
+  CMD wget -qO- "http://localhost:${PORT:-8080}/actuator/health/readiness" || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

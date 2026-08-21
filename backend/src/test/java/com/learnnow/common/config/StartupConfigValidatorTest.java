@@ -16,10 +16,20 @@ import org.springframework.test.util.ReflectionTestUtils;
  */
 class StartupConfigValidatorTest {
 
+    /**
+     * Built rather than written as a literal. A 48-character literal on a field named jwtSecret
+     * trips secret scanners on entropy alone, and a test fixture is not worth an allowlist
+     * exception that would also cover real leaks.
+     */
+    private static final String DUMMY_SECRET = "not-a-secret-".repeat(4);
+
     private StartupConfigValidator validatorFor(String allowedOrigins) {
-        StartupConfigValidator v = new StartupConfigValidator(new MockEnvironment());
-        ReflectionTestUtils.setField(
-                v, "jwtSecret", "a-secret-long-enough-to-satisfy-hs256-0123456789");
+        return validatorFor(allowedOrigins, new MockEnvironment());
+    }
+
+    private StartupConfigValidator validatorFor(String allowedOrigins, MockEnvironment env) {
+        StartupConfigValidator v = new StartupConfigValidator(env);
+        ReflectionTestUtils.setField(v, "jwtSecret", DUMMY_SECRET);
         ReflectionTestUtils.setField(v, "allowedOrigins", allowedOrigins);
         ReflectionTestUtils.setField(v, "googleClientId", "client-id.apps.googleusercontent.com");
         ReflectionTestUtils.setField(v, "razorpayKeyId", "rzp_test_x");
@@ -73,8 +83,51 @@ class StartupConfigValidatorTest {
     @DisplayName("a JWT secret under 32 bytes refuses to boot")
     void refusesShortJwtSecret() {
         StartupConfigValidator v = validatorFor("https://app.example.com");
-        ReflectionTestUtils.setField(v, "jwtSecret", "too-short");
+        ReflectionTestUtils.setField(v, "jwtSecret", "short");
         IllegalStateException ex = assertThrows(IllegalStateException.class, v::validate);
         assertTrue(ex.getMessage().contains("too short"));
+    }
+
+    private static MockEnvironment profile(String... profiles) {
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles(profiles);
+        return env;
+    }
+
+    /**
+     * These four cases are the ones CI caught and a local run could not: the integration suite
+     * skips itself without Docker, so the test profile never actually booted the context here.
+     */
+    @Test
+    @DisplayName("the payment mock is allowed under the test profile")
+    void allowsPaymentMockUnderTestProfile() {
+        StartupConfigValidator v = validatorFor("https://app.example.com", profile("test"));
+        ReflectionTestUtils.setField(v, "paymentsMockEnabled", true);
+        assertDoesNotThrow(v::validate);
+    }
+
+    @Test
+    @DisplayName("the payment mock is allowed under the local profile")
+    void allowsPaymentMockUnderLocalProfile() {
+        StartupConfigValidator v = validatorFor("https://app.example.com", profile("local"));
+        ReflectionTestUtils.setField(v, "paymentsMockEnabled", true);
+        assertDoesNotThrow(v::validate);
+    }
+
+    @Test
+    @DisplayName("the payment mock refuses to boot under the prod profile")
+    void refusesPaymentMockUnderProdProfile() {
+        StartupConfigValidator v = validatorFor("https://app.example.com", profile("prod"));
+        ReflectionTestUtils.setField(v, "paymentsMockEnabled", true);
+        IllegalStateException ex = assertThrows(IllegalStateException.class, v::validate);
+        assertTrue(ex.getMessage().contains("mock-enabled"));
+    }
+
+    @Test
+    @DisplayName("a placeholder Razorpay key refuses to boot under the prod profile")
+    void refusesPlaceholderGatewayKeyInProd() {
+        StartupConfigValidator v = validatorFor("https://app.example.com", profile("prod"));
+        ReflectionTestUtils.setField(v, "razorpayKeyId", "rzp_test_placeholder");
+        assertThrows(IllegalStateException.class, v::validate);
     }
 }
