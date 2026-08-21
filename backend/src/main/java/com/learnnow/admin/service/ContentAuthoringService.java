@@ -327,6 +327,19 @@ public class ContentAuthoringService {
                             }
                             List<QuizQuestion> updatedQuestionsList = new ArrayList<>();
                             for (AdminPathDto.AdminQuizQuestionDto qReq : stReq.questions()) {
+                                // A question with no prompt cannot be stored - the column is
+                                // NOT NULL - and letting it through aborted the entire batch
+                                // with an opaque JDBC error naming only one row. Skipping it
+                                // keeps the rest of the course importable and says which one
+                                // was dropped.
+                                if (qReq.prompt() == null || qReq.prompt().isBlank()) {
+                                    log.warn(
+                                            "Skipping quiz question with no prompt in subtopic"
+                                                    + " '{}' (answer: '{}')",
+                                            stReq.title(),
+                                            qReq.correctAnswer());
+                                    continue;
+                                }
                                 String optionsJson =
                                         serializeStringList(qReq.options(), "quiz options");
                                 QuizQuestion q;
@@ -337,7 +350,9 @@ public class ContentAuthoringService {
                                     q = new QuizQuestion();
                                     q.setBlock(quizBlock);
                                 }
-                                q.setKind(qReq.kind() != null ? qReq.kind() : "mcq");
+                                q.setKind(
+                                        resolveQuestionKind(
+                                                qReq.kind(), qReq.options(), qReq.correctAnswer()));
                                 q.setPrompt(qReq.prompt());
                                 q.setOptions(optionsJson);
                                 q.setCorrectAnswer(
@@ -884,18 +899,7 @@ public class ContentAuthoringService {
             counts.questions++;
             String optionsJson = serializeStringList(qReq.options(), "quiz options");
 
-            String kind = qReq.kind();
-            if (kind == null || kind.isBlank()) {
-                if (qReq.options() != null && !qReq.options().isEmpty()) {
-                    kind = "mcq";
-                } else if (qReq.correctAnswer() != null
-                        && ("true".equalsIgnoreCase(qReq.correctAnswer())
-                                || "false".equalsIgnoreCase(qReq.correctAnswer()))) {
-                    kind = "true_false";
-                } else {
-                    kind = "fill_blank";
-                }
-            }
+            String kind = resolveQuestionKind(qReq.kind(), qReq.options(), qReq.correctAnswer());
 
             QuizQuestion q =
                     QuizQuestion.builder()
@@ -913,6 +917,30 @@ public class ContentAuthoringService {
             block.setQuestions(quizQuestions);
             subtopic.getBlocks().add(block);
         }
+    }
+
+    /**
+     * Picks a question kind when the payload omits it.
+     *
+     * <p>Defaulting to "mcq" produced multiple-choice questions with no choices, which the quiz UI
+     * cannot render and the CHECK constraint has no way to catch. Inferring from the shape of the
+     * data gives something usable: choices present means multiple choice, a boolean answer means
+     * true/false, and anything else is a free-text answer.
+     */
+    private String resolveQuestionKind(
+            String declared, List<String> options, String correctAnswer) {
+        if (declared != null && !declared.isBlank()) {
+            return declared;
+        }
+        if (options != null && !options.isEmpty()) {
+            return "mcq";
+        }
+        if (correctAnswer != null
+                && ("true".equalsIgnoreCase(correctAnswer.trim())
+                        || "false".equalsIgnoreCase(correctAnswer.trim()))) {
+            return "true_false";
+        }
+        return "fill_blank";
     }
 
     private ContentStatus parseStatus(String status) {
