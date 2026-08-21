@@ -86,14 +86,25 @@ public class ContentAuthoringService {
 
         Topic topic =
                 Topic.builder()
-                        .path(path)
                         .title(request.title())
                         .description(request.description())
                         .category(request.category() != null ? request.category() : "course")
                         .duration(request.duration() != null ? request.duration() : "1 hour")
                         .status(ContentStatus.DRAFT)
                         .build();
-        return topicRepository.save(topic);
+        Topic saved = topicRepository.save(topic);
+
+        // Membership is the join row. There is no owning-path column to set.
+        int nextIndex = path.getPathTopics() != null ? path.getPathTopics().size() + 1 : 1;
+        pathTopicRepository.save(
+                PathTopic.builder()
+                        .id(new PathTopicId(path.getId(), saved.getId()))
+                        .path(path)
+                        .topic(saved)
+                        .orderIndex(nextIndex)
+                        .build());
+
+        return saved;
     }
 
     @Transactional
@@ -433,14 +444,6 @@ public class ContentAuthoringService {
                         .orderIndex(index)
                         .build();
         pathTopicRepository.save(pathTopic);
-
-        // Keep the legacy topics.path_id column populated for topics that have no other
-        // path yet. It is no longer read for progress tracking, but leaving it null broke
-        // every consumer that still dereferenced topic.getPath().
-        if (topic.getPath() == null) {
-            topic.setPath(path);
-            topicRepository.save(topic);
-        }
     }
 
     @Transactional
@@ -712,9 +715,21 @@ public class ContentAuthoringService {
                                                 : DEFAULT_DURATION_TOPIC)
                                 .orderIndex(tIdx++)
                                 .status(ContentStatus.DRAFT)
-                                .path(path)
                                 .build();
-                path.getTopics().add(topic);
+
+                // path.getTopics() is a derived, immutable projection - adding to it
+                // threw UnsupportedOperationException, so importing a new topic failed
+                // at runtime. Membership is recorded on the owning collection instead,
+                // which cascades from Path.
+                topicRepository.save(topic);
+                path.getPathTopics()
+                        .add(
+                                PathTopic.builder()
+                                        .id(new PathTopicId(path.getId(), topic.getId()))
+                                        .path(path)
+                                        .topic(topic)
+                                        .orderIndex(topic.getOrderIndex())
+                                        .build());
             }
 
             processSubtopics(tReq.subtopics(), topic, strategy, counts);

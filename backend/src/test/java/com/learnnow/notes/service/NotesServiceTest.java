@@ -6,9 +6,12 @@ import com.learnnow.notes.dto.response.BookmarkResponse;
 import com.learnnow.notes.dto.response.NoteResponse;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
+import com.learnnow.paths.entity.PathTopic;
+import com.learnnow.paths.entity.PathTopicId;
 import com.learnnow.paths.entity.Subtopic;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
+import com.learnnow.paths.repository.PathTopicRepository;
 import com.learnnow.paths.repository.SubtopicRepository;
 import com.learnnow.paths.repository.TopicRepository;
 import com.learnnow.user.entity.User;
@@ -29,6 +32,7 @@ public class NotesServiceTest extends com.learnnow.AbstractIntegrationTest {
     @Autowired private UserRepository userRepository;
 
     @Autowired private PathRepository pathRepository;
+    @Autowired private PathTopicRepository pathTopicRepository;
 
     @Autowired private TopicRepository topicRepository;
 
@@ -56,10 +60,17 @@ public class NotesServiceTest extends com.learnnow.AbstractIntegrationTest {
                 topicRepository.save(
                         Topic.builder()
                                 .title("Test Topic")
-                                .path(path)
                                 .status(ContentStatus.PUBLISHED)
                                 .orderIndex(1)
                                 .build());
+        // Membership lives in path_topics; a topic has no owning-path column.
+        pathTopicRepository.save(
+                PathTopic.builder()
+                        .id(new PathTopicId(path.getId(), testTopic.getId()))
+                        .path(path)
+                        .topic(testTopic)
+                        .orderIndex(1)
+                        .build());
 
         testSubtopic =
                 subtopicRepository.save(

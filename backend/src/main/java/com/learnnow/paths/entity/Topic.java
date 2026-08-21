@@ -13,8 +13,14 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = "path")
 public class Topic {
+
+    /*
+     * A topic has no owning path. Membership lives entirely in path_topics,
+     * because the same topic belongs to several courses at different positions.
+     * The old topics.path_id column was a second source of truth that the admin
+     * attach flow never populated, so anything reading it got null.
+     */
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,11 +42,6 @@ public class Topic {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ContentStatus status = ContentStatus.PUBLISHED;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "path_id")
-    @JsonIgnore
-    private Path path;
 
     @OneToMany(mappedBy = "topic")
     @JsonIgnore

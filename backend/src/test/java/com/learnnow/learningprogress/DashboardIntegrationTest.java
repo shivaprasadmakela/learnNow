@@ -13,9 +13,12 @@ import com.learnnow.learningprogress.service.DashboardService;
 import com.learnnow.learningprogress.service.ProgressService;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
+import com.learnnow.paths.entity.PathTopic;
+import com.learnnow.paths.entity.PathTopicId;
 import com.learnnow.paths.entity.Subtopic;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
+import com.learnnow.paths.repository.PathTopicRepository;
 import com.learnnow.paths.repository.SubtopicRepository;
 import com.learnnow.paths.repository.TopicRepository;
 import com.learnnow.paths.service.CatalogService;
@@ -46,6 +49,7 @@ public class DashboardIntegrationTest extends com.learnnow.AbstractIntegrationTe
     @Autowired private CatalogService catalogService;
 
     @Autowired private PathRepository pathRepository;
+    @Autowired private PathTopicRepository pathTopicRepository;
 
     @Autowired private TopicRepository topicRepository;
 
@@ -79,7 +83,6 @@ public class DashboardIntegrationTest extends com.learnnow.AbstractIntegrationTe
             Topic topic1 =
                     topicRepository.save(
                             Topic.builder()
-                                    .path(path)
                                     .title("Topic 1")
                                     .description("Topic 1 Desc")
                                     .category("course")
@@ -87,11 +90,11 @@ public class DashboardIntegrationTest extends com.learnnow.AbstractIntegrationTe
                                     .status(ContentStatus.PUBLISHED)
                                     .build());
             sampleTopicId1 = topic1.getId();
+            attach(path, topic1, 1);
 
             Topic topic2 =
                     topicRepository.save(
                             Topic.builder()
-                                    .path(path)
                                     .title("Topic 2")
                                     .description("Topic 2 Desc")
                                     .category("course")
@@ -99,6 +102,7 @@ public class DashboardIntegrationTest extends com.learnnow.AbstractIntegrationTe
                                     .status(ContentStatus.PUBLISHED)
                                     .build());
             sampleTopicId2 = topic2.getId();
+            attach(path, topic2, 2);
 
             Subtopic subtopic1 =
                     subtopicRepository.save(
@@ -119,13 +123,13 @@ public class DashboardIntegrationTest extends com.learnnow.AbstractIntegrationTe
                 Topic topic1 =
                         topicRepository.save(
                                 Topic.builder()
-                                        .path(p)
                                         .title("Topic 1")
                                         .description("Topic 1 Desc")
                                         .category("course")
                                         .duration("1 hour")
                                         .status(ContentStatus.PUBLISHED)
                                         .build());
+                attach(p, topic1, 1);
                 topics = List.of(topic1);
             }
             sampleTopicId1 = topics.get(0).getId();
@@ -318,5 +322,16 @@ public class DashboardIntegrationTest extends com.learnnow.AbstractIntegrationTe
 
         DashboardResponse response = dashboardService.buildDashboard(testUserId);
         assertEquals(0, response.currentStreak(), "Stale streak should be 0 on the dashboard!");
+    }
+
+    /** Records path membership. Topics no longer carry an owning-path column. */
+    private void attach(Path path, Topic topic, int orderIndex) {
+        pathTopicRepository.save(
+                PathTopic.builder()
+                        .id(new PathTopicId(path.getId(), topic.getId()))
+                        .path(path)
+                        .topic(topic)
+                        .orderIndex(orderIndex)
+                        .build());
     }
 }

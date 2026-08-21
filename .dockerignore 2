@@ -1,0 +1,24 @@
+# Build output
+backend/target/
+ui/dist/
+ui/dist-ssr/
+ui/node_modules/
+
+# Secrets - must never enter the build context
+.env
+.env.*
+!.env.example
+**/application-local.properties
+key-*.json
+*.json.key
+*.pem
+
+# VCS / tooling / OS
+.git/
+.github/
+.vscode/
+.idea/
+*.iml
+.DS_Store
+*.log
+run.log
