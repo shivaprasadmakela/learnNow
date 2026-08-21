@@ -104,10 +104,14 @@ public class SecurityConfig {
     }
 
     /**
-     * Exact-origin CORS. Uses {@code setAllowedOrigins} rather than the pattern variant: patterns
-     * exist to permit wildcards, and a wildcard combined with {@code allowCredentials} would let
-     * any site read authenticated responses. {@code StartupConfigValidator} additionally refuses to
-     * boot if a configured origin contains one.
+     * CORS origins, allowing scoped wildcards.
+     *
+     * <p>Pattern matching is required because preview deployments have dynamic subdomains - {@code
+     * https://*.vercel.app} cannot be enumerated ahead of time. The risk of pairing a wildcard with
+     * {@code allowCredentials} is real, so {@code StartupConfigValidator} refuses to boot on a
+     * wildcard broad enough to match arbitrary hosts: a bare {@code *}, a scheme-only pattern, or
+     * one whose remaining suffix is a single label such as {@code *.com}. A wildcard confined to
+     * subdomains of a concrete registrable domain is permitted.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -118,7 +122,7 @@ public class SecurityConfig {
                         .filter(s -> !s.isEmpty())
                         .toList();
 
-        cfg.setAllowedOrigins(origins);
+        cfg.setAllowedOriginPatterns(origins);
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         cfg.setAllowedHeaders(
                 List.of(

@@ -88,19 +88,59 @@ public class StartupConfigValidator {
         }
         for (String origin : allowedOrigins.split(",")) {
             String trimmed = origin.trim();
-            if (trimmed.isEmpty()) {
-                continue;
+            if (!trimmed.isEmpty()) {
+                validateOrigin(trimmed);
             }
-            if (trimmed.contains("*")) {
-                throw new IllegalStateException(
-                        "ALLOWED_ORIGINS contains a wildcard ('"
-                                + trimmed
-                                + "'). Credentialed CORS requires exact origins.");
-            }
-            if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-                throw new IllegalStateException(
-                        "ALLOWED_ORIGINS entry '" + trimmed + "' must include a scheme.");
-            }
+        }
+    }
+
+    /**
+     * Rejects an origin only when its wildcard is broad enough to match hosts we do not control.
+     *
+     * <p>A scoped wildcard is legitimate and necessary: preview deployments get a fresh subdomain
+     * per build, so {@code https://*.vercel.app} cannot be replaced by an enumerated list. What
+     * must not get through is a wildcard that matches arbitrary hosts, because these origins are
+     * paired with {@code allowCredentials} - any site it matches could read authenticated
+     * responses. The line drawn here is that a wildcard must leave a concrete registrable domain
+     * behind it: {@code *.vercel.app} is accepted, {@code *.com} and {@code https://*} are not.
+     */
+    private void validateOrigin(String origin) {
+        if (!origin.startsWith("http://") && !origin.startsWith("https://")) {
+            throw new IllegalStateException(
+                    "ALLOWED_ORIGINS entry '" + origin + "' must include a scheme.");
+        }
+
+        String host = origin.substring(origin.indexOf("://") + 3);
+        // Strip any port or path so the host is what gets inspected.
+        host = host.split("/")[0].split(":")[0];
+
+        if (!host.contains("*")) {
+            return;
+        }
+        if (host.equals("*")) {
+            throw new IllegalStateException(
+                    "ALLOWED_ORIGINS entry '"
+                            + origin
+                            + "' matches every host. Credentialed CORS cannot use a bare"
+                            + " wildcard.");
+        }
+        if (!host.startsWith("*.") || host.lastIndexOf('*') > 0) {
+            throw new IllegalStateException(
+                    "ALLOWED_ORIGINS entry '"
+                            + origin
+                            + "' is malformed. A wildcard is only allowed as the leading subdomain,"
+                            + " e.g. https://*.example.com");
+        }
+
+        // "*.vercel.app" -> "vercel.app". Two labels is the minimum that names a real domain;
+        // one label would be a bare public suffix such as "*.com".
+        String suffix = host.substring(2);
+        if (suffix.chars().filter(c -> c == '.').count() < 1 || suffix.startsWith(".")) {
+            throw new IllegalStateException(
+                    "ALLOWED_ORIGINS entry '"
+                            + origin
+                            + "' is too broad - a wildcard must be scoped to a specific domain,"
+                            + " e.g. https://*.example.com");
         }
     }
 

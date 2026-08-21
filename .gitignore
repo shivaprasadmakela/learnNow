@@ -42,3 +42,12 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# iCloud Drive conflict copies. ~/Documents is synced by iCloud when
+# "Desktop & Documents Folders" is on, and the bird daemon creates
+# "<name> 2.<ext>" copies when a build writes many files at once. javac and
+# Flyway both pick these up from the source tree and fail: duplicate classes,
+# and two migrations claiming the same version. Ignoring them stops them being
+# committed, but the real fix is to move the repo off a synced folder.
+* [0-9].*
+* [0-9][0-9].*
