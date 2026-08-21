@@ -130,13 +130,9 @@ export const Loader: React.FC<LoaderProps> = ({
     // Optional background health ping when response takes > 3s
     useEffect(() => {
         if (elapsedTime >= 3000 && elapsedTime < 3500) {
+            // The request itself is the point: it warms a cold backend so the
+            // user's next real call does not pay the start-up cost.
             fetch('/api/health')
-                .then(res => res.json())
-                .then(data => {
-                    if (data?.status === 'UP') {
-                        console.log('Backend health check UP during cold start');
-                    }
-                })
                 .catch(() => {
                     // Ignore ping error during boot
                 });
