@@ -3,6 +3,7 @@ package com.learnnow.common.security;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import java.nio.charset.StandardCharsets;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -18,17 +19,25 @@ public class JwtConfig {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    /**
+     * Charset is explicit. {@code String.getBytes()} without one derives the key from the JVM's
+     * default encoding, so the same secret could produce different keys on a developer machine and
+     * in a container - tokens signed in one place would then fail to verify in the other. {@code
+     * StartupConfigValidator} enforces the 256-bit minimum HS256 requires.
+     */
+    private byte[] secretBytes() {
+        return jwtSecret.getBytes(StandardCharsets.UTF_8);
+    }
+
     @Bean
     public JwtDecoder jwtDecoder() {
-        byte[] bytes = jwtSecret.getBytes();
-        SecretKeySpec spec = new SecretKeySpec(bytes, "HmacSHA256");
+        SecretKeySpec spec = new SecretKeySpec(secretBytes(), "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(spec).build();
     }
 
     @Bean
     public JwtEncoder jwtEncoder() {
-        byte[] bytes = jwtSecret.getBytes();
-        JWKSource<SecurityContext> jwks = new ImmutableSecret<>(bytes);
+        JWKSource<SecurityContext> jwks = new ImmutableSecret<>(secretBytes());
         return new NimbusJwtEncoder(jwks);
     }
 }
