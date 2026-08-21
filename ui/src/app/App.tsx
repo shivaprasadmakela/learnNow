@@ -37,7 +37,7 @@ export default function App() {
     const { showToast } = useToast();
 
     // Custom Hooks for User Data & Topic Sessions
-    const { courses, isCoursesLoading, userStreak, userPoints, updateMetrics, refreshUserData, loadTopicsForPath } = useUserData(isLoggedIn, activeView, isLoading);
+    const { courses, isCoursesLoading, userStreak, userPoints, updateMetrics, refreshUserData, loadTopicsForPath, markPathsStale } = useUserData(isLoggedIn, activeView, isLoading);
     const {
         activeTopic,
         isStudyLoading,
@@ -52,8 +52,7 @@ export default function App() {
         courses,
         changeView,
         showToast,
-        refreshUserData,
-        loadTopicsForPath
+        markPathsStale
     });
 
     const slugify = (text: string) =>

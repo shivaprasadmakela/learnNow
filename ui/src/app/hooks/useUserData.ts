@@ -56,7 +56,11 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         }
 
         // Fetch paths ONLY when the user views Home, Paths, Topics, or Study views
-        const shouldFetchPaths = activeView === 'HOME' || activeView === 'PATHS' || activeView === 'TOPICS' || activeView === 'STUDY';
+        // STUDY is deliberately absent. The study console renders one topic, fetched by
+        // its own endpoint; it never shows the path list, so pulling every path and all
+        // their topics there was a large request for data nothing displayed.
+        const shouldFetchPaths =
+            activeView === 'HOME' || activeView === 'PATHS' || activeView === 'TOPICS';
         if (!shouldFetchPaths && !force) {
             return;
         }
@@ -135,6 +139,19 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         refreshUserData();
     }, [refreshUserData]);
 
+    /**
+     * Marks the cached path list as stale without fetching anything.
+     *
+     * Completing a section changes progress percentages shown on the Paths and Topics views,
+     * but not in the study console the user is currently looking at. Forcing a refetch there
+     * meant waiting on the full path payload - and a second call for the same path's topics -
+     * before the toast appeared. Marking it stale defers that to whichever view actually needs
+     * it, which then fetches once.
+     */
+    const markPathsStale = useCallback(() => {
+        hasFetchedRef.current = false;
+    }, []);
+
     const updateMetrics = useCallback((streak: number, points: number) => {
         setUserStreak(streak);
         setUserPoints(points);
@@ -146,6 +163,7 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         userStreak,
         userPoints,
         updateMetrics,
+        markPathsStale,
         refreshUserData,
         loadTopicsForPath
     };

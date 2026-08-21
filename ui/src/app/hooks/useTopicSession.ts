@@ -18,8 +18,11 @@ interface UseTopicSessionOptions {
     courses: Course[];
     changeView: (view: ViewState, pathSlug?: string, topicSlug?: string) => void;
     showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
-    refreshUserData: (force?: boolean) => Promise<void>;
-    loadTopicsForPath?: (pathId: number | string) => Promise<void>;
+    /**
+     * Invalidates the cached path list without fetching it now. The study console does not
+     * render that list, so refreshing it here only delayed the user.
+     */
+    markPathsStale?: () => void;
 }
 
 export const useTopicSession = ({
@@ -27,8 +30,7 @@ export const useTopicSession = ({
     courses,
     changeView,
     showToast,
-    refreshUserData,
-    loadTopicsForPath
+    markPathsStale
 }: UseTopicSessionOptions) => {
     const [activeTopicId, setActiveTopicId] = useState<string | number | null>(null);
     const [activeTopic, setActiveTopic] = useState<TopicDetails | null>(null);
@@ -150,13 +152,12 @@ export const useTopicSession = ({
 
             const details = await fetchTopicDetails(activeTopicId);
             setActiveTopic(details);
+            // The topic details fetched above are what this screen renders. The path list and
+            // its per-path topics are only shown on other views, so they are marked stale and
+            // refetched when the user navigates there - rather than making them wait here for
+            // two more round trips to a database on another continent.
             invalidatePathsCache();
-            await refreshUserData(true);
-
-            const parentCourse = courses.find(c => c.topics?.some(s => s.id === activeTopicId));
-            if (parentCourse && loadTopicsForPath) {
-                await loadTopicsForPath(parentCourse.id);
-            }
+            markPathsStale?.();
 
             showToast(nextCompleted ? "Topic marked as completed! (+20 bonus points)" : "Topic marked as incomplete.", "success");
         } catch (err) {
@@ -175,13 +176,12 @@ export const useTopicSession = ({
 
             const details = await fetchTopicDetails(activeTopicId);
             setActiveTopic(details);
+            // The topic details fetched above are what this screen renders. The path list and
+            // its per-path topics are only shown on other views, so they are marked stale and
+            // refetched when the user navigates there - rather than making them wait here for
+            // two more round trips to a database on another continent.
             invalidatePathsCache();
-            await refreshUserData(true);
-
-            const parentCourse = courses.find(c => c.topics?.some(s => s.id === activeTopicId));
-            if (parentCourse && loadTopicsForPath) {
-                await loadTopicsForPath(parentCourse.id);
-            }
+            markPathsStale?.();
 
             showToast(completed ? "Section marked as read! (+5 points)" : "Section unmarked.", "success");
         } catch (err) {
