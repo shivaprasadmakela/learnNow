@@ -52,13 +52,25 @@ public class ActivityRecordingService {
         upsertDailyActivity(userId, localDate, pointsToAward);
     }
 
-    /** Record daily points with pre-loaded preferences (avoids duplicate DB lookup). */
+    /**
+     * Records an award of points, with pre-loaded preferences to avoid a second lookup.
+     *
+     * <p>Two counters are maintained and both matter. The daily row drives the streak calendar and
+     * the weekly leaderboard; {@code preferences.total_points} is the lifetime total behind the gem
+     * count in the header. This method previously updated only the daily row, so points from
+     * subtopic completions and correct quiz answers appeared on the leaderboard while the gem count
+     * stayed behind. Awarding to both here means no caller has to remember to do it separately -
+     * which is exactly how they diverged.
+     */
     @Transactional
     public void recordDailyPoints(
             String userId, ZoneId userZone, int points, UserLearningPreferences prefs) {
         LocalDate localDate = LocalDate.now(userZone);
         expireStreakIfStale(prefs, localDate);
         streakService.updateStreak(prefs, localDate);
+        if (points > 0) {
+            prefs.addPoints(points);
+        }
         preferencesRepository.save(prefs);
         upsertDailyActivity(userId, localDate, points);
     }

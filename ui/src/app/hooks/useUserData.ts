@@ -5,8 +5,14 @@ import type { Course } from '../../types';
 export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoading = false) => {
     const [courses, setCourses] = useState<Course[]>([]);
     const [isCoursesLoading, setIsCoursesLoading] = useState<boolean>(false);
-    const [userStreak, setUserStreak] = useState<number>(0);
-    const [userPoints, setUserPoints] = useState<number>(0);
+    /**
+     * null means "not reported yet", which is deliberately distinct from 0. The header used to
+     * read the profile's gemsCount first, and that value is captured at login and never
+     * refreshed - so a genuine 0 from sign-in time shadowed the live figure through ?? and the
+     * gem count never moved, even while the leaderboard climbed.
+     */
+    const [userStreak, setUserStreak] = useState<number | null>(null);
+    const [userPoints, setUserPoints] = useState<number | null>(null);
 
     const isFetchingRef = useRef(false);
     const hasFetchedRef = useRef(false);
