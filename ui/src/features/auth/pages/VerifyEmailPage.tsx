@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { UserProfile } from '../../../types';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { apiFetch } from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/feedback/Toast';
@@ -6,7 +7,11 @@ import styles from '../styles/VerifyEmailPage.module.css';
 
 interface VerifyEmailPageProps {
     changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
-    onVerificationSuccess: (token: string, profile: any) => void;
+    onVerificationSuccess: (
+        token: string,
+        profile: UserProfile,
+        refreshToken?: string
+    ) => void;
 }
 
 export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView, onVerificationSuccess }) => {
@@ -41,7 +46,7 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView, on
                     setStatus('success');
                     showToast('Email verified successfully! Logging you in...', 'success');
                     setTimeout(() => {
-                        onVerificationSuccess(data.token, data.profile);
+                        onVerificationSuccess(data.token, data.profile, data.refreshToken);
                     }, 1500);
                 } else {
                     setStatus('error');

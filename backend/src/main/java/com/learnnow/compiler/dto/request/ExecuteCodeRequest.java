@@ -19,5 +19,7 @@ public class ExecuteCodeRequest {
     @Size(max = 65536, message = "code_too_large")
     private String code;
 
+    // Previously unbounded: only the servlet's request size capped it.
+    @Size(max = 8192, message = "stdin_too_large")
     private String stdin;
 }

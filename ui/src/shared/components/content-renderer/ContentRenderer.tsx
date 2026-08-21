@@ -3,7 +3,13 @@ import { HelpCircle, CheckCircle2, XCircle, RotateCcw, ChevronLeft, ChevronRight
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { submitQuizAnswer } from '../../api/profile.api';
-import { MermaidDiagram } from '../mermaid';
+/**
+ * Lazy: mermaid is ~3 MB minified, and most content blocks contain no diagram at all.
+ * Loading it eagerly put that weight on every learner's first paint.
+ */
+const MermaidDiagram = React.lazy(() =>
+    import('../mermaid').then((m) => ({ default: m.MermaidDiagram }))
+);
 import { CodePlayground } from '../code-playground';
 import { isExecutableLanguage, formatExecutableCode } from '../../utils/codeWrapper';
 import styles from './ContentRenderer.module.css';
@@ -55,7 +61,11 @@ const CodeBlockRenderer: React.FC<{
 
     const cleanLang = (lang || '').trim().toLowerCase();
     if (cleanLang === 'mermaid') {
-        return <MermaidDiagram chart={codeString} />;
+        return (
+            <React.Suspense fallback={<div className={styles.codeSection}>Loading diagram…</div>}>
+                <MermaidDiagram chart={codeString} />
+            </React.Suspense>
+        );
     }
 
     const executable = isExecutableLanguage(cleanLang);

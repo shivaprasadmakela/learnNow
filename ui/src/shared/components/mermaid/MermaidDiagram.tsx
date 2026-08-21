@@ -2,12 +2,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import styles from './MermaidDiagram.module.css';
 
-mermaid.initialize({
-    startOnLoad: false,
-    theme: 'dark',
-    securityLevel: 'loose',
-    fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-});
+/**
+ * Diagram source comes from admin-authored content blocks, including the bulk JSON
+ * course importer. 'loose' permits raw HTML in labels and javascript: click handlers,
+ * so any content author - or anyone who compromised one admin account - could execute
+ * script in every learner's browser. 'strict' is the only safe setting for content we
+ * did not author ourselves.
+ */
+const initMermaid = (theme: 'dark' | 'default') =>
+    mermaid.initialize({
+        startOnLoad: false,
+        theme,
+        securityLevel: 'strict',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+    });
+
+/** Reads the theme the app is currently rendering in, so diagrams match the page. */
+const currentMermaidTheme = (): 'dark' | 'default' =>
+    document.documentElement.getAttribute('data-theme') === 'light' ? 'default' : 'dark';
 
 interface MermaidDiagramProps {
     chart: string;
@@ -25,6 +37,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart }) => {
         const renderChart = async () => {
             try {
                 setError(null);
+                initMermaid(currentMermaidTheme());
                 const { svg: renderedSvg } = await mermaid.render(id, chart.trim());
                 if (isMounted) {
                     setSvg(renderedSvg);
@@ -61,7 +74,7 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart }) => {
         <div className={styles.mermaidWrapper}>
             <div className={styles.mermaidHeader}>
                 <span className={styles.mermaidBadge}>
-                    <i className="fa-solid fa-diagram-project" style={{ marginRight: '6px' }} />
+                    <i className="fa-solid fa-diagram-project" style={{ marginRight: '6px' }} aria-hidden="true" />
                     Architecture / Flow Diagram
                 </span>
             </div>

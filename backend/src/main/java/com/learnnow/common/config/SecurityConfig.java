@@ -1,10 +1,13 @@
 package com.learnnow.common.config;
 
 import com.learnnow.common.security.RateLimitingFilter;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,14 +28,38 @@ public class SecurityConfig {
 
     private final RateLimitingFilter rateLimitingFilter;
 
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Safe to disable: the API is stateless and authenticates from the
+                // Authorization header, never from an ambient cookie. Re-enable this if
+                // tokens ever move into cookies.
                 .csrf(csrf -> csrf.disable())
                 .headers(
                         headers ->
                                 headers.frameOptions(frame -> frame.deny())
-                                        .contentTypeOptions(Customizer.withDefaults()))
+                                        .contentTypeOptions(Customizer.withDefaults())
+                                        .httpStrictTransportSecurity(
+                                                hsts ->
+                                                        hsts.includeSubDomains(true)
+                                                                .maxAgeInSeconds(31536000))
+                                        .referrerPolicy(
+                                                referrer ->
+                                                        referrer.policy(
+                                                                org.springframework.security.web
+                                                                        .header.writers
+                                                                        .ReferrerPolicyHeaderWriter
+                                                                        .ReferrerPolicy
+                                                                        .STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                                        .permissionsPolicy(
+                                                permissions ->
+                                                        permissions.policy(
+                                                                "camera=(), microphone=(),"
+                                                                        + " geolocation=(),"
+                                                                        + " payment=()")))
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
@@ -50,22 +77,21 @@ public class SecurityConfig {
                                         // Auth flows
                                         .requestMatchers("/api/auth/**", "/api/health", "/error")
                                         .permitAll()
-                                        // Donations (Buy Me a Coffee) - open to both guest & logged
-                                        // in users
+                                        // Donation checkout is open to guests; the webhook is
+                                        // authenticated by its Razorpay signature, not by a JWT.
                                         .requestMatchers("/api/donations/**")
                                         .permitAll()
-                                        // Compiler: execution is public (API key is server-side;
-                                        // abuse handled by IP rate limiting).
-                                        // Creating shared snippets requires login so snippets are
-                                        // tied to a user identity.
-                                        // Reading a shared snippet via short link is always public.
-                                        .requestMatchers(
-                                                HttpMethod.POST, "/api/compiler/snippets/execute")
-                                        .permitAll()
+                                        // Reading a shared snippet by short link stays public so
+                                        // links work for anyone.
                                         .requestMatchers(
                                                 HttpMethod.GET, "/api/compiler/snippets/{shortId}")
                                         .permitAll()
-
+                                        // Code execution now requires a login. It proxies to an
+                                        // external execution engine, so leaving it anonymous made
+                                        // the service an open execution relay with no way to
+                                        // attribute or quota abuse.
+                                        .requestMatchers("/api/compiler/**")
+                                        .authenticated()
                                         // Admin endpoints require ADMIN role
                                         .requestMatchers("/api/admin/**")
                                         .hasAnyAuthority("SCOPE_ADMIN", "ROLE_ADMIN", "ADMIN")
@@ -77,26 +103,30 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @org.springframework.beans.factory.annotation.Value(
-            "${app.cors.allowed-origins:http://localhost:5173}")
-    private String allowedOrigins;
-
     /**
-     * Single source-of-truth CORS configuration. Uses configurable allowed-origins property for
-     * production security.
+     * Exact-origin CORS. Uses {@code setAllowedOrigins} rather than the pattern variant: patterns
+     * exist to permit wildcards, and a wildcard combined with {@code allowCredentials} would let
+     * any site read authenticated responses. {@code StartupConfigValidator} additionally refuses to
+     * boot if a configured origin contains one.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         List<String> origins =
-                java.util.Arrays.stream(allowedOrigins.split(","))
+                Arrays.stream(allowedOrigins.split(","))
                         .map(String::trim)
                         .filter(s -> !s.isEmpty())
                         .toList();
 
-        cfg.setAllowedOriginPatterns(origins);
+        cfg.setAllowedOrigins(origins);
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        cfg.setAllowedHeaders(List.of("*"));
+        cfg.setAllowedHeaders(
+                List.of(
+                        HttpHeaders.AUTHORIZATION,
+                        HttpHeaders.CONTENT_TYPE,
+                        HttpHeaders.ACCEPT,
+                        HttpHeaders.ACCEPT_LANGUAGE,
+                        "X-Requested-With"));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
 

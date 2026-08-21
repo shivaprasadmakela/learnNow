@@ -20,7 +20,8 @@ public class QuizController {
     @PostMapping("/submit")
     public ResponseEntity<QuizSubmitResponse> submitQuiz(
             @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody QuizSubmitRequest request) {
-        String userId = jwt != null ? jwt.getSubject() : null;
+        // The endpoint requires authentication, so the principal is always present.
+        String userId = jwt.getSubject();
         QuizSubmitResponse response = quizService.validateAndSubmitQuiz(userId, request);
         return ResponseEntity.ok(response);
     }

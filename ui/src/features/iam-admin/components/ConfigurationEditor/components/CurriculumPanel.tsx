@@ -24,7 +24,7 @@ interface CurriculumPanelProps {
 
 const cleanSubtopicTitle = (title?: string) => {
     if (!title) return 'New Subtopic';
-    return title.replace(/^\d+[\.\)]\s*/, '').replace(/^\d+\.\d+\s*/, '');
+    return title.replace(/^\d+[.)]\s*/, '').replace(/^\d+\.\d+\s*/, '');
 };
 
 export const CurriculumPanel: React.FC<CurriculumPanelProps> = ({

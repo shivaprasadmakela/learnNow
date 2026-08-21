@@ -22,7 +22,8 @@ public class TopicDao {
         List<Topic> topics =
                 entityManager
                         .createQuery(
-                                "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st WHERE t.id = :id",
+                                "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subtopics st"
+                                        + " WHERE t.id = :id",
                                 Topic.class)
                         .setParameter("id", id)
                         .getResultList();
@@ -36,7 +37,8 @@ public class TopicDao {
         // Fetch pathTopics in a separate query to avoid MultipleBagFetchException
         entityManager
                 .createQuery(
-                        "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.pathTopics pt WHERE t.id = :id",
+                        "SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.pathTopics pt WHERE t.id"
+                                + " = :id",
                         Topic.class)
                 .setParameter("id", id)
                 .getResultList();

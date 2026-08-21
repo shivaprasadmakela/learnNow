@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Check, Loader2, AlertCircle, Eye, Edit3 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from './NoteEditor.module.css';
 
 interface NoteEditorProps {
@@ -17,19 +19,19 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
+    /**
+     * Renders the note through react-markdown, which escapes by default.
+     *
+     * <p>This previously ran three regex replacements over the text and injected the
+     * result with dangerouslySetInnerHTML, escaping nothing - so a note containing an
+     * image tag with an onerror handler executed on preview. The library was already a
+     * dependency and does this correctly.
+     */
     const renderFormattedMarkdown = (text: string) => {
         if (!text.trim()) {
             return <p className={styles.placeholderText}>No notes added yet for this section.</p>;
         }
-
-        const paragraphs = text.split('\n\n');
-        return paragraphs.map((p, idx) => {
-            const formatted = p
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');
-            return <p key={idx} style={{ margin: '0 0 12px 0' }} dangerouslySetInnerHTML={{ __html: formatted }} />;
-        });
+        return <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>;
     };
 
     return (

@@ -14,8 +14,8 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
     List<Topic> findByStatus(ContentStatus status);
 
     @Query(
-            "SELECT pt.topic FROM PathTopic pt WHERE pt.path.id = :pathId AND (pt.topic.status = :status OR"
-                    + " pt.path.status = :status) ORDER BY pt.orderIndex ASC")
+            "SELECT pt.topic FROM PathTopic pt WHERE pt.path.id = :pathId AND (pt.topic.status ="
+                    + " :status OR pt.path.status = :status) ORDER BY pt.orderIndex ASC")
     List<Topic> findByPathIdAndStatus(
             @Param("pathId") UUID pathId, @Param("status") ContentStatus status);
 
@@ -28,6 +28,8 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
     @Query("SELECT COUNT(st) FROM Subtopic st WHERE st.topic.id = :topicId")
     long countSubtopicsByTopicId(@Param("topicId") UUID topicId);
 
-    @Query("SELECT COUNT(pt) FROM PathTopic pt WHERE pt.path.id = :pathId AND pt.topic.status = 'PUBLISHED'")
+    @Query(
+            "SELECT COUNT(pt) FROM PathTopic pt WHERE pt.path.id = :pathId AND pt.topic.status ="
+                    + " 'PUBLISHED'")
     long countPublishedTopicsByPathId(@Param("pathId") UUID pathId);
 }

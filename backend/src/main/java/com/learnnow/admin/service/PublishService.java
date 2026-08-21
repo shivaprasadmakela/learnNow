@@ -7,9 +7,11 @@ import com.learnnow.admin.service.validation.ContentValidationPolicy;
 import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
+import com.learnnow.paths.entity.PathTopic;
 import com.learnnow.paths.entity.Subtopic;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
+import com.learnnow.paths.repository.PathTopicRepository;
 import com.learnnow.paths.repository.SubtopicRepository;
 import com.learnnow.paths.repository.TopicRepository;
 import java.util.List;
@@ -25,6 +27,7 @@ public class PublishService {
     private final SubtopicRepository subtopicRepository;
     private final TopicRepository topicRepository;
     private final PathRepository pathRepository;
+    private final PathTopicRepository pathTopicRepository;
     private final ContentBlockRepository contentBlockRepository;
     private final com.learnnow.paths.dao.PathDao pathDao;
     private final ContentAuthoringService authoringService;
@@ -51,11 +54,17 @@ public class PublishService {
             parentTopic.setStatus(ContentStatus.PUBLISHED);
             topicRepository.save(parentTopic);
 
-            Path parentPath = parentTopic.getPath();
-            if (parentPath != null && parentPath.getStatus() == ContentStatus.DRAFT) {
-                parentPath.setStatus(ContentStatus.PUBLISHED);
-                pathRepository.save(parentPath);
-            }
+            // A topic can belong to several paths, so publishing it promotes every
+            // draft parent rather than a single owning one.
+            pathTopicRepository.findByTopicId(parentTopic.getId()).stream()
+                    .map(PathTopic::getPath)
+                    .filter(p -> p != null && p.getStatus() == ContentStatus.DRAFT)
+                    .distinct()
+                    .forEach(
+                            p -> {
+                                p.setStatus(ContentStatus.PUBLISHED);
+                                pathRepository.save(p);
+                            });
         }
 
         return subtopic;

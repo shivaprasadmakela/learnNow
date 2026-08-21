@@ -113,7 +113,7 @@ main()
     public static void main(String[] args) {
         System.out.println("☕ Welcome to Java Sandbox!");
         System.out.println("Public static void main... because 4 words are better than 1! 😂");
-        System.out.println("System.out.println(\"Happy Coding!\");");
+        System.out.println("System.out.println('Happy Coding!');");
     }
 }
 `
@@ -165,7 +165,7 @@ class Program {
     static void Main() {
         Console.WriteLine("✨ Welcome to C# Sandbox!");
         Console.WriteLine("Powered by .NET and pure sharp logic! 🎯");
-        Console.WriteLine("Console.WriteLine(\"Let's build something epic!\");");
+        Console.WriteLine("Console.WriteLine('Let\u2019s build something epic!');");
     }
 }
 `

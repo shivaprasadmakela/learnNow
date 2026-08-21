@@ -161,8 +161,13 @@ public class DashboardService {
                                     UserLearningPreferences pref = prefMap.get(user.getId());
                                     int streak = 0;
                                     if (pref != null) {
-                                        String tz = pref.getTimezone() != null ? pref.getTimezone() : "Asia/Kolkata";
-                                        streak = pref.getCurrentStreakForDate(LocalDate.now(ZoneId.of(tz)));
+                                        String tz =
+                                                pref.getTimezone() != null
+                                                        ? pref.getTimezone()
+                                                        : "Asia/Kolkata";
+                                        streak =
+                                                pref.getCurrentStreakForDate(
+                                                        LocalDate.now(ZoneId.of(tz)));
                                     }
                                     int pts = weeklyPointsMap.getOrDefault(user.getId(), 0);
                                     return streak > 0 || pts > 0 || isCurrent;
@@ -177,13 +182,23 @@ public class DashboardService {
                                     UserLearningPreferences pref2 = prefMap.get(u2.getId());
                                     int streak1 = 0;
                                     if (pref1 != null) {
-                                        String tz = pref1.getTimezone() != null ? pref1.getTimezone() : "Asia/Kolkata";
-                                        streak1 = pref1.getCurrentStreakForDate(LocalDate.now(ZoneId.of(tz)));
+                                        String tz =
+                                                pref1.getTimezone() != null
+                                                        ? pref1.getTimezone()
+                                                        : "Asia/Kolkata";
+                                        streak1 =
+                                                pref1.getCurrentStreakForDate(
+                                                        LocalDate.now(ZoneId.of(tz)));
                                     }
                                     int streak2 = 0;
                                     if (pref2 != null) {
-                                        String tz = pref2.getTimezone() != null ? pref2.getTimezone() : "Asia/Kolkata";
-                                        streak2 = pref2.getCurrentStreakForDate(LocalDate.now(ZoneId.of(tz)));
+                                        String tz =
+                                                pref2.getTimezone() != null
+                                                        ? pref2.getTimezone()
+                                                        : "Asia/Kolkata";
+                                        streak2 =
+                                                pref2.getCurrentStreakForDate(
+                                                        LocalDate.now(ZoneId.of(tz)));
                                     }
                                     if (streak2 != streak1)
                                         return Integer.compare(streak2, streak1);
@@ -213,7 +228,8 @@ public class DashboardService {
             UserLearningPreferences userPref = prefMap.get(user.getId());
             int streak = 0;
             if (userPref != null) {
-                String tz = userPref.getTimezone() != null ? userPref.getTimezone() : "Asia/Kolkata";
+                String tz =
+                        userPref.getTimezone() != null ? userPref.getTimezone() : "Asia/Kolkata";
                 streak = userPref.getCurrentStreakForDate(LocalDate.now(ZoneId.of(tz)));
             }
 

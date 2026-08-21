@@ -265,9 +265,9 @@ export const useProfileDashboard = () => {
         }
 
         const data = await response.json();
-        authClient.setToken(data.token);
+        authClient.setSession(data.token, data.refreshToken);
         setProfile(data.profile);
-        
+
         changeView('DASHBOARD');
         window.history.pushState(null, '', '/dashboard');
         return data;
@@ -288,7 +288,7 @@ export const useProfileDashboard = () => {
         }
 
         const data = await response.json();
-        authClient.setToken(data.token);
+        authClient.setSession(data.token, data.refreshToken);
         setProfile(data.profile);
 
         changeView('DASHBOARD');
@@ -296,14 +296,43 @@ export const useProfileDashboard = () => {
         return data;
     };
 
-    const handleLoginSuccess = useCallback((token: string, profile: UserProfile) => {
-        authClient.setToken(token);
-        setProfile(profile);
-        changeView('DASHBOARD');
-        window.history.pushState(null, '', '/dashboard');
+    const handleLoginSuccess = useCallback(
+        (token: string, profile: UserProfile, refreshToken?: string) => {
+            authClient.setSession(token, refreshToken);
+            setProfile(profile);
+            changeView('DASHBOARD');
+            window.history.pushState(null, '', '/dashboard');
+        },
+        [changeView]
+    );
+
+    /**
+     * The API client ends the session when a token can no longer be renewed. Without
+     * this the user was left on an authenticated screen whose requests all failed
+     * silently, with no indication they needed to sign in again.
+     */
+    useEffect(() => {
+        return authClient.onSessionEnded(() => {
+            setProfile(null);
+            changeView('LOGIN');
+        });
     }, [changeView]);
 
     const signOut = async () => {
+        // Tell the backend first so the refresh token is actually revoked; clearing
+        // browser storage alone left a usable renewal credential on the server.
+        const refreshToken = authClient.getRefreshToken();
+        if (refreshToken) {
+            try {
+                await apiFetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                });
+            } catch (e) {
+                console.error('Sign-out request failed; clearing local session anyway', e);
+            }
+        }
         authClient.clearToken();
         setProfile(null);
         changeView('HOME');

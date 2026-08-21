@@ -1,0 +1,45 @@
+name: Dependency audit
+
+# Vulnerability disclosures do not wait for a commit, so this runs on a schedule as
+# well as on demand.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend (OWASP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+      - name: OWASP dependency check
+        working-directory: backend
+        run: mvn -B dependency-check:check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: backend/target/dependency-check-report.html
+
+  frontend:
+    name: Frontend (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - run: npm ci
+        working-directory: ui
+      - run: npm audit --audit-level=moderate
+        working-directory: ui

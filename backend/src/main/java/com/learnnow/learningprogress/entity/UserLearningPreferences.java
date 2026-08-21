@@ -17,6 +17,12 @@ public class UserLearningPreferences {
     @Column(name = "user_id")
     private String userId;
 
+    /**
+     * Optimistic lock. Point awards are read-modify-write, so without this two concurrent awards
+     * silently lost one of the two increments.
+     */
+    @Version @Builder.Default private Long version = 0L;
+
     @Column(nullable = false)
     @Builder.Default
     private String timezone = "Asia/Kolkata";

@@ -36,6 +36,15 @@ public class User {
 
     @Builder.Default private String role = "USER";
 
+    /**
+     * Incremented to invalidate every access token issued to this user so far. Checked when a
+     * refresh token is redeemed, which bounds the lifetime of a compromised access token to a
+     * single access-token TTL without a database read on every request.
+     */
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private int tokenVersion = 0;
+
     private String bio;
 
     @Builder.Default private Instant createdAt = Instant.now();

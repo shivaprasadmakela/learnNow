@@ -20,9 +20,7 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<UserDto> getProfile(@AuthenticationPrincipal Jwt jwt) {
-        String id = jwt.getSubject();
-        String email = jwt.getClaimAsString("email");
-        return ResponseEntity.ok(userService.getOrCreateUser(id, email));
+        return ResponseEntity.ok(userService.getUser(jwt.getSubject()));
     }
 
     @PutMapping
