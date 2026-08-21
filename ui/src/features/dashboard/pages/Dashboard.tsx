@@ -48,10 +48,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
         }
     }, [dashboardData, onMetricsLoaded]);
 
+    /**
+     * Fetch paths once when the Paths tab is first opened.
+     *
+     * The guard is a ref, not the effect's own dependencies. The previous version keyed off
+     * courses.length === 0 && !isCoursesLoading and passed force: true, which bypasses every
+     * guard inside refreshUserData. When the request failed -- or simply returned no paths --
+     * courses.length stayed at 0 while isCoursesLoading flipped back to false, so the
+     * dependencies changed, the effect re-ran, and it fetched again without end. Its own
+     * loading state was the thing re-triggering it.
+     *
+     * Keyed on activeTab so switching away and back re-attempts, which is the one case where a
+     * retry is actually wanted.
+     */
+    const pathsFetchAttemptedFor = React.useRef<string | null>(null);
+
     useEffect(() => {
-        if (activeTab === 'paths' && courses.length === 0 && !isCoursesLoading && refreshUserData) {
-            refreshUserData(true);
+        if (activeTab !== 'paths' || !refreshUserData) {
+            return;
         }
+        if (pathsFetchAttemptedFor.current === activeTab) {
+            return;
+        }
+        if (courses.length > 0 || isCoursesLoading) {
+            return;
+        }
+        pathsFetchAttemptedFor.current = activeTab;
+        refreshUserData(true);
     }, [activeTab, courses.length, isCoursesLoading, refreshUserData]);
 
     if (isLoading) {
