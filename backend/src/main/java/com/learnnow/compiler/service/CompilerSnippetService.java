@@ -16,15 +16,23 @@ import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
 public class CompilerSnippetService {
+
+    public CompilerSnippetService(
+            SharedSnippetRepository snippetRepository,
+            @Qualifier("codeExecutionRestClient") RestClient codeExecutionRestClient) {
+        this.snippetRepository = snippetRepository;
+        this.codeExecutionRestClient = codeExecutionRestClient;
+    }
 
     private static final String ALPHANUMERIC =
             "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
@@ -50,6 +58,9 @@ public class CompilerSnippetService {
 
     private final SharedSnippetRepository snippetRepository;
 
+    /** Timeout-configured client; see {@code HttpClientConfig}. */
+    private final RestClient codeExecutionRestClient;
+
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest request) {
         int languageId = mapLanguageToJudge0Id(request.getLanguage());
         String code = request.getCode();
@@ -66,9 +77,9 @@ public class CompilerSnippetService {
 
         try {
             Map<?, ?> response =
-                    RestClient.create()
+                    codeExecutionRestClient
                             .post()
-                            .uri("https://ce.judge0.com/submissions?wait=true")
+                            .uri("/submissions?wait=true")
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(body)
                             .retrieve()
@@ -121,6 +132,7 @@ public class CompilerSnippetService {
                     .build();
 
         } catch (Exception e) {
+            log.warn("Code execution failed for language {}", request.getLanguage(), e);
             return ExecuteCodeResponse.builder()
                     .stderr(EXECUTION_ERROR_PREFIX + e.getMessage())
                     .statusCode(13)
@@ -181,16 +193,16 @@ public class CompilerSnippetService {
         return toResponse(saved);
     }
 
-    @Transactional
+    /**
+     * Reads are read-only. This previously wrote {@code lastAccessedAt} on every request, which
+     * made a public GET non-idempotent and turned link traffic into write load.
+     */
+    @Transactional(readOnly = true)
     public SharedSnippetResponse getSnippetByShortId(String shortId) {
-        SharedSnippet snippet =
-                snippetRepository
-                        .findByShortId(shortId)
-                        .orElseThrow(() -> new NotFoundException("snippet_not_found"));
-
-        snippet.setLastAccessedAt(Instant.now());
-        snippetRepository.save(snippet);
-        return toResponse(snippet);
+        return snippetRepository
+                .findByShortId(shortId)
+                .map(this::toResponse)
+                .orElseThrow(() -> new NotFoundException("snippet_not_found"));
     }
 
     private String generateUniqueShortId() {
@@ -229,13 +241,18 @@ public class CompilerSnippetService {
     private String prepareJavaSourceCode(String code) {
         if (code == null || code.isBlank()) return code;
         String trimmed = code.trim();
-        boolean hasClassOrInterface = trimmed.contains("class ") || trimmed.contains("interface ")
-                || trimmed.contains("enum ") || trimmed.contains("record ");
+        boolean hasClassOrInterface =
+                trimmed.contains("class ")
+                        || trimmed.contains("interface ")
+                        || trimmed.contains("enum ")
+                        || trimmed.contains("record ");
         boolean hasMain = trimmed.contains("main(");
 
         if (!hasClassOrInterface && !hasMain) {
             String indented = "        " + trimmed.replace("\n", "\n        ");
-            return "public class Main {\n    public static void main(String[] args) {\n" + indented + "\n    }\n}";
+            return "public class Main {\n    public static void main(String[] args) {\n"
+                    + indented
+                    + "\n    }\n}";
         }
 
         if (trimmed.contains("public class ") && !trimmed.contains("public class Main")) {
