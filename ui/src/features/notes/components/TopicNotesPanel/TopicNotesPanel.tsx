@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { FileText, X, Save, Check, Loader2 } from 'lucide-react';
-import styles from './SubtopicNotesPanel.module.css';
+import styles from './TopicNotesPanel.module.css';
 
-interface SubtopicNotesPanelProps {
+interface TopicNotesPanelProps {
     isOpen: boolean;
     title?: string;
     content: string;
@@ -13,7 +13,7 @@ interface SubtopicNotesPanelProps {
     isLoading?: boolean;
 }
 
-export const SubtopicNotesPanel: React.FC<SubtopicNotesPanelProps> = ({
+export const TopicNotesPanel: React.FC<TopicNotesPanelProps> = ({
     isOpen,
     title = 'Topic Notes',
     content,
@@ -67,7 +67,7 @@ export const SubtopicNotesPanel: React.FC<SubtopicNotesPanelProps> = ({
                     className={styles.plainTextarea}
                     value={content}
                     onChange={(e) => onChange(e.target.value)}
-                    placeholder={isLoading ? 'Loading section notes...' : 'Type your notes, reminders, or code snippets for this section...'}
+                    placeholder={isLoading ? 'Loading topic notes...' : 'Type your notes, reminders, or code snippets for this topic...'}
                     disabled={isLoading}
                 />
                 <div className={styles.notesPanelFooter}>

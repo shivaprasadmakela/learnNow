@@ -1,8 +1,8 @@
 import { apiFetch } from '../../../shared/api/client';
 
-export interface SubtopicNoteDto {
+export interface TopicNoteDto {
     id: string | null;
-    subtopicId: string;
+    topicId: string;
     content: string;
     createdAt?: string;
     updatedAt?: string;
@@ -14,48 +14,24 @@ export interface BookmarkDto {
     createdAt: string;
 }
 
-export const fetchSubtopicNote = async (subtopicId: string): Promise<SubtopicNoteDto> => {
-    const res = await apiFetch(`/api/me/notes/subtopics/${subtopicId}`);
-    if (!res.ok) throw new Error('Failed to fetch subtopic note');
+export const fetchTopicNote = async (topicId: string): Promise<TopicNoteDto> => {
+    const res = await apiFetch(`/api/me/notes/topics/${topicId}`);
+    if (!res.ok) throw new Error('Failed to fetch topic note');
     return res.json();
 };
 
-export const saveSubtopicNote = async (subtopicId: string, content: string): Promise<SubtopicNoteDto> => {
-    const res = await apiFetch(`/api/me/notes/subtopics/${subtopicId}`, {
+export const saveTopicNote = async (topicId: string, content: string): Promise<TopicNoteDto> => {
+    const res = await apiFetch(`/api/me/notes/topics/${topicId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
     });
-    if (!res.ok) throw new Error('Failed to save subtopic note');
+    if (!res.ok) throw new Error('Failed to save topic note');
     return res.json();
 };
 
-export const fetchEntityNote = async (entityType: string, entityId: string): Promise<SubtopicNoteDto> => {
-    try {
-        const res = await apiFetch(`/api/me/notes/${entityType}/${entityId}`);
-        if (res.ok) return await res.json();
-    } catch {
-        // fallback
-    }
-    return fetchSubtopicNote(entityId);
-};
-
-export const saveEntityNote = async (entityType: string, entityId: string, content: string): Promise<SubtopicNoteDto> => {
-    try {
-        const res = await apiFetch(`/api/me/notes/${entityType}/${entityId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
-        });
-        if (res.ok) return await res.json();
-    } catch {
-        // fallback
-    }
-    return saveSubtopicNote(entityId, content);
-};
-
-export const fetchAllNotes = async (): Promise<SubtopicNoteDto[]> => {
-    const res = await apiFetch('/api/me/notes');
+export const fetchAllTopicNotes = async (): Promise<TopicNoteDto[]> => {
+    const res = await apiFetch('/api/me/notes/topics');
     if (!res.ok) throw new Error('Failed to fetch notes');
     return res.json();
 };

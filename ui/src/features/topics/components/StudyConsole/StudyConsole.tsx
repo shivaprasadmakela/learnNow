@@ -9,7 +9,7 @@ import { isExecutableLanguage, formatExecutableCode } from '../../../../shared/u
 import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCodeBlock';
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { LevelBadge, TrackBadge, DurationBadge } from '../../../../shared/components/ui/Badge';
-import { useTopicNote, useBookmarks, BookmarkButton, SubtopicNotesPanel } from '../../../notes';
+import { useTopicNote, useBookmarks, BookmarkButton, TopicNotesPanel } from '../../../notes';
 import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
 import { TopicCelebrationModal } from '../TopicCelebrationModal/TopicCelebrationModal';
 import styles from './StudyConsole.module.css';
@@ -419,7 +419,7 @@ export function StudyConsole({
                             >
                                 <FileText size={14} />
                                 <span>Notes</span>
-                                {Boolean(topicNoteContent.trim()) && <span className={styles.subtopicNoteDot} />}
+                                {Boolean(topicNoteContent.trim()) && <span className={styles.topicNoteDot} />}
                             </button>
                         </div>
                         <div className={styles.metaRow}>
@@ -635,7 +635,7 @@ export function StudyConsole({
                             </div>
 
                             {/* In-pane corner slider Topic Notes Panel */}
-                            <SubtopicNotesPanel
+                            <TopicNotesPanel
                                 isOpen={isNotesDrawerOpen}
                                 title={`${topic.title} Notes`}
                                 content={topicNoteContent}

@@ -1,0 +1,1 @@
+export { TopicNotesPanel } from './TopicNotesPanel';

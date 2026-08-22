@@ -1,1 +1,0 @@
-export { SubtopicNotesPanel } from './SubtopicNotesPanel';
