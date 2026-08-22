@@ -7,6 +7,7 @@ import {
 } from '../../shared/api';
 import type { Course, PathData } from '../../types';
 import type { Topic } from '../../features/topics';
+import { matchesSlug } from '../../shared/utils/slug';
 
 interface TopicPaging {
     /** Highest topic page loaded for this path so far. */
@@ -57,6 +58,9 @@ const mergeCourses = (existing: Course[], incoming: Course[]): Course[] => {
 
 export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoading = false) => {
     const [courses, setCourses] = useState<Course[]>([]);
+    // Mirrors courses for callers that read them outside a render, so slug resolution does not
+    // have to be rebuilt - and restarted - every time a page of paths or topics arrives.
+    const coursesRef = useRef<Course[]>([]);
     const [isCoursesLoading, setIsCoursesLoading] = useState<boolean>(false);
     /**
      * null means "not reported yet", which is deliberately distinct from 0. The header used to
@@ -107,6 +111,10 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         topicPagingRef.current = seeded;
         setTopicPaging(seeded);
     }, []);
+
+    useEffect(() => {
+        coursesRef.current = courses;
+    }, [courses]);
 
     const isFetchingRef = useRef(false);
     const hasFetchedRef = useRef(false);
@@ -278,6 +286,72 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         return topicPaging[String(pathId)] || { page: 0, hasNext: false, isLoading: false };
     }, [topicPaging]);
 
+    /**
+     * Resolves a /paths/:pathSlug/:topicSlug URL to a topic id, fetching what it takes.
+     *
+     * Landing straight on a study URL is the one case where neither half of that URL is in
+     * memory: the study console does not fetch the path list (it shows none), and topics arrive
+     * a page at a time, so a link to the thirtieth topic names something three pages past
+     * anything loaded. This walks pages until it finds the topic, merging each one so the
+     * console's next-topic link keeps working, and returns null rather than leaving the caller
+     * waiting on data that is never coming.
+     */
+    const resolveTopicIdBySlug = useCallback(
+        async (pathSlug: string, topicSlug: string): Promise<string | number | null> => {
+            const findPath = (list: Course[]) =>
+                list.find(
+                    c => matchesSlug(c.title, pathSlug) || String(c.id) === pathSlug
+                );
+
+            let path = findPath(coursesRef.current);
+            let pathPage = pathsPageRef.current;
+            let morePaths = !path;
+
+            while (!path && morePaths) {
+                const result = isLoggedIn
+                    ? await fetchPathsPage(pathPage, DEFAULT_PAGE_SIZE)
+                    : await fetchPublicPathsPage(pathPage, DEFAULT_PAGE_SIZE);
+                const mapped = result.content.map(p => toCourse(p, isLoggedIn));
+                setCourses(prev => mergeCourses(prev, mapped));
+                seedTopicPaging(mapped);
+                pathsPageRef.current = pathPage;
+                setHasMorePaths(result.hasNext);
+                path = findPath(mapped);
+                morePaths = result.hasNext;
+                pathPage += 1;
+            }
+
+            if (!path) return null;
+
+            const loaded = path.topics || [];
+            const alreadyLoaded = loaded.find(
+                t => matchesSlug(t.title, topicSlug) || String(t.id) === topicSlug
+            );
+            if (alreadyLoaded) return alreadyLoaded.id;
+
+            let topicPage = 0;
+            let moreTopics = true;
+            while (moreTopics) {
+                const result = await fetchTopicsByPathPage(path.id, topicPage, DEFAULT_PAGE_SIZE);
+                applyTopicsPage(path.id, result.content, topicPage === 0);
+                setTopicPagingFor(String(path.id), {
+                    page: topicPage,
+                    hasNext: result.hasNext,
+                    isLoading: false
+                });
+                const match = result.content.find(
+                    t => matchesSlug(t.title, topicSlug) || String(t.id) === topicSlug
+                );
+                if (match) return match.id;
+                moreTopics = result.hasNext;
+                topicPage += 1;
+            }
+
+            return null;
+        },
+        [isLoggedIn, seedTopicPaging, applyTopicsPage, setTopicPagingFor]
+    );
+
     return {
         courses,
         isCoursesLoading,
@@ -291,7 +365,8 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         refreshUserData,
         loadTopicsForPath,
         loadMoreTopicsForPath,
-        getTopicPaging
+        getTopicPaging,
+        resolveTopicIdBySlug
     };
 };
 

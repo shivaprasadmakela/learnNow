@@ -50,7 +50,8 @@ export default function App() {
         loadTopicsForPath,
         loadMoreTopicsForPath,
         getTopicPaging,
-        markPathsStale
+        markPathsStale,
+        resolveTopicIdBySlug
     } = useUserData(isLoggedIn, activeView, isLoading);
     const {
         activeTopic,
@@ -66,7 +67,8 @@ export default function App() {
         courses,
         changeView,
         showToast,
-        markPathsStale
+        markPathsStale,
+        resolveTopicIdBySlug
     });
 
     const slugify = (text: string) =>

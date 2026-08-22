@@ -153,3 +153,109 @@ describe('useUserData pagination', () => {
         expect(result.current.getTopicPaging(1).hasNext).toBe(false);
     });
 });
+
+/**
+ * Landing straight on /paths/:pathSlug/:topicSlug - a refresh inside the study console - is the
+ * one case where neither slug can be matched against anything in memory: the console does not
+ * fetch the path list, and topics arrive ten at a time. Before this resolved its own data the
+ * console sat on a spinner forever.
+ */
+describe('useUserData slug resolution', () => {
+    const topic = (id: number, title: string) => ({ id, title, isCompleted: false });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        fetchPathsPage.mockResolvedValue(page([]));
+        fetchPublicPathsPage.mockResolvedValue(page([]));
+        fetchTopicsByPathPage.mockResolvedValue(page([]));
+    });
+    afterEach(() => vi.clearAllMocks());
+
+    const studyConsole = () => renderHook(() => useUserData(true, 'STUDY', false));
+
+    it('resolves a topic slug from the study console, where nothing is loaded', async () => {
+        const spring = {
+            ...path(1, 57, [topic(11, 'Introduction to the Java platform')]),
+            title: 'Java Backend Developer (Spring Boot)'
+        };
+        fetchPathsPage.mockResolvedValue(page([spring], false));
+
+        const { result } = studyConsole();
+        // The view alone still fetches nothing.
+        expect(fetchPathsPage).not.toHaveBeenCalled();
+
+        let resolved: string | number | null = null;
+        await act(async () => {
+            resolved = await result.current.resolveTopicIdBySlug(
+                'java-backend-developer-spring-boot',
+                'introduction-to-the-java-platform'
+            );
+        });
+
+        expect(resolved).toBe(11);
+    });
+
+    it('pages through topics to reach one past the first page', async () => {
+        fetchPathsPage.mockResolvedValue(page([path(1, 25, [topic(1, 'Topic 1')])], false));
+        fetchTopicsByPathPage
+            .mockResolvedValueOnce(page([topic(1, 'Topic 1')], true))
+            .mockResolvedValueOnce(page([topic(2, 'Records & sealed types')], true))
+            .mockResolvedValueOnce(page([topic(3, 'Virtual threads')], false));
+
+        const { result } = studyConsole();
+
+        let resolved: string | number | null = null;
+        await act(async () => {
+            resolved = await result.current.resolveTopicIdBySlug('path-1', 'virtual-threads');
+        });
+
+        expect(resolved).toBe(3);
+        expect(fetchTopicsByPathPage).toHaveBeenCalledTimes(3);
+        expect(fetchTopicsByPathPage).toHaveBeenLastCalledWith(1, 2, 10);
+    });
+
+    it('returns null for a topic that is nowhere, rather than paging forever', async () => {
+        fetchPathsPage.mockResolvedValue(page([path(1, 1, [topic(1, 'Topic 1')])], false));
+        fetchTopicsByPathPage.mockResolvedValue(page([topic(1, 'Topic 1')], false));
+
+        const { result } = studyConsole();
+
+        let resolved: string | number | null = 'unset';
+        await act(async () => {
+            resolved = await result.current.resolveTopicIdBySlug('path-1', 'no-such-topic');
+        });
+
+        expect(resolved).toBeNull();
+    });
+
+    it('returns null when the path slug itself matches nothing', async () => {
+        fetchPathsPage.mockResolvedValue(page([path(1)], false));
+
+        const { result } = studyConsole();
+
+        let resolved: string | number | null = 'unset';
+        await act(async () => {
+            resolved = await result.current.resolveTopicIdBySlug('deleted-path', 'some-topic');
+        });
+
+        expect(resolved).toBeNull();
+        expect(fetchTopicsByPathPage).not.toHaveBeenCalled();
+    });
+
+    it('keeps the topics it loaded, so next-topic navigation still works', async () => {
+        fetchPathsPage.mockResolvedValue(page([path(1, 20, [topic(1, 'Topic 1')])], false));
+        fetchTopicsByPathPage
+            .mockResolvedValueOnce(page([topic(1, 'Topic 1')], true))
+            .mockResolvedValueOnce(page([topic(2, 'Second topic')], false));
+
+        const { result } = studyConsole();
+
+        await act(async () => {
+            await result.current.resolveTopicIdBySlug('path-1', 'second-topic');
+        });
+
+        await waitFor(() =>
+            expect(result.current.courses[0].topics?.map(t => t.id)).toEqual([1, 2])
+        );
+    });
+});

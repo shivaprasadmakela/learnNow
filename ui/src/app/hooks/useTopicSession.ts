@@ -4,12 +4,7 @@ import type { TopicDetails } from '../../shared/api';
 import { useRecordActivity } from '../../features/activity';
 import type { Course } from '../../types';
 
-const slugify = (text: string) => {
-    return text
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-};
+import { slugify, matchesSlug } from '../../shared/utils/slug';
 
 import type { ViewState } from '../../features/dashboard/hooks/useProfileDashboard';
 
@@ -23,6 +18,11 @@ interface UseTopicSessionOptions {
      * render that list, so refreshing it here only delayed the user.
      */
     markPathsStale?: () => void;
+    /**
+     * Turns the slugs in a study URL into a topic id, fetching pages of paths and topics if the
+     * ones named are not loaded. Needed on a hard refresh, where nothing is.
+     */
+    resolveTopicIdBySlug?: (pathSlug: string, topicSlug: string) => Promise<string | number | null>;
 }
 
 export const useTopicSession = ({
@@ -30,7 +30,8 @@ export const useTopicSession = ({
     courses,
     changeView,
     showToast,
-    markPathsStale
+    markPathsStale,
+    resolveTopicIdBySlug
 }: UseTopicSessionOptions) => {
     const [activeTopicId, setActiveTopicId] = useState<string | number | null>(null);
     const [activeTopic, setActiveTopic] = useState<TopicDetails | null>(null);
@@ -41,7 +42,19 @@ export const useTopicSession = ({
 
     const fetchingRef = useRef<string | number | null>(null);
 
-    const handleSelectTopic = useCallback(async (id: string | number, subtopicId?: string | number, subtopicTitle?: string) => {
+    /**
+     * Opens a topic.
+     *
+     * `keepUrl` is for reopening the topic a URL already names, where the address bar is the
+     * source of truth: rewriting it from whatever is loaded would drop the subtopic the link
+     * points at, and drop the path slug entirely when the path list has not been fetched.
+     */
+    const handleSelectTopic = useCallback(async (
+        id: string | number,
+        subtopicId?: string | number,
+        subtopicTitle?: string,
+        keepUrl: boolean = false
+    ) => {
         if (!isLoggedIn) {
             changeView('LOGIN');
             return;
@@ -60,18 +73,20 @@ export const useTopicSession = ({
         const topicSlug = topicObj ? slugify(topicObj.title) : 'topic';
         const subSlug = subtopicTitle ? slugify(subtopicTitle) : (subtopicId ? String(subtopicId) : null);
 
-        if (subSlug) {
-            changeView('STUDY', pathSlug, `${topicSlug}/${subSlug}`);
-        } else if (parentCourse && topicObj) {
-            changeView('STUDY', pathSlug, topicSlug);
-        } else {
-            changeView('STUDY', 'path', 'topic');
+        if (!keepUrl) {
+            if (subSlug) {
+                changeView('STUDY', pathSlug, `${topicSlug}/${subSlug}`);
+            } else if (parentCourse && topicObj) {
+                changeView('STUDY', pathSlug, topicSlug);
+            } else {
+                changeView('STUDY', 'path', 'topic');
+            }
         }
 
         try {
             const details = await fetchTopicDetails(id);
             setActiveTopic(details);
-            if (details.title && (!parentCourse || !topicObj)) {
+            if (!keepUrl && details.title && (!parentCourse || !topicObj)) {
                 if (subSlug) {
                     changeView('STUDY', 'path', `${slugify(details.title)}/${subSlug}`);
                 } else {
@@ -89,7 +104,15 @@ export const useTopicSession = ({
 
     const attemptedRestoreRef = useRef<string | null>(null);
 
-    // Auto-restore topic session when URL matches /paths/:pathSlug/:topicSlug and activeTopic is null
+    /**
+     * Reopens the topic named in the URL after a reload.
+     *
+     * A slug is not an id, so it has to be matched against titles. Whatever is already loaded is
+     * searched first; failing that, resolveTopicIdBySlug fetches until it finds the topic. The
+     * attempt is marked before any of it starts so a URL is only ever resolved once, and a URL
+     * that resolves to nothing ends on the paths view - an unanswerable link used to leave the
+     * study console spinning indefinitely.
+     */
     useEffect(() => {
         if (!isLoggedIn || activeTopic || isStudyLoading) return;
         if (typeof window === 'undefined') return;
@@ -98,50 +121,70 @@ export const useTopicSession = ({
         if (attemptedRestoreRef.current === path) return;
 
         const parts = path.split('/').filter(Boolean);
-        if (parts.length >= 3 && parts[0] === 'paths') {
-            const topicSlug = parts[2];
-            if (!topicSlug) return;
+        if (parts.length < 3 || parts[0] !== 'paths') return;
 
-            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(topicSlug);
+        const pathSlug = parts[1];
+        const topicSlug = parts[2];
+        if (!topicSlug) return;
 
-            if (isUuid) {
-                attemptedRestoreRef.current = path;
-                if (String(activeTopicId) !== topicSlug) {
-                    handleSelectTopic(topicSlug);
-                }
-                return;
+        attemptedRestoreRef.current = path;
+
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(topicSlug);
+        if (isUuid) {
+            if (String(activeTopicId) !== topicSlug) {
+                handleSelectTopic(topicSlug);
             }
-
-            if (courses.length === 0) return;
-
-            attemptedRestoreRef.current = path;
-
-            let foundTopicId: string | number | null = null;
-            const normSlug = topicSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-            for (const course of courses) {
-                if (course.topics) {
-                    const match = course.topics.find(t => {
-                        const tSlug = slugify(t.title);
-                        const normTitle = t.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        return (
-                            tSlug === topicSlug ||
-                            normTitle === normSlug ||
-                            String(t.id) === topicSlug
-                        );
-                    });
-                    if (match) {
-                        foundTopicId = match.id;
-                        break;
-                    }
-                }
-            }
-
-            if (foundTopicId !== null && String(activeTopicId) !== String(foundTopicId)) {
-                handleSelectTopic(foundTopicId);
-            }
+            return;
         }
-    }, [isLoggedIn, activeTopic, activeTopicId, courses, isStudyLoading, handleSelectTopic]);
+
+        const loadedMatch = courses
+            .flatMap(course => course.topics || [])
+            .find(t => matchesSlug(t.title, topicSlug) || String(t.id) === topicSlug);
+
+        if (loadedMatch) {
+            if (String(activeTopicId) !== String(loadedMatch.id)) {
+                handleSelectTopic(loadedMatch.id, undefined, undefined, true);
+            }
+            return;
+        }
+
+        if (!resolveTopicIdBySlug) return;
+
+        let cancelled = false;
+        (async () => {
+            try {
+                const resolved = await resolveTopicIdBySlug(pathSlug, topicSlug);
+                if (cancelled) return;
+                if (resolved !== null && String(activeTopicId) !== String(resolved)) {
+                    handleSelectTopic(resolved, undefined, undefined, true);
+                    return;
+                }
+                if (resolved === null) {
+                    showToast("That topic could not be found", "error");
+                    changeView('PATHS');
+                }
+            } catch (err) {
+                if (cancelled) return;
+                console.error("Failed to resolve the topic in the URL", err);
+                showToast("Failed to open that topic", "error");
+                changeView('PATHS');
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        isLoggedIn,
+        activeTopic,
+        activeTopicId,
+        courses,
+        isStudyLoading,
+        handleSelectTopic,
+        resolveTopicIdBySlug,
+        showToast,
+        changeView
+    ]);
 
     const handleToggleTopicComplete = async () => {
         if (!activeTopicId || !activeTopic) return;
