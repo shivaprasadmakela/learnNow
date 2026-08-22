@@ -1,5 +1,7 @@
 package com.learnnow.paths.service;
 
+import com.learnnow.common.dto.PageRequests;
+import com.learnnow.common.dto.PageResponse;
 import com.learnnow.learningprogress.entity.UserSubtopicProgress;
 import com.learnnow.learningprogress.entity.UserTopicProgress;
 import com.learnnow.learningprogress.enums.ProgressStatus;
@@ -13,6 +15,7 @@ import com.learnnow.paths.dto.response.SubtopicDto;
 import com.learnnow.paths.dto.response.TopicDetailDto;
 import com.learnnow.paths.dto.response.TopicSummaryDto;
 import com.learnnow.paths.entity.ContentStatus;
+import com.learnnow.paths.entity.Path;
 import com.learnnow.paths.entity.Subtopic;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
@@ -23,6 +26,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,49 +45,72 @@ public class CatalogService {
     private final UserSubtopicProgressRepository subtopicProgressRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
+    /**
+     * Paths come back ordered by title.
+     *
+     * <p>An unordered page is not stable between requests: with rows free to come back in any
+     * order, a client scrolling to page two could be shown paths it already has while others are
+     * never reached at all.
+     */
+    private static Pageable byTitle(Pageable pageable) {
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.ASC, "title"));
+    }
+
     @Transactional(readOnly = true)
-    public List<CatalogPathDto> getPublicCatalogPaths() {
-        return pathRepository.findByStatus(ContentStatus.PUBLISHED).stream()
-                .map(
+    public PageResponse<CatalogPathDto> getPublicCatalogPaths(Pageable pageable) {
+        Page<Path> page = pathRepository.findByStatus(ContentStatus.PUBLISHED, byTitle(pageable));
+        return PageResponse.of(
+                page.map(
                         path ->
                                 new CatalogPathDto(
                                         path.getId(),
                                         path.getTitle(),
                                         path.getDescription(),
                                         path.getCategory(),
-                                        path.getManagedBy()))
-                .toList();
+                                        path.getManagedBy())));
     }
 
     @Transactional(readOnly = true)
-    public List<PathSummaryDto> getAllPaths() {
-        return getAllPaths(null);
+    public PageResponse<PathSummaryDto> getAllPaths(Pageable pageable) {
+        return getAllPaths(null, pageable);
     }
 
     @Transactional(readOnly = true)
-    public List<PathSummaryDto> getAllPaths(String userId) {
-        return pathRepository.findByStatus(ContentStatus.PUBLISHED).stream()
-                .map(
-                        path -> {
-                            List<TopicSummaryDto> topics = getTopicsForPath(path.getId(), userId);
-                            int pathPct = 0;
-                            if (!topics.isEmpty()) {
-                                double sumPct =
-                                        topics.stream()
-                                                .mapToInt(TopicSummaryDto::progressPercentage)
-                                                .sum();
-                                pathPct = (int) Math.round(sumPct / topics.size());
-                            }
-                            return new PathSummaryDto(
-                                    path.getId(),
-                                    path.getTitle(),
-                                    path.getDescription(),
-                                    path.getCategory(),
-                                    path.getManagedBy(),
-                                    pathPct,
-                                    topics);
-                        })
-                .toList();
+    public PageResponse<PathSummaryDto> getAllPaths(String userId, Pageable pageable) {
+        Page<Path> page = pathRepository.findByStatus(ContentStatus.PUBLISHED, byTitle(pageable));
+        return PageResponse.of(page.map(path -> toPathSummary(path, userId)));
+    }
+
+    /**
+     * Builds a list-view summary of a path.
+     *
+     * <p>Every topic is loaded because the path's own percentage is the mean across all of them,
+     * but only the first page is embedded in the response - the UI pulls the remainder from the
+     * per-path topics endpoint as it scrolls.
+     */
+    private PathSummaryDto toPathSummary(Path path, String userId) {
+        List<TopicSummaryDto> topics = getTopicsForPath(path.getId(), userId);
+        int pathPct = 0;
+        if (!topics.isEmpty()) {
+            double sumPct = topics.stream().mapToInt(TopicSummaryDto::progressPercentage).sum();
+            pathPct = (int) Math.round(sumPct / topics.size());
+        }
+        List<TopicSummaryDto> firstPage =
+                topics.size() > PageRequests.DEFAULT_PAGE_SIZE
+                        ? topics.subList(0, PageRequests.DEFAULT_PAGE_SIZE)
+                        : topics;
+        return new PathSummaryDto(
+                path.getId(),
+                path.getTitle(),
+                path.getDescription(),
+                path.getCategory(),
+                path.getManagedBy(),
+                pathPct,
+                topics.size(),
+                List.copyOf(firstPage));
     }
 
     @Transactional(readOnly = true)
@@ -88,9 +118,23 @@ public class CatalogService {
         return getTopicsForPath(pathId, null);
     }
 
+    /** One page of a path's topics - what the infinite-scrolling topic list requests. */
+    @Transactional(readOnly = true)
+    public PageResponse<TopicSummaryDto> getTopicsForPath(
+            UUID pathId, String userId, Pageable pageable) {
+        Page<Topic> page =
+                topicRepository.findByPathIdAndStatus(pathId, ContentStatus.PUBLISHED, pageable);
+        return PageResponse.of(
+                toTopicSummaries(page.getContent(), userId), pageable, page.getTotalElements());
+    }
+
     @Transactional(readOnly = true)
     public List<TopicSummaryDto> getTopicsForPath(UUID pathId, String userId) {
-        List<Topic> topics = topicRepository.findByPathIdAndStatus(pathId, ContentStatus.PUBLISHED);
+        return toTopicSummaries(
+                topicRepository.findByPathIdAndStatus(pathId, ContentStatus.PUBLISHED), userId);
+    }
+
+    private List<TopicSummaryDto> toTopicSummaries(List<Topic> topics, String userId) {
         if (userId == null || userId.isBlank()) {
             return topics.stream()
                     .map(
@@ -173,28 +217,7 @@ public class CatalogService {
 
     @Transactional(readOnly = true)
     public Optional<PathSummaryDto> getPathDetails(UUID pathId, String userId) {
-        return pathRepository
-                .findById(pathId)
-                .map(
-                        path -> {
-                            List<TopicSummaryDto> topics = getTopicsForPath(pathId, userId);
-                            int pathPct = 0;
-                            if (!topics.isEmpty()) {
-                                double sumPct =
-                                        topics.stream()
-                                                .mapToInt(TopicSummaryDto::progressPercentage)
-                                                .sum();
-                                pathPct = (int) Math.round(sumPct / topics.size());
-                            }
-                            return new PathSummaryDto(
-                                    path.getId(),
-                                    path.getTitle(),
-                                    path.getDescription(),
-                                    path.getCategory(),
-                                    path.getManagedBy(),
-                                    pathPct,
-                                    topics);
-                        });
+        return pathRepository.findById(pathId).map(path -> toPathSummary(path, userId));
     }
 
     @Transactional(readOnly = true)

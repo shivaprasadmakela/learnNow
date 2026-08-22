@@ -4,8 +4,9 @@ import com.learnnow.admin.dto.request.*;
 import com.learnnow.admin.dto.response.*;
 import com.learnnow.admin.service.ContentAuthoringService;
 import com.learnnow.admin.service.PublishService;
+import com.learnnow.common.dto.PageRequests;
+import com.learnnow.common.dto.PageResponse;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,12 @@ public class AdminPathController {
     private final ContentAuthoringService authoringService;
     private final PublishService publishService;
 
+    /** One page of authored paths, newest-first grid in the studio scrolls to load more. */
     @GetMapping
-    public ResponseEntity<List<AdminPathDto>> getAllPaths() {
-        return ResponseEntity.ok(authoringService.getAllAdminPaths());
+    public ResponseEntity<PageResponse<AdminPathDto>> getAllPaths(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(authoringService.getAllAdminPaths(PageRequests.of(page, size)));
     }
 
     @GetMapping("/{id}")

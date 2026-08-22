@@ -4,6 +4,7 @@ import com.learnnow.admin.dto.request.*;
 import com.learnnow.admin.dto.response.*;
 import com.learnnow.admin.entity.*;
 import com.learnnow.admin.repository.*;
+import com.learnnow.common.dto.PageResponse;
 import com.learnnow.common.exception.NotFoundException;
 import com.learnnow.paths.dao.PathDao;
 import com.learnnow.paths.entity.*;
@@ -19,6 +20,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -165,8 +169,9 @@ public class ContentAuthoringService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdminPathDto> getAllAdminPaths() {
-        return pathDao.findAllWithTopics().stream().map(this::toAdminPathSummaryDto).toList();
+    public PageResponse<AdminPathDto> getAllAdminPaths(Pageable pageable) {
+        return PageResponse.of(
+                pathDao.findPageWithTopics(pageable).map(this::toAdminPathSummaryDto));
     }
 
     @Transactional(readOnly = true)
@@ -425,8 +430,15 @@ public class ContentAuthoringService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdminPathDto.AdminTopicDto> getAllAdminTopics() {
-        return topicRepository.findAll().stream().map(this::toAdminTopicDto).toList();
+    public PageResponse<AdminPathDto.AdminTopicDto> getAllAdminTopics(Pageable pageable) {
+        // Sorted by title: an unsorted page is not stable between requests, so an
+        // infinite-scrolling caller would see topics repeat and others never appear.
+        Pageable sorted =
+                PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        Sort.by(Sort.Direction.ASC, "title"));
+        return PageResponse.of(topicRepository.findAll(sorted).map(this::toAdminTopicDto));
     }
 
     @Transactional

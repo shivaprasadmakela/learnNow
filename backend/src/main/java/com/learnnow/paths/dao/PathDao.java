@@ -7,6 +7,9 @@ import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -22,6 +25,44 @@ public class PathDao {
                                 + " FETCH pt.topic ORDER BY p.title ASC",
                         Path.class)
                 .getResultList();
+    }
+
+    /**
+     * One page of paths with their topics eagerly loaded.
+     *
+     * <p>Done in two queries on purpose: applying a limit to a {@code JOIN FETCH} of a collection
+     * makes Hibernate fetch every row and paginate in memory, which defeats the point. So the page
+     * of ids is selected first, then those paths are fetched whole.
+     */
+    public Page<Path> findPageWithTopics(Pageable pageable) {
+        long total =
+                entityManager
+                        .createQuery("SELECT COUNT(p) FROM Path p", Long.class)
+                        .getSingleResult();
+        if (total == 0) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        List<UUID> ids =
+                entityManager
+                        .createQuery("SELECT p.id FROM Path p ORDER BY p.title ASC", UUID.class)
+                        .setFirstResult((int) pageable.getOffset())
+                        .setMaxResults(pageable.getPageSize())
+                        .getResultList();
+        if (ids.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, total);
+        }
+
+        List<Path> paths =
+                entityManager
+                        .createQuery(
+                                "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT"
+                                        + " JOIN FETCH pt.topic WHERE p.id IN :ids ORDER BY p.title"
+                                        + " ASC",
+                                Path.class)
+                        .setParameter("ids", ids)
+                        .getResultList();
+        return new PageImpl<>(paths, pageable, total);
     }
 
     /** Fetch a single path with its topics eagerly by ID. */
