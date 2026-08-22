@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.learnnow.notes.dto.response.BookmarkResponse;
 import com.learnnow.notes.dto.response.NoteResponse;
+import com.learnnow.notes.dto.response.TopicNoteResponse;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
 import com.learnnow.paths.entity.PathTopic;
@@ -110,6 +111,37 @@ public class NotesServiceTest extends com.learnnow.AbstractIntegrationTest {
         // 5. Get all notes for user
         List<NoteResponse> allNotes = notesService.getAllNotes(userId);
         assertEquals(1, allNotes.size());
+    }
+
+    @Test
+    @Transactional
+    public void testUpsertAndRetrieveTopicNote() {
+        String userId = testUser.getId();
+        UUID topicId = testTopic.getId();
+
+        // 1. Initial topic note should be empty
+        assertTrue(notesService.getTopicNote(userId, topicId).isEmpty());
+
+        // 2. Create note
+        TopicNoteResponse created =
+                notesService.upsertTopicNote(userId, topicId, "Notes for the whole topic");
+        assertNotNull(created.id());
+        assertEquals(topicId, created.topicId());
+        assertEquals("Notes for the whole topic", created.content());
+
+        // 3. Retrieve note
+        TopicNoteResponse retrieved = notesService.getTopicNote(userId, topicId).orElseThrow();
+        assertEquals("Notes for the whole topic", retrieved.content());
+
+        // 4. Update the same row rather than inserting a second one
+        TopicNoteResponse updated =
+                notesService.upsertTopicNote(userId, topicId, "Revised topic notes");
+        assertEquals(created.id(), updated.id());
+        assertEquals("Revised topic notes", updated.content());
+        assertEquals(1, notesService.getAllTopicNotes(userId).size());
+
+        // 5. Topic notes stay out of the subtopic notes collection
+        assertTrue(notesService.getAllNotes(userId).isEmpty());
     }
 
     @Test

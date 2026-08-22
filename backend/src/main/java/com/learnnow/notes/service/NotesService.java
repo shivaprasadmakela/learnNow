@@ -2,10 +2,13 @@ package com.learnnow.notes.service;
 
 import com.learnnow.notes.dto.response.BookmarkResponse;
 import com.learnnow.notes.dto.response.NoteResponse;
+import com.learnnow.notes.dto.response.TopicNoteResponse;
 import com.learnnow.notes.entity.SubtopicNote;
 import com.learnnow.notes.entity.TopicBookmark;
+import com.learnnow.notes.entity.TopicNote;
 import com.learnnow.notes.repository.SubtopicNoteRepository;
 import com.learnnow.notes.repository.TopicBookmarkRepository;
+import com.learnnow.notes.repository.TopicNoteRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotesService {
 
     private final SubtopicNoteRepository noteRepository;
+    private final TopicNoteRepository topicNoteRepository;
     private final TopicBookmarkRepository bookmarkRepository;
 
     @Transactional
@@ -70,6 +74,42 @@ public class NotesService {
                                         n.getCreatedAt(),
                                         n.getUpdatedAt()))
                 .toList();
+    }
+
+    @Transactional
+    public TopicNoteResponse upsertTopicNote(String userId, UUID topicId, String content) {
+        TopicNote note =
+                topicNoteRepository
+                        .findByUserIdAndTopicId(userId, topicId)
+                        .orElseGet(
+                                () ->
+                                        TopicNote.builder()
+                                                .userId(userId)
+                                                .topicId(topicId)
+                                                .content("")
+                                                .build());
+
+        note.setContent(content != null ? content : "");
+        return toResponse(topicNoteRepository.save(note));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<TopicNoteResponse> getTopicNote(String userId, UUID topicId) {
+        return topicNoteRepository.findByUserIdAndTopicId(userId, topicId).map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TopicNoteResponse> getAllTopicNotes(String userId) {
+        return topicNoteRepository.findAllByUserId(userId).stream().map(this::toResponse).toList();
+    }
+
+    private TopicNoteResponse toResponse(TopicNote note) {
+        return new TopicNoteResponse(
+                note.getId(),
+                note.getTopicId(),
+                note.getContent(),
+                note.getCreatedAt(),
+                note.getUpdatedAt());
     }
 
     @Transactional
