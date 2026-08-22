@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileJson, Copy, Check, AlertCircle, Loader2, Edit3, FileUp, Sparkles, FolderPlus } from 'lucide-react';
-import { importCourse, validateImportConflicts, fetchAdminPaths, type ImportResultDto, type AdminPathData, type ImportConflictItemDto, type ImportCoursePayload } from '../../api/admin.api';
+import { importCourse, validateImportConflicts, fetchAllAdminPaths, type ImportResultDto, type AdminPathData, type ImportConflictItemDto, type ImportCoursePayload } from '../../api/admin.api';
 import { ConflictResolutionModal, type ConflictStrategyOption } from './components/ConflictResolutionModal';
 import type { CourseImporterProps } from './CourseImporter.types';
 import styles from './CourseImporter.module.css';
@@ -65,7 +65,8 @@ export const CourseImporter: React.FC<CourseImporterProps> = ({
     const [selectedPathId, setSelectedPathId] = useState<string>('');
 
     useEffect(() => {
-        fetchAdminPaths().then(setAvailablePaths).catch(console.error);
+        // The whole list, not one page: this feeds a <select>, which has nothing to scroll.
+        fetchAllAdminPaths().then(setAvailablePaths).catch(console.error);
     }, []);
 
     const handleCopyTemplate = () => {

@@ -5,15 +5,28 @@ import { CategoryFilterPills } from '../components/CategoryFilterPills';
 import { PathsGrid } from '../components/PathsGrid';
 
 import { Loader } from '../../../shared/components/ui/Loader';
+import { InfiniteScrollSentinel } from '../../../shared/components/ui/InfiniteScrollSentinel';
 
 export interface PathsPageProps {
     courses: Course[];
     onSelectPath: (pathId: number) => void;
     isLoggedIn?: boolean;
     isLoading?: boolean;
+    /** Another page of paths exists on the server. */
+    hasMorePaths?: boolean;
+    isLoadingMorePaths?: boolean;
+    onLoadMorePaths?: () => void;
 }
 
-export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isLoggedIn = false, isLoading = false }) => {
+export const PathsPage: React.FC<PathsPageProps> = ({
+    courses,
+    onSelectPath,
+    isLoggedIn = false,
+    isLoading = false,
+    hasMorePaths = false,
+    isLoadingMorePaths = false,
+    onLoadMorePaths
+}) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
     const categories = useMemo(
@@ -56,6 +69,21 @@ export const PathsPage: React.FC<PathsPageProps> = ({ courses, onSelectPath, isL
                 onSelectPath={onSelectPath}
                 isLoggedIn={isLoggedIn}
             />
+
+            {/*
+              Sits outside the grid so it still fires when a category filter leaves the grid empty:
+              the sentinel stays in view and keeps pulling pages until a match turns up or the
+              server runs out, rather than stranding the user on "no paths found".
+            */}
+            {onLoadMorePaths && (
+                <InfiniteScrollSentinel
+                    hasMore={hasMorePaths}
+                    isLoading={isLoadingMorePaths}
+                    onLoadMore={onLoadMorePaths}
+                    loadingText="Loading more paths..."
+                    loadMoreLabel="Load more paths"
+                />
+            )}
         </div>
     );
 };

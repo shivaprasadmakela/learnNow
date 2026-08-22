@@ -37,7 +37,21 @@ export default function App() {
     const { showToast } = useToast();
 
     // Custom Hooks for User Data & Topic Sessions
-    const { courses, isCoursesLoading, userStreak, userPoints, updateMetrics, refreshUserData, loadTopicsForPath, markPathsStale } = useUserData(isLoggedIn, activeView, isLoading);
+    const {
+        courses,
+        isCoursesLoading,
+        hasMorePaths,
+        isLoadingMorePaths,
+        loadMorePaths,
+        userStreak,
+        userPoints,
+        updateMetrics,
+        refreshUserData,
+        loadTopicsForPath,
+        loadMoreTopicsForPath,
+        getTopicPaging,
+        markPathsStale
+    } = useUserData(isLoggedIn, activeView, isLoading);
     const {
         activeTopic,
         isStudyLoading,
@@ -109,6 +123,27 @@ export default function App() {
         }
     }, [isLoggedIn, activeView, isLoading, changeView]);
 
+    /**
+     * Keeps "next topic" reachable from the study console.
+     *
+     * Topics are paginated, so the last topic the client has loaded is not necessarily the last
+     * topic on the path. Without this, finishing topic ten of thirty would look like the end of
+     * the course. Reaching the edge of what is loaded pulls the following page in the background.
+     */
+    useEffect(() => {
+        if (activeView !== 'STUDY' || !activeTopic) return;
+        const course = courses.find(c => c.topics?.some(t => String(t.id) === String(activeTopic.id)));
+        if (!course?.id) return;
+        const loadedTopics = course.topics || [];
+        if (loadedTopics.length === 0) return;
+        if (String(loadedTopics[loadedTopics.length - 1].id) !== String(activeTopic.id)) return;
+
+        const paging = getTopicPaging(course.id);
+        if (paging.hasNext && !paging.isLoading) {
+            loadMoreTopicsForPath(course.id);
+        }
+    }, [activeView, activeTopic, courses, getTopicPaging, loadMoreTopicsForPath]);
+
     const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => {
         if (view === 'TOPICS') {
             const path = courses.find(c => c.id === selectedPathId) || courses[0];
@@ -173,6 +208,13 @@ export default function App() {
         ...rawSelectedPath,
         progressPercentage: computedPathProgress
     } : courses[0];
+
+    // Topic paging follows whichever path the Topics view is showing, which is not always the one
+    // explicitly selected - on a cold load from a bookmarked URL it falls back to the first path.
+    const selectedPathTopicPaging = getTopicPaging(rawSelectedPath?.id);
+    const handleLoadMoreTopics = () => {
+        if (rawSelectedPath?.id) loadMoreTopicsForPath(rawSelectedPath.id);
+    };
 
     return (
         <div className={`${styles.appRoot} ${theme === 'dark' ? 'dark-theme' : ''}`}>
@@ -278,6 +320,12 @@ export default function App() {
                             profile={profile}
                             courses={courses}
                             isCoursesLoading={isCoursesLoading}
+                            hasMorePaths={hasMorePaths}
+                            isLoadingMorePaths={isLoadingMorePaths}
+                            onLoadMorePaths={loadMorePaths}
+                            hasMoreTopics={selectedPathTopicPaging.hasNext}
+                            isLoadingMoreTopics={selectedPathTopicPaging.isLoading}
+                            onLoadMoreTopics={handleLoadMoreTopics}
                             selectedPath={selectedPath}
                             dashboardTab={dashboardTab}
                             setDashboardTab={setDashboardTab}

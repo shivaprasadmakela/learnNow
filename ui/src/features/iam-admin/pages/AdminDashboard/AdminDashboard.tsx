@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ShieldCheck, Plus, BookOpen, Upload } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { Loader } from '../../../../shared/components/ui/Loader';
 import { LearningCard } from '../../../../shared/components/cards';
-import { fetchAdminPaths, deleteAdminPath, type AdminPathData } from '../../api/admin.api';
+import { InfiniteScrollSentinel } from '../../../../shared/components/ui/InfiniteScrollSentinel';
+import { DEFAULT_PAGE_SIZE } from '../../../../shared/api/pagination';
+import { fetchAdminPathsPage, deleteAdminPath, type AdminPathData } from '../../api/admin.api';
 import { ConfirmDeleteModal } from '../../components/ConfirmDeleteModal';
 
 interface AdminDashboardProps {
@@ -22,21 +24,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
     const [paths, setPaths] = useState<AdminPathData[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [hasMore, setHasMore] = useState<boolean>(false);
+    const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+    const pageRef = useRef(0);
 
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-    const loadPaths = async () => {
+    /** Reloads from the first page - used on mount and after a delete changes the ordering. */
+    const loadPaths = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await fetchAdminPaths();
-            setPaths(data);
+            const result = await fetchAdminPathsPage(0, DEFAULT_PAGE_SIZE);
+            setPaths(result.content);
+            pageRef.current = 0;
+            setHasMore(result.hasNext);
         } catch (err) {
             console.error('Failed to load admin paths:', err);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    const loadMorePaths = useCallback(async () => {
+        if (isLoadingMore || !hasMore) return;
+        setIsLoadingMore(true);
+        const nextPage = pageRef.current + 1;
+        try {
+            const result = await fetchAdminPathsPage(nextPage, DEFAULT_PAGE_SIZE);
+            setPaths(prev => {
+                const seen = new Set(prev.map(p => p.id));
+                return [...prev, ...result.content.filter(p => !seen.has(p.id))];
+            });
+            pageRef.current = nextPage;
+            setHasMore(result.hasNext);
+        } catch (err) {
+            console.error('Failed to load more admin paths:', err);
+            setHasMore(false);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [hasMore, isLoadingMore]);
 
     const handleConfirmDelete = async () => {
         if (!deleteTarget) return;
@@ -57,7 +85,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     useEffect(() => {
         loadPaths();
-    }, []);
+    }, [loadPaths]);
 
     return (
         <div className={styles.container}>
@@ -115,6 +143,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             />
                         );
                     })}
+
+                    <InfiniteScrollSentinel
+                        hasMore={hasMore}
+                        isLoading={isLoadingMore}
+                        onLoadMore={loadMorePaths}
+                        loadingText="Loading more courses..."
+                        loadMoreLabel="Load more courses"
+                    />
                 </div>
             )}
 

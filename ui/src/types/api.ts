@@ -7,5 +7,7 @@ export interface PathData {
     category: string;
     managedBy: string;
     progressPercentage?: number;
+    /** Total topics on the path. `topics` holds only the first page of them. */
+    topicCount?: number;
     topics?: Topic[];
 }

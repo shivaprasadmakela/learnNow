@@ -18,6 +18,11 @@ export interface TopicsPageProps {
     managedBy?: string;
     activitiesCount?: number;
     topics: Topic[];
+    /** Total topics on the path; `topics` holds only the pages fetched so far. */
+    topicCount?: number;
+    hasMoreTopics?: boolean;
+    isLoadingMoreTopics?: boolean;
+    onLoadMoreTopics?: () => void;
     progressPercent?: number;
     isAdmin?: boolean;
     onSelectTopic?: (id: number | string, subtopicId?: number | string, subtopicTitle?: string) => void;

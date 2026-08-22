@@ -1,5 +1,7 @@
 import { apiFetch } from './client';
+import { DEFAULT_PAGE_SIZE, toPageResponse, withPageParams, type PageResponse } from './pagination';
 import type { UserProfile, PathData } from '../../types';
+import type { Topic } from '../../features/topics';
 
 let profileCache: UserProfile | null = null;
 let profilePromise: Promise<UserProfile> | null = null;
@@ -45,43 +47,85 @@ export const updateProfile = async (profile: Partial<UserProfile> & { fullName: 
     return response.json();
 };
 
-let pathsCache: PathData[] | null = null;
-let pathsPromise: Promise<PathData[]> | null = null;
+/**
+ * Cache of path pages already fetched, keyed by page number.
+ *
+ * Paths arrive one page at a time as the user scrolls, so the cache has to be per page rather
+ * than a single list - otherwise returning to the Paths view would refetch page one and throw
+ * away everything the user had already scrolled past.
+ */
+const pathsPageCache = new Map<string, PageResponse<PathData>>();
+const pathsPagePromises = new Map<string, Promise<PageResponse<PathData>>>();
+
+const pageKey = (page: number, size: number) => `${page}:${size}`;
 
 export const invalidatePathsCache = () => {
-    pathsCache = null;
-    pathsPromise = null;
+    pathsPageCache.clear();
+    pathsPagePromises.clear();
 };
 
-export const fetchPaths = async (force: boolean = false): Promise<PathData[]> => {
-    if (!force && pathsCache) return pathsCache;
-    if (!force && pathsPromise) return pathsPromise;
+export const fetchPathsPage = async (
+    page: number = 0,
+    size: number = DEFAULT_PAGE_SIZE,
+    force: boolean = false
+): Promise<PageResponse<PathData>> => {
+    const key = pageKey(page, size);
+    if (!force) {
+        const cached = pathsPageCache.get(key);
+        if (cached) return cached;
+        const inFlight = pathsPagePromises.get(key);
+        if (inFlight) return inFlight;
+    }
 
-    pathsPromise = (async () => {
-        const response = await apiFetch('/api/paths');
+    const request = (async () => {
+        const response = await apiFetch(withPageParams('/api/paths', page, size));
         if (!response.ok) throw new Error('Failed to fetch paths');
-        const data = await response.json();
-        pathsCache = data;
-        pathsPromise = null;
-        return data;
+        const result = toPageResponse<PathData>(await response.json(), size);
+        pathsPageCache.set(key, result);
+        pathsPagePromises.delete(key);
+        return result;
     })().catch(err => {
-        pathsPromise = null;
+        pathsPagePromises.delete(key);
         throw err;
     });
 
-    return pathsPromise;
+    pathsPagePromises.set(key, request);
+    return request;
+};
+
+/** First page only. Kept for callers that just need "some paths" rather than the scrolling list. */
+export const fetchPaths = async (force: boolean = false): Promise<PathData[]> => {
+    const result = await fetchPathsPage(0, DEFAULT_PAGE_SIZE, force);
+    return result.content;
+};
+
+export const fetchPublicPathsPage = async (
+    page: number = 0,
+    size: number = DEFAULT_PAGE_SIZE
+): Promise<PageResponse<PathData>> => {
+    const response = await apiFetch(withPageParams('/api/catalog/paths', page, size));
+    if (!response.ok) throw new Error('Failed to fetch catalog paths');
+    return toPageResponse<PathData>(await response.json(), size);
 };
 
 export const fetchPublicPaths = async (): Promise<PathData[]> => {
-    const response = await apiFetch('/api/catalog/paths');
-    if (!response.ok) throw new Error('Failed to fetch catalog paths');
-    return response.json();
+    const result = await fetchPublicPathsPage();
+    return result.content;
 };
 
-export const fetchTopicsByPath = async (pathId: string | number) => {
-    const response = await apiFetch(`/api/paths/${pathId}/topics`);
+export const fetchTopicsByPathPage = async (
+    pathId: string | number,
+    page: number = 0,
+    size: number = DEFAULT_PAGE_SIZE
+): Promise<PageResponse<Topic>> => {
+    const response = await apiFetch(withPageParams(`/api/paths/${pathId}/topics`, page, size));
     if (!response.ok) throw new Error('Failed to fetch topics for path');
-    return response.json();
+    return toPageResponse<Topic>(await response.json(), size);
+};
+
+export const fetchTopicsByPath = async (pathId: string | number): Promise<Topic[]> => {
+    const result = await fetchTopicsByPathPage(pathId);
+    return result.content;
 };
 
 export interface CodeSnippetItem {

@@ -19,6 +19,9 @@ export interface DashboardProps {
     profile: UserProfile | null;
     courses?: Course[];
     isCoursesLoading?: boolean;
+    hasMorePaths?: boolean;
+    isLoadingMorePaths?: boolean;
+    onLoadMorePaths?: () => void;
     refreshUserData?: (force?: boolean) => void;
     activeTab?: 'activities' | 'paths' | 'bookmarks';
     setActiveTab?: (tab: 'activities' | 'paths' | 'bookmarks') => void;
@@ -31,6 +34,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     profile,
     courses = [],
     isCoursesLoading = false,
+    hasMorePaths,
+    isLoadingMorePaths,
+    onLoadMorePaths,
     refreshUserData,
     activeTab = 'activities',
     setActiveTab,
@@ -134,6 +140,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 courses={courses}
                                 isLoading={isCoursesLoading}
                                 onSelectPath={onSelectPath}
+                                hasMore={hasMorePaths}
+                                isLoadingMore={isLoadingMorePaths}
+                                onLoadMore={onLoadMorePaths}
                             />
                         )}
                         {activeTab === 'bookmarks' && (

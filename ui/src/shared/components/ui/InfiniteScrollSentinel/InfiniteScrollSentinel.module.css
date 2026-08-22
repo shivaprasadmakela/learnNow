@@ -1,0 +1,38 @@
+.sentinel {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 16px 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--tech-blue);
+    border-radius: 50%;
+    animation: sentinelSpin 0.7s linear infinite;
+}
+
+.endText {
+    color: var(--text-secondary);
+    opacity: 0.65;
+    font-size: 0.8rem;
+}
+
+@keyframes sentinelSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation-duration: 2s;
+    }
+}

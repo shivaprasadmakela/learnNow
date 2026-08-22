@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Search, CheckCircle2, BookOpen, Plus, Unlink } from 'lucide-react';
 import type { AdminTopicData } from '../../../api/admin.api';
-import { fetchAdminTopicsLibrary } from '../../../api/admin.api';
+import { fetchAdminTopicsLibraryPage } from '../../../api/admin.api';
+import { DEFAULT_PAGE_SIZE } from '../../../../../shared/api/pagination';
+import { InfiniteScrollSentinel } from '../../../../../shared/components/ui/InfiniteScrollSentinel';
 import styles from './AttachTopicModal.module.css';
 
 interface AttachTopicModalProps {
@@ -22,15 +24,54 @@ export const AttachTopicModal: React.FC<AttachTopicModalProps> = ({
     const [library, setLibrary] = useState<AdminTopicData[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const pageRef = useRef(0);
+    /**
+     * The list scrolls inside the modal, not the page, so the observer has to watch this element -
+     * against the viewport the sentinel would count as visible from the moment the modal opened.
+     */
+    const [scrollBody, setScrollBody] = useState<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!isOpen) return;
+        let cancelled = false;
         setIsLoading(true);
-        fetchAdminTopicsLibrary()
-            .then(data => setLibrary(data || []))
+        fetchAdminTopicsLibraryPage(0, DEFAULT_PAGE_SIZE)
+            .then(result => {
+                if (cancelled) return;
+                setLibrary(result.content);
+                pageRef.current = 0;
+                setHasMore(result.hasNext);
+            })
             .catch(err => console.error('Failed to load topic library', err))
-            .finally(() => setIsLoading(false));
+            .finally(() => {
+                if (!cancelled) setIsLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
     }, [isOpen]);
+
+    const loadMore = useCallback(async () => {
+        if (isLoadingMore || !hasMore) return;
+        setIsLoadingMore(true);
+        const nextPage = pageRef.current + 1;
+        try {
+            const result = await fetchAdminTopicsLibraryPage(nextPage, DEFAULT_PAGE_SIZE);
+            setLibrary(prev => {
+                const seen = new Set(prev.map(t => t.id));
+                return [...prev, ...result.content.filter(t => !seen.has(t.id))];
+            });
+            pageRef.current = nextPage;
+            setHasMore(result.hasNext);
+        } catch (err) {
+            console.error('Failed to load more topics', err);
+            setHasMore(false);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [hasMore, isLoadingMore]);
 
     if (!isOpen) return null;
 
@@ -67,10 +108,10 @@ export const AttachTopicModal: React.FC<AttachTopicModalProps> = ({
                     />
                 </div>
 
-                <div className={styles.body}>
+                <div className={styles.body} ref={setScrollBody}>
                     {isLoading ? (
                         <div className={styles.loadingState}>Loading global topic library...</div>
-                    ) : filtered.length === 0 ? (
+                    ) : filtered.length === 0 && !hasMore ? (
                         <div className={styles.emptyState}>No topics found matching "{searchQuery}".</div>
                     ) : (
                         <ul className={styles.topicList}>
@@ -118,6 +159,21 @@ export const AttachTopicModal: React.FC<AttachTopicModalProps> = ({
                                 );
                             })}
                         </ul>
+                    )}
+
+                    {/*
+                      Outside the list so a search that matches nothing on the loaded pages keeps
+                      pulling the rest of the library instead of reporting "no topics found".
+                    */}
+                    {!isLoading && (
+                        <InfiniteScrollSentinel
+                            hasMore={hasMore}
+                            isLoading={isLoadingMore}
+                            onLoadMore={loadMore}
+                            root={scrollBody}
+                            loadingText="Loading more topics..."
+                            loadMoreLabel="Load more topics"
+                        />
                     )}
                 </div>
             </div>

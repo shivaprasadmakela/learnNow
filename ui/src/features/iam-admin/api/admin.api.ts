@@ -1,4 +1,11 @@
 import { apiFetch } from '../../../shared/api/client';
+import {
+    DEFAULT_PAGE_SIZE,
+    fetchAllPages,
+    toPageResponse,
+    withPageParams,
+    type PageResponse
+} from '../../../shared/api/pagination';
 
 export interface QuizQuestionDto {
     id?: string;
@@ -42,11 +49,27 @@ export interface AdminPathData {
     topics: AdminTopicData[];
 }
 
-export const fetchAdminPaths = async (): Promise<AdminPathData[]> => {
-    const res = await apiFetch('/api/admin/paths');
+export const fetchAdminPathsPage = async (
+    page: number = 0,
+    size: number = DEFAULT_PAGE_SIZE
+): Promise<PageResponse<AdminPathData>> => {
+    const res = await apiFetch(withPageParams('/api/admin/paths', page, size));
     if (!res.ok) throw new Error('Failed to fetch admin paths');
-    return res.json();
+    return toPageResponse<AdminPathData>(await res.json(), size);
 };
+
+/** First page only - the authoring grid scrolls for the rest via {@link fetchAdminPathsPage}. */
+export const fetchAdminPaths = async (): Promise<AdminPathData[]> => {
+    const result = await fetchAdminPathsPage();
+    return result.content;
+};
+
+/**
+ * Every path, walked page by page. The importer offers them in a `<select>`, which has nothing to
+ * scroll and no way to ask for more, so it needs the complete list up front.
+ */
+export const fetchAllAdminPaths = async (): Promise<AdminPathData[]> =>
+    fetchAllPages<AdminPathData>((page, size) => fetchAdminPathsPage(page, size));
 
 export const fetchAdminPathById = async (id: string): Promise<AdminPathData> => {
     const res = await apiFetch(`/api/admin/paths/${id}`);
@@ -140,10 +163,18 @@ export const deleteAdminPath = async (id: string): Promise<void> => {
     if (!res.ok) throw new Error('Failed to delete path');
 };
 
-export const fetchAdminTopicsLibrary = async (): Promise<AdminTopicData[]> => {
-    const res = await apiFetch('/api/admin/topics');
+export const fetchAdminTopicsLibraryPage = async (
+    page: number = 0,
+    size: number = DEFAULT_PAGE_SIZE
+): Promise<PageResponse<AdminTopicData>> => {
+    const res = await apiFetch(withPageParams('/api/admin/topics', page, size));
     if (!res.ok) throw new Error('Failed to fetch admin topics library');
-    return res.json();
+    return toPageResponse<AdminTopicData>(await res.json(), size);
+};
+
+export const fetchAdminTopicsLibrary = async (): Promise<AdminTopicData[]> => {
+    const result = await fetchAdminTopicsLibraryPage();
+    return result.content;
 };
 
 

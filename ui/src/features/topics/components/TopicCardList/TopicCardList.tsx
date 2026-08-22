@@ -6,15 +6,33 @@ import { LearningCard } from '../../../../shared/components/cards';
 import { CardBadge } from '../../../../shared/components/cards/LearningCard/components/CardBadge';
 import { CardActionArrow } from '../../../../shared/components/cards/LearningCard/components/CardActionArrow';
 import { CardCompletedBadge } from '../../../../shared/components/cards/LearningCard/components/CardCompletedBadge';
+import { InfiniteScrollSentinel } from '../../../../shared/components/ui/InfiniteScrollSentinel';
 import { useBookmarks } from '../../../notes';
 import { fetchTopicDetails, type SubtopicData } from '../../../../shared/api/profile.api';
 import type { TopicCardListProps } from './TopicCardList.types';
 
-export const TopicCardList: React.FC<TopicCardListProps> = ({ topics, viewMode, onTopicClick }) => {
+export const TopicCardList: React.FC<TopicCardListProps> = ({
+    topics,
+    viewMode,
+    onTopicClick,
+    hasMore = false,
+    isLoadingMore = false,
+    onLoadMore
+}) => {
     const { isBookmarked, toggleBookmark } = useBookmarks();
     const [expandedTopics, setExpandedTopics] = useState<Record<string | number, boolean>>({});
     const [topicSubtopics, setTopicSubtopics] = useState<Record<string | number, SubtopicData[]>>({});
     const [loadingTopics, setLoadingTopics] = useState<Record<string | number, boolean>>({});
+
+    const moreTopics = onLoadMore ? (
+        <InfiniteScrollSentinel
+            hasMore={hasMore}
+            isLoading={isLoadingMore}
+            onLoadMore={onLoadMore}
+            loadingText="Loading more topics..."
+            loadMoreLabel="Load more topics"
+        />
+    ) : null;
 
     const toggleExpand = async (topicId: string | number, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -67,6 +85,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({ topics, viewMode, 
                         />
                     );
                 })}
+                {moreTopics}
             </div>
         );
     }
@@ -236,6 +255,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({ topics, viewMode, 
                     </div>
                 );
             })}
+            {moreTopics}
         </div>
     );
 };

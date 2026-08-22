@@ -15,6 +15,10 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
     managedBy = 'learnNow',
     activitiesCount,
     topics,
+    topicCount,
+    hasMoreTopics = false,
+    isLoadingMoreTopics = false,
+    onLoadMoreTopics,
     progressPercent = 0,
     isAdmin = false,
     onSelectTopic,
@@ -26,7 +30,13 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
     const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
     const [isCreateSubtopicOpen, setIsCreateSubtopicOpen] = useState(false);
 
-    const dynamicCount = typeof activitiesCount === 'number' ? activitiesCount : (topics ? topics.length : 0);
+    /**
+     * The banner counts every topic on the path, not just the pages loaded so far - otherwise the
+     * headline number would climb as the user scrolled.
+     */
+    const dynamicCount = typeof topicCount === 'number' && topicCount > 0
+        ? topicCount
+        : (typeof activitiesCount === 'number' ? activitiesCount : (topics ? topics.length : 0));
 
     const handleTopicClick = (id: number | string, title: string, subtopicId?: number | string, subtopicTitle?: string) => {
         if (onSelectTopic) {
@@ -152,6 +162,9 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
                     topics={topics}
                     viewMode={viewMode}
                     onTopicClick={handleTopicClick}
+                    hasMore={hasMoreTopics}
+                    isLoadingMore={isLoadingMoreTopics}
+                    onLoadMore={onLoadMoreTopics}
                 />
             </div>
 

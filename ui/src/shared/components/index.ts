@@ -5,4 +5,5 @@ export * from './navigation';
 export * from './feedback/Toast';
 export * from './ui/EmptyState';
 export * from './ui/Loader';
+export * from './ui/InfiniteScrollSentinel';
 export * from './code-playground';

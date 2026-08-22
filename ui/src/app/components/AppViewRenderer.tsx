@@ -25,6 +25,12 @@ interface AppViewRendererProps {
     profile: UserProfile | null;
     courses: Course[];
     isCoursesLoading?: boolean;
+    hasMorePaths?: boolean;
+    isLoadingMorePaths?: boolean;
+    onLoadMorePaths?: () => void;
+    hasMoreTopics?: boolean;
+    isLoadingMoreTopics?: boolean;
+    onLoadMoreTopics?: () => void;
     selectedPath: Course;
     dashboardTab: 'activities' | 'paths' | 'bookmarks';
     setDashboardTab: (tab: 'activities' | 'paths' | 'bookmarks') => void;
@@ -48,6 +54,12 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     profile,
     courses,
     isCoursesLoading,
+    hasMorePaths,
+    isLoadingMorePaths,
+    onLoadMorePaths,
+    hasMoreTopics,
+    isLoadingMoreTopics,
+    onLoadMoreTopics,
     selectedPath,
     dashboardTab,
     setDashboardTab,
@@ -99,6 +111,9 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         profile={profile}
                         courses={courses}
                         isCoursesLoading={isCoursesLoading}
+                        hasMorePaths={hasMorePaths}
+                        isLoadingMorePaths={isLoadingMorePaths}
+                        onLoadMorePaths={onLoadMorePaths}
                         refreshUserData={refreshUserData}
                         onSelectPath={handleSelectPath}
                         onSelectRecentTopic={onSelectRecentTopic}
@@ -132,6 +147,9 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         onSelectPath={handleSelectPath}
                         isLoggedIn={isLoggedIn}
                         isLoading={isCoursesLoading}
+                        hasMorePaths={hasMorePaths}
+                        isLoadingMorePaths={isLoadingMorePaths}
+                        onLoadMorePaths={onLoadMorePaths}
                     />
                 )}
 
@@ -143,6 +161,10 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         managedBy={selectedPath?.managedBy || 'learnNow Team'}
                         activitiesCount={selectedPath?.topics?.length}
                         topics={selectedPath?.topics || []}
+                        topicCount={selectedPath?.topicCount}
+                        hasMoreTopics={hasMoreTopics}
+                        isLoadingMoreTopics={isLoadingMoreTopics}
+                        onLoadMoreTopics={onLoadMoreTopics}
                         progressPercent={selectedPath?.progressPercentage || 0}
                         isAdmin={isAdmin}
                         onSelectTopic={handleSelectTopic}
