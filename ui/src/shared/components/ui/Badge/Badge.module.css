@@ -59,3 +59,29 @@
     color: var(--text-tertiary);
     border-color: var(--border-color);
 }
+
+
+/* ─── Difficulty ─── */
+
+.difficultyBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: transparent;
+    white-space: nowrap;
+}
+
+.difficultyEasy   { color: var(--color-green-600, #15803d); }
+.difficultyMedium { color: var(--color-yellow-600, #b45309); }
+.difficultyHard   { color: var(--color-red-600, #b91c1c); }
+
+/* The light-theme hues lose contrast on a dark ground, so each gets a lifted counterpart. */
+:global([data-theme='dark']) .difficultyEasy   { color: #4ade80; }
+:global([data-theme='dark']) .difficultyMedium { color: #fbbf24; }
+:global([data-theme='dark']) .difficultyHard   { color: #f87171; }

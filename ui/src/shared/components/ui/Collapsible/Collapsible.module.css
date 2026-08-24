@@ -1,0 +1,68 @@
+/*
+ * The shell around a collapsible row: container, chevron, and the body that appears.
+ *
+ * What each caller puts in the header is its own business — a step's progress bar and a topic's
+ * completion ring have nothing in common — so only the frame and the interaction live here.
+ */
+
+.item {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-card);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+
+.itemOpen { border-color: var(--tech-blue); }
+
+.headerRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 15px;
+    cursor: pointer;
+    text-align: left;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+}
+
+.headerRow:hover { background: var(--bg-secondary); }
+
+.chevronBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    padding: 2px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: transform 0.18s ease, color 0.15s ease;
+}
+
+.chevronBtn:hover { color: var(--tech-blue); }
+
+.chevronBtn:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+}
+
+.chevronOpen { transform: rotate(90deg); }
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.body { border-top: 1px solid var(--border-color); }
+
+@media (prefers-reduced-motion: reduce) {
+    .chevronBtn { transition: none; }
+}

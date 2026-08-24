@@ -1,0 +1,221 @@
+/*
+ * The banner at the top of a content module.
+ *
+ * Lifted verbatim from TopicsPage.module.css, where it had been living even though the component
+ * that used it was in features/topics/components — a shared component reading a page's stylesheet.
+ * Moving it here is what made it reusable at all.
+ */
+
+.wrapper {
+    position: relative;
+    margin-bottom: var(--space-4);
+    width: 100%;
+}
+
+.banner {
+    background: linear-gradient(135deg, var(--tech-blue-hover, #004b7d) 0%, var(--tech-blue, #005995) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 18px 24px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.headerInline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.description {
+    margin: 0;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.metaDetail {
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.rightAction {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.progressBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 160px;
+}
+
+.progressTextRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.progressVal {
+    color: #ffffff;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.progressBarTrack {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progressBarFill {
+    height: 100%;
+    background: #ffffff;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+}
+
+.actionButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background: #ffffff;
+    color: var(--tech-blue-active, #003e67);
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.actionButton:hover { background: var(--bg-secondary, #f8fafc); }
+
+.actionButton:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+/* A count reads better than a percentage where the total is the point — "12 / 43 solved". */
+.headline {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.headlineValue {
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+}
+
+.headlineCaption {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Slot below the banner proper, on the same card: a difficulty split, a playlist link. */
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.bannerWithFooter {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.bannerWithFooter .topRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+@media (max-width: 900px) {
+    .banner { padding: var(--space-5, 18px); flex-direction: column; align-items: stretch; }
+    .bannerWithFooter .topRow { flex-direction: column; align-items: stretch; }
+    .left { max-width: 100%; }
+    .title { font-size: 1.2rem; white-space: normal; }
+    .description { white-space: normal; }
+    .rightAction { justify-content: space-between; }
+    .progressBlock { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .progressBarFill { transition: none; }
+}

@@ -2,6 +2,7 @@ import React from 'react';
 
 export type LevelType = 'beginner' | 'intermediate' | 'advanced' | string;
 export type TrackType = 'concept' | 'hands-on' | string;
+export type DifficultyType = 'EASY' | 'MEDIUM' | 'HARD' | string;
 
 export interface LevelBadgeProps {
     level?: LevelType;
@@ -10,6 +11,11 @@ export interface LevelBadgeProps {
 
 export interface TrackBadgeProps {
     track?: TrackType;
+    className?: string;
+}
+
+export interface DifficultyBadgeProps {
+    difficulty?: DifficultyType;
     className?: string;
 }
 

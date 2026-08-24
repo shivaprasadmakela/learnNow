@@ -6,4 +6,7 @@ export * from './feedback/Toast';
 export * from './ui/EmptyState';
 export * from './ui/Loader';
 export * from './ui/InfiniteScrollSentinel';
+export * from './ui/Tabs';
+export * from './ui/Collapsible';
+export * from './ui/ContentHeroBanner';
 export * from './code-playground';

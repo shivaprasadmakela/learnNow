@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LevelBadgeProps, TrackBadgeProps, DurationBadgeProps, ReusableBadgeProps } from './Badge.types';
+import type { LevelBadgeProps, TrackBadgeProps, DifficultyBadgeProps, DurationBadgeProps, ReusableBadgeProps } from './Badge.types';
 import styles from './Badge.module.css';
 
 export const LevelBadge: React.FC<LevelBadgeProps> = ({ level = 'beginner', className = '' }) => {
@@ -70,4 +70,32 @@ export const ReusableBadge: React.FC<ReusableBadgeProps> = ({ label, icon, varia
             <span>{label}</span>
         </span>
     );
+};
+
+/**
+ * Problem difficulty.
+ *
+ * Sibling of {@link LevelBadge} rather than a variant of it: a topic's beginner/intermediate/
+ * advanced and a problem's easy/medium/hard are different vocabularies for different things, and
+ * collapsing them would mean one component with two label maps and a mode flag.
+ *
+ * The hues are deliberately not the brand blue - difficulty is information the learner scans for,
+ * so it earns semantic colour.
+ */
+export const DifficultyBadge: React.FC<DifficultyBadgeProps> = ({
+    difficulty = 'EASY',
+    className = ''
+}) => {
+    const norm = String(difficulty).toUpperCase();
+
+    const styleClass =
+        norm === 'HARD'
+            ? styles.difficultyHard
+            : norm === 'MEDIUM'
+              ? styles.difficultyMedium
+              : styles.difficultyEasy;
+
+    const label = norm.charAt(0) + norm.slice(1).toLowerCase();
+
+    return <span className={`${styles.difficultyBadge} ${styleClass} ${className}`.trim()}>{label}</span>;
 };

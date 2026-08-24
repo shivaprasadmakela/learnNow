@@ -49,32 +49,8 @@
     flex-wrap: nowrap;
 }
 
-.chevronBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: 6px;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, color 0.2s ease;
-    flex-shrink: 0;
-}
 
-.topicHeaderRow:hover .chevronBtn {
-    color: var(--tech-blue);
-    border-color: var(--tech-blue);
-}
 
-.chevronBtnExpanded {
-    transform: rotate(90deg);
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--tech-blue);
-    border-color: rgba(99, 102, 241, 0.3);
-}
 
 .topicTitleText {
     font-size: 1.02rem;

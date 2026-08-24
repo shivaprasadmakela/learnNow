@@ -1,7 +1,14 @@
 import React from 'react';
-import styles from '../../pages/TopicsPage/TopicsPage.module.css';
+import { ContentHeroBanner } from '../../../../shared/components/ui/ContentHeroBanner';
 import type { TopicHeroBannerProps } from './TopicHeroBanner.types';
 
+/**
+ * A learning path's banner.
+ *
+ * Kept as a named component over the shared banner rather than inlining it at the call site,
+ * because "what a path's header says" — the badge wording, how topics are pluralised, when the
+ * button reads Continue instead of Start — belongs in one place.
+ */
 export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
     pathTitle,
     description,
@@ -10,47 +17,30 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
     progressPercent,
     onContinueClick
 }) => {
+    const meta: string[] = [];
+    if (managedBy) meta.push(`Managed by ${managedBy}`);
+    if (typeof activitiesCount === 'number') {
+        meta.push(`${activitiesCount} ${activitiesCount === 1 ? 'topic' : 'topics'}`);
+    }
+
     return (
-        <div className={styles.heroBannerWrapper}>
-            <div className={styles.heroBanner}>
-                {/* Left Side: Badge, Title, Meta */}
-                <div className={styles.heroLeft}>
-                    <div className={styles.heroHeaderInline}>
-                        <span className={styles.heroBadge}>
-                            <i className="fa-solid fa-dragon" style={{ marginRight: '6px' }} aria-hidden="true" />
-                            Path
-                        </span>
-                        <h1 className={styles.heroTitle}>{pathTitle}</h1>
-                    </div>
-
-                    {description && <p className={styles.heroDescription}>{description}</p>}
-
-                    <div className={styles.metaRow}>
-                        {managedBy && <span className={styles.metaDetail}>Managed by {managedBy}</span>}
-                        {typeof activitiesCount === 'number' && (
-                            <span className={styles.metaDetail}>{activitiesCount} {activitiesCount === 1 ? 'topic' : 'topics'}</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Right Side: Progress & Action */}
-                <div className={styles.heroRightAction}>
-                    <div className={styles.heroProgressBlock}>
-                        <div className={styles.progressTextRow}>
-                            <span className={styles.progressLabel}>Overall Progress</span>
-                            <span className={styles.progressVal}>{progressPercent}%</span>
-                        </div>
-                        <div className={styles.progressBarTrack}>
-                            <div className={styles.progressBarFill} style={{ width: `${progressPercent}%` }} />
-                        </div>
-                    </div>
-
-                    <button className={styles.continueButton} onClick={onContinueClick}>
-                        {progressPercent > 0 ? 'Continue' : 'Start Path'}
-                        <i className="fa-solid fa-arrow-right" style={{ marginLeft: '8px', fontSize: '0.85rem' }} aria-hidden="true" />
-                    </button>
-                </div>
-            </div>
-        </div>
+        <ContentHeroBanner
+            badgeLabel="Path"
+            badgeIcon={
+                <i
+                    className="fa-solid fa-dragon"
+                    style={{ marginRight: '2px' }}
+                    aria-hidden="true"
+                />
+            }
+            title={pathTitle}
+            description={description}
+            meta={meta}
+            progressPercent={progressPercent}
+            actionLabel={progressPercent > 0 ? 'Continue' : 'Start Path'}
+            onAction={onContinueClick}
+        />
     );
 };
+
+export default TopicHeroBanner;

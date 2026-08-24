@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Check, ArrowRight, Play, BookOpen, Clock, Award } from 'lucide-react';
+import { Check, ArrowRight, Play, BookOpen, Clock, Award } from 'lucide-react';
 import styles from './TopicCardList.module.css';
 import pageStyles from '../../pages/TopicsPage/TopicsPage.module.css';
 import { LearningCard } from '../../../../shared/components/cards';
@@ -7,6 +7,7 @@ import { CardBadge } from '../../../../shared/components/cards/LearningCard/comp
 import { CardActionArrow } from '../../../../shared/components/cards/LearningCard/components/CardActionArrow';
 import { CardCompletedBadge } from '../../../../shared/components/cards/LearningCard/components/CardCompletedBadge';
 import { InfiniteScrollSentinel } from '../../../../shared/components/ui/InfiniteScrollSentinel';
+import { Collapsible } from '../../../../shared/components/ui/Collapsible';
 import { useBookmarks } from '../../../notes';
 import { fetchTopicDetails, type SubtopicData } from '../../../../shared/api/profile.api';
 import type { TopicCardListProps } from './TopicCardList.types';
@@ -34,8 +35,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({
         />
     ) : null;
 
-    const toggleExpand = async (topicId: string | number, e: React.MouseEvent) => {
-        e.stopPropagation();
+    const toggleExpand = async (topicId: string | number) => {
         const currentlyExpanded = Boolean(expandedTopics[topicId]);
         setExpandedTopics(prev => ({ ...prev, [topicId]: !currentlyExpanded }));
 
@@ -101,24 +101,16 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({
                 const subtopicsCount = subtopics.length || 0;
 
                 return (
-                    <div
+                    <Collapsible
                         key={topic.id}
-                        className={`${styles.topicAccordionItem} ${isExpanded ? styles.topicAccordionItemExpanded : ''}`}
-                    >
-                        <div
-                            className={styles.topicHeaderRow}
-                            onClick={(e) => toggleExpand(topic.id, e)}
-                        >
+                        isOpen={isExpanded}
+                        onToggle={() => toggleExpand(topic.id)}
+                        label={`lessons in ${topic.title}`}
+                        className={styles.topicAccordionItem}
+                        headerClassName={styles.topicHeaderRow}
+                        header={
+                            <>
                             <div className={styles.topicTitleGroup}>
-                                <button
-                                    type="button"
-                                    className={`${styles.chevronBtn} ${isExpanded ? styles.chevronBtnExpanded : ''}`}
-                                    onClick={(e) => toggleExpand(topic.id, e)}
-                                    title={isExpanded ? "Collapse subtopics" : "Expand subtopics"}
-                                >
-                                    <ChevronRight size={18} />
-                                </button>
-
                                 <CardBadge label="Topic" isCompleted={topic.isCompleted} />
 
                                 <span className={styles.topicTitleText}>{topic.title}</span>
@@ -159,10 +151,10 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({
                                     }}
                                 />
                             </div>
-                        </div>
-
+                            </>
+                        }
+                    >
                         {/* Expanded Subtopics Timeline Tree */}
-                        {isExpanded && (
                             <div className={styles.subtopicTimelineContainer}>
                                 {isLoading ? (
                                     <div className={styles.timelineLoading}>
@@ -251,8 +243,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({
                                     <div className={styles.timelineLoading}>No subtopics listed for this topic yet.</div>
                                 )}
                             </div>
-                        )}
-                    </div>
+                    </Collapsible>
                 );
             })}
             {moreTopics}

@@ -1,2 +1,8 @@
-export { LevelBadge, TrackBadge, DurationBadge, ReusableBadge } from './Badge';
-export type { LevelBadgeProps, TrackBadgeProps, DurationBadgeProps, ReusableBadgeProps } from './Badge.types';
+export { LevelBadge, TrackBadge, DifficultyBadge, DurationBadge, ReusableBadge } from './Badge';
+export type {
+    LevelBadgeProps,
+    TrackBadgeProps,
+    DifficultyBadgeProps,
+    DurationBadgeProps,
+    ReusableBadgeProps
+} from './Badge.types';

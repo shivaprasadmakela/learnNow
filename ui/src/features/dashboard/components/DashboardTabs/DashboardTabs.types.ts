@@ -1,4 +1,6 @@
+export type DashboardTabId = 'activities' | 'paths' | 'bookmarks';
+
 export interface DashboardTabsProps {
-    activeTab: 'activities' | 'paths' | 'bookmarks';
-    setActiveTab?: (tab: 'activities' | 'paths' | 'bookmarks') => void;
+    activeTab: DashboardTabId;
+    setActiveTab?: (tab: DashboardTabId) => void;
 }

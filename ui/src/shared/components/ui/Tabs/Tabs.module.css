@@ -1,0 +1,113 @@
+/*
+ * Three variants, because the codebase had grown three tab bars by hand and each was answering a
+ * real question about density:
+ *
+ *   underline — the dashboard's section switcher. Generous, large type, sits under a page title.
+ *   compact   — a workspace pane switcher. Tight, small, competing with content for vertical space.
+ *   pill      — a filter row. Reads as "narrow this list", not "change what page I am on".
+ *
+ * They share one implementation, one keyboard model and one set of ARIA roles.
+ */
+
+.tablist {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.tablist::-webkit-scrollbar { height: 4px; }
+.tablist::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+
+.tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.tab:hover:not(:disabled) { color: var(--text-primary); }
+.tab:disabled { opacity: 0.45; cursor: default; }
+
+.tab:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.count {
+    font-size: 0.78em;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.75;
+}
+
+/* ─── underline ─── */
+
+.underline { gap: 28px; padding-bottom: 2px; }
+
+.underline .tab {
+    padding: 12px 4px;
+    font-size: 1.05rem;
+    position: relative;
+}
+
+.underline .tabActive { color: var(--tech-blue); }
+
+.underline .tabActive::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--tech-blue);
+    border-radius: var(--radius-pill, 999px);
+}
+
+/* ─── compact ─── */
+
+.compact {
+    gap: 2px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-card);
+}
+
+.compact .tab {
+    padding: 11px 13px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    border-bottom: 2px solid transparent;
+}
+
+.compact .tabActive { color: var(--tech-blue); border-bottom-color: var(--tech-blue); }
+
+/* ─── pill ─── */
+
+.pill { gap: 6px; flex-wrap: wrap; overflow-x: visible; }
+
+.pill .tab {
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-card);
+}
+
+.pill .tab:hover:not(:disabled) { border-color: var(--tech-blue); color: var(--tech-blue); }
+
+.pill .tabActive {
+    border-color: var(--tech-blue);
+    background: var(--tech-blue);
+    color: #ffffff;
+}
+
+.pill .tabActive:hover { color: #ffffff; }
