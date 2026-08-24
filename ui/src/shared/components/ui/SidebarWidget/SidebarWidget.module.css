@@ -1,0 +1,56 @@
+.widget {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.titleGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tech-blue);
+    font-size: 0.95rem;
+}
+
+.title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.action {
+    font-size: 0.78rem;
+    color: var(--tech-blue);
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+}

@@ -2,6 +2,7 @@ import React from 'react';
 import styles from '../Navigation.module.css';
 import type { SidebarProps } from './Sidebar.types';
 import { SidebarNavItem } from './components/SidebarNavItem';
+import { EncouragementWidget } from './components/EncouragementWidget';
 
 export const Sidebar: React.FC<SidebarProps> = ({
     isExpanded,
@@ -75,8 +76,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
             </nav>
 
+            {isExpanded && <EncouragementWidget />}
+
             {onOpenDonationModal && (
-                <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-color)', width: '100%' }}>
+                <div style={{ marginTop: isExpanded ? '4px' : 'auto', paddingTop: '12px', borderTop: '1px solid var(--border-color)', width: '100%' }}>
                     <SidebarNavItem
                         iconClass="fa-solid fa-mug-hot"
                         label="Buy Coffee"

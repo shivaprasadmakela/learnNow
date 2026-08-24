@@ -9,4 +9,6 @@ export * from './ui/InfiniteScrollSentinel';
 export * from './ui/Tabs';
 export * from './ui/Collapsible';
 export * from './ui/ContentHeroBanner';
+export * from './ui/ProgressRing';
+export * from './ui/SidebarWidget';
 export * from './code-playground';

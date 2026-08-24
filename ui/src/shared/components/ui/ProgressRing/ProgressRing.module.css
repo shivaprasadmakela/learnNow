@@ -1,0 +1,51 @@
+.container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.svg {
+    display: block;
+    transform: rotate(0deg);
+}
+
+.track {
+    transition: stroke 0.2s ease;
+}
+
+.progress {
+    transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.2s ease;
+}
+
+.labelContainer {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    text-align: center;
+}
+
+.label {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.sublabel {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .progress {
+        transition: none;
+    }
+}

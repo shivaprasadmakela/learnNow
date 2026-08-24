@@ -15,8 +15,8 @@
 }
 
 .sidebarExpanded {
-    width: 256px;
-    padding: var(--space-4) var(--space-3);
+    width: 200px;
+    padding: var(--space-4) var(--space-2);
 }
 
 .sidebarCollapsed {
@@ -216,6 +216,49 @@
 
 .navItemCollapsed:hover .navLabelCollapsed {
     color: var(--text-primary);
+}
+
+.encouragementWidget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 14px 12px 10px;
+    margin: 16px 8px 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    gap: 8px;
+}
+
+.encouragementText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.encouragementTitle {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.encouragementSubtitle {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+}
+
+.encouragementGraphic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+}
+
+.plantSvg {
+    width: 100%;
+    height: 100%;
 }
 
 /* Global Top Header */
@@ -532,8 +575,8 @@
     .sidebar {
         position: fixed;
         top: 52px;
-        left: -256px;
-        width: 256px;
+        left: -200px;
+        width: 200px;
         height: calc(100vh - 52px);
         z-index: var(--z-modal);
         box-shadow: var(--shadow-lg);
@@ -542,14 +585,14 @@
     }
 
     .sidebarExpanded {
-        transform: translateX(256px);
-        padding: var(--space-4) var(--space-3);
+        transform: translateX(200px);
+        padding: var(--space-4) var(--space-2);
     }
 
     .sidebarCollapsed {
         transform: translateX(0);
-        width: 256px;
-        padding: var(--space-4) var(--space-3);
+        width: 200px;
+        padding: var(--space-4) var(--space-2);
         border-right: none;
     }
 
