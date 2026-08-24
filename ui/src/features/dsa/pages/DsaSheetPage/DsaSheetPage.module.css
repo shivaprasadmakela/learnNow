@@ -5,12 +5,36 @@
     box-sizing: border-box;
 }
 
+.pageLayout {
+    display: grid;
+    grid-template-columns: 1fr 290px;
+    gap: 24px;
+    align-items: start;
+    width: 100%;
+}
+
+.mainColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.sideColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 16px;
+}
+
+/* ─── Search & Filters ─── */
 .filters {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
 .search {
@@ -23,29 +47,40 @@
     width: 100%;
     padding: 8px 12px 8px 34px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 20px;
     background: var(--bg-card);
     color: var(--text-primary);
     font-size: 0.85rem;
     font-family: inherit;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
 }
 
 .searchInput:focus-visible {
     outline: 2px solid var(--tech-blue);
     outline-offset: 1px;
+    border-color: var(--tech-blue);
 }
 
 .searchIcon {
     position: absolute;
-    left: 11px;
+    left: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-tertiary);
     pointer-events: none;
 }
 
+.difficultyFilters,
+.statusFilters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .pill {
-    padding: 7px 14px;
+    padding: 6px 14px;
     border: 1px solid var(--border-color);
     border-radius: 999px;
     background: var(--bg-card);
@@ -54,10 +89,13 @@
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition: all 0.15s ease;
 }
 
-.pill:hover { border-color: var(--tech-blue); color: var(--tech-blue); }
+.pill:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
 
 .pillActive {
     background: var(--tech-blue);
@@ -65,30 +103,165 @@
     color: #ffffff;
 }
 
-.pillActive:hover { color: #ffffff; }
-
-.revisionLink {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-    padding: 7px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
+.pillActive:hover {
+    color: #ffffff;
 }
 
-.revisionLink:hover { border-color: var(--tech-blue); color: var(--tech-blue); }
-
+/* ─── Steps ─── */
 .steps {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+/* ─── Motivational Banner with learnNow Logo Theme Gradient ─── */
+.motivationalBanner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    margin-top: 12px;
+    background: linear-gradient(135deg, #005995 0%, #004b7d 55%, #99bdd5 100%);
+    border: none;
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 0.85rem;
+    box-shadow: 0 3px 12px rgba(0, 89, 149, 0.16);
+}
+
+.bannerIcon {
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.bannerText {
+    color: #ffffff;
+}
+
+/* ─── Right Sidebar Widgets ─── */
+.progressRingSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0 4px;
+}
+
+.progressLegend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.legendRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+
+.legendDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legendDotSolved {
+    background: var(--color-green-500, #22c55e);
+}
+
+.legendDotRemaining {
+    background: var(--border-color, #cbd5e1);
+}
+
+.legendLabel {
+    color: var(--text-secondary);
+    font-weight: 500;
+    flex-grow: 1;
+}
+
+.legendValue {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Goal Widget */
+.goalSection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.goalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.goalCount {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.goalProgressBarTrack {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.goalProgressBarFill {
+    height: 100%;
+    background: var(--tech-blue);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.goalSubtext {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--text-tertiary);
+}
+
+.goalIcon {
+    color: var(--tech-blue);
+    flex-shrink: 0;
+}
+
+/* Tip Widget */
+.tipIcon {
+    color: var(--color-yellow-500, #f59e0b);
+}
+
+.tipSection {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tipQuote {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.tipSubtext {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    line-height: 1.4;
 }
 
 .state {
@@ -107,6 +280,18 @@
     font-size: 0.88rem;
 }
 
+@media (max-width: 1100px) {
+    .pageLayout {
+        grid-template-columns: 1fr;
+    }
+    .sideColumn {
+        position: static;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .pill { transition: none; }
+    .pill,
+    .goalProgressBarFill {
+        transition: none;
+    }
 }

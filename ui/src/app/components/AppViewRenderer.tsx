@@ -86,7 +86,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                 ? styles.pageContentCompiler
                 : activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
                     ? styles.pageContentFull
-                    : activeView === 'DASHBOARD'
+                    : activeView === 'DASHBOARD' || activeView === 'DSA'
                         ? styles.pageContentDashboard
                         : styles.pageContent
         }>

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Lightbulb, Target, Sparkles, BookOpen } from 'lucide-react';
 import styles from './DsaSheetPage.module.css';
 import { toggleBookmarkApi } from '../../../notes/api/notes.api';
 import { SheetProgressHeader } from '../../components/SheetProgressHeader';
@@ -8,7 +8,8 @@ import { useDsaSheet } from '../../hooks/useDsaSheet';
 import { setDsaProblemStatus, type DsaProblemRow } from '../../api/dsa.api';
 import { Loader } from '../../../../shared/components/ui/Loader';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
-import { BookOpen } from 'lucide-react';
+import { ProgressRing } from '../../../../shared/components/ui/ProgressRing';
+import { SidebarWidget } from '../../../../shared/components/ui/SidebarWidget';
 
 export interface DsaSheetPageProps {
     isLoggedIn: boolean;
@@ -18,6 +19,65 @@ export interface DsaSheetPageProps {
 
 type StatusFilter = 'ALL' | 'TODO' | 'SOLVED' | 'BOOKMARKED';
 type DifficultyFilter = 'ALL' | 'EASY' | 'MEDIUM' | 'HARD';
+
+const DAILY_TIPS = [
+    {
+        quote: 'Focus on understanding, not just solving.',
+        subtext: 'Master the concepts, the solutions will follow.'
+    },
+    {
+        quote: 'First, solve the problem. Then, write the code.',
+        subtext: 'Plan your approach with pen and paper before typing.'
+    },
+    {
+        quote: 'Simplicity is prerequisite for reliability.',
+        subtext: 'Clean, readable algorithms are easier to debug and optimize.'
+    },
+    {
+        quote: 'Premature optimization is the root of all evil.',
+        subtext: 'Get a correct working solution first, then optimize time and space.'
+    },
+    {
+        quote: 'Small daily improvements over time lead to stunning results.',
+        subtext: 'Consistency with 1-2 problems daily beats weekend cramming.'
+    },
+    {
+        quote: 'The best error message is the one that never shows up.',
+        subtext: 'Always consider edge cases: nulls, empty inputs, and bounds.'
+    },
+    {
+        quote: 'Patterns repeat across problems.',
+        subtext: 'Identify underlying archetypes: sliding window, two pointers, BFS/DFS.'
+    },
+    {
+        quote: 'Debugging is twice as hard as writing the code in the first place.',
+        subtext: 'Write code as clearly as possible from the start.'
+    },
+    {
+        quote: 'Break complex problems into smaller subproblems.',
+        subtext: 'Divide and conquer makes overwhelming challenges manageable.'
+    },
+    {
+        quote: 'Measure twice, code once.',
+        subtext: 'Dry run your logic with small sample inputs before submitting.'
+    },
+    {
+        quote: 'Space and time are trade-offs, not absolutes.',
+        subtext: 'Explore whether a hash map or sorting gives you the optimal balance.'
+    },
+    {
+        quote: 'Every master was once a beginner who refused to give up.',
+        subtext: 'Getting stuck is part of learning. Analyze editorial hints step by step.'
+    },
+    {
+        quote: 'Understand the data structure that best fits the problem.',
+        subtext: 'The right structure often makes the algorithmic solution self-evident.'
+    },
+    {
+        quote: 'Write tests for what could break, not just what should work.',
+        subtext: 'Test extreme constraints and single-element collections.'
+    }
+];
 
 export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
     isLoggedIn,
@@ -38,6 +98,13 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
     const [query, setQuery] = useState('');
     const [status, setStatus] = useState<StatusFilter>('ALL');
     const [difficulty, setDifficulty] = useState<DifficultyFilter>('ALL');
+
+    // Select tip for the 24-hour day across a 14-day (2-week) rotation
+    const currentTip = useMemo(() => {
+        const dayNumber = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+        const index = Math.abs(dayNumber) % DAILY_TIPS.length;
+        return DAILY_TIPS[index];
+    }, []);
 
     const toggleStep = useCallback(
         (stepId: string) => {
@@ -65,12 +132,6 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
         [onOpenProblem, stepSlugById]
     );
 
-    /**
-     * Filtering is client-side over the pages already loaded, which is honest about what it can
-     * see: a step the learner has never expanded has nothing to filter. The alternative — pushing
-     * filters to the server — would mean the accordion could no longer show per-step counts without
-     * a second round of queries, for a sheet whose whole point is that you work through it in order.
-     */
     const visible = useCallback(
         (rows: DsaProblemRow[]): DsaProblemRow[] => {
             const q = query.trim().toLowerCase();
@@ -89,13 +150,9 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
         [query, status, difficulty]
     );
 
-    /**
-     * Which sections are collapsed, keyed by id. Absent means open — sections default to expanded,
-     * since the reader has already opened the step to get to them.
-     */
     const [openSectionIds, setOpenSectionIds] = useState<Record<string, boolean>>({});
     const toggleSection = useCallback((sectionId: string) => {
-        setOpenSectionIds(prev => ({ ...prev, [sectionId]: prev[sectionId] === false }));
+        setOpenSectionIds(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
     }, []);
 
     const handleToggleSolved = useCallback(
@@ -116,11 +173,6 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
         [isLoggedIn, onRequireLogin, applyRowChange]
     );
 
-    /**
-     * Bookmarking goes through the shared bookmarks endpoint, the same one the study console uses
-     * for topics - so a bookmarked problem turns up in the dashboard's bookmark list beside them
-     * rather than in a list of its own.
-     */
     const handleToggleBookmark = useCallback(
         async (problem: DsaProblemRow) => {
             if (!isLoggedIn) {
@@ -172,78 +224,168 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
         );
     }
 
+    const solvedCount = sheet.solvedProblems;
+    const totalCount = sheet.totalProblems;
+    const remainingCount = Math.max(0, totalCount - solvedCount);
+    const solvedPct = totalCount > 0 ? Math.round((solvedCount / totalCount) * 100) : 0;
+    const remainingPct = 100 - solvedPct;
+
+    const weeklyGoalTarget = 20;
+    const weeklyGoalProgress = Math.min(weeklyGoalTarget, solvedCount);
+    const weeklyGoalPct = Math.min(100, Math.round((weeklyGoalProgress / weeklyGoalTarget) * 100));
+
     return (
         <div className={styles.container}>
-            <SheetProgressHeader sheet={sheet} />
+            <div className={styles.pageLayout}>
+                {/* Main Content Column */}
+                <div className={styles.mainColumn}>
+                    <SheetProgressHeader sheet={sheet} />
 
-            <div className={styles.filters}>
-                <div className={styles.search}>
-                    <Search size={15} className={styles.searchIcon} />
-                    <input
-                        type="search"
-                        className={styles.searchInput}
-                        placeholder="Search loaded problems by title or tag"
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                        aria-label="Search problems"
-                    />
+                    <div className={styles.filters}>
+                        <div className={styles.search}>
+                            <Search size={15} className={styles.searchIcon} />
+                            <input
+                                type="search"
+                                className={styles.searchInput}
+                                placeholder="Search problems by title or tags..."
+                                value={query}
+                                onChange={e => setQuery(e.target.value)}
+                                aria-label="Search problems"
+                            />
+                        </div>
+
+                        <div className={styles.difficultyFilters}>
+                            {(['ALL', 'EASY', 'MEDIUM', 'HARD'] as DifficultyFilter[]).map(level => (
+                                <button
+                                    key={level}
+                                    type="button"
+                                    className={`${styles.pill} ${difficulty === level ? styles.pillActive : ''}`}
+                                    onClick={() => setDifficulty(level)}
+                                    aria-pressed={difficulty === level}
+                                >
+                                    {level === 'ALL' ? 'All Levels' : level.charAt(0) + level.slice(1).toLowerCase()}
+                                </button>
+                            ))}
+                        </div>
+
+                        {isLoggedIn && (
+                            <div className={styles.statusFilters}>
+                                {(['ALL', 'TODO', 'SOLVED', 'BOOKMARKED'] as StatusFilter[]).map(value => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        className={`${styles.pill} ${status === value ? styles.pillActive : ''}`}
+                                        onClick={() => setStatus(value)}
+                                        aria-pressed={status === value}
+                                    >
+                                        {value === 'ALL'
+                                            ? 'All Status'
+                                            : value === 'TODO'
+                                              ? 'Unsolved'
+                                              : value === 'SOLVED'
+                                                ? 'Solved'
+                                                : 'Bookmarked'}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className={styles.steps}>
+                        {sheet.steps.map(step => {
+                            const state = problemsFor(step.id);
+                            return (
+                                <StepAccordion
+                                    key={step.id}
+                                    step={step}
+                                    isOpen={Boolean(openSteps[step.id])}
+                                    onToggle={() => toggleStep(step.id)}
+                                    problems={visible(state.rows)}
+                                    hasMore={state.hasMore}
+                                    isLoading={state.isLoading}
+                                    onLoadMore={() => loadMoreProblems(step.id)}
+                                    onOpenProblem={slug => openProblem(step.id, slug)}
+                                    onToggleSolved={handleToggleSolved}
+                                    onToggleBookmark={handleToggleBookmark}
+                                    openSectionIds={openSectionIds}
+                                    onToggleSection={toggleSection}
+                                    canTrack={isLoggedIn}
+                                />
+                            );
+                        })}
+                    </div>
+
+                    {/* Motivational Footer Banner with learnNow Logo Theme Gradient */}
+                    <div className={styles.motivationalBanner}>
+                        <Sparkles size={18} className={styles.bannerIcon} />
+                        <span className={styles.bannerText}>
+                            Every problem you solve makes you better. <strong>Keep going! 💪</strong>
+                        </span>
+                    </div>
                 </div>
 
-                {(['ALL', 'EASY', 'MEDIUM', 'HARD'] as DifficultyFilter[]).map(level => (
-                    <button
-                        key={level}
-                        type="button"
-                        className={`${styles.pill} ${difficulty === level ? styles.pillActive : ''}`}
-                        onClick={() => setDifficulty(level)}
-                        aria-pressed={difficulty === level}
+                {/* Right Sidebar Column */}
+                <div className={styles.sideColumn}>
+                    {/* Overall Progress Card */}
+                    <SidebarWidget title="Overall Progress">
+                        <div className={styles.progressRingSection}>
+                            <ProgressRing
+                                percentage={solvedPct}
+                                size={110}
+                                strokeWidth={9}
+                                label={`${solvedPct}%`}
+                                sublabel="Solved"
+                                primaryColor="var(--tech-blue)"
+                            />
+                            <div className={styles.progressLegend}>
+                                <div className={styles.legendRow}>
+                                    <span className={`${styles.legendDot} ${styles.legendDotSolved}`} />
+                                    <span className={styles.legendLabel}>Solved</span>
+                                    <span className={styles.legendValue}>{solvedCount} ({solvedPct}%)</span>
+                                </div>
+                                <div className={styles.legendRow}>
+                                    <span className={`${styles.legendDot} ${styles.legendDotRemaining}`} />
+                                    <span className={styles.legendLabel}>Remaining</span>
+                                    <span className={styles.legendValue}>{remainingCount} ({remainingPct}%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </SidebarWidget>
+
+                    {/* Weekly Goal Card */}
+                    <SidebarWidget title="Weekly Goal">
+                        <div className={styles.goalSection}>
+                            <div className={styles.goalHeader}>
+                                <span className={styles.goalCount}>{weeklyGoalProgress} / {weeklyGoalTarget} solved</span>
+                            </div>
+                            <div className={styles.goalProgressBarTrack}>
+                                <div
+                                    className={styles.goalProgressBarFill}
+                                    style={{ width: `${weeklyGoalPct}%` }}
+                                />
+                            </div>
+                            <div className={styles.goalSubtext}>
+                                <Target size={14} className={styles.goalIcon} />
+                                <span>Solve {weeklyGoalTarget} problems this week</span>
+                            </div>
+                        </div>
+                    </SidebarWidget>
+
+                    {/* Tip of the Day Card (Bottom Last Widget with 14-day 24h rotation) */}
+                    <SidebarWidget
+                        title="Tip of the Day"
+                        icon={<Lightbulb size={16} className={styles.tipIcon} />}
                     >
-                        {level === 'ALL' ? 'All levels' : level.charAt(0) + level.slice(1).toLowerCase()}
-                    </button>
-                ))}
-
-                {isLoggedIn &&
-                    (['ALL', 'TODO', 'SOLVED', 'BOOKMARKED'] as StatusFilter[]).map(value => (
-                        <button
-                            key={value}
-                            type="button"
-                            className={`${styles.pill} ${status === value ? styles.pillActive : ''}`}
-                            onClick={() => setStatus(value)}
-                            aria-pressed={status === value}
-                        >
-                            {value === 'ALL'
-                                ? 'Any status'
-                                : value === 'TODO'
-                                  ? 'Unsolved'
-                                  : value === 'SOLVED'
-                                    ? 'Solved'
-                                    : 'Bookmarked'}
-                        </button>
-                    ))}
-
-            </div>
-
-            <div className={styles.steps}>
-                {sheet.steps.map(step => {
-                    const state = problemsFor(step.id);
-                    return (
-                        <StepAccordion
-                            key={step.id}
-                            step={step}
-                            isOpen={Boolean(openSteps[step.id])}
-                            onToggle={() => toggleStep(step.id)}
-                            problems={visible(state.rows)}
-                            hasMore={state.hasMore}
-                            isLoading={state.isLoading}
-                            onLoadMore={() => loadMoreProblems(step.id)}
-                            onOpenProblem={slug => openProblem(step.id, slug)}
-                            onToggleSolved={handleToggleSolved}
-                            onToggleBookmark={handleToggleBookmark}
-                            openSectionIds={openSectionIds}
-                            onToggleSection={toggleSection}
-                            canTrack={isLoggedIn}
-                        />
-                    );
-                })}
+                        <div className={styles.tipSection}>
+                            <p className={styles.tipQuote}>
+                                &ldquo;{currentTip.quote}&rdquo;
+                            </p>
+                            <p className={styles.tipSubtext}>
+                                {currentTip.subtext}
+                            </p>
+                        </div>
+                    </SidebarWidget>
+                </div>
             </div>
         </div>
     );
