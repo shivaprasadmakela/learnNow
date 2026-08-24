@@ -1,7 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
-import { fetchBookmarksApi, toggleBookmarkApi, type BookmarkDto } from '../api/notes.api';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+    fetchBookmarksApi,
+    toggleBookmarkApi,
+    type BookmarkDto,
+    type NoteTarget
+} from '../api/notes.api';
 
-export function useBookmarks(isLoggedIn: boolean = true) {
+/**
+ * The learner's bookmarks, of every kind.
+ *
+ * `target` defaults to TOPIC so existing callers - the topic cards and the study console - keep
+ * working untouched. The DSA sheet passes DSA_PROBLEM.
+ */
+export function useBookmarks(isLoggedIn: boolean = true, target: NoteTarget = 'TOPIC') {
     const [bookmarks, setBookmarks] = useState<BookmarkDto[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -9,8 +20,7 @@ export function useBookmarks(isLoggedIn: boolean = true) {
         if (!isLoggedIn) return;
         setIsLoading(true);
         try {
-            const data = await fetchBookmarksApi();
-            setBookmarks(data);
+            setBookmarks(await fetchBookmarksApi());
         } catch {
             // silent catch if unauthenticated or network error
         } finally {
@@ -22,38 +32,66 @@ export function useBookmarks(isLoggedIn: boolean = true) {
         loadBookmarks();
     }, [loadBookmarks]);
 
-    const isBookmarked = useCallback((topicId?: string | number) => {
-        if (!topicId) return false;
-        const idStr = String(topicId);
-        return bookmarks.some(b => String(b.topicId) === idStr);
-    }, [bookmarks]);
+    /** Only the bookmarks of this hook's target type. */
+    const scoped = useMemo(
+        () => bookmarks.filter(b => b.target === target),
+        [bookmarks, target]
+    );
 
-    const toggleBookmark = useCallback(async (topicId?: string | number) => {
-        if (!topicId || !isLoggedIn) return false;
-        const idStr = String(topicId);
-        const currentlyBookmarked = bookmarks.some(b => String(b.topicId) === idStr);
+    const isBookmarked = useCallback(
+        (targetId?: string | number) => {
+            if (!targetId) return false;
+            const idStr = String(targetId);
+            return scoped.some(b => String(b.targetId) === idStr);
+        },
+        [scoped]
+    );
 
-        // Optimistic UI update
-        if (currentlyBookmarked) {
-            setBookmarks(prev => prev.filter(b => String(b.topicId) !== idStr));
-        } else {
-            setBookmarks(prev => [...prev, { id: 'temp-' + Date.now(), topicId: idStr, createdAt: new Date().toISOString() }]);
-        }
+    const toggleBookmark = useCallback(
+        async (targetId?: string | number) => {
+            if (!targetId || !isLoggedIn) return false;
+            const idStr = String(targetId);
+            const wasBookmarked = scoped.some(b => String(b.targetId) === idStr);
 
-        try {
-            const result = await toggleBookmarkApi(idStr);
-            if (result.bookmarked !== !currentlyBookmarked) {
-                loadBookmarks();
+            // Optimistic, so the icon responds to the click rather than to the round trip.
+            if (wasBookmarked) {
+                setBookmarks(prev =>
+                    prev.filter(b => !(b.target === target && String(b.targetId) === idStr))
+                );
+            } else {
+                setBookmarks(prev => [
+                    ...prev,
+                    {
+                        id: `pending-${idStr}`,
+                        target,
+                        targetId: idStr,
+                        createdAt: new Date().toISOString(),
+                        topicId: target === 'TOPIC' ? idStr : null,
+                        dsaProblemId: target === 'DSA_PROBLEM' ? idStr : null
+                    }
+                ]);
             }
-            return result.bookmarked;
-        } catch {
-            loadBookmarks();
-            return currentlyBookmarked;
-        }
-    }, [bookmarks, isLoggedIn, loadBookmarks]);
+
+            try {
+                const result = await toggleBookmarkApi(idStr, target);
+                if (result.bookmarked === wasBookmarked) {
+                    // The server disagreed with the guess; take its answer.
+                    loadBookmarks();
+                }
+                return result.bookmarked;
+            } catch {
+                loadBookmarks();
+                return wasBookmarked;
+            }
+        },
+        [scoped, isLoggedIn, loadBookmarks, target]
+    );
 
     return {
-        bookmarks,
+        /** Bookmarks of this hook's target type. */
+        bookmarks: scoped,
+        /** Every bookmark, whatever it points at - for a list that shows them all. */
+        allBookmarks: bookmarks,
         isLoading,
         isBookmarked,
         toggleBookmark,

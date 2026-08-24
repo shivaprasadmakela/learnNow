@@ -1,0 +1,24 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+
+.filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+
+
+
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.state {
+    padding: 28px 0;
+    text-align: center;
+    font-size: 0.87rem;
+    color: var(--text-tertiary);
+}

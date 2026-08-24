@@ -64,6 +64,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     // Proxies to an external execution engine: metered to keep the service from
                     // becoming a free relay.
                     new Tier("compiler", 20, List.of("/api/compiler/")),
+                    // Run and Submit reach the same engine by another door. Generous for a person
+                    // working through a problem, ruinous for a script.
+                    new Tier("dsa-execution", 30, List.of("/api/dsa/problems/")),
                     // Payment endpoints, excluding the signature-authenticated webhook.
                     new Tier(
                             "payments",

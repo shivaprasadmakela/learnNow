@@ -13,6 +13,7 @@ const AdminDashboard = React.lazy(() => import('../../features/iam-admin').then(
 const ConfigurationEditor = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.ConfigurationEditor })));
 const CourseImporter = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.CourseImporter })));
 const CompilerPage = React.lazy(() => import('../../features/compiler').then(m => ({ default: m.CompilerPage })));
+const DsaSheetPage = React.lazy(() => import('../../features/dsa').then(m => ({ default: m.DsaSheetPage })));
 const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
 import { fetchAdminPathById, saveAdminPath } from '../../features/iam-admin/api/admin.api';
 
@@ -38,6 +39,7 @@ interface AppViewRendererProps {
     signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
     signInWithGoogle?: (idToken: string) => Promise<unknown>;
     handleSelectPath: (pathId: number) => void;
+    onOpenDsaProblem: (stepSlug: string, problemSlug: string) => void;
     handleSelectTopic: (topicId: number | string, subtopicId?: number | string, subtopicTitle?: string) => void;
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
     handleViewChange: (view: any) => void;
@@ -67,6 +69,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     signUp,
     signInWithGoogle,
     handleSelectPath,
+    onOpenDsaProblem,
     handleSelectTopic,
     onSelectRecentTopic,
     handleViewChange,
@@ -117,6 +120,8 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         refreshUserData={refreshUserData}
                         onSelectPath={handleSelectPath}
                         onSelectRecentTopic={onSelectRecentTopic}
+                        onOpenDsaSheet={() => changeView('DSA')}
+                        onOpenDsaProblem={onOpenDsaProblem}
                         activeTab={dashboardTab}
                         setActiveTab={setDashboardTab}
                         onMetricsLoaded={onMetricsLoaded}
@@ -140,6 +145,14 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                 )}
 
                 {activeView === 'COMPILER' && <CompilerPage />}
+
+                {activeView === 'DSA' && (
+                    <DsaSheetPage
+                        isLoggedIn={isLoggedIn}
+                        onOpenProblem={onOpenDsaProblem}
+                        onRequireLogin={() => changeView('LOGIN')}
+                    />
+                )}
 
                 {activeView === 'PATHS' && (
                     <PathsPage

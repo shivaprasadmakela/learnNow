@@ -10,20 +10,33 @@
     color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
+    font-family: inherit;
     cursor: pointer;
     transition: all 0.2s ease;
+    /* One accent, referenced below, so the colour is stated once. */
+    --bookmark-accent: var(--tech-yellow, #f59e0b);
 }
 
-.bookmarkBtn:hover {
-    border-color: #f59e0b;
-    color: #f59e0b;
-    background-color: rgba(245, 158, 11, 0.08);
+.bookmarkBtn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.bookmarkBtn:focus-visible {
+    outline: 2px solid var(--bookmark-accent);
+    outline-offset: 2px;
+}
+
+.bookmarkBtn:hover:not(:disabled) {
+    border-color: var(--bookmark-accent);
+    color: var(--bookmark-accent);
+    background-color: color-mix(in srgb, var(--bookmark-accent) 8%, transparent);
 }
 
 .bookmarkBtnActive {
-    border-color: #f59e0b;
-    background-color: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    border-color: var(--bookmark-accent);
+    background-color: color-mix(in srgb, var(--bookmark-accent) 15%, transparent);
+    color: var(--bookmark-accent);
 }
 
 .bookmarkIcon {

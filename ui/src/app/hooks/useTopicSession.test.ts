@@ -28,7 +28,14 @@ describe('useTopicSession restoring a topic from the URL', () => {
     const changeView = vi.fn();
     const showToast = vi.fn();
 
-    const options = (courses: Course[], resolveTopicIdBySlug?: ReturnType<typeof vi.fn>) => ({
+    /**
+     * Typed explicitly: a bare `ReturnType<typeof vi.fn>` widens to `Mock<Procedure |
+     * Constructable>`, which is not assignable to the resolver's signature, so `tsc -b` (and
+     * therefore `npm run build` and CI) failed on every call site below.
+     */
+    type Resolver = (pathSlug: string, topicSlug: string) => Promise<string | number | null>;
+
+    const options = (courses: Course[], resolveTopicIdBySlug?: Resolver) => ({
         isLoggedIn: true,
         courses,
         changeView,

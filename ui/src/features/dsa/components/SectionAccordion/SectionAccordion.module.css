@@ -1,0 +1,58 @@
+/*
+ * A section inside a step. Indentation comes from --section-depth, set per node, so the same rules
+ * serve level two, three, four and beyond rather than needing a class per level.
+ */
+
+.section {
+    border: none;
+    border-radius: 0;
+    border-top: 1px solid var(--border-color);
+    background: transparent;
+}
+
+.section:first-child { border-top: none; }
+
+.header {
+    /* 43px clears the step's own chevron column; each further level steps in by 18. */
+    padding-left: calc(43px + var(--section-depth, 0) * 18px);
+    padding-top: 9px;
+    padding-bottom: 9px;
+    background: var(--bg-secondary);
+}
+
+.header:hover { background: var(--bg-tertiary); }
+
+.title {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.body { border-top: 1px solid var(--border-color); }
+
+/*
+ * Deeper levels get a quieter heading, so the hierarchy reads by weight as well as by indent —
+ * on a narrow screen the indent alone is easy to miss.
+ */
+.section .section .title { text-transform: none; letter-spacing: 0.02em; font-size: 0.78rem; }

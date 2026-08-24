@@ -1,0 +1,164 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+
+.intro {
+    margin: 0;
+    max-width: 74ch;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+}
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+.secondaryBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.secondaryBtn:hover:not(:disabled) { border-color: var(--tech-blue); color: var(--tech-blue); }
+.secondaryBtn:disabled { opacity: 0.5; cursor: default; }
+
+.primaryBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    background: var(--tech-blue);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.primaryBtn:hover:not(:disabled) { background: var(--tech-blue-hover); }
+.primaryBtn:disabled { opacity: 0.55; cursor: default; }
+
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 26px 20px;
+    border: 2px dashed var(--border-color-light);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-align: center;
+    cursor: pointer;
+}
+
+.dropzoneActive { border-color: var(--tech-blue); background: var(--accent-blue-light); }
+
+.textarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    resize: vertical;
+    box-sizing: border-box;
+    tab-size: 2;
+}
+
+.textarea:focus-visible { outline: 2px solid var(--tech-blue); outline-offset: 1px; }
+
+.counts {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+}
+
+.countValue { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.banner {
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--tech-blue);
+    border-radius: 0 8px 8px 0;
+    background: var(--bg-secondary);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.bannerError { border-left-color: var(--color-red-500, #ef4444); }
+.bannerOk { border-left-color: var(--color-green-600, #15803d); }
+
+.bannerTitle {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tech-blue);
+    margin-bottom: 5px;
+}
+
+.bannerError .bannerTitle { color: var(--color-red-500, #ef4444); }
+.bannerOk .bannerTitle { color: var(--color-green-600, #15803d); }
+
+.pre {
+    margin: 6px 0 0;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-secondary);
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 11px 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    background: var(--bg-card);
+}
+
+.statLabel {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.statValue {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.warnList { margin: 6px 0 0; padding-left: 1.1em; }
+.warnList li { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 3px; }
+
+.hiddenInput { display: none; }

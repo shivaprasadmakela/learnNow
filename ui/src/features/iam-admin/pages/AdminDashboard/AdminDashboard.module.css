@@ -94,3 +94,8 @@
         gap: 20px;
     }
 }
+
+/* The tab bar itself comes from shared/components/ui/Tabs; this is only its placement. */
+.studioTabs {
+    margin-bottom: 22px;
+}

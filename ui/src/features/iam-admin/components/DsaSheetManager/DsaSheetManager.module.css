@@ -1,0 +1,159 @@
+.wrap { display: flex; flex-direction: column; gap: 14px; }
+
+.sheetHead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 11px;
+    background: var(--bg-card);
+    flex-wrap: wrap;
+}
+
+.sheetTitle { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+
+.badge {
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.badgeDraft { color: var(--color-yellow-600, #b45309); }
+.badgePublished { color: var(--color-green-600, #15803d); }
+
+.spacer { margin-left: auto; }
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.btn:hover:not(:disabled) { border-color: var(--tech-blue); color: var(--tech-blue); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+.step {
+    border: 1px solid var(--border-color);
+    border-radius: 11px;
+    background: var(--bg-card);
+    overflow: hidden;
+}
+
+.stepHead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+}
+
+.stepHead:hover { background: var(--bg-secondary); }
+
+.stepIndex {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--tech-blue);
+    flex: none;
+}
+
+.stepTitle { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+
+.stepMeta { margin-left: auto; font-size: 0.75rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+.table { border-top: 1px solid var(--border-color); }
+
+.sectionLabel {
+    padding: 8px 15px;
+    background: var(--bg-secondary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.row:last-child { border-bottom: none; }
+
+.rowMain { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.rowTitle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.87rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex-wrap: wrap;
+}
+
+.slug {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+}
+
+.flags { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.72rem; }
+
+.flag { display: inline-flex; align-items: center; gap: 4px; color: var(--text-tertiary); }
+.flagWarn { color: var(--color-yellow-600, #b45309); }
+.flagBad { color: var(--color-red-500, #ef4444); }
+.flagOk { color: var(--color-green-600, #15803d); }
+
+.rowActions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+.state { padding: 30px 0; text-align: center; font-size: 0.87rem; color: var(--text-tertiary); }
+
+.banner {
+    padding: 11px 14px;
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--tech-blue);
+    border-radius: 0 8px 8px 0;
+    background: var(--bg-secondary);
+    font-size: 0.83rem;
+    color: var(--text-secondary);
+}
+
+.bannerBad { border-left-color: var(--color-red-500, #ef4444); }
+.bannerOk { border-left-color: var(--color-green-600, #15803d); }
+
+.pre {
+    margin: 5px 0 0;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.72rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+@media (max-width: 700px) {
+    .row { grid-template-columns: 1fr; }
+    .rowActions { justify-content: flex-start; }
+}

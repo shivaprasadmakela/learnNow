@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ShieldCheck, Plus, BookOpen, Upload } from 'lucide-react';
+import { ShieldCheck, Plus, BookOpen, Upload, FileJson, Layers, GraduationCap } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { Loader } from '../../../../shared/components/ui/Loader';
@@ -7,7 +7,10 @@ import { LearningCard } from '../../../../shared/components/cards';
 import { InfiniteScrollSentinel } from '../../../../shared/components/ui/InfiniteScrollSentinel';
 import { DEFAULT_PAGE_SIZE } from '../../../../shared/api/pagination';
 import { fetchAdminPathsPage, deleteAdminPath, type AdminPathData } from '../../api/admin.api';
+import { Tabs } from '../../../../shared/components/ui/Tabs';
 import { ConfirmDeleteModal } from '../../components/ConfirmDeleteModal';
+import { DsaImporter } from '../../components/DsaImporter';
+import { DsaSheetManager } from '../../components/DsaSheetManager';
 
 interface AdminDashboardProps {
     onNavigateCreate: () => void;
@@ -27,6 +30,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [hasMore, setHasMore] = useState<boolean>(false);
     const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
     const pageRef = useRef(0);
+
+    type AdminTab = 'courses' | 'dsa-import' | 'dsa-sheet';
+    const [tab, setTab] = useState<AdminTab>('courses');
+    /** Bumped after an import so the sheet tab reloads without a remount. */
+    const [dsaToken, setDsaToken] = useState(0);
 
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -94,6 +102,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <ShieldCheck size={28} color="var(--tech-blue)" />
                     Course Authoring Studio
                 </div>
+                {tab === 'courses' && (
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                         type="button"
@@ -112,9 +121,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <Plus size={18} /> Create Course
                     </button>
                 </div>
+                )}
             </div>
 
-            {isLoading ? (
+            <Tabs
+                items={[
+                    { id: 'courses', label: 'Courses', icon: <GraduationCap size={16} /> },
+                    { id: 'dsa-import', label: 'DSA · Import JSON', icon: <FileJson size={16} /> },
+                    { id: 'dsa-sheet', label: 'DSA · Sheet', icon: <Layers size={16} /> }
+                ]}
+                activeId={tab}
+                onChange={setTab}
+                variant="compact"
+                label="Authoring sections"
+                className={styles.studioTabs}
+            />
+
+            {tab === 'dsa-import' && (
+                <DsaImporter
+                    onImported={() => {
+                        setDsaToken(n => n + 1);
+                        setTab('dsa-sheet');
+                    }}
+                />
+            )}
+
+            {tab === 'dsa-sheet' && <DsaSheetManager refreshToken={dsaToken} />}
+
+            {tab === 'courses' && (isLoading ? (
                 <Loader variant="inline" text="Loading course catalog..." showColdStartFunnyMessages={true} />
             ) : paths.length === 0 ? (
                 <EmptyState
@@ -152,7 +186,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         loadMoreLabel="Load more courses"
                     />
                 </div>
-            )}
+            ))}
 
             <ConfirmDeleteModal
                 isOpen={Boolean(deleteTarget)}

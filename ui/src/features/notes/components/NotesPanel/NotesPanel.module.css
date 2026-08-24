@@ -124,3 +124,38 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* ─── inline variant ───
+ * Fills its container rather than sliding over one. Used where the note editor is already a pane
+ * the learner navigated to, so the drawer chrome would be redundant.
+ */
+.notesInline {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+}
+
+.notesInline .notesPanelBody { padding: 0; }
+
+.notesInline .plainTextarea {
+    min-height: 240px;
+    height: auto;
+    resize: vertical;
+}
+
+/* Status colours, previously inline styles repeated at each usage. */
+.statusSaving,
+.statusSaved,
+.statusError,
+.statusHint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+}
+
+.statusSaving { color: var(--tech-blue); }
+.statusSaved { color: var(--tech-green); }
+.statusError { color: var(--tech-red); }
+.statusHint { color: var(--text-tertiary); }

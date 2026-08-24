@@ -290,6 +290,23 @@
     font-family: var(--font-family-display);
 }
 
+/*
+ * For a view that owns its own scrolling and wants every remaining pixel: fills the row beside the
+ * sidebar, adds no padding, and clips rather than scrolling. min-width:0 is the load-bearing part -
+ * without it a flex item sizes to its content's intrinsic width and stops short of the viewport,
+ * which is exactly how the problem workspace ended up occupying two thirds of the screen.
+ */
+.mainContentFlush {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    height: calc(100vh - 72px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--bg-tertiary);
+}
+
 .appLayoutStudy {
     display: flex;
     flex-grow: 1;

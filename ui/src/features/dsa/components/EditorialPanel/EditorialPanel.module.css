@@ -1,0 +1,116 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px 20px 40px;
+}
+
+.tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.tab:hover:not(:disabled) { border-color: var(--tech-blue); color: var(--tech-blue); }
+
+.tabActive {
+    background: var(--tech-blue);
+    border-color: var(--tech-blue);
+    color: #ffffff;
+}
+
+.tabActive:hover { color: #ffffff; }
+
+.tabLocked {
+    opacity: 0.5;
+    cursor: default;
+    border-style: dashed;
+}
+
+.complexity {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 5px 11px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    font-size: 0.8rem;
+}
+
+.chipLabel {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.chipValue {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.gate {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 22px;
+    border: 1px dashed var(--border-color-light);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+}
+
+.gateText {
+    margin: 0;
+    max-width: 52ch;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.gateBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--tech-blue);
+    color: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.empty {
+    padding: 30px 0;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--text-tertiary);
+}

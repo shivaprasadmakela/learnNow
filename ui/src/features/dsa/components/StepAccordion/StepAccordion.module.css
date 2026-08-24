@@ -1,0 +1,117 @@
+.step {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-card);
+    overflow: hidden;
+}
+
+
+
+
+
+.titleGroup { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.index {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tech-blue);
+}
+
+.title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.description {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.bar {
+    width: 84px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-tertiary);
+    overflow: hidden;
+}
+
+.barFill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--tech-blue);
+    transition: width 0.25s ease;
+}
+
+.barFillDone { background: var(--color-green-600, #15803d); }
+
+.body { border-top: 1px solid var(--border-color); }
+
+.empty {
+    padding: 20px 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+
+@media (max-width: 640px) {
+    .description { display: none; }
+    .bar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chevron, .barFill { transition: none; }
+}
+
+/* ─── Section heading ───
+ * The middle level of the sheet: steps contain sections contain problems. Rendered only when a step
+ * actually groups its problems — a single unnamed section is the flat case and gets no heading.
+ */
+.sectionHeading {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    padding: 10px 15px 10px 43px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.sectionCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}

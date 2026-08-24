@@ -1,0 +1,686 @@
+{
+  "sheetSlug": "learnnow-dsa-a2z",
+  "sheetTitle": "learnNow DSA, A to Z",
+  "sheetDescription": "Every problem with a written explanation, a video walkthrough, and an editor that checks your answer.",
+  "playlistUrl": "https://www.youtube.com/playlist?list=REPLACE_WITH_FULL_PLAYLIST_ID",
+  "steps": [
+    {
+      "slug": "test-drive",
+      "orderIndex": 99,
+      "title": "Test Drive",
+      "description": "Ten problems for exercising the module end to end. Delete the step once you are happy.",
+      "sections": [
+        {
+          "title": "Input, output and arithmetic",
+          "orderIndex": 1,
+          "problems": [
+            {
+              "slug": "td-print-number",
+              "title": "Print a Number",
+              "difficulty": "EASY",
+              "estimatedMinutes": 5,
+              "tags": [
+                "basics",
+                "io"
+              ],
+              "statement": "Read a single integer and print it.\n\nThis one exists to prove the plumbing works: input arrives, output is compared, the verdict comes back.\n\n**Constraints**\n\n- `-1000 <= n <= 1000`",
+              "status": "PUBLISHED",
+              "hints": [
+                "Read into an int, then print it with nothing around it."
+              ],
+              "check": {
+                "prompt": "If the input is 0, what is the output?",
+                "options": [
+                  "5",
+                  "6",
+                  "7",
+                  "0"
+                ],
+                "correctAnswer": "0",
+                "explanation": "Nothing is transformed \u2014 what comes in goes back out, zero included."
+              },
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Read one integer, print it. There is no algorithm here; the cost of the problem is knowing where input comes from.",
+                  "timeComplexity": "O(1)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        cout << n;\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        cout << n;\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "7\n",
+                  "expectedOutput": "7",
+                  "isSample": true,
+                  "explanation": "Echoed straight back."
+                },
+                {
+                  "input": "-5\n",
+                  "expectedOutput": "-5",
+                  "isSample": true
+                },
+                {
+                  "input": "0\n",
+                  "expectedOutput": "0",
+                  "isSample": false
+                },
+                {
+                  "input": "1000\n",
+                  "expectedOutput": "1000",
+                  "isSample": false
+                }
+              ]
+            },
+            {
+              "slug": "td-sum-of-two",
+              "title": "Sum of Two Numbers",
+              "difficulty": "EASY",
+              "estimatedMinutes": 5,
+              "tags": [
+                "basics",
+                "io"
+              ],
+              "statement": "Read two integers on one line and print their sum.\n\n**Constraints**\n\n- `-10^9 <= a, b <= 10^9`\n- The sum does not fit in a signed 32-bit integer.",
+              "status": "PUBLISHED",
+              "hints": [
+                "Two successive reads happily cross a space; you do not need to split by hand.",
+                "Both inputs fit in 32 bits. Their sum does not."
+              ],
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Read, add, print. The only trap is the type: two values near 10^9 sum to near 2\u00d710^9, which overflows a signed 32-bit integer and wraps to a negative number.",
+                  "timeComplexity": "O(1)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        long long a, b; cin >> a >> b;\n        cout << a + b;\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        long long a, b; cin >> a >> b;\n        cout << a + b;\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "2 3\n",
+                  "expectedOutput": "5",
+                  "isSample": true
+                },
+                {
+                  "input": "-4 9\n",
+                  "expectedOutput": "5",
+                  "isSample": true,
+                  "explanation": "Signs need no special handling."
+                },
+                {
+                  "input": "0 0\n",
+                  "expectedOutput": "0",
+                  "isSample": false
+                },
+                {
+                  "input": "1000000000 1000000000\n",
+                  "expectedOutput": "2000000000",
+                  "isSample": false
+                },
+                {
+                  "input": "-1000000000 -1000000000\n",
+                  "expectedOutput": "-2000000000",
+                  "isSample": false
+                }
+              ]
+            },
+            {
+              "slug": "td-count-digits",
+              "title": "Count Digits",
+              "difficulty": "EASY",
+              "estimatedMinutes": 8,
+              "tags": [
+                "math"
+              ],
+              "statement": "Given an integer `n`, print how many digits it has.\n\n**Constraints**\n\n- `0 <= n <= 10^9`\n\nNote that `0` has one digit, which is the case a loop written the obvious way gets wrong.",
+              "status": "PUBLISHED",
+              "hints": [
+                "Repeatedly dividing by 10 counts digits \u2014 but check what your loop does when n is already 0.",
+                "A while loop that tests `n > 0` never runs for n = 0, so it returns a count of zero."
+              ],
+              "check": {
+                "prompt": "How many digits does 0 have?",
+                "options": [
+                  "0",
+                  "1",
+                  "undefined",
+                  "10"
+                ],
+                "correctAnswer": "1",
+                "explanation": "It is written with a single digit. A `while (n > 0)` loop returns 0 for it, which is the classic off-by-one here."
+              },
+              "approaches": [
+                {
+                  "kind": "BRUTE",
+                  "intuition": "Convert to a string and take its length. Correct, and fine at this size, but it allocates and it hides the arithmetic the problem is actually about.",
+                  "timeComplexity": "O(log n)",
+                  "spaceComplexity": "O(log n)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        long long n; cin >> n;\n        cout << to_string(n).size();\n    }\n};"
+                },
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Divide by ten until nothing is left, counting as you go. Handle 0 as its own case first, because the loop condition excludes it.\n\nEach division removes one digit, so this runs in a number of steps proportional to the digit count \u2014 log base 10 of n.",
+                  "timeComplexity": "O(log n)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        long long n; cin >> n;\n        if (n == 0) { cout << 1; return; }\n        int count = 0;\n        while (n > 0) { n /= 10; count++; }\n        cout << count;\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        long long n; cin >> n;\n        if (n == 0) { cout << 1; return; }\n        int count = 0;\n        while (n > 0) { n /= 10; count++; }\n        cout << count;\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "7\n",
+                  "expectedOutput": "1",
+                  "isSample": true
+                },
+                {
+                  "input": "12345\n",
+                  "expectedOutput": "5",
+                  "isSample": true
+                },
+                {
+                  "input": "0\n",
+                  "expectedOutput": "1",
+                  "isSample": false,
+                  "explanation": "The case a `while (n > 0)` loop gets wrong."
+                },
+                {
+                  "input": "1000000000\n",
+                  "expectedOutput": "10",
+                  "isSample": false
+                }
+              ]
+            },
+            {
+              "slug": "td-reverse-number",
+              "title": "Reverse a Number",
+              "difficulty": "EASY",
+              "estimatedMinutes": 10,
+              "tags": [
+                "math"
+              ],
+              "statement": "Given an integer `n`, print its digits in reverse order. Leading zeros in the result are dropped, so reversing `120` gives `21`.\n\n**Constraints**\n\n- `0 <= n <= 10^9`",
+              "status": "PUBLISHED",
+              "hints": [
+                "Peel the last digit off with `% 10` and drop it with `/= 10`.",
+                "Build the answer as you go: multiply the accumulator by ten before adding each digit."
+              ],
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Take the last digit with `n % 10`, push it onto the end of an accumulator by multiplying that accumulator by ten first, then drop the digit with `n /= 10`.\n\nDropping leading zeros happens for free: `120` peels to `0`, `2`, `1`, and the accumulator goes `0`, `2`, `21`. A leading zero contributes nothing when it is the first thing multiplied.",
+                  "timeComplexity": "O(log n)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        long long n; cin >> n;\n        long long rev = 0;\n        while (n > 0) { rev = rev * 10 + n % 10; n /= 10; }\n        cout << rev;\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        long long n; cin >> n;\n        long long rev = 0;\n        while (n > 0) { rev = rev * 10 + n % 10; n /= 10; }\n        cout << rev;\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "1234\n",
+                  "expectedOutput": "4321",
+                  "isSample": true
+                },
+                {
+                  "input": "120\n",
+                  "expectedOutput": "21",
+                  "isSample": true,
+                  "explanation": "The trailing zero becomes a leading one, and leading zeros are dropped."
+                },
+                {
+                  "input": "0\n",
+                  "expectedOutput": "0",
+                  "isSample": false
+                },
+                {
+                  "input": "1000000000\n",
+                  "expectedOutput": "1",
+                  "isSample": false
+                }
+              ]
+            },
+            {
+              "slug": "td-palindrome-number",
+              "title": "Palindrome Number",
+              "difficulty": "EASY",
+              "estimatedMinutes": 8,
+              "tags": [
+                "math"
+              ],
+              "statement": "Given an integer `n`, print `true` if it reads the same forwards and backwards, and `false` otherwise.\n\nPrint the words lowercase, exactly.\n\n**Constraints**\n\n- `0 <= n <= 10^9`",
+              "status": "PUBLISHED",
+              "hints": [
+                "You already know how to reverse a number.",
+                "Compare the reversal to the original \u2014 but keep a copy, because reversing destroys it."
+              ],
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Reverse the number and compare. The one thing to be careful about is that the reversing loop consumes `n`, so take a copy before you start rather than after.",
+                  "timeComplexity": "O(log n)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        long long n; cin >> n;\n        long long original = n, rev = 0;\n        while (n > 0) { rev = rev * 10 + n % 10; n /= 10; }\n        cout << (rev == original ? \"true\" : \"false\");\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        long long n; cin >> n;\n        long long original = n, rev = 0;\n        while (n > 0) { rev = rev * 10 + n % 10; n /= 10; }\n        cout << (rev == original ? \"true\" : \"false\");\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "121\n",
+                  "expectedOutput": "true",
+                  "isSample": true
+                },
+                {
+                  "input": "123\n",
+                  "expectedOutput": "false",
+                  "isSample": true
+                },
+                {
+                  "input": "7\n",
+                  "expectedOutput": "true",
+                  "isSample": false,
+                  "explanation": "A single digit is trivially a palindrome."
+                },
+                {
+                  "input": "1000000001\n",
+                  "expectedOutput": "true",
+                  "isSample": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Arrays",
+          "orderIndex": 2,
+          "problems": [
+            {
+              "slug": "td-array-sum",
+              "title": "Sum of an Array",
+              "difficulty": "EASY",
+              "estimatedMinutes": 8,
+              "tags": [
+                "arrays"
+              ],
+              "statement": "The first line gives `n`, the number of elements. The second line gives `n` integers. Print their sum.\n\n**Constraints**\n\n- `1 <= n <= 10^5`\n- `-10^9 <= arr[i] <= 10^9`\n\nWith `n` at its maximum and every element at its, the sum needs more than 32 bits.",
+              "status": "PUBLISHED",
+              "hints": [
+                "Read n first, then loop exactly n times.",
+                "10^5 elements of 10^9 each is 10^14 \u2014 well past a 32-bit integer."
+              ],
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "One pass, one accumulator. There is nothing to optimise about the traversal; the whole risk is the accumulator's width. 10^5 \u00d7 10^9 is 10^14, which overflows int and wraps silently.",
+                  "timeComplexity": "O(n)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        long long total = 0, x;\n        for (int i = 0; i < n; i++) { cin >> x; total += x; }\n        cout << total;\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        long long total = 0, x;\n        for (int i = 0; i < n; i++) { cin >> x; total += x; }\n        cout << total;\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "5\n1 2 3 4 5\n",
+                  "expectedOutput": "15",
+                  "isSample": true
+                },
+                {
+                  "input": "3\n-1 -2 -3\n",
+                  "expectedOutput": "-6",
+                  "isSample": true
+                },
+                {
+                  "input": "1\n0\n",
+                  "expectedOutput": "0",
+                  "isSample": false
+                },
+                {
+                  "input": "4\n1000000000 1000000000 1000000000 1000000000\n",
+                  "expectedOutput": "4000000000",
+                  "isSample": false,
+                  "explanation": "Overflows a 32-bit accumulator."
+                }
+              ]
+            },
+            {
+              "slug": "td-largest-element",
+              "title": "Largest Element",
+              "difficulty": "EASY",
+              "estimatedMinutes": 8,
+              "tags": [
+                "arrays"
+              ],
+              "statement": "The first line gives `n`. The second gives `n` integers. Print the largest.\n\n**Constraints**\n\n- `1 <= n <= 10^5`\n- `-10^9 <= arr[i] <= 10^9`\n\nEvery element may be negative, which rules out one popular way of initialising the answer.",
+              "status": "PUBLISHED",
+              "hints": [
+                "Initialising your running maximum to 0 breaks the moment every element is negative.",
+                "Start from the first element instead, then compare the rest against it."
+              ],
+              "check": {
+                "prompt": "Why is initialising the running maximum to 0 wrong here?",
+                "options": [
+                  "It is slower",
+                  "It returns 0 when every element is negative",
+                  "It overflows",
+                  "It only works for sorted input"
+                ],
+                "correctAnswer": "It returns 0 when every element is negative",
+                "explanation": "0 is larger than every element, so nothing ever replaces it and the answer is a value that was never in the array."
+              },
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Seed the answer with the first element \u2014 a value that is definitely in the array \u2014 then walk the rest, keeping whichever is larger.\n\nSeeding with 0 or with 1 is the standard bug: both are values that may not be in the array at all, and if every element is below the seed the function returns something that was never there.",
+                  "timeComplexity": "O(n)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        long long best, x;\n        cin >> best;\n        for (int i = 1; i < n; i++) { cin >> x; best = max(best, x); }\n        cout << best;\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        long long best, x;\n        cin >> best;\n        for (int i = 1; i < n; i++) { cin >> x; best = max(best, x); }\n        cout << best;\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "5\n3 9 2 9 1\n",
+                  "expectedOutput": "9",
+                  "isSample": true,
+                  "explanation": "Ties are not special \u2014 the maximum is still 9."
+                },
+                {
+                  "input": "4\n-7 -3 -9 -1\n",
+                  "expectedOutput": "-1",
+                  "isSample": true,
+                  "explanation": "Where a zero-seeded answer goes wrong."
+                },
+                {
+                  "input": "1\n42\n",
+                  "expectedOutput": "42",
+                  "isSample": false
+                },
+                {
+                  "input": "3\n-1000000000 -1000000000 -1000000000\n",
+                  "expectedOutput": "-1000000000",
+                  "isSample": false
+                }
+              ]
+            },
+            {
+              "slug": "td-second-largest",
+              "title": "Second Largest Element",
+              "difficulty": "MEDIUM",
+              "estimatedMinutes": 15,
+              "tags": [
+                "arrays"
+              ],
+              "statement": "The first line gives `n`. The second gives `n` integers. Print the second largest **distinct** value, or `-1` if there is no such value.\n\nSo `[3, 9, 2, 9]` gives `3`, not `9` \u2014 the two nines are the same value.\n\n**Constraints**\n\n- `1 <= n <= 10^5`\n- `-10^9 <= arr[i] <= 10^9`",
+              "status": "PUBLISHED",
+              "hints": [
+                "Sorting works, but it does more than you need \u2014 you only want two values.",
+                "Track the largest and the second largest in one pass. The order of the two comparisons matters.",
+                "When a new element beats the largest, the old largest becomes the second \u2014 do not overwrite both at once."
+              ],
+              "approaches": [
+                {
+                  "kind": "BRUTE",
+                  "intuition": "Sort descending, then walk forward until you find a value different from the first. Correct and easy to reason about, and O(n log n) for an answer you can get in one pass.",
+                  "timeComplexity": "O(n log n)",
+                  "spaceComplexity": "O(n)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        vector<long long> a(n);\n        for (auto &x : a) cin >> x;\n        sort(a.rbegin(), a.rend());\n        for (int i = 1; i < n; i++)\n            if (a[i] != a[0]) { cout << a[i]; return; }\n        cout << -1;\n    }\n};"
+                },
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Keep two running values: the largest seen, and the largest strictly below it.\n\nThe ordering of the two branches is the whole trick. When an element beats the current largest, the *old* largest becomes the second largest \u2014 so you must copy before you overwrite. When it only beats the second largest, and is not equal to the largest, it replaces the second. Anything else is ignored.\n\nThe strict inequality is what makes duplicates fall out: an element equal to the largest satisfies neither branch.",
+                  "timeComplexity": "O(n)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        const long long NONE = LLONG_MIN;\n        long long largest = NONE, second = NONE, x;\n        for (int i = 0; i < n; i++) {\n            cin >> x;\n            if (largest == NONE || x > largest) { second = largest; largest = x; }\n            else if (x < largest && (second == NONE || x > second)) second = x;\n        }\n        cout << (second == NONE ? -1 : second);\n    }\n};"
+                }
+              ],
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        int n; cin >> n;\n        const long long NONE = LLONG_MIN;\n        long long largest = NONE, second = NONE, x;\n        for (int i = 0; i < n; i++) {\n            cin >> x;\n            if (largest == NONE || x > largest) { second = largest; largest = x; }\n            else if (x < largest && (second == NONE || x > second)) second = x;\n        }\n        cout << (second == NONE ? -1 : second);\n    }\n};"
+                }
+              },
+              "testCases": [
+                {
+                  "input": "5\n1 2 4 7 7\n",
+                  "expectedOutput": "4",
+                  "isSample": true,
+                  "explanation": "The duplicated 7 does not count as the second largest."
+                },
+                {
+                  "input": "4\n3 9 2 9\n",
+                  "expectedOutput": "3",
+                  "isSample": true
+                },
+                {
+                  "input": "1\n5\n",
+                  "expectedOutput": "-1",
+                  "isSample": false,
+                  "explanation": "One element, so no second largest."
+                },
+                {
+                  "input": "3\n4 4 4\n",
+                  "expectedOutput": "-1",
+                  "isSample": false,
+                  "explanation": "All equal, so no distinct second."
+                },
+                {
+                  "input": "4\n-1 -2 -3 -4\n",
+                  "expectedOutput": "-2",
+                  "isSample": false
+                }
+              ]
+            }
+          ],
+          "sections": [
+            {
+              "title": "Searching",
+              "orderIndex": 1,
+              "problems": [
+                {
+                  "slug": "td-linear-search",
+                  "title": "Linear Search",
+                  "difficulty": "EASY",
+                  "estimatedMinutes": 8,
+                  "tags": [
+                    "arrays",
+                    "searching"
+                  ],
+                  "statement": "The first line gives `n` and `target`. The second gives `n` integers. Print the index of the **first** occurrence of `target`, zero-based, or `-1` if it is absent.\n\n**Constraints**\n\n- `1 <= n <= 10^5`",
+                  "status": "PUBLISHED",
+                  "hints": [
+                    "Return as soon as you find it \u2014 carrying on would give you the last occurrence, not the first."
+                  ],
+                  "approaches": [
+                    {
+                      "kind": "OPTIMAL",
+                      "intuition": "Walk left to right and stop at the first match. Stopping is what makes it the *first* occurrence: a loop that keeps going and overwrites its answer ends up reporting the last one instead.",
+                      "timeComplexity": "O(n)",
+                      "spaceComplexity": "O(1)",
+                      "language": "cpp",
+                      "code": "class Solution {\npublic:\n    void solve() {\n        int n; long long target; cin >> n >> target;\n        long long x; int found = -1;\n        for (int i = 0; i < n; i++) {\n            cin >> x;\n            if (found == -1 && x == target) found = i;\n        }\n        cout << found;\n    }\n};"
+                    }
+                  ],
+                  "harnesses": {
+                    "cpp": {
+                      "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                      "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                      "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        int n; long long target; cin >> n >> target;\n        long long x; int found = -1;\n        for (int i = 0; i < n; i++) {\n            cin >> x;\n            if (found == -1 && x == target) found = i;\n        }\n        cout << found;\n    }\n};"
+                    }
+                  },
+                  "testCases": [
+                    {
+                      "input": "5 4\n1 3 4 4 9\n",
+                      "expectedOutput": "2",
+                      "isSample": true,
+                      "explanation": "First occurrence, not the second."
+                    },
+                    {
+                      "input": "4 7\n1 2 3 4\n",
+                      "expectedOutput": "-1",
+                      "isSample": true
+                    },
+                    {
+                      "input": "1 5\n5\n",
+                      "expectedOutput": "0",
+                      "isSample": false
+                    },
+                    {
+                      "input": "3 1\n1 1 1\n",
+                      "expectedOutput": "0",
+                      "isSample": false
+                    }
+                  ]
+                }
+              ],
+              "sections": [
+                {
+                  "title": "Binary search",
+                  "orderIndex": 1,
+                  "problems": [
+                    {
+                      "slug": "td-lower-bound",
+                      "title": "Lower Bound",
+                      "difficulty": "MEDIUM",
+                      "estimatedMinutes": 15,
+                      "tags": [
+                        "binary-search",
+                        "arrays"
+                      ],
+                      "statement": "The first line gives `n` and `x`. The second gives `n` integers in non-decreasing order.\n\nPrint the smallest index `i` such that `arr[i] >= x`. If no element satisfies that, print `n`.\n\n**Constraints**\n\n- `1 <= n <= 10^5`\n- The array is sorted non-decreasing.",
+                      "status": "PUBLISHED",
+                      "hints": [
+                        "What does it mean for an index to be a *candidate* answer?",
+                        "If `arr[mid] >= x`, can anything to the right of `mid` be a better answer?",
+                        "Keep the best candidate you have seen and keep shrinking the search space \u2014 do not try to return from inside the loop."
+                      ],
+                      "check": {
+                        "prompt": "For arr = [1, 2, 4, 4, 7] and x = 4, what is the lower bound index?",
+                        "options": [
+                          "1",
+                          "2",
+                          "3",
+                          "4"
+                        ],
+                        "correctAnswer": "2",
+                        "explanation": "The first element that is at least 4 sits at index 2. The second 4, at index 3, is a valid element but not the smallest such index."
+                      },
+                      "approaches": [
+                        {
+                          "kind": "BRUTE",
+                          "intuition": "Walk left to right and stop at the first element that is at least `x`. Correct, and O(n) \u2014 which throws away the sortedness that is the whole point of the problem.",
+                          "timeComplexity": "O(n)",
+                          "spaceComplexity": "O(1)",
+                          "language": "cpp",
+                          "code": "class Solution {\npublic:\n    void solve() {\n        int n; long long x; cin >> n >> x;\n        vector<long long> a(n);\n        for (auto &v : a) cin >> v;\n        for (int i = 0; i < n; i++)\n            if (a[i] >= x) { cout << i; return; }\n        cout << n;\n    }\n};"
+                        },
+                        {
+                          "kind": "OPTIMAL",
+                          "intuition": "Binary search, but on the *answer* rather than on a match.\n\nHold a running best candidate, initialised to `n` \u2014 the answer when nothing qualifies. At each step, if `arr[mid] >= x` then `mid` is a valid answer, so record it and look further left for a smaller index. Otherwise everything at or left of `mid` is too small, so move right.\n\nThe reason this is not the usual find-the-element binary search is that there may be no element equal to `x` at all, and there may be several. Recording-and-continuing handles both without special cases.",
+                          "timeComplexity": "O(log n)",
+                          "spaceComplexity": "O(1)",
+                          "language": "cpp",
+                          "code": "class Solution {\npublic:\n    void solve() {\n        int n; long long x; cin >> n >> x;\n        vector<long long> a(n);\n        for (auto &v : a) cin >> v;\n        int low = 0, high = n - 1, answer = n;\n        while (low <= high) {\n            int mid = low + (high - low) / 2;\n            if (a[mid] >= x) { answer = mid; high = mid - 1; }\n            else low = mid + 1;\n        }\n        cout << answer;\n    }\n};"
+                        }
+                      ],
+                      "harnesses": {
+                        "cpp": {
+                          "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                          "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _c;\n    if (!(cin >> _c)) return 0;\n    while (_c--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                          "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        int n; long long x; cin >> n >> x;\n        vector<long long> a(n);\n        for (auto &v : a) cin >> v;\n        int low = 0, high = n - 1, answer = n;\n        while (low <= high) {\n            int mid = low + (high - low) / 2;\n            if (a[mid] >= x) { answer = mid; high = mid - 1; }\n            else low = mid + 1;\n        }\n        cout << answer;\n    }\n};"
+                        }
+                      },
+                      "testCases": [
+                        {
+                          "input": "5 4\n1 2 4 4 7\n",
+                          "expectedOutput": "2",
+                          "isSample": true,
+                          "explanation": "The first element at least 4 is at index 2."
+                        },
+                        {
+                          "input": "3 5\n1 1 1\n",
+                          "expectedOutput": "3",
+                          "isSample": true,
+                          "explanation": "Nothing qualifies, so the answer is n."
+                        },
+                        {
+                          "input": "1 7\n7\n",
+                          "expectedOutput": "0",
+                          "isSample": false
+                        },
+                        {
+                          "input": "4 0\n1 2 3 4\n",
+                          "expectedOutput": "0",
+                          "isSample": false,
+                          "explanation": "Everything qualifies, so the smallest index does."
+                        },
+                        {
+                          "input": "6 4\n4 4 4 4 4 4\n",
+                          "expectedOutput": "0",
+                          "isSample": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

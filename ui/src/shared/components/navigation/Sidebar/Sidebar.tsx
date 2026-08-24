@@ -10,6 +10,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     isLoggedIn,
     isPathsActive,
     onSelectPaths,
+    isDsaActive = false,
+    onSelectDsa,
     profile,
     setIsExpanded,
     onOpenDonationModal
@@ -45,6 +47,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     isExpanded={isExpanded}
                     onClick={() => handleNavClick(onSelectPaths)}
                 />
+                {onSelectDsa && (
+                    <SidebarNavItem
+                        iconClass="fa-solid fa-layer-group"
+                        label="DSA Sheet"
+                        isActive={isDsaActive}
+                        isExpanded={isExpanded}
+                        onClick={() => handleNavClick(onSelectDsa)}
+                    />
+                )}
                 <SidebarNavItem
                     iconClass="fa-solid fa-code"
                     label="Compiler"

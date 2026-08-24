@@ -12,6 +12,7 @@ import { StreakCalendar } from '../components/StreakCalendar';
 import { WeeklyLeagueBoard } from '../components/WeeklyLeagueBoard';
 import { OverallProgress } from '../components/OverallProgress';
 import { BrandFooter } from '../components/BrandFooter';
+import { DsaProgressTile } from '../components/DsaProgressTile';
 
 import type { Course } from '../../../types';
 
@@ -27,6 +28,8 @@ export interface DashboardProps {
     setActiveTab?: (tab: 'activities' | 'paths' | 'bookmarks') => void;
     onSelectPath: (pathId: number) => void;
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
+    onOpenDsaSheet?: () => void;
+    onOpenDsaProblem?: (stepSlug: string, problemSlug: string) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
 }
 
@@ -42,6 +45,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setActiveTab,
     onSelectPath,
     onSelectRecentTopic,
+    onOpenDsaSheet,
+    onOpenDsaProblem,
     onMetricsLoaded
 }) => {
     const { dashboardData, isLoading, error } = useDashboard();
@@ -162,6 +167,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         weeklyCalendar={weeklyCalendar}
                     />
                     <WeeklyLeagueBoard entries={weeklyLeaderboard} />
+                    {onOpenDsaSheet && onOpenDsaProblem && (
+                        <DsaProgressTile
+                            onOpenSheet={onOpenDsaSheet}
+                            onOpenProblem={onOpenDsaProblem}
+                        />
+                    )}
                     <OverallProgress
                         courses={courses}
                         streak={currentStreak}

@@ -12,12 +12,14 @@ const ProfileEditModal = React.lazy(() => import('../features/dashboard/componen
 const StudyConsole = React.lazy(() => import('../features/topics/components/StudyConsole/StudyConsole').then(m => ({ default: m.StudyConsole })));
 const PathCelebrationModal = React.lazy(() => import('./components/PathCelebrationModal').then(m => ({ default: m.PathCelebrationModal })));
 const BuyMeACoffeeModal = React.lazy(() => import('../features/donation/components/BuyMeACoffeeModal').then(m => ({ default: m.BuyMeACoffeeModal })));
+const DsaProblemPage = React.lazy(() => import('../features/dsa').then(m => ({ default: m.DsaProblemPage })));
 
 export default function App() {
     const {
         activeView,
         changeView,
         editingPathId,
+        dsaRoute,
         profile,
         isLoading,
         theme,
@@ -158,6 +160,18 @@ export default function App() {
         if (view === 'DASHBOARD') setDashboardTab('activities');
     };
 
+    const isDsaView =
+        activeView === 'DSA' || activeView === 'DSA_PROBLEM';
+
+    const handleSelectDsa = () => {
+        setIsPathsActive(false);
+        changeView('DSA');
+    };
+
+    const handleOpenDsaProblem = (stepSlug: string, problemSlug: string) => {
+        changeView('DSA_PROBLEM', stepSlug, problemSlug);
+    };
+
     const handleSelectPaths = () => {
         setIsPathsActive(true);
         setSelectedPathId(null);
@@ -253,13 +267,32 @@ export default function App() {
                         isLoggedIn={isLoggedIn}
                         isPathsActive={isPathsActive}
                         onSelectPaths={handleSelectPaths}
+                        isDsaActive={isDsaView}
+                        onSelectDsa={handleSelectDsa}
                         profile={profile}
                         onOpenDonationModal={() => setIsDonationModalOpen(true)}
                     />
                 )}
 
                 {/* Main Content View Switcher */}
-                {activeView === 'STUDY' ? (
+                {activeView === 'DSA_PROBLEM' ? (
+                    <main className={styles.mainContentFlush}>
+                    <Suspense fallback={null}>
+                        <DsaProblemPage
+                            problemSlug={dsaRoute.problemSlug || ''}
+                            isLoggedIn={isLoggedIn}
+                            onBackToSheet={() => changeView('DSA')}
+                            onNavigateProblem={handleOpenDsaProblem}
+                            onRequireLogin={() => changeView('LOGIN')}
+                            onOpenFullCompiler={(code, lang) => {
+                                const langId = lang.toLowerCase() === 'javascript' ? 'js' : lang.toLowerCase();
+                                localStorage.setItem(`compiler_draft_${langId}`, code);
+                                changeView('COMPILER');
+                            }}
+                        />
+                    </Suspense>
+                    </main>
+                ) : activeView === 'STUDY' ? (
                     activeTopic && !isStudyLoading ? (
                         <Suspense fallback={null}>
                             <StudyConsole
@@ -335,6 +368,7 @@ export default function App() {
                             signUp={signUp}
                             signInWithGoogle={signInWithGoogle}
                             handleSelectPath={handleSelectPath}
+                            onOpenDsaProblem={handleOpenDsaProblem}
                             handleSelectTopic={handleSelectTopic}
                             onSelectRecentTopic={handleSelectRecentTopic}
                             handleViewChange={handleViewChange}

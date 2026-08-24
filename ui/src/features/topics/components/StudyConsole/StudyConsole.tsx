@@ -9,7 +9,7 @@ import { isExecutableLanguage, formatExecutableCode } from '../../../../shared/u
 import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCodeBlock';
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { LevelBadge, TrackBadge, DurationBadge } from '../../../../shared/components/ui/Badge';
-import { useTopicNote, useBookmarks, BookmarkButton, TopicNotesPanel } from '../../../notes';
+import { useNote, useBookmarks, BookmarkButton, NotesPanel } from '../../../notes';
 import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
 import { TopicCelebrationModal } from '../TopicCelebrationModal/TopicCelebrationModal';
 import styles from './StudyConsole.module.css';
@@ -195,7 +195,7 @@ export function StudyConsole({
         saveStatus: topicNoteSaveStatus,
         isLoading: isTopicNoteLoading,
         saveNow: saveTopicNoteNow
-    } = useTopicNote(topic.id, isNotesDrawerOpen);
+    } = useNote('TOPIC', topic.id, isNotesDrawerOpen);
 
     const completedSubtopicsCount = subtopics.filter((s: SubtopicData) => s.isCompleted).length;
 
@@ -410,6 +410,8 @@ export function StudyConsole({
                                 isBookmarked={isBookmarked(topic.id)}
                                 onToggle={() => toggleBookmark(topic.id)}
                                 showLabel={false}
+                                targetNoun="topic"
+                                targetName={topic.title}
                             />
                             <button
                                 type="button"
@@ -635,7 +637,7 @@ export function StudyConsole({
                             </div>
 
                             {/* In-pane corner slider Topic Notes Panel */}
-                            <TopicNotesPanel
+                            <NotesPanel
                                 isOpen={isNotesDrawerOpen}
                                 title={`${topic.title} Notes`}
                                 content={topicNoteContent}

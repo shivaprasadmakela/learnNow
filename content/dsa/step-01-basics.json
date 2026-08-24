@@ -1,0 +1,129 @@
+{
+  "sheetSlug": "learnnow-dsa-a2z",
+  "sheetTitle": "learnNow DSA, A to Z",
+  "sheetDescription": "Every problem with a written explanation, a video walkthrough, and an editor that checks your answer.",
+  "playlistUrl": "https://www.youtube.com/playlist?list=REPLACE_WITH_FULL_PLAYLIST_ID",
+
+  "steps": [
+    {
+      "slug": "basics",
+      "orderIndex": 1,
+      "title": "Learn the Basics",
+      "description": "Reading input, printing output, and the shape of every problem that follows.",
+      "sections": [
+        {
+          "title": "Input and output",
+          "orderIndex": 1,
+          "problems": [
+            {
+              "slug": "print-a-number",
+              "title": "Print a Number",
+              "difficulty": "EASY",
+              "estimatedMinutes": 5,
+              "tags": ["basics", "io"],
+              "statement": "Complete `printNumber`, which reads a single integer from the input and prints it.\n\nThis one exists to get the mechanics out of the way: how you read input, how you print, and what the editor does when you press Run. Every problem after this assumes you have done it once.\n\n**Printing, by language**\n\n| Language | Statement |\n| --- | --- |\n| C++ | `cout << value;` |\n| Java | `System.out.print(value);` |\n| Python | `print(value)` |\n\n**Constraints**\n\n- `-1000 <= value <= 1000`",
+              "youtubeUrl": null,
+              "youtubePosition": 1,
+              "practiceUrl": null,
+              "practicePlatform": null,
+              "status": "PUBLISHED",
+
+              "hints": [
+                "You need to read the value before you can print it. In C++ that is `cin >> value`.",
+                "Print the value and nothing else — no label, no trailing text. The checker compares your output exactly."
+              ],
+
+              "check": {
+                "prompt": "If the input is 0, what should the output be?",
+                "options": ["5", "6", "7", "0"],
+                "correctAnswer": "0",
+                "explanation": "Nothing is being transformed — whatever comes in goes straight back out, zero included."
+              },
+
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Read one integer, print it. There is no algorithm here, which is the point: the whole cost of the problem is knowing where input comes from and where output goes.\n\nThe function reads its own input rather than taking a parameter, so you are seeing the raw shape of a competitive-programming main loop before we start hiding it behind signatures.",
+                  "timeComplexity": "O(1)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void printNumber() {\n        int value;\n        cin >> value;\n        cout << value;\n    }\n};"
+                }
+              ],
+
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void printNumber() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _cases;\n    if (!(cin >> _cases)) return 0;\n    while (_cases--) {\n        Solution _s;\n        _s.printNumber();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void printNumber() {\n        int value;\n        cin >> value;\n        cout << value;\n    }\n};"
+                },
+                "java": {
+                  "starterCode": "class Solution {\n    void printNumber(Scanner sc) {\n        \n    }\n}",
+                  "driverCode": "import java.util.*;\n\n{{USER_CODE}}\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int cases = sc.hasNextInt() ? sc.nextInt() : 0;\n        for (int i = 0; i < cases; i++) {\n            new Solution().printNumber(sc);\n            System.out.print(\"\\n<<<LN-CASE-END>>>\\n\");\n        }\n    }\n}\n",
+                  "referenceSolution": "class Solution {\n    void printNumber(Scanner sc) {\n        int value = sc.nextInt();\n        System.out.print(value);\n    }\n}"
+                },
+                "python": {
+                  "starterCode": "class Solution:\n    def printNumber(self):\n        pass",
+                  "driverCode": "{{USER_CODE}}\n\ndef _main():\n    try:\n        cases = int(input())\n    except (EOFError, ValueError):\n        return\n    for _ in range(cases):\n        Solution().printNumber()\n        print(\"\\n<<<LN-CASE-END>>>\")\n\n_main()\n",
+                  "referenceSolution": "class Solution:\n    def printNumber(self):\n        print(int(input()), end='')"
+                }
+              },
+
+              "testCases": [
+                { "input": "7\n", "expectedOutput": "7", "isSample": true, "explanation": "The value is echoed back with nothing around it." },
+                { "input": "-5\n", "expectedOutput": "-5", "isSample": true },
+                { "input": "0\n", "expectedOutput": "0", "isSample": false },
+                { "input": "1000\n", "expectedOutput": "1000", "isSample": false },
+                { "input": "-1000\n", "expectedOutput": "-1000", "isSample": false }
+              ]
+            },
+
+            {
+              "slug": "sum-of-two",
+              "title": "Sum of Two Numbers",
+              "difficulty": "EASY",
+              "estimatedMinutes": 5,
+              "tags": ["basics", "io"],
+              "statement": "Read two integers and print their sum.\n\nThe interesting part is not the addition. It is that the two values arrive on the same line, separated by a space, and your reader has to cope with that — which is how most input you will meet is shaped.\n\n**Constraints**\n\n- `-10^9 <= a, b <= 10^9`\n- The sum can exceed a 32-bit integer, so pick your type accordingly.",
+              "youtubeUrl": null,
+              "youtubePosition": 2,
+              "status": "PUBLISHED",
+
+              "hints": [
+                "Two successive reads from the same stream will happily cross a space — you do not need to split anything by hand.",
+                "Both inputs fit in 32 bits. Their sum does not. In C++ that means `long long`, in Java `long`."
+              ],
+
+              "approaches": [
+                {
+                  "kind": "OPTIMAL",
+                  "intuition": "Read both values, add, print. The only trap is the type: two values near 10^9 sum to near 2×10^9, which overflows a signed 32-bit integer and silently wraps to a negative number. Widening the accumulator is the whole problem.",
+                  "timeComplexity": "O(1)",
+                  "spaceComplexity": "O(1)",
+                  "language": "cpp",
+                  "code": "class Solution {\npublic:\n    void solve() {\n        long long a, b;\n        cin >> a >> b;\n        cout << a + b;\n    }\n};"
+                }
+              ],
+
+              "harnesses": {
+                "cpp": {
+                  "starterCode": "class Solution {\npublic:\n    void solve() {\n        \n    }\n};",
+                  "driverCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <string>\n#include <climits>\nusing namespace std;\n\n{{USER_CODE}}\n\nint main() {\n    int _cases;\n    if (!(cin >> _cases)) return 0;\n    while (_cases--) {\n        Solution _s;\n        _s.solve();\n        cout << \"\\n<<<LN-CASE-END>>>\\n\";\n    }\n    return 0;\n}\n",
+                  "referenceSolution": "class Solution {\npublic:\n    void solve() {\n        long long a, b;\n        cin >> a >> b;\n        cout << a + b;\n    }\n};"
+                }
+              },
+
+              "testCases": [
+                { "input": "2 3\n", "expectedOutput": "5", "isSample": true },
+                { "input": "-4 9\n", "expectedOutput": "5", "isSample": true, "explanation": "Signs are not special — the same two reads handle them." },
+                { "input": "0 0\n", "expectedOutput": "0", "isSample": false },
+                { "input": "1000000000 1000000000\n", "expectedOutput": "2000000000", "isSample": false },
+                { "input": "-1000000000 -1000000000\n", "expectedOutput": "-2000000000", "isSample": false }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

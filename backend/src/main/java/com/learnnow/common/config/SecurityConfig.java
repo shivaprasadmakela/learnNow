@@ -68,10 +68,16 @@ public class SecurityConfig {
                                 auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                                         .permitAll()
                                         // Public read-only catalog and path listing
+                                        // GET only, deliberately. The DSA run and submit
+                                        // endpoints are POSTs under /api/dsa, so scoping this to
+                                        // GET leaves them behind the authenticated catch-all --
+                                        // they proxy to a metered execution engine and must never
+                                        // be anonymous.
                                         .requestMatchers(
                                                 HttpMethod.GET,
                                                 "/api/paths/**",
                                                 "/api/catalog/**",
+                                                "/api/dsa/**",
                                                 "/api/health")
                                         .permitAll()
                                         // Auth flows

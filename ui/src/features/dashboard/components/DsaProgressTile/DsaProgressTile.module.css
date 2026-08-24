@@ -1,0 +1,85 @@
+.tile {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    background: var(--bg-card);
+}
+
+.head { display: flex; align-items: center; gap: 8px; }
+
+.title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.headline { display: flex; align-items: baseline; gap: 6px; }
+
+.value {
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.total { font-size: 0.85rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+.bar { height: 7px; border-radius: 4px; background: var(--bg-tertiary); overflow: hidden; }
+.barFill { height: 100%; border-radius: 4px; background: var(--tech-blue); transition: width 0.3s ease; }
+
+.split { display: flex; gap: 16px; flex-wrap: wrap; }
+.splitItem { display: flex; flex-direction: column; gap: 2px; }
+
+.splitLabel {
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.splitValue {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.next {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.next:hover { border-color: var(--tech-blue); color: var(--tech-blue); }
+
+.nextLabel {
+    display: block;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+}
+
+.nextTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+    .barFill { transition: none; }
+}
