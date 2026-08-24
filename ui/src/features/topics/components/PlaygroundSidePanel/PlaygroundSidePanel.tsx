@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Play, RotateCcw, Copy, Check, ExternalLink, Terminal } from 'lucide-react';
-import { MonacoEditorPane } from '../../../../features/compiler/components/MonacoEditorPane/MonacoEditorPane';
-import { CompilerOutputPane } from '../../../../features/compiler/components/CompilerOutputPane/CompilerOutputPane';
-import { useCodeExecution } from '../../../../features/compiler/hooks/useCodeExecution';
+import { MonacoEditorPane } from '../../../../shared/components/editor/MonacoEditorPane/MonacoEditorPane';
+import { CompilerOutputPane } from '../../../../shared/components/editor/CompilerOutputPane/CompilerOutputPane';
+import { useCodeExecution } from '../../../../shared/components/editor/useCodeExecution';
 import styles from './PlaygroundSidePanel.module.css';
 
 interface PlaygroundSidePanelProps {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { MonacoEditorPane } from '../../../features/compiler/components/MonacoEditorPane/MonacoEditorPane';
-import { CompilerOutputPane } from '../../../features/compiler/components/CompilerOutputPane/CompilerOutputPane';
-import { useCodeExecution } from '../../../features/compiler/hooks/useCodeExecution';
+import { MonacoEditorPane } from '../editor/MonacoEditorPane/MonacoEditorPane';
+import { CompilerOutputPane } from '../editor/CompilerOutputPane/CompilerOutputPane';
+import { useCodeExecution } from '../editor/useCodeExecution';
 import { Play, RotateCcw, Copy, Check, ExternalLink } from 'lucide-react';
 import styles from './CodePlayground.module.css';
 
