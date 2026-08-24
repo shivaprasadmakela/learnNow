@@ -58,18 +58,21 @@ export const StepAccordion: React.FC<StepAccordionProps> = ({
             bodyClassName={styles.body}
             header={
                 <>
-                    <span className={styles.titleGroup}>
+                    <div className={styles.titleGroup}>
                         <span className={styles.index}>Step {step.orderIndex}</span>
                         <span className={styles.title}>{step.title}</span>
                         {step.description && (
                             <span className={styles.description}>{step.description}</span>
                         )}
-                    </span>
-                    <span className={styles.progress}>
-                        <span className={styles.count}>
-                            {step.solvedProblems} / {step.totalProblems}
-                        </span>
-                        <span
+                    </div>
+                    <div className={styles.progress}>
+                        <div className={styles.countGroup}>
+                            <span className={styles.countNumber}>
+                                {step.solvedProblems} / {step.totalProblems}
+                            </span>
+                            <span className={styles.countCaption}>Solved</span>
+                        </div>
+                        <div
                             className={styles.bar}
                             role="progressbar"
                             aria-valuenow={pct}
@@ -77,59 +80,52 @@ export const StepAccordion: React.FC<StepAccordionProps> = ({
                             aria-valuemax={100}
                             aria-label={`${step.title} progress`}
                         >
-                            <span
+                            <div
                                 className={`${styles.barFill} ${complete ? styles.barFillDone : ''}`}
                                 style={{ width: `${pct}%` }}
                             />
-                        </span>
-                    </span>
+                        </div>
+                    </div>
                 </>
             }
         >
+            {showSections
+                ? sections.map(section => (
+                      <SectionAccordion
+                          key={section.id}
+                          node={section}
+                          openIds={openSectionIds}
+                          onToggle={onToggleSection}
+                          onOpenProblem={onOpenProblem}
+                          onToggleSolved={onToggleSolved}
+                          onToggleBookmark={onToggleBookmark}
+                          canTrack={canTrack}
+                      />
+                  ))
+                : problems.map(problem => (
+                      <ProblemRow
+                          key={problem.id}
+                          problem={problem}
+                          onOpen={onOpenProblem}
+                          onToggleSolved={onToggleSolved}
+                          onToggleBookmark={onToggleBookmark}
+                          canTrack={canTrack}
+                      />
+                  ))}
 
-                    {showSections
-                        ? sections.map(section => (
-                              <SectionAccordion
-                                  key={section.id}
-                                  node={section}
-                                  openIds={openSectionIds}
-                                  onToggle={onToggleSection}
-                                  onOpenProblem={onOpenProblem}
-                                  onToggleSolved={onToggleSolved}
-                                  onToggleBookmark={onToggleBookmark}
-                                  canTrack={canTrack}
-                              />
-                          ))
-                        : problems.map(problem => (
-                              <ProblemRow
-                                  key={problem.id}
-                                  problem={problem}
-                                  onOpen={onOpenProblem}
-                                  onToggleSolved={onToggleSolved}
-                                  onToggleBookmark={onToggleBookmark}
-                                  canTrack={canTrack}
-                              />
-                          ))}
+            {problems.length === 0 && !isLoading && !hasMore && (
+                <p className={styles.empty}>
+                    Nothing published in this step yet — it is being written.
+                </p>
+            )}
 
-                    {problems.length === 0 && !isLoading && !hasMore && (
-                        <p className={styles.empty}>
-                            Nothing published in this step yet — it is being written.
-                        </p>
-                    )}
-
-                    {/*
-                      The scroll container is the page, so the sentinel needs no root. It fires as
-                      soon as it is visible, which for a short list is immediately -- that is what
-                      keeps a step with twelve problems from needing a deliberate scroll to see the
-                      last two.
-                    */}
-                    <InfiniteScrollSentinel
-                        hasMore={hasMore}
-                        isLoading={isLoading}
-                        onLoadMore={onLoadMore}
-                        loadingText="Loading problems..."
-                        loadMoreLabel="Load more problems"
-                    />
+            <InfiniteScrollSentinel
+                hasMore={hasMore}
+                isLoading={isLoading}
+                onLoadMore={onLoadMore}
+                loadingText="Loading problems..."
+                loadMoreLabel="Load more problems"
+            />
         </Collapsible>
     );
 };

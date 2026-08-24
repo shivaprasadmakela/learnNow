@@ -1,24 +1,30 @@
 .row {
     display: grid;
-    grid-template-columns: 28px 1fr auto;
+    grid-template-columns: 24px 1fr auto;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
+    gap: 14px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--border-color);
+    background: var(--bg-card);
     transition: background 0.12s ease;
 }
 
-.row:last-child { border-bottom: none; }
-.row:hover { background: var(--bg-secondary); }
+.row:last-child {
+    border-bottom: none;
+}
+
+.row:hover {
+    background: var(--bg-secondary);
+}
 
 .checkbox {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     padding: 0;
-    border: 1.5px solid var(--border-color-light);
+    border: 1.5px solid var(--border-color-light, #cbd5e1);
     border-radius: 6px;
     background: transparent;
     color: transparent;
@@ -26,7 +32,9 @@
     transition: all 0.12s ease;
 }
 
-.checkbox:hover { border-color: var(--tech-blue); }
+.checkbox:hover {
+    border-color: var(--tech-blue);
+}
 
 .checkboxSolved {
     background: var(--color-green-600, #15803d);
@@ -34,7 +42,9 @@
     color: #ffffff;
 }
 
-.checkboxAttempted { border-color: var(--color-yellow-500, #f59e0b); }
+.checkboxAttempted {
+    border-color: var(--color-yellow-500, #f59e0b);
+}
 
 .main {
     display: flex;
@@ -59,39 +69,50 @@
     padding: 0;
     text-align: left;
     cursor: pointer;
+    transition: color 0.12s ease;
 }
 
-.title:hover { color: var(--tech-blue); text-decoration: underline; }
+.title:hover {
+    color: var(--tech-blue);
+    text-decoration: underline;
+}
 
 .meta {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     font-size: 0.72rem;
     color: var(--text-tertiary);
     flex-wrap: wrap;
 }
 
+.timeBadge {
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
 .tag {
-    padding: 1px 6px;
+    padding: 1px 8px;
     border-radius: 4px;
     background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     color: var(--text-secondary);
     font-size: 0.68rem;
+    font-weight: 500;
 }
 
 .actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
 }
 
 .iconBtn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border: none;
     border-radius: 6px;
     background: transparent;
@@ -100,13 +121,66 @@
     transition: all 0.12s ease;
 }
 
-.iconBtn:hover { background: var(--bg-tertiary); color: var(--tech-blue); }
-.iconBtnActive { color: var(--color-yellow-500, #f59e0b); }
-.iconBtnActive:hover { color: var(--color-yellow-500, #f59e0b); }
-.iconBtnDisabled { opacity: 0.3; cursor: default; }
-.iconBtnDisabled:hover { background: transparent; color: var(--text-tertiary); }
+.iconBtn:hover {
+    background: var(--bg-tertiary);
+    color: var(--tech-blue);
+}
+
+.iconBtnDisabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.iconBtnDisabled:hover {
+    background: transparent;
+    color: var(--text-tertiary);
+}
+
+/* Walkthrough / Play circular button */
+.playBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tech-blue);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.playIcon {
+    margin-left: 2px;
+}
+
+.playBtnActive {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+.playBtnActive:hover {
+    background: var(--tech-blue);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.playBtnDisabled {
+    border-color: var(--border-color);
+    color: var(--text-tertiary);
+    opacity: 0.4;
+    cursor: default;
+}
 
 @media (max-width: 640px) {
-    .row { grid-template-columns: 24px 1fr; }
-    .actions { grid-column: 2; justify-content: flex-start; }
+    .row {
+        grid-template-columns: 20px 1fr;
+        gap: 8px;
+    }
+    .actions {
+        grid-column: 2;
+        justify-content: flex-start;
+        margin-top: 4px;
+    }
 }

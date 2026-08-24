@@ -1,55 +1,204 @@
-/*
- * Only what is specific to a sheet's footer slot. The banner itself, its progress bar and its
- * headline all come from shared/components/ui/ContentHeroBanner.
- */
-
-.splitItem {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-.splitLabel {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.75);
-}
-
-.splitValue {
-    font-size: 0.9rem;
-    font-weight: 700;
+.heroCard {
+    background: linear-gradient(135deg, var(--tech-blue-hover, #004b7d) 0%, var(--tech-blue, #005995) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px 28px;
     color: #ffffff;
-    font-variant-numeric: tabular-nums;
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    align-items: center;
+    gap: 32px;
+    box-shadow: 0 4px 20px rgba(0, 89, 149, 0.12);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
 }
 
-.playlist {
+.mainInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-left: auto;
-    padding: 5px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.15);
     color: #ffffff;
-    font-size: 0.78rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.description {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.45;
+    max-width: 600px;
+}
+
+.difficultyRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.diffPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.76rem;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.dotEasy {
+    background-color: #4ade80;
+}
+
+.dotMedium {
+    background-color: #fbbf24;
+}
+
+.dotHard {
+    background-color: #f87171;
+}
+
+.diffLabel {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.diffCount {
+    color: #ffffff;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.progressColumn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    gap: 4px;
+}
+
+.progressHeading {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.progressCountRow {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.solvedCount {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.totalCount {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.solvedSubtitle {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 4px;
+}
+
+.progressBarWrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.progressBarTrack {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progressBarFill {
+    height: 100%;
+    background: #ffffff;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+}
+
+.progressPctText {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffffff;
+    min-width: 28px;
+}
+
+.playlistButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-size: 0.76rem;
     font-weight: 600;
     text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.playlist:hover {
-    background: rgba(255, 255, 255, 0.22);
-    color: #ffffff;
+.playlistButton:hover {
+    background: rgba(255, 255, 255, 0.28);
+    border-color: #ffffff;
+    transform: translateY(-1px);
 }
 
-.playlist:focus-visible {
-    outline: 2px solid #ffffff;
-    outline-offset: 2px;
-}
-
-@media (max-width: 900px) {
-    .playlist { margin-left: 0; }
+@media (max-width: 800px) {
+    .heroCard {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .progressColumn {
+        align-items: flex-start;
+        text-align: left;
+    }
 }

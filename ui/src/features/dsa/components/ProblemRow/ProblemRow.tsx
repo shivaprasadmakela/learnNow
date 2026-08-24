@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Video, ExternalLink } from 'lucide-react';
+import { Check, Play, ExternalLink } from 'lucide-react';
 import styles from './ProblemRow.module.css';
 import { DifficultyBadge } from '../../../../shared/components/ui/Badge';
 import { BookmarkButton } from '../../../notes';
@@ -42,7 +42,7 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
                 aria-label={solved ? `Mark ${problem.title} unsolved` : `Mark ${problem.title} solved`}
                 title={canTrack ? (solved ? 'Mark unsolved' : 'Mark solved') : 'Sign in to track progress'}
             >
-                <Check size={14} strokeWidth={3} />
+                <Check size={13} strokeWidth={3} />
             </button>
 
             <div className={styles.main}>
@@ -57,8 +57,8 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
                     <DifficultyBadge difficulty={problem.difficulty} />
                 </div>
                 <div className={styles.meta}>
-                    <span>{problem.estimatedMinutes} min</span>
-                    {problem.tags.slice(0, 3).map(tag => (
+                    <span className={styles.timeBadge}>{problem.estimatedMinutes} min</span>
+                    {problem.tags.slice(0, 4).map(tag => (
                         <span key={tag} className={styles.tag}>
                             {tag}
                         </span>
@@ -67,21 +67,15 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
             </div>
 
             <div className={styles.actions}>
-                {/*
-                  Rendered even without a video, but visibly inert. A row that silently loses a
-                  control depending on content makes the list look ragged; a dimmed one reads as
-                  "not yet".
-                */}
-                <button
-                    type="button"
-                    className={`${styles.iconBtn} ${problem.hasVideo ? '' : styles.iconBtnDisabled}`}
-                    onClick={() => problem.hasVideo && onOpen(problem.slug)}
-                    disabled={!problem.hasVideo}
-                    title={problem.hasVideo ? 'Watch the walkthrough' : 'Video coming soon'}
-                    aria-label={problem.hasVideo ? `Watch ${problem.title}` : 'Video coming soon'}
-                >
-                    <Video size={16} />
-                </button>
+                <BookmarkButton
+                    isBookmarked={problem.bookmarked}
+                    onToggle={() => onToggleBookmark(problem)}
+                    showLabel={false}
+                    disabled={!canTrack}
+                    targetNoun="problem"
+                    targetName={problem.title}
+                    size={16}
+                />
 
                 {problem.practiceUrl && (
                     <a
@@ -96,15 +90,16 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
                     </a>
                 )}
 
-                <BookmarkButton
-                    isBookmarked={problem.bookmarked}
-                    onToggle={() => onToggleBookmark(problem)}
-                    showLabel={false}
-                    disabled={!canTrack}
-                    targetNoun="problem"
-                    targetName={problem.title}
-                    size={15}
-                />
+                <button
+                    type="button"
+                    className={`${styles.playBtn} ${problem.hasVideo ? styles.playBtnActive : styles.playBtnDisabled}`}
+                    onClick={() => problem.hasVideo && onOpen(problem.slug)}
+                    disabled={!problem.hasVideo}
+                    title={problem.hasVideo ? 'Watch the walkthrough' : 'Video coming soon'}
+                    aria-label={problem.hasVideo ? `Watch ${problem.title}` : 'Video coming soon'}
+                >
+                    <Play size={13} className={styles.playIcon} />
+                </button>
             </div>
         </div>
     );

@@ -3,115 +3,113 @@
     border-radius: 12px;
     background: var(--bg-card);
     overflow: hidden;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
+.step:hover {
+    border-color: var(--border-color-light, #cbd5e1);
+}
 
-
-
-
-.titleGroup { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.titleGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
 
 .index {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--tech-blue);
 }
 
 .title {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 700;
     color: var(--text-primary);
+    line-height: 1.25;
 }
 
 .description {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     color: var(--text-tertiary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.35;
+    margin-top: 2px;
 }
 
 .progress {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
-.count {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-secondary);
+.countGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+}
+
+.countNumber {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
     font-variant-numeric: tabular-nums;
 }
 
+.countCaption {
+    font-size: 0.68rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
 .bar {
-    width: 84px;
+    width: 72px;
     height: 6px;
-    border-radius: 3px;
+    border-radius: 4px;
     background: var(--bg-tertiary);
     overflow: hidden;
 }
 
 .barFill {
     height: 100%;
-    border-radius: 3px;
+    border-radius: 4px;
     background: var(--tech-blue);
     transition: width 0.25s ease;
 }
 
-.barFillDone { background: var(--color-green-600, #15803d); }
+.barFillDone {
+    background: var(--color-green-600, #15803d);
+}
 
-.body { border-top: 1px solid var(--border-color); }
+.body {
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-primary);
+}
 
 .empty {
-    padding: 20px 16px;
+    padding: 24px 16px;
     text-align: center;
     font-size: 0.85rem;
     color: var(--text-tertiary);
 }
 
 @media (max-width: 640px) {
-    .description { display: none; }
-    .bar { display: none; }
+    .description {
+        display: none;
+    }
+    .bar {
+        display: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .chevron, .barFill { transition: none; }
-}
-
-/* ─── Section heading ───
- * The middle level of the sheet: steps contain sections contain problems. Rendered only when a step
- * actually groups its problems — a single unnamed section is the flat case and gets no heading.
- */
-.sectionHeading {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin: 0;
-    padding: 10px 15px 10px 43px;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-}
-
-.sectionCount {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    padding: 1px 6px;
-    border-radius: 999px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0;
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
+    .barFill {
+        transition: none;
+    }
 }

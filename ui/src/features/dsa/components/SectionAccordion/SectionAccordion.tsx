@@ -19,12 +19,7 @@ export interface SectionAccordionProps {
 /**
  * One section and everything under it, to whatever depth the content goes.
  *
- * Recursive: a section renders its own problems, then renders itself again for each child. A fourth
- * or fifth grouping level needs no change here — it is simply one more turn of the recursion, which
- * is why the indentation is computed from `node.depth` rather than hardcoded per level.
- *
- * Sections default to open. Unlike a step, a section is a subdivision the reader has already chosen
- * to look inside, so collapsing it by default would make them click twice to reach anything.
+ * Sections default to collapsed so the list opens level-by-level cleanly.
  */
 export const SectionAccordion: React.FC<SectionAccordionProps> = ({
     node,
@@ -35,7 +30,7 @@ export const SectionAccordion: React.FC<SectionAccordionProps> = ({
     onToggleBookmark,
     canTrack
 }) => {
-    const isOpen = openIds[node.id] !== false;
+    const isOpen = Boolean(openIds[node.id]);
 
     return (
         <Collapsible
