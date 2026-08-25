@@ -5,12 +5,13 @@ import {
     ChevronLeft,
     ChevronRight,
     Clock,
-    ExternalLink,
     Loader2,
+    Maximize2,
+    Minimize2,
     Play,
-    Plus,
     RotateCcw,
     Send,
+    Sparkles,
     Video,
     X
 } from 'lucide-react';
@@ -23,8 +24,9 @@ import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { BookmarkButton, NotesPanel, useBookmarks, useNote } from '../../../notes';
 import { useDsaProblem } from '../../hooks/useDsaProblem';
 import { useProblemRun } from '../../hooks/useProblemRun';
-import { useEditorTabs } from '../../hooks/useEditorTabs';
+import { useCodeBuffer } from '../../hooks/useCodeBuffer';
 import { useSplitPane } from '../../hooks/useSplitPane';
+import { DSA_SUPPORTED_LANGUAGES, getStarterCode } from '../../utils/dsaExecutionHelper';
 import type {
     DsaApproach,
     DsaCaseResult,
@@ -59,13 +61,13 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     onBackToSheet,
     onNavigateProblem,
     onRequireLogin,
-    onOpenFullCompiler
+    onOpenFullCompiler: _onOpenFullCompiler
 }) => {
     const { problem, isLoading, error, reload } = useDsaProblem(problemSlug);
     const { isBookmarked, toggleBookmark } = useBookmarks(true, 'DSA_PROBLEM');
 
     const [leftTab, setLeftTab] = useState<LeftTab>('description');
-    const [language, setLanguage] = useState<string>('');
+    const [language, setLanguage] = useState<string>('javascript');
     const [revealedHints, setRevealedHints] = useState(0);
     const [approachIndex, setApproachIndex] = useState(0);
 
@@ -77,49 +79,53 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
         storageKey: 'dsa_split_x'
     });
     const vertical = useSplitPane({
-        initial: 34,
-        min: 15,
-        max: 70,
+        initial: 66,
+        min: 25,
+        max: 85,
         axis: 'y',
         storageKey: 'dsa_split_y'
     });
 
-    // Pick a language once the problem arrives: what the learner last used, else the first harness.
+    // Default to JavaScript, or what the learner last used on this problem.
     useEffect(() => {
         if (!problem) return;
-        const available = problem.harnesses.map(h => h.language);
-        if (available.length === 0) {
-            setLanguage('');
-            return;
-        }
         const last = problem.progress?.lastLanguage;
-        setLanguage(last && available.includes(last) ? last : available[0]);
+        setLanguage(last && last.trim().length > 0 ? last.toLowerCase() : 'javascript');
         setRevealedHints(0);
         setApproachIndex(0);
         setLeftTab('description');
     }, [problem]);
 
-    const harness = problem?.harnesses.find(h => h.language === language);
-    const starterCode = harness?.starterCode ?? '';
+    const starterCode = useMemo(() => {
+        if (!problem) return '';
+        return getStarterCode(problem, language);
+    }, [problem, language]);
 
-    const tabs = useEditorTabs(problemSlug, language || 'none', starterCode);
-    const run = useProblemRun(problem?.id ?? '');
+    const { code, setCode, resetCode } = useCodeBuffer(problemSlug, language || 'javascript', starterCode);
+
+    const editorRef = React.useRef<any>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const handleFormat = useCallback(() => {
+        if (editorRef.current) {
+            editorRef.current.getAction('editor.action.formatDocument')?.run();
+        }
+    }, []);
+
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+        } else {
+            document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+        }
+    }, []);
+
+    const run = useProblemRun(problem?.id, problem?.samples ?? []);
 
     const monacoLanguage = useMemo(() => {
-        const map: Record<string, string> = {
-            cpp: 'cpp',
-            java: 'java',
-            python: 'python',
-            javascript: 'javascript',
-            typescript: 'typescript',
-            c: 'c',
-            csharp: 'csharp',
-            go: 'go'
-        };
-        return map[language] ?? 'plaintext';
+        const match = DSA_SUPPORTED_LANGUAGES.find(l => l.id.toLowerCase() === language.toLowerCase());
+        return match?.monacoLanguage ?? language;
     }, [language]);
-
-    const code = tabs.activeTab?.code ?? '';
 
     const doRun = useCallback(() => {
         if (!problem || !language || run.isBusy) return;
@@ -129,12 +135,10 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     const doSubmit = useCallback(async () => {
         if (!problem || !language || run.isBusy) return;
         const result = await run.submit(language, code);
-        // An accepted submission moves the status server-side, so refresh what we show.
         if (result?.verdict === 'ACCEPTED') reload();
     }, [problem, language, run, code, reload]);
 
-    // Ctrl/Cmd+Enter runs, adding Shift submits. Monaco binds plain Ctrl+Enter itself; this covers
-    // the case where focus is anywhere else on the page.
+    // Ctrl/Cmd+Enter runs, adding Shift submits.
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
             if (!(event.metaKey || event.ctrlKey) || event.key !== 'Enter') return;
@@ -163,9 +167,10 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     const bookmarked = isBookmarked(problem.id);
     const approaches = problem.approaches;
     const visibleApproach: DsaApproach | undefined = approaches[approachIndex];
+    const isAnyDragging = horizontal.isDragging || vertical.isDragging;
 
     return (
-        <div className={styles.shell}>
+        <div className={`${styles.shell} ${isAnyDragging ? styles.dragging : ''}`}>
             {/* ── top bar ── */}
             <header className={styles.topBar}>
                 <button type="button" className={styles.backBtn} onClick={onBackToSheet}>
@@ -212,11 +217,11 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                             type="button"
                             className={styles.runBtn}
                             onClick={doRun}
-                            disabled={run.isBusy || !harness}
+                            disabled={run.isBusy}
                             title="Run against the sample cases (Ctrl/Cmd+Enter)"
                         >
                             {run.phase === 'running' ? (
-                                <Loader2 size={14} />
+                                <Loader2 size={14} className={styles.spin} />
                             ) : (
                                 <Play size={14} />
                             )}
@@ -226,11 +231,11 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                             type="button"
                             className={styles.submitBtn}
                             onClick={doSubmit}
-                            disabled={run.isBusy || !harness}
+                            disabled={run.isBusy}
                             title="Submit against every case (Ctrl/Cmd+Shift+Enter)"
                         >
                             {run.phase === 'submitting' ? (
-                                <Loader2 size={14} />
+                                <Loader2 size={14} className={styles.spin} />
                             ) : (
                                 <Send size={14} />
                             )}
@@ -248,7 +253,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                 ref={horizontal.setContainer}
                 style={{ ['--left-width' as string]: `${horizontal.size}%` }}
             >
-                {/* left: the writing */}
+                {/* left: description and editorial */}
                 <section className={styles.leftPane}>
                     <Tabs
                         items={[
@@ -258,7 +263,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                             { id: 'note', label: 'My note' }
                         ]}
                         activeId={leftTab}
-                        onChange={setLeftTab}
+                        onChange={id => setLeftTab(id as LeftTab)}
                         variant="compact"
                         label="Problem panes"
                     />
@@ -373,11 +378,6 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                                     </p>
                                 ) : (
                                     <>
-                                        {/*
-                                          Later approaches unlock in order, so a learner walks past
-                                          brute force before optimal appears rather than jumping
-                                          straight to the answer.
-                                        */}
                                         <div className={styles.approachTabs}>
                                             {approaches.map((approach, index) => (
                                                 <button
@@ -469,120 +469,71 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                     {...horizontal.gutterProps}
                 />
 
-                {/* right: editor over console */}
+                {/* right: editor over console (Single Editor section, No Tabs) */}
                 <div
                     className={styles.rightPane}
                     ref={vertical.setContainer}
-                    style={{ ['--console-height' as string]: `${vertical.size}%` }}
+                    style={{ ['--editor-height' as string]: `${vertical.size}%` }}
                 >
                     <div className={styles.editorCell}>
                         <div className={styles.paneBar}>
-                            {problem.harnesses.length > 0 ? (
-                                <select
-                                    className={styles.langSelect}
-                                    value={language}
-                                    onChange={e => setLanguage(e.target.value)}
-                                    aria-label="Language"
-                                >
-                                    {problem.harnesses.map(h => (
-                                        <option key={h.language} value={h.language}>
-                                            {h.language}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <span className={styles.metaText}>No editor for this problem</span>
-                            )}
-
-                            <div className={styles.editorTabs}>
-                                {tabs.tabs.map(tab => (
-                                    <span
-                                        key={tab.id}
-                                        className={`${styles.editorTab} ${
-                                            tab.id === tabs.activeId ? styles.editorTabActive : ''
-                                        }`}
-                                    >
-                                        <button
-                                            type="button"
-                                            className={styles.editorTabClose}
-                                            onClick={() => tabs.setActiveId(tab.id)}
-                                            style={{ color: 'inherit' }}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                        {tabs.tabs.length > 1 && (
-                                            <button
-                                                type="button"
-                                                className={styles.editorTabClose}
-                                                onClick={() => tabs.closeTab(tab.id)}
-                                                title={`Close ${tab.label}`}
-                                            >
-                                                <X size={11} />
-                                            </button>
-                                        )}
-                                    </span>
+                            <select
+                                className={styles.langSelect}
+                                value={language}
+                                onChange={e => setLanguage(e.target.value)}
+                                aria-label="Language"
+                            >
+                                {DSA_SUPPORTED_LANGUAGES.map(item => (
+                                    <option key={item.id} value={item.id}>
+                                        {item.name}
+                                    </option>
                                 ))}
-                                {tabs.canAddTab && (
-                                    <button
-                                        type="button"
-                                        className={styles.editorTabClose}
-                                        onClick={tabs.addTab}
-                                        title="New scratch tab"
-                                    >
-                                        <Plus size={13} />
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className={styles.spacer} />
-
-                            {onOpenFullCompiler && harness && (
-                                <button
-                                    type="button"
-                                    className={styles.iconBtn}
-                                    onClick={() => onOpenFullCompiler(code, language)}
-                                    title="Open this buffer in the standalone console"
-                                >
-                                    <ExternalLink size={13} />
-                                </button>
-                            )}
+                            </select>
 
                             <button
                                 type="button"
                                 className={styles.iconBtn}
-                                onClick={tabs.resetActive}
-                                title="Back to the starter code"
+                                onClick={handleFormat}
+                                title="Prettify / Format Code (Shift + Alt + F)"
+                                aria-label="Format Code"
+                            >
+                                <Sparkles size={13} />
+                            </button>
+
+                            <button
+                                type="button"
+                                className={styles.iconBtn}
+                                onClick={resetCode}
+                                title="Reset to starter code"
+                                aria-label="Reset to starter code"
                             >
                                 <RotateCcw size={13} />
                             </button>
+
+                            <button
+                                type="button"
+                                className={styles.iconBtn}
+                                onClick={toggleFullscreen}
+                                title={isFullscreen ? 'Exit Fullscreen' : 'Toggle Fullscreen'}
+                                aria-label="Toggle Fullscreen"
+                            >
+                                {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                            </button>
+
+                            <div className={styles.spacer} />
                         </div>
 
-                        {harness ? (
-                            <div className={styles.editorHost}>
-                                <MonacoEditorPane
-                                    code={code}
-                                    language={monacoLanguage}
-                                    onChange={tabs.setCode}
-                                    onRun={doRun}
-                                />
-                            </div>
-                        ) : (
-                            <div className={styles.noHarness}>
-                                <p>
-                                    This problem has no editor yet — the write-up and the video are
-                                    all there is for now.
-                                </p>
-                                {problem.practiceUrl && (
-                                    <a
-                                        href={problem.practiceUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Practise it on {problem.practicePlatform ?? 'the judge'}
-                                    </a>
-                                )}
-                            </div>
-                        )}
+                        <div className={styles.editorHost}>
+                            <MonacoEditorPane
+                                code={code}
+                                language={monacoLanguage}
+                                onChange={setCode}
+                                onRun={doRun}
+                                onMountEditor={ed => {
+                                    editorRef.current = ed;
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <div
@@ -631,7 +582,6 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
     const verdict = result?.verdict ?? null;
     const results: DsaCaseResult[] = result?.cases ?? [];
 
-    // Before a run there is nothing to show but the examples themselves.
     const cases: DsaCaseResult[] =
         results.length > 0
             ? results
@@ -742,7 +692,7 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
 
                         {compileOutput && (
                             <div className={styles.ioBlock}>
-                                <span className={styles.ioLabel}>Compiler</span>
+                                <span className={styles.ioLabel}>Compiler / Runtime</span>
                                 <pre className={`${styles.ioValue} ${styles.ioValueBad}`}>
                                     {compileOutput}
                                 </pre>
@@ -848,33 +798,32 @@ const NoteTab: React.FC<{ problemId: string }> = ({ problemId }) => {
 
 /* ------------------------------------------------- manual solve (no harness) */
 
-const ManualSolveButton: React.FC<{
-    problemId: string;
-    solved: boolean;
-    onDone: () => void;
-}> = ({ problemId, solved, onDone }) => {
-    const [isBusy, setIsBusy] = useState(false);
+const ManualSolveButton: React.FC<{ problemId: string; solved: boolean; onDone: () => void }> = ({
+    problemId,
+    solved,
+    onDone
+}) => {
+    const [busy, setBusy] = useState(false);
 
     const toggle = async () => {
-        setIsBusy(true);
+        setBusy(true);
         try {
-            const m = await import('../../api/dsa.api');
-            await m.setDsaProblemStatus(problemId, solved ? 'ATTEMPTED' : 'SOLVED');
+            const api = await import('../../api/dsa.api');
+            await api.setDsaProblemStatus(problemId, solved ? 'ATTEMPTED' : 'SOLVED');
             onDone();
         } finally {
-            setIsBusy(false);
+            setBusy(false);
         }
     };
 
     return (
         <button
             type="button"
-            className={solved ? styles.runBtn : styles.submitBtn}
+            className={`${styles.runBtn} ${solved ? styles.runBtnSolved : ''}`}
             onClick={toggle}
-            disabled={isBusy}
-            title="This problem has no test cases, so its status is yours to set"
+            disabled={busy}
         >
-            {isBusy ? <Loader2 size={14} /> : <Check size={14} />}
+            <Check size={14} />
             {solved ? 'Solved' : 'Mark solved'}
         </button>
     );

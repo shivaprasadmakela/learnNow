@@ -128,7 +128,7 @@
 
 .rightPane {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) 6px var(--console-height, 34%);
+    grid-template-rows: var(--editor-height, 66%) 6px minmax(0, 1fr);
     background: transparent;
     overflow: hidden;
 }
@@ -369,40 +369,28 @@
     cursor: pointer;
 }
 
-.editorTabs { display: flex; align-items: center; gap: 3px; }
-
-.editorTab {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 9px;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text-tertiary);
-    font-size: 0.75rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
+.dragging {
+    user-select: none !important;
 }
 
-.editorTabActive {
-    border-color: var(--border-color);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+.dragging .editorHost,
+.dragging .tabBody,
+.dragging .consoleBody {
+    pointer-events: none !important;
 }
 
-.editorTabClose {
-    display: inline-flex;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    line-height: 1;
+.spin {
+    animation: spin 1s linear infinite;
 }
 
-.editorTabClose:hover { color: var(--color-red-500, #ef4444); }
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 .editorHost { flex: 1; min-height: 0; }
 

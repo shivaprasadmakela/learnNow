@@ -22,6 +22,7 @@ export interface StepAccordionProps {
     openSectionIds: Record<string, boolean>;
     onToggleSection: (sectionId: string) => void;
     canTrack?: boolean;
+    isFilterActive?: boolean;
 }
 
 export const StepAccordion: React.FC<StepAccordionProps> = ({
@@ -37,7 +38,8 @@ export const StepAccordion: React.FC<StepAccordionProps> = ({
     onToggleBookmark,
     openSectionIds,
     onToggleSection,
-    canTrack = true
+    canTrack = true,
+    isFilterActive = false
 }) => {
     const pct =
         step.totalProblems > 0
@@ -100,6 +102,7 @@ export const StepAccordion: React.FC<StepAccordionProps> = ({
                           onToggleSolved={onToggleSolved}
                           onToggleBookmark={onToggleBookmark}
                           canTrack={canTrack}
+                          isFilterActive={isFilterActive}
                       />
                   ))
                 : problems.map(problem => (
@@ -115,7 +118,9 @@ export const StepAccordion: React.FC<StepAccordionProps> = ({
 
             {problems.length === 0 && !isLoading && !hasMore && (
                 <p className={styles.empty}>
-                    Nothing published in this step yet — it is being written.
+                    {isFilterActive
+                        ? 'No problems match the current filters in this step.'
+                        : 'Nothing published in this step yet — it is being written.'}
                 </p>
             )}
 

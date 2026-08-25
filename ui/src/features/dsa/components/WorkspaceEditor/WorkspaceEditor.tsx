@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Play, RotateCcw, Send, X, Plus, Maximize2 } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Maximize2, Minimize2, Play, RotateCcw, Send, Sparkles } from 'lucide-react';
 import styles from './WorkspaceEditor.module.css';
 import { MonacoEditorPane } from '../../../../shared/components/editor/MonacoEditorPane/MonacoEditorPane';
-import { SUPPORTED_LANGUAGES } from '../../../../shared/components/editor/codeTemplates';
-import { useEditorTabs } from '../../hooks/useEditorTabs';
-import type { DsaHarnessStub } from '../../api/dsa.api';
+import { DSA_SUPPORTED_LANGUAGES, getStarterCode } from '../../utils/dsaExecutionHelper';
+import { useCodeBuffer } from '../../hooks/useCodeBuffer';
+import type { DsaHarnessStub, DsaProblemDetail } from '../../api/dsa.api';
 
 export interface WorkspaceEditorProps {
     problemSlug: string;
@@ -16,14 +16,14 @@ export interface WorkspaceEditorProps {
     onRun: (code: string) => void;
     onSubmit: (code: string) => void;
     onOpenFullCompiler?: (code: string, language: string) => void;
+    problemDetail?: DsaProblemDetail;
 }
 
 /**
  * The code half of the workspace.
  *
- * `MonacoEditorPane` is mounted exactly as the standalone console mounts it — same theme observer,
- * same Ctrl/Cmd+Enter binding, no fork. What this adds is the language picker constrained to the
- * languages this problem actually has a harness for, the scratch tabs, and the Run/Submit pair.
+ * Single-buffer editor supporting standard languages with JavaScript as default,
+ * complete with Prettier code formatter, reset, and fullscreen controls.
  */
 export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
     problemSlug,
@@ -34,58 +34,47 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
     isBusy,
     onRun,
     onSubmit,
-    onOpenFullCompiler
+    onOpenFullCompiler: _onOpenFullCompiler,
+    problemDetail
 }) => {
-    const harness = useMemo(
-        () => harnesses.find(h => h.language.toLowerCase() === language.toLowerCase()),
-        [harnesses, language]
-    );
+    const editorRef = useRef<any>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
-    const starterCode = harness?.starterCode ?? '';
+    const starterCode = useMemo(() => {
+        if (problemDetail) {
+            return getStarterCode(problemDetail, language);
+        }
+        const h = harnesses.find(item => item.language.toLowerCase() === language.toLowerCase());
+        return h?.starterCode ?? `// Write your ${language} solution here\n`;
+    }, [problemDetail, harnesses, language]);
 
-    const {
-        tabs,
-        activeTab,
-        activeId,
-        canAddTab,
-        setActiveId,
-        setCode,
-        addTab,
-        closeTab,
-        resetActive
-    } = useEditorTabs(problemSlug, language, starterCode);
+    const { code, setCode, resetCode } = useCodeBuffer(problemSlug, language, starterCode);
 
-    /**
-     * Monaco language id, which is not always the same string as our language id (the console's own
-     * table is the source of truth for that mapping).
-     */
     const monacoLanguage = useMemo(() => {
-        const match = SUPPORTED_LANGUAGES.find(l => l.id === language);
+        const match = DSA_SUPPORTED_LANGUAGES.find(l => l.id.toLowerCase() === language.toLowerCase());
         return match?.monacoLanguage ?? language;
     }, [language]);
 
-    /**
-     * Ctrl/Cmd+Enter is bound inside the editor pane at mount, so its callback closes over whatever
-     * code existed then. Keeping the latest in a ref means the shortcut always runs what is on
-     * screen rather than the starter stub.
-     */
-    const latestCode = useRef(activeTab?.code ?? '');
+    const latestCode = useRef(code);
     useEffect(() => {
-        latestCode.current = activeTab?.code ?? '';
-    }, [activeTab?.code]);
+        latestCode.current = code;
+    }, [code]);
 
     const codeOf = () => latestCode.current;
 
-    if (harnesses.length === 0) {
-        return (
-            <div className={styles.wrapper}>
-                <div className={styles.notice}>
-                    No coding harness for this problem yet, so there is nothing to run here. Read the
-                    walkthrough, solve it on the judge, and tick it off when you are done.
-                </div>
-            </div>
-        );
-    }
+    const handleFormat = () => {
+        if (editorRef.current) {
+            editorRef.current.getAction('editor.action.formatDocument')?.run();
+        }
+    };
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+        } else {
+            document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+        }
+    };
 
     return (
         <div className={styles.wrapper}>
@@ -96,37 +85,42 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                     onChange={e => onLanguageChange(e.target.value)}
                     aria-label="Language"
                 >
-                    {harnesses.map(item => {
-                        const known = SUPPORTED_LANGUAGES.find(l => l.id === item.language);
-                        return (
-                            <option key={item.language} value={item.language}>
-                                {known?.name ?? item.language}
-                            </option>
-                        );
-                    })}
+                    {DSA_SUPPORTED_LANGUAGES.map(item => (
+                        <option key={item.id} value={item.id}>
+                            {item.name}
+                        </option>
+                    ))}
                 </select>
 
                 <button
                     type="button"
                     className={styles.iconBtn}
-                    onClick={resetActive}
-                    title="Reset this tab to the starter code"
+                    onClick={handleFormat}
+                    title="Prettify / Format Code (Shift + Alt + F)"
+                    aria-label="Format Code"
+                >
+                    <Sparkles size={14} />
+                </button>
+
+                <button
+                    type="button"
+                    className={styles.iconBtn}
+                    onClick={resetCode}
+                    title="Reset to starter code"
                     aria-label="Reset to starter code"
                 >
                     <RotateCcw size={14} />
                 </button>
 
-                {onOpenFullCompiler && (
-                    <button
-                        type="button"
-                        className={styles.iconBtn}
-                        onClick={() => onOpenFullCompiler(codeOf(), language)}
-                        title="Open in the full console"
-                        aria-label="Open in the full console"
-                    >
-                        <Maximize2 size={14} />
-                    </button>
-                )}
+                <button
+                    type="button"
+                    className={styles.iconBtn}
+                    onClick={toggleFullscreen}
+                    title={isFullscreen ? 'Exit Fullscreen' : 'Toggle Fullscreen'}
+                    aria-label="Toggle Fullscreen"
+                >
+                    {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                </button>
 
                 <div className={styles.spacer} />
 
@@ -150,51 +144,15 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
                 </button>
             </div>
 
-            <div className={styles.tabs}>
-                {tabs.map(tab => (
-                    <span
-                        key={tab.id}
-                        className={`${styles.tab} ${tab.id === activeId ? styles.tabActive : ''}`}
-                    >
-                        <button
-                            type="button"
-                            className={styles.tab}
-                            style={{ padding: 0, border: 'none', background: 'none' }}
-                            onClick={() => setActiveId(tab.id)}
-                        >
-                            {tab.label}
-                        </button>
-                        {tabs.length > 1 && (
-                            <button
-                                type="button"
-                                className={styles.tabClose}
-                                onClick={() => closeTab(tab.id)}
-                                aria-label={`Close ${tab.label}`}
-                            >
-                                <X size={11} />
-                            </button>
-                        )}
-                    </span>
-                ))}
-                {canAddTab && (
-                    <button
-                        type="button"
-                        className={styles.addTab}
-                        onClick={addTab}
-                        aria-label="New scratch tab"
-                        title="New scratch tab"
-                    >
-                        <Plus size={13} />
-                    </button>
-                )}
-            </div>
-
             <div className={styles.editor}>
                 <MonacoEditorPane
-                    code={activeTab?.code ?? ''}
+                    code={code}
                     language={monacoLanguage}
                     onChange={setCode}
                     onRun={() => !isBusy && judgeable && onRun(codeOf())}
+                    onMountEditor={ed => {
+                        editorRef.current = ed;
+                    }}
                 />
             </div>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Play, ExternalLink } from 'lucide-react';
+import { Check, ExternalLink, Play } from 'lucide-react';
 import styles from './ProblemRow.module.css';
 import { DifficultyBadge } from '../../../../shared/components/ui/Badge';
 import { BookmarkButton } from '../../../notes';
@@ -36,7 +36,10 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
             <button
                 type="button"
                 className={`${checkboxClass} ${canTrack ? '' : styles.iconBtnDisabled}`}
-                onClick={() => canTrack && onToggleSolved(problem)}
+                onClick={e => {
+                    e.stopPropagation();
+                    if (canTrack) onToggleSolved(problem);
+                }}
                 disabled={!canTrack}
                 aria-pressed={solved}
                 aria-label={solved ? `Mark ${problem.title} unsolved` : `Mark ${problem.title} solved`}
@@ -45,15 +48,23 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
                 <Check size={13} strokeWidth={3} />
             </button>
 
-            <div className={styles.main}>
+            <div
+                className={styles.main}
+                onClick={() => onOpen(problem.slug)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onOpen(problem.slug);
+                    }
+                }}
+                style={{ cursor: 'pointer' }}
+            >
                 <div className={styles.titleRow}>
-                    <button
-                        type="button"
-                        className={styles.title}
-                        onClick={() => onOpen(problem.slug)}
-                    >
+                    <span className={styles.title}>
                         {problem.title}
-                    </button>
+                    </span>
                     <DifficultyBadge difficulty={problem.difficulty} />
                 </div>
                 <div className={styles.meta}>
@@ -85,6 +96,7 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
                         rel="noopener noreferrer"
                         title={`Practice on ${problem.practicePlatform || 'the judge'}`}
                         aria-label={`Practice ${problem.title} on ${problem.practicePlatform || 'the judge'}`}
+                        onClick={e => e.stopPropagation()}
                     >
                         <ExternalLink size={15} />
                     </a>
@@ -93,7 +105,10 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
                 <button
                     type="button"
                     className={`${styles.playBtn} ${problem.hasVideo ? styles.playBtnActive : styles.playBtnDisabled}`}
-                    onClick={() => problem.hasVideo && onOpen(problem.slug)}
+                    onClick={e => {
+                        e.stopPropagation();
+                        if (problem.hasVideo) onOpen(problem.slug);
+                    }}
                     disabled={!problem.hasVideo}
                     title={problem.hasVideo ? 'Watch the walkthrough' : 'Video coming soon'}
                     aria-label={problem.hasVideo ? `Watch ${problem.title}` : 'Video coming soon'}

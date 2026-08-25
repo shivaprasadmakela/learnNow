@@ -14,12 +14,14 @@ export interface SectionAccordionProps {
     onToggleSolved: (problem: DsaProblemRow) => void;
     onToggleBookmark: (problem: DsaProblemRow) => void;
     canTrack?: boolean;
+    isFilterActive?: boolean;
 }
 
 /**
  * One section and everything under it, to whatever depth the content goes.
  *
- * Sections default to collapsed so the list opens level-by-level cleanly.
+ * Replaces the rounded count badge with a full progress bar matching the step header,
+ * and indents problems step-wise.
  */
 export const SectionAccordion: React.FC<SectionAccordionProps> = ({
     node,
@@ -28,9 +30,16 @@ export const SectionAccordion: React.FC<SectionAccordionProps> = ({
     onOpenProblem,
     onToggleSolved,
     onToggleBookmark,
-    canTrack
+    canTrack,
+    isFilterActive = false
 }) => {
-    const isOpen = Boolean(openIds[node.id]);
+    const isOpen = isFilterActive ? true : Boolean(openIds[node.id]);
+
+    const pct =
+        node.totalProblems > 0
+            ? Math.round((node.solvedProblems / node.totalProblems) * 100)
+            : 0;
+    const complete = node.totalProblems > 0 && node.solvedProblems >= node.totalProblems;
 
     return (
         <Collapsible
@@ -40,25 +49,48 @@ export const SectionAccordion: React.FC<SectionAccordionProps> = ({
             className={styles.section}
             headerClassName={styles.header}
             bodyClassName={styles.body}
-            // Each level steps in, so the hierarchy is legible without a connector line.
             style={{ ['--section-depth' as string]: node.depth }}
             header={
                 <>
-                    <span className={styles.title}>{node.title ?? 'Problems'}</span>
-                    <span className={styles.count}>{node.totalProblems}</span>
+                    <div className={styles.titleGroup}>
+                        <span className={styles.title}>{node.title ?? 'Problems'}</span>
+                    </div>
+                    <div className={styles.progress}>
+                        <div className={styles.countGroup}>
+                            <span className={styles.countNumber}>
+                                {node.solvedProblems} / {node.totalProblems}
+                            </span>
+                            <span className={styles.countCaption}>Solved</span>
+                        </div>
+                        <div
+                            className={styles.bar}
+                            role="progressbar"
+                            aria-valuenow={pct}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={`${node.title ?? 'Section'} progress`}
+                        >
+                            <div
+                                className={`${styles.barFill} ${complete ? styles.barFillDone : ''}`}
+                                style={{ width: `${pct}%` }}
+                            />
+                        </div>
+                    </div>
                 </>
             }
         >
-            {node.problems.map(problem => (
-                <ProblemRow
-                    key={problem.id}
-                    problem={problem}
-                    onOpen={onOpenProblem}
-                    onToggleSolved={onToggleSolved}
-                    onToggleBookmark={onToggleBookmark}
-                    canTrack={canTrack}
-                />
-            ))}
+            <div className={styles.problemWrapper} style={{ ['--section-depth' as string]: node.depth }}>
+                {node.problems.map(problem => (
+                    <ProblemRow
+                        key={problem.id}
+                        problem={problem}
+                        onOpen={onOpenProblem}
+                        onToggleSolved={onToggleSolved}
+                        onToggleBookmark={onToggleBookmark}
+                        canTrack={canTrack}
+                    />
+                ))}
+            </div>
 
             {node.children.map(child => (
                 <SectionAccordion
@@ -70,6 +102,7 @@ export const SectionAccordion: React.FC<SectionAccordionProps> = ({
                     onToggleSolved={onToggleSolved}
                     onToggleBookmark={onToggleBookmark}
                     canTrack={canTrack}
+                    isFilterActive={isFilterActive}
                 />
             ))}
         </Collapsible>

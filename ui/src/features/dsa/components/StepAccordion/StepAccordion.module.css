@@ -3,8 +3,9 @@
     border-radius: 12px;
     background: var(--bg-card);
     overflow: hidden;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    contain: layout paint;
 }
 
 .step:hover {

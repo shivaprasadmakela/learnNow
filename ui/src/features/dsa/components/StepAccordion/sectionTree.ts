@@ -9,6 +9,8 @@ export interface SectionNode {
     children: SectionNode[];
     /** This section's problems plus every descendant's — what the header counts. */
     totalProblems: number;
+    /** Number of solved problems in this section and its descendants. */
+    solvedProblems: number;
 }
 
 /**
@@ -39,7 +41,8 @@ export const buildSectionTree = (problems: DsaProblemRow[]): SectionNode[] => {
             depth: ref.depth,
             problems: [],
             children: [],
-            totalProblems: 0
+            totalProblems: 0,
+            solvedProblems: 0
         };
         byId.set(ref.id, created);
         siblings.push(created);
@@ -47,14 +50,9 @@ export const buildSectionTree = (problems: DsaProblemRow[]): SectionNode[] => {
     };
 
     for (const problem of problems) {
-        // A server that predates sectionPath sends nothing here. Treating that as "one section"
-        // would silently merge every problem in the step under the first one's heading — which is
-        // exactly what an unrestarted backend produced — so an absent path is the ungrouped case.
         const path = (problem.sectionPath ?? []).filter(ref => Boolean(ref?.id));
 
         if (path.length === 0) {
-            // A problem with no ancestry should not happen, but dropping it silently would be
-            // worse than showing it ungrouped.
             const orphan = nodeFor({ id: '__ungrouped__', title: null, depth: 0 }, roots);
             orphan.problems.push(problem);
             continue;
@@ -71,23 +69,29 @@ export const buildSectionTree = (problems: DsaProblemRow[]): SectionNode[] => {
         node!.problems.push(problem);
     }
 
-    // Roll the counts up once the tree is complete, so a parent header can report everything
-    // beneath it rather than only what sits directly inside it.
-    const total = (node: SectionNode): number => {
-        node.totalProblems =
-            node.problems.length + node.children.reduce((sum, child) => sum + total(child), 0);
-        return node.totalProblems;
+    // Roll both the total problem count and the solved count up once the tree is complete
+    const calculateTotals = (node: SectionNode): { total: number; solved: number } => {
+        let directSolved = node.problems.filter(p => p.status === 'SOLVED').length;
+        let directTotal = node.problems.length;
+
+        for (const child of node.children) {
+            const childCounts = calculateTotals(child);
+            directTotal += childCounts.total;
+            directSolved += childCounts.solved;
+        }
+
+        node.totalProblems = directTotal;
+        node.solvedProblems = directSolved;
+        return { total: directTotal, solved: directSolved };
     };
-    roots.forEach(total);
+
+    roots.forEach(calculateTotals);
 
     return roots;
 };
 
 /**
  * Whether the tree is worth showing as a tree.
- *
- * A step whose problems all sit in one untitled root section is the flat case — that is what makes
- * the grouping level optional — and a lone heading there would just repeat the step's own name.
  */
 export const shouldShowSections = (nodes: SectionNode[]): boolean =>
     nodes.length > 1 || Boolean(nodes[0]?.title) || Boolean(nodes[0]?.children.length);

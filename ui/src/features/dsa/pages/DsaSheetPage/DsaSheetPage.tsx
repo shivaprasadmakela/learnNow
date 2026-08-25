@@ -1,15 +1,19 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Search, Lightbulb, Target, Sparkles, BookOpen } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BookOpen, Lightbulb, Search, Sparkles, Target } from 'lucide-react';
 import styles from './DsaSheetPage.module.css';
-import { toggleBookmarkApi } from '../../../notes/api/notes.api';
 import { SheetProgressHeader } from '../../components/SheetProgressHeader';
 import { StepAccordion } from '../../components/StepAccordion';
-import { useDsaSheet } from '../../hooks/useDsaSheet';
-import { setDsaProblemStatus, type DsaProblemRow } from '../../api/dsa.api';
 import { Loader } from '../../../../shared/components/ui/Loader';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { ProgressRing } from '../../../../shared/components/ui/ProgressRing';
 import { SidebarWidget } from '../../../../shared/components/ui/SidebarWidget';
+import { useDsaSheet } from '../../hooks/useDsaSheet';
+import {
+    setDsaProblemStatus,
+    type DsaDifficulty,
+    type DsaProblemRow
+} from '../../api/dsa.api';
+import { toggleBookmarkApi } from '../../../notes';
 
 export interface DsaSheetPageProps {
     isLoggedIn: boolean;
@@ -17,45 +21,46 @@ export interface DsaSheetPageProps {
     onRequireLogin: () => void;
 }
 
+type DifficultyFilter = 'ALL' | DsaDifficulty;
 type StatusFilter = 'ALL' | 'TODO' | 'SOLVED' | 'BOOKMARKED';
-type DifficultyFilter = 'ALL' | 'EASY' | 'MEDIUM' | 'HARD';
 
+/** 14-day (2-week) daily curated quotes and mindset tips */
 const DAILY_TIPS = [
     {
         quote: 'Focus on understanding, not just solving.',
-        subtext: 'Master the concepts, the solutions will follow.'
+        subtext: 'Master the core concepts; the optimal solutions will naturally follow.'
     },
     {
-        quote: 'First, solve the problem. Then, write the code.',
-        subtext: 'Plan your approach with pen and paper before typing.'
+        quote: 'Patterns repeat, syntax changes.',
+        subtext: 'Look for the underlying pattern: Two Pointers, Sliding Window, or Binary Search.'
     },
     {
         quote: 'Simplicity is prerequisite for reliability.',
-        subtext: 'Clean, readable algorithms are easier to debug and optimize.'
+        subtext: 'A clean brute-force solution is better than a broken optimal one.'
     },
     {
-        quote: 'Premature optimization is the root of all evil.',
-        subtext: 'Get a correct working solution first, then optimize time and space.'
+        quote: 'Make it work, make it right, make it fast.',
+        subtext: 'First get a working solution, then refine edge cases, then optimize time/space.'
     },
     {
-        quote: 'Small daily improvements over time lead to stunning results.',
-        subtext: 'Consistency with 1-2 problems daily beats weekend cramming.'
+        quote: 'Edge cases define the boundaries of your logic.',
+        subtext: 'Always check: empty array, single element, negative numbers, and integer overflow.'
     },
     {
-        quote: 'The best error message is the one that never shows up.',
-        subtext: 'Always consider edge cases: nulls, empty inputs, and bounds.'
+        quote: 'Consistency beats intensity every single time.',
+        subtext: 'Solving 2 problems every day compounds faster than 14 problems in one sitting.'
     },
     {
-        quote: 'Patterns repeat across problems.',
-        subtext: 'Identify underlying archetypes: sliding window, two pointers, BFS/DFS.'
+        quote: 'Visualize before you type.',
+        subtext: 'Draw recursion trees and trace pointers on paper to spot off-by-one errors early.'
     },
     {
-        quote: 'Debugging is twice as hard as writing the code in the first place.',
-        subtext: 'Write code as clearly as possible from the start.'
+        quote: 'Break big problems into small invariant steps.',
+        subtext: 'Define what must hold true before and after each loop iteration.'
     },
     {
-        quote: 'Break complex problems into smaller subproblems.',
-        subtext: 'Divide and conquer makes overwhelming challenges manageable.'
+        quote: 'A good algorithm is nothing without the right base case.',
+        subtext: 'In dynamic programming and recursion, correct base conditions prevent stack overflows.'
     },
     {
         quote: 'Measure twice, code once.',
@@ -99,6 +104,18 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
     const [status, setStatus] = useState<StatusFilter>('ALL');
     const [difficulty, setDifficulty] = useState<DifficultyFilter>('ALL');
 
+    const isFilterActive = difficulty !== 'ALL' || status !== 'ALL' || query.trim().length > 0;
+
+    // Whenever any filter or search is active, automatically load problems for all steps
+    useEffect(() => {
+        if (!sheet) return;
+        if (isFilterActive) {
+            sheet.steps.forEach(step => {
+                ensureProblemsLoaded(step.id);
+            });
+        }
+    }, [sheet, isFilterActive, ensureProblemsLoaded]);
+
     // Select tip for the 24-hour day across a 14-day (2-week) rotation
     const currentTip = useMemo(() => {
         const dayNumber = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
@@ -136,15 +153,30 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
         (rows: DsaProblemRow[]): DsaProblemRow[] => {
             const q = query.trim().toLowerCase();
             return rows.filter(row => {
-                if (difficulty !== 'ALL' && row.difficulty !== difficulty) return false;
-                if (status === 'SOLVED' && row.status !== 'SOLVED') return false;
-                if (status === 'TODO' && row.status === 'SOLVED') return false;
-                if (status === 'BOOKMARKED' && !row.bookmarked) return false;
-                if (!q) return true;
-                return (
-                    row.title.toLowerCase().includes(q) ||
-                    row.tags.some(tag => tag.toLowerCase().includes(q))
-                );
+                // 1. Difficulty filter (Case-insensitive)
+                if (difficulty !== 'ALL') {
+                    const rowDiff = (row.difficulty || '').toUpperCase();
+                    const targetDiff = difficulty.toUpperCase();
+                    if (rowDiff !== targetDiff) return false;
+                }
+
+                // 2. Status filter
+                if (status === 'SOLVED') {
+                    if (row.status !== 'SOLVED') return false;
+                } else if (status === 'TODO') {
+                    if (row.status === 'SOLVED') return false;
+                } else if (status === 'BOOKMARKED') {
+                    if (!row.bookmarked) return false;
+                }
+
+                // 3. Search text query against title or tags
+                if (q) {
+                    const titleMatch = (row.title || '').toLowerCase().includes(q);
+                    const tagMatch = Array.isArray(row.tags) && row.tags.some(tag => tag.toLowerCase().includes(q));
+                    if (!titleMatch && !tagMatch) return false;
+                }
+
+                return true;
             });
         },
         [query, status, difficulty]
@@ -268,39 +300,46 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
                             ))}
                         </div>
 
-                        {isLoggedIn && (
-                            <div className={styles.statusFilters}>
-                                {(['ALL', 'TODO', 'SOLVED', 'BOOKMARKED'] as StatusFilter[]).map(value => (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        className={`${styles.pill} ${status === value ? styles.pillActive : ''}`}
-                                        onClick={() => setStatus(value)}
-                                        aria-pressed={status === value}
-                                    >
-                                        {value === 'ALL'
-                                            ? 'All Status'
-                                            : value === 'TODO'
-                                              ? 'Unsolved'
-                                              : value === 'SOLVED'
-                                                ? 'Solved'
-                                                : 'Bookmarked'}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        <div className={styles.statusFilters}>
+                            {(['ALL', 'TODO', 'SOLVED', 'BOOKMARKED'] as StatusFilter[]).map(value => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    className={`${styles.pill} ${status === value ? styles.pillActive : ''}`}
+                                    onClick={() => {
+                                        if (!isLoggedIn && (value === 'SOLVED' || value === 'BOOKMARKED')) {
+                                            onRequireLogin();
+                                            return;
+                                        }
+                                        setStatus(value);
+                                    }}
+                                    aria-pressed={status === value}
+                                >
+                                    {value === 'ALL'
+                                        ? 'All Status'
+                                        : value === 'TODO'
+                                          ? 'Unsolved'
+                                          : value === 'SOLVED'
+                                            ? 'Solved'
+                                            : 'Bookmarked'}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className={styles.steps}>
                         {sheet.steps.map(step => {
                             const state = problemsFor(step.id);
+                            const filteredProblems = visible(state.rows);
+                            const isStepOpen = isFilterActive ? (filteredProblems.length > 0 || state.isLoading) : Boolean(openSteps[step.id]);
+
                             return (
                                 <StepAccordion
                                     key={step.id}
                                     step={step}
-                                    isOpen={Boolean(openSteps[step.id])}
+                                    isOpen={isStepOpen}
                                     onToggle={() => toggleStep(step.id)}
-                                    problems={visible(state.rows)}
+                                    problems={filteredProblems}
                                     hasMore={state.hasMore}
                                     isLoading={state.isLoading}
                                     onLoadMore={() => loadMoreProblems(step.id)}
@@ -310,6 +349,7 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
                                     openSectionIds={openSectionIds}
                                     onToggleSection={toggleSection}
                                     canTrack={isLoggedIn}
+                                    isFilterActive={isFilterActive}
                                 />
                             );
                         })}

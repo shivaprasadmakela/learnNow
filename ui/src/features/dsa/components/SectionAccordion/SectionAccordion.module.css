@@ -10,6 +10,10 @@
 }
 
 .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     padding-left: calc(36px + var(--section-depth, 0) * 16px);
     padding-right: 16px;
     padding-top: 10px;
@@ -22,8 +26,16 @@
     background: var(--bg-tertiary);
 }
 
+.titleGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-grow: 1;
+}
+
 .title {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-weight: 700;
     color: var(--text-primary);
     min-width: 0;
@@ -32,23 +44,58 @@
     white-space: nowrap;
 }
 
-.count {
-    display: inline-flex;
+.progress {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--text-secondary);
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.countGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.76rem;
+    color: var(--text-tertiary);
     font-variant-numeric: tabular-nums;
+}
+
+.countNumber {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.countCaption {
+    color: var(--text-tertiary);
+}
+
+.bar {
+    width: 60px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.barFill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--tech-blue);
+    transition: width 0.3s ease;
+}
+
+.barFillDone {
+    background: var(--color-green-600, #15803d);
 }
 
 .body {
     border-top: 1px solid var(--border-color);
+}
+
+/* Step-wise indent for problems inside section */
+.problemWrapper {
+    padding-left: calc(20px + var(--section-depth, 0) * 16px);
 }
 
 .section .section .title {
