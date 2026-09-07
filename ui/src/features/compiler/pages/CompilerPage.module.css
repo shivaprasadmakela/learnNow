@@ -15,7 +15,12 @@
     overflow: hidden;
 }
 
-@media (max-width: 900px) {
+/*
+ * Tablet: the editor and its output stack, sized as a share of the viewport
+ * rather than in fixed pixels - 400px of editor is most of a short screen and a
+ * third of a tall one.
+ */
+@media (max-width: 1024px) {
     .pageLayout {
         height: auto;
         min-height: 100%;
@@ -24,6 +29,18 @@
 
     .splitEditorOutput {
         grid-template-columns: 1fr;
-        grid-template-rows: 400px 380px;
+        grid-template-rows: 55vh 40vh;
+    }
+}
+
+/*
+ * Phone: the editor takes the room it needs and the output follows it. The
+ * console is short by default because on a phone the code is what you came for;
+ * it grows as output arrives since it is min-content-sized, not fixed.
+ */
+@media (max-width: 768px) {
+    .splitEditorOutput {
+        grid-template-rows: 60dvh auto;
+        min-height: 0;
     }
 }

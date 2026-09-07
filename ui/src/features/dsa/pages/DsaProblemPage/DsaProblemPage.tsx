@@ -26,6 +26,7 @@ import { useDsaProblem } from '../../hooks/useDsaProblem';
 import { useProblemRun } from '../../hooks/useProblemRun';
 import { useCodeBuffer } from '../../hooks/useCodeBuffer';
 import { useSplitPane } from '../../hooks/useSplitPane';
+import { useIsMobile } from '../../../../shared/hooks/useMediaQuery';
 import { DSA_SUPPORTED_LANGUAGES, getStarterCode } from '../../utils/dsaExecutionHelper';
 import type {
     DsaApproach,
@@ -45,6 +46,7 @@ export interface DsaProblemPageProps {
 }
 
 type LeftTab = 'description' | 'editorial' | 'submissions' | 'note';
+type MobilePane = 'problem' | 'code' | 'tests';
 
 const VERDICT_LABEL: Record<string, string> = {
     ACCEPTED: 'Accepted',
@@ -67,6 +69,9 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     const { isBookmarked, toggleBookmark } = useBookmarks(true, 'DSA_PROBLEM');
 
     const [leftTab, setLeftTab] = useState<LeftTab>('description');
+    /** Which single pane is showing on a phone. Ignored on desktop, where all three are visible. */
+    const [mobilePane, setMobilePane] = useState<MobilePane>('problem');
+    const isMobile = useIsMobile();
     const [language, setLanguage] = useState<string>('javascript');
     const [revealedHints, setRevealedHints] = useState(0);
     const [approachIndex, setApproachIndex] = useState(0);
@@ -129,14 +134,17 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
 
     const doRun = useCallback(() => {
         if (!problem || !language || run.isBusy) return;
+        // On a phone the console is a pane you are not looking at, so bring it forward.
+        if (isMobile) setMobilePane('tests');
         run.run(language, code);
-    }, [problem, language, run, code]);
+    }, [problem, language, run, code, isMobile]);
 
     const doSubmit = useCallback(async () => {
         if (!problem || !language || run.isBusy) return;
+        if (isMobile) setMobilePane('tests');
         const result = await run.submit(language, code);
         if (result?.verdict === 'ACCEPTED') reload();
-    }, [problem, language, run, code, reload]);
+    }, [problem, language, run, code, reload, isMobile]);
 
     // Ctrl/Cmd+Enter runs, adding Shift submits.
     useEffect(() => {
@@ -247,10 +255,35 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                 )}
             </header>
 
+            {/*
+              On a phone the three panes become one at a time. Resizable gutters are meaningless
+              under a thumb, and stacking them means scrolling past the whole statement to reach
+              the editor - so the panes become a switcher and each one gets the full height.
+            */}
+            {isMobile && (
+                <Tabs
+                    items={[
+                        { id: 'problem', label: 'Problem' },
+                        { id: 'code', label: 'Code' },
+                        {
+                            id: 'tests',
+                            label: 'Tests',
+                            count: run.result ? run.result.passedCount : undefined
+                        }
+                    ]}
+                    activeId={mobilePane}
+                    onChange={setMobilePane}
+                    variant="pill"
+                    label="Workspace panes"
+                    className={styles.paneSwitch}
+                />
+            )}
+
             {/* ── split body ── */}
             <div
                 className={styles.body}
                 ref={horizontal.setContainer}
+                data-pane={isMobile ? mobilePane : undefined}
                 style={{ ['--left-width' as string]: `${horizontal.size}%` }}
             >
                 {/* left: description and editorial */}

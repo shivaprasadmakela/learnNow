@@ -5,8 +5,8 @@
     flex-direction: column;
     flex-shrink: 0;
     position: sticky;
-    top: 52px;
-    height: calc(100vh - 52px);
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
     z-index: var(--z-sticky);
     transition: width var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1), background-color var(--transition-normal), border-color var(--transition-normal);
     overflow-x: hidden;
@@ -263,7 +263,7 @@
 
 /* Global Top Header */
 .header {
-    height: 52px;
+    height: var(--header-height);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
@@ -350,6 +350,8 @@
     justify-content: center;
     width: 40px;
     height: 40px;
+    /* A flex child with a declared width still shrinks without this - it was rendering 29px. */
+    flex: none;
     border-radius: var(--radius-pill);
     transition: all var(--transition-fast);
 }
@@ -397,6 +399,8 @@
     border-radius: var(--radius-pill);
     width: 40px;
     height: 40px;
+    /* A flex child with a declared width still shrinks without this - it was rendering 29px. */
+    flex: none;
     background-color: var(--bg-secondary);
     border: 2px solid var(--border-color);
     transition: border-color var(--transition-fast);
@@ -414,7 +418,7 @@
 .profileDropdown {
     position: absolute;
     right: 0;
-    top: 52px;
+    top: var(--header-height);
     width: 320px;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
@@ -574,10 +578,10 @@
 
     .sidebar {
         position: fixed;
-        top: 52px;
+        top: var(--header-height);
         left: -200px;
         width: 200px;
-        height: calc(100vh - 52px);
+        height: calc(100vh - var(--header-height));
         z-index: var(--z-modal);
         box-shadow: var(--shadow-lg);
         border-right: 1px solid var(--border-color);
@@ -616,5 +620,33 @@
     .streakBadge {
         padding: 2px 6px;
         font-size: 0.75rem;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+ * Touch targets.
+ *
+ * Keyed on pointer type rather than viewport width: a small window on a desktop
+ * still has a mouse and does not want 44px chrome, while a tablet at 1024px
+ * does. 44px is the smallest reliably tappable target, so controls that sit at
+ * 34-40px for mouse density get padded out for touch without changing their
+ * visual weight.
+ * --------------------------------------------------------------------------- */
+
+@media (pointer: coarse) {
+    .menuBtn,
+    .headerIconBtn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .signInBtn {
+        min-height: 44px;
+    }
+
+    /* The drawer's own rows: a nav item is the most-tapped thing in the app. */
+    .navItemExpanded,
+    .navItemCollapsed {
+        min-height: 48px;
     }
 }

@@ -105,3 +105,14 @@
         transform: rotate(360deg);
     }
 }
+
+/*
+ * See the note in Navigation.module.css: touch needs 44px, mouse does not. Only
+ * the two smaller sizes are raised - lg is already 46px.
+ */
+@media (pointer: coarse) {
+    .sm,
+    .md {
+        min-height: 44px;
+    }
+}

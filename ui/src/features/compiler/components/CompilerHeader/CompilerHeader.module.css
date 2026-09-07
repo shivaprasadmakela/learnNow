@@ -171,3 +171,22 @@
         padding: 0 12px;
     }
 }
+
+
+/*
+ * See Navigation.module.css on keying this to pointer type. These sit at 26-31px
+ * for mouse density; Run Code is the primary action on the page and was the
+ * smallest thing on it.
+ */
+@media (pointer: coarse) {
+    .langSelect,
+    .shareBtn,
+    .runBtn {
+        min-height: 44px;
+    }
+
+    .iconBtn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}

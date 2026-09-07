@@ -2,8 +2,8 @@
 .container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 52px);
-    max-height: calc(100vh - 52px);
+    height: calc(100vh - var(--header-height));
+    max-height: calc(100vh - var(--header-height));
     width: 100%;
     gap: 0;
     background: var(--bg-primary);

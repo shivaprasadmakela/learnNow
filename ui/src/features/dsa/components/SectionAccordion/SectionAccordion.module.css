@@ -103,3 +103,19 @@
     font-weight: 600;
     color: var(--text-secondary);
 }
+
+/*
+ * Nesting costs width, and on a phone there is none to spare: at depth three the
+ * desktop indent eats 84 of 375px before the title starts. The step is halved and
+ * the base trimmed, which keeps the hierarchy legible - the quieter heading weight
+ * at each level is doing most of that work anyway - without squeezing the titles.
+ */
+@media (max-width: 768px) {
+    .header {
+        padding-left: calc(20px + var(--section-depth, 0) * 8px);
+    }
+
+    .problemWrapper {
+        padding-left: calc(8px + var(--section-depth, 0) * 8px);
+    }
+}

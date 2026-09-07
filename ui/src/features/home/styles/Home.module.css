@@ -902,3 +902,11 @@
         transform: translateY(2px);
     }
 }
+
+
+/* See Navigation.module.css: touch needs 44px, mouse does not. */
+@media (pointer: coarse) {
+    .categoryTabBtn {
+        min-height: 44px;
+    }
+}

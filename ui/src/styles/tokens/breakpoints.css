@@ -5,3 +5,31 @@
   --breakpoint-md: 1024px;
   --breakpoint-lg: 1200px;
 }
+
+/* ---------------------------------------------------------------------------
+ * The responsive scale.
+ *
+ * Custom properties cannot be used inside a media query, so these four values
+ * exist to be *quoted* rather than referenced — write the number and keep it on
+ * this scale rather than inventing a nearby one:
+ *
+ *     xs  480px   one column, controls stack, labels drop to icons
+ *     sm  768px   the sidebar becomes an off-canvas drawer; touch assumed
+ *     md  1024px  side-by-side panes stop earning their keep
+ *     lg  1200px  widest content measure
+ *
+ * The codebase currently also contains 500, 580, 600, 640, 700, 800, 900, 992
+ * and 1100px breakpoints, predating this. They are being consolidated onto the
+ * scale as each area is touched, rather than in one sweep — a mass rewrite of
+ * breakpoints changes layouts in ways only a person looking at them can judge.
+ * --------------------------------------------------------------------------- */
+
+:root {
+  /*
+   * The sticky header's height. Every full-height calculation subtracts it, and
+   * it was hardcoded in twelve places across six files — with App.module.css
+   * using 72px against the header's actual 52px, so every page's content area
+   * was 20px shorter than the space available to it.
+   */
+  --header-height: 52px;
+}

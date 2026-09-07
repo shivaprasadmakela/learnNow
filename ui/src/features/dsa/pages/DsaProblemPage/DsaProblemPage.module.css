@@ -558,13 +558,95 @@
 .state { padding: 40px 0; text-align: center; color: var(--text-tertiary); font-size: 0.88rem; }
 
 /* Below the tablet breakpoint the split stops earning its keep. */
-@media (max-width: 900px) {
+/* ---------------------------------------------------------------------------
+ * Tablet: the columns stack but everything stays visible and scrollable.
+ * --------------------------------------------------------------------------- */
+
+@media (max-width: 1024px) and (min-width: 769px) {
     .shell { height: auto; min-height: 0; overflow: visible; }
     .body { grid-template-columns: 1fr; }
     .gutter { display: none; }
     .leftPane { border-bottom: 1px solid var(--border-color); }
-    .rightPane { grid-template-rows: 420px 6px 320px; }
+    .rightPane { grid-template-rows: 60vh 6px 40vh; }
     .topTitle { max-width: 18ch; }
+}
+
+/* ---------------------------------------------------------------------------
+ * Phone: one pane at a time, chosen by the switcher, each filling the screen.
+ *
+ * Stacking all three would mean scrolling past the entire statement to reach
+ * the editor, and a 6px drag gutter is not operable with a thumb. The switcher
+ * lives in the page (it needs to exist as a control, which CSS cannot conjure);
+ * these rules are what make only the chosen pane occupy the body.
+ * --------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+    .shell {
+        /* Own the viewport minus the app header, so the active pane is full height. */
+        height: calc(100dvh - var(--header-height));
+        overflow: hidden;
+    }
+
+    .topBar {
+        gap: 6px;
+        padding: 7px 10px;
+    }
+
+    /* The breadcrumb is the first thing to go; the title above it says the same. */
+    .crumb { display: none; }
+    .topTitle { max-width: 100%; font-size: 0.85rem; }
+
+    .paneSwitch {
+        flex: none;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-card);
+    }
+
+    .body {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+    }
+
+    .gutter,
+    .rowGutter { display: none; }
+
+    /* Every pane occupies the single grid cell; the switcher reveals one. */
+    .leftPane,
+    .rightPane {
+        grid-column: 1;
+        grid-row: 1;
+        min-height: 0;
+    }
+
+    .rightPane {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .editorCell,
+    .consoleCell { flex: 1 1 auto; min-height: 0; }
+
+    .body[data-pane='problem'] .rightPane { display: none; }
+
+    .body[data-pane='code'] .leftPane,
+    .body[data-pane='code'] .consoleCell { display: none; }
+
+    .body[data-pane='tests'] .leftPane,
+    .body[data-pane='tests'] .editorCell { display: none; }
+
+    /* Run and Submit are the reason the page exists; keep their labels. */
+    .runBtn,
+    .submitBtn {
+        padding: 8px 12px;
+        font-size: 0.78rem;
+    }
+
+    .tabBody { padding: 14px 14px 32px; }
+
+    /* An example's label column costs a third of the width at this size. */
+    .exampleRow { flex-direction: column; gap: 3px; }
+    .exampleLabel { width: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
