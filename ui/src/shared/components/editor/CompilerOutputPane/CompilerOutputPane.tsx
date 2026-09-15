@@ -2,7 +2,7 @@ import React from 'react';
 import type { ConsoleLogEntry } from '../useCodeExecution';
 import styles from './CompilerOutputPane.module.css';
 
-interface CompilerOutputPaneProps {
+export interface CompilerOutputPaneProps {
     logs: ConsoleLogEntry[];
     htmlPreview: string;
     stdin: string;

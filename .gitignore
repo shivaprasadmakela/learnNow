@@ -1,8 +1,13 @@
-# Agent documentation (local only)
+# Agent documentation and tooling (local only)
 AGENTS.md
 CLAUDE.md
 GEMINI.md
 docs/
+.claude/
+
+# Authored course content. Seed data for the DSA import endpoint, kept
+# out of the repo and loaded locally.
+content/
 
 # Backend (Maven / Java / Spring Boot)
 backend/target/

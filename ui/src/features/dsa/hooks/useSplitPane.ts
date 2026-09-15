@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 export interface UseSplitPaneOptions {
+    /** Ref to the container DOM element whose dimensions determine percentage splits. */
+    containerRef?: React.RefObject<HTMLElement | null>;
     /** Starting size as a percentage of the container. */
     initial: number;
     min?: number;
@@ -17,6 +19,7 @@ export interface UseSplitPaneOptions {
  * or stutters even when moving rapidly over Monaco editor or complex nested DOM.
  */
 export const useSplitPane = ({
+    containerRef,
     initial,
     min = 20,
     max = 80,
@@ -31,7 +34,6 @@ export const useSplitPane = ({
         return initial;
     });
     const [isDragging, setIsDragging] = useState(false);
-    const [container, setContainer] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
         if (!storageKey || typeof localStorage === 'undefined') return;
@@ -39,7 +41,9 @@ export const useSplitPane = ({
     }, [size, storageKey]);
 
     useEffect(() => {
-        if (!isDragging || !container) return;
+        if (!isDragging) return;
+        const container = containerRef?.current;
+        if (!container) return;
 
         const onPointerMove = (event: PointerEvent) => {
             event.preventDefault();
@@ -73,7 +77,7 @@ export const useSplitPane = ({
             window.removeEventListener('pointerup', onPointerUp);
             window.removeEventListener('pointercancel', onPointerUp);
         };
-    }, [isDragging, container, axis, min, max]);
+    }, [isDragging, containerRef, axis, min, max]);
 
     const onPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -97,7 +101,6 @@ export const useSplitPane = ({
     return {
         size,
         isDragging,
-        setContainer,
         gutterProps: {
             role: 'separator' as const,
             'aria-orientation': (axis === 'x' ? 'vertical' : 'horizontal') as

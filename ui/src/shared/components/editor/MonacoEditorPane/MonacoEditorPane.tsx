@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import type { Monaco, OnMount } from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
 import styles from './MonacoEditorPane.module.css';
 
-interface MonacoEditorPaneProps {
+export interface MonacoEditorPaneProps {
     code: string;
     language: string;
     onChange: (val: string) => void;
     onRun?: () => void;
-    onMountEditor?: (editor: any) => void;
+    onMountEditor?: (editor: editor.IStandaloneCodeEditor) => void;
 }
 
 export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
@@ -18,7 +19,7 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
     onRun,
     onMountEditor
 }) => {
-    const editorRef = useRef<any>(null);
+    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const monacoRef = useRef<Monaco | null>(null);
 
     const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {

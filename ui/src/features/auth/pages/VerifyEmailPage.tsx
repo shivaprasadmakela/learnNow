@@ -58,7 +58,7 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ changeView, on
         };
 
         performVerification();
-    }, []);
+    }, [onVerificationSuccess, showToast]);
 
     const handleResendSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

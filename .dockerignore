@@ -17,8 +17,12 @@ key-*.json
 .git/
 .github/
 .vscode/
+.claude/
 .idea/
 *.iml
 .DS_Store
 *.log
 run.log
+
+# Local-only authored content
+content/

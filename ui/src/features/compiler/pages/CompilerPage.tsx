@@ -5,6 +5,7 @@ import { CompilerHeader } from '../components/CompilerHeader/CompilerHeader';
 import { MonacoEditorPane } from '../components/MonacoEditorPane/MonacoEditorPane';
 import { CompilerOutputPane } from '../components/CompilerOutputPane/CompilerOutputPane';
 import { useCodeExecution } from '../hooks/useCodeExecution';
+import type { editor } from 'monaco-editor';
 import { shareSnippetApi, fetchSharedSnippetApi } from '../../../shared/api/compiler.api';
 import { authClient } from '../../../shared/api/authClient';
 import styles from './CompilerPage.module.css';
@@ -35,7 +36,7 @@ export const CompilerPage: React.FC = () => {
     const [stdin, setStdin] = useState<string>('');
     const [activeTab, setActiveTab] = useState<'input' | 'output'>('output');
 
-    const monacoEditorRef = React.useRef<any>(null);
+    const monacoEditorRef = React.useRef<editor.IStandaloneCodeEditor | null>(null);
 
     const { logs, htmlPreview, isRunning, executionTimeMs, runCode, clearConsole } = useCodeExecution();
 

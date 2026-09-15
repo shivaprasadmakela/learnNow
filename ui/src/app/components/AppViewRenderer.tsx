@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import styles from '../App.module.css';
 import type { Course, UserProfile } from '../../types';
+import type { ViewState } from '../../features/dashboard/hooks/useProfileDashboard';
 
 // Dynamic Lazy Imports for Code-Splitting & Small Initial Bundle Size
 const Home = React.lazy(() => import('../../features/home').then(m => ({ default: m.Home })));
@@ -15,7 +16,7 @@ const CourseImporter = React.lazy(() => import('../../features/iam-admin').then(
 const CompilerPage = React.lazy(() => import('../../features/compiler').then(m => ({ default: m.CompilerPage })));
 const DsaSheetPage = React.lazy(() => import('../../features/dsa').then(m => ({ default: m.DsaSheetPage })));
 const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
-import { fetchAdminPathById, saveAdminPath } from '../../features/iam-admin/api/admin.api';
+import { fetchAdminPathById, saveAdminPath, type AdminSubtopicData } from '../../features/iam-admin/api/admin.api';
 
 
 
@@ -42,8 +43,8 @@ interface AppViewRendererProps {
     onOpenDsaProblem: (stepSlug: string, problemSlug: string) => void;
     handleSelectTopic: (topicId: number | string, subtopicId?: number | string, subtopicTitle?: string) => void;
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
-    handleViewChange: (view: any) => void;
-    changeView: (view: any, slug?: string) => void;
+    handleViewChange: (view: ViewState) => void;
+    changeView: (view: ViewState, slug?: string) => void;
     handleLoginSuccess: (token: string, profile: UserProfile) => void;
     refreshUserData: (force?: boolean) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
@@ -206,7 +207,11 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
 
                                 const targetTopic = fullPath.topics[targetIdx];
                                 const items = Array.isArray(subtopicData) ? subtopicData : [subtopicData];
-                                const newSubs = items.map((s: any, idx: number) => ({
+                                const newSubs = (items as Partial<AdminSubtopicData>[]).map((s, idx: number) => ({
+                                    title: s.title ?? '',
+                                    content: s.content ?? '',
+                                    status: s.status ?? 'DRAFT',
+                                    questions: s.questions ?? [],
                                     ...s,
                                     orderIndex: (targetTopic.subtopics?.length || 0) + idx + 1
                                 }));

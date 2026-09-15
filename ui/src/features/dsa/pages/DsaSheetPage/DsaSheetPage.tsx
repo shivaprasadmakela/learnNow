@@ -117,11 +117,11 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
     }, [sheet, isFilterActive, ensureProblemsLoaded]);
 
     // Select tip for the 24-hour day across a 14-day (2-week) rotation
-    const currentTip = useMemo(() => {
+    const [currentTip] = useState(() => {
         const dayNumber = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
         const index = Math.abs(dayNumber) % DAILY_TIPS.length;
         return DAILY_TIPS[index];
-    }, []);
+    });
 
     const toggleStep = useCallback(
         (stepId: string) => {

@@ -62,8 +62,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     isLoggedIn,
     onBackToSheet,
     onNavigateProblem,
-    onRequireLogin,
-    onOpenFullCompiler: _onOpenFullCompiler
+    onRequireLogin
 }) => {
     const { problem, isLoading, error, reload } = useDsaProblem(problemSlug);
     const { isBookmarked, toggleBookmark } = useBookmarks(true, 'DSA_PROBLEM');
@@ -76,7 +75,11 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     const [revealedHints, setRevealedHints] = useState(0);
     const [approachIndex, setApproachIndex] = useState(0);
 
+    const horizontalContainerRef = React.useRef<HTMLDivElement | null>(null);
+    const verticalContainerRef = React.useRef<HTMLDivElement | null>(null);
+
     const horizontal = useSplitPane({
+        containerRef: horizontalContainerRef,
         initial: 44,
         min: 25,
         max: 70,
@@ -84,6 +87,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
         storageKey: 'dsa_split_x'
     });
     const vertical = useSplitPane({
+        containerRef: verticalContainerRef,
         initial: 66,
         min: 25,
         max: 85,
@@ -272,7 +276,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                         }
                     ]}
                     activeId={mobilePane}
-                    onChange={setMobilePane}
+                    onChange={id => setMobilePane(id as MobilePane)}
                     variant="pill"
                     label="Workspace panes"
                     className={styles.paneSwitch}
@@ -282,7 +286,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
             {/* ── split body ── */}
             <div
                 className={styles.body}
-                ref={horizontal.setContainer}
+                ref={horizontalContainerRef}
                 data-pane={isMobile ? mobilePane : undefined}
                 style={{ ['--left-width' as string]: `${horizontal.size}%` }}
             >
@@ -505,7 +509,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                 {/* right: editor over console (Single Editor section, No Tabs) */}
                 <div
                     className={styles.rightPane}
-                    ref={vertical.setContainer}
+                    ref={verticalContainerRef}
                     style={{ ['--editor-height' as string]: `${vertical.size}%` }}
                 >
                     <div className={styles.editorCell}>

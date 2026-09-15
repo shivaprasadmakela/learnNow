@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { useProfileDashboard } from '../features/dashboard/hooks/useProfileDashboard';
+import { useProfileDashboard, type ViewState } from '../features/dashboard/hooks/useProfileDashboard';
 import { Header, Sidebar, Breadcrumb, Loader } from '../shared/components';
 import { useToast } from '../shared/components/feedback/Toast';
 import styles from './App.module.css';
@@ -148,7 +148,7 @@ export default function App() {
         }
     }, [activeView, activeTopic, courses, getTopicPaging, loadMoreTopicsForPath]);
 
-    const handleViewChange = (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => {
+    const handleViewChange = (view: ViewState) => {
         if (view === 'TOPICS') {
             const path = courses.find(c => c.id === selectedPathId) || courses[0];
             changeView(view, path ? slugify(path.title) : 'path');

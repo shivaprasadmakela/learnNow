@@ -159,20 +159,23 @@ export function executeJavaScriptLocally(
     for (let i = 0; i < samples.length; i++) {
         const sample = samples[i];
         const caseNumber = i + 1;
-        let actualOutput = '';
+        let actualOutput: string;
 
+        // eslint-disable-next-line no-console
+        const originalLog = console.log;
         try {
             const logsCaptured: string[] = [];
-            const originalLog = console.log;
-            console.log = (...args: any[]) => {
+            // eslint-disable-next-line no-console
+            console.log = (...args: unknown[]) => {
                 logsCaptured.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
             };
 
-            const inputTrimmed = sample.input.trim();
-            const inputTokens = inputTrimmed.split(/\s+/).filter(Boolean);
+            try {
+                const inputTrimmed = sample.input.trim();
+                const inputTokens = inputTrimmed.split(/\s+/).filter(Boolean);
 
-            // Execute user code dynamically in sandboxed Function
-            const wrappedCode = `
+                // Execute user code dynamically in sandboxed Function
+                const wrappedCode = `
                 ${userCode}
 
                 let executionResult = undefined;
@@ -196,13 +199,16 @@ export function executeJavaScriptLocally(
                 }
             `;
 
-            const fn = new Function(wrappedCode);
-            fn();
+                const fn = new Function(wrappedCode);
+                fn();
 
-            console.log = originalLog;
-            actualOutput = logsCaptured.join('\n').trim();
-        } catch (err: any) {
-            compileError = err?.message || String(err);
+                actualOutput = logsCaptured.join('\n').trim();
+            } finally {
+                // eslint-disable-next-line no-console
+                console.log = originalLog;
+            }
+        } catch (err: unknown) {
+            compileError = err instanceof Error ? err.message : String(err);
             cases.push({
                 caseNumber,
                 sample: true,

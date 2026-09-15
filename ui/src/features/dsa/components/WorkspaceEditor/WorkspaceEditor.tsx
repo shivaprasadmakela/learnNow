@@ -34,7 +34,6 @@ export const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({
     isBusy,
     onRun,
     onSubmit,
-    onOpenFullCompiler: _onOpenFullCompiler,
     problemDetail
 }) => {
     const editorRef = useRef<any>(null);

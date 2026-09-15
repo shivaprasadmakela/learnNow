@@ -3,7 +3,7 @@ import { ShieldAlert, ArrowLeft, LogIn, LayoutDashboard } from 'lucide-react';
 import styles from './UnauthorizedAccess.module.css';
 
 interface UnauthorizedAccessProps {
-    changeView: (view: string) => void;
+    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN') => void;
     isLoggedIn: boolean;
 }
 
