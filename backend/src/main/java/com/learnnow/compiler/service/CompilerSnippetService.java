@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
@@ -56,6 +57,16 @@ public class CompilerSnippetService {
     private static final String KEY_SOURCE_CODE = "source_code";
     private static final String KEY_STDIN = "stdin";
 
+    /**
+     * Judge0 validates that every string field in a plain submission is readable as UTF-8 and
+     * rejects the whole request with a 400 when one is not - which a learner hits by pasting a
+     * smart quote, an accented identifier or an emoji into a comment, and which surfaced as "some
+     * attributes for this submission cannot be converted to UTF-8". Base64 sidesteps the validator
+     * entirely: the code and stdin go over as opaque bytes, and stdout, stderr and the compiler
+     * output come back the same way.
+     */
+    private static final String SUBMISSION_URI = "/submissions?base64_encoded=true&wait=true";
+
     private final SharedSnippetRepository snippetRepository;
 
     /** Timeout-configured client; see {@code HttpClientConfig}. */
@@ -70,16 +81,16 @@ public class CompilerSnippetService {
 
         Map<String, Object> body = new HashMap<>();
         body.put(KEY_LANGUAGE_ID, languageId);
-        body.put(KEY_SOURCE_CODE, code);
+        body.put(KEY_SOURCE_CODE, encode(code));
         if (request.getStdin() != null && !request.getStdin().isBlank()) {
-            body.put(KEY_STDIN, request.getStdin());
+            body.put(KEY_STDIN, encode(request.getStdin()));
         }
 
         try {
             Map<?, ?> response =
                     codeExecutionRestClient
                             .post()
-                            .uri("/submissions?wait=true")
+                            .uri(SUBMISSION_URI)
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(body)
                             .retrieve()
@@ -93,9 +104,9 @@ public class CompilerSnippetService {
                         .build();
             }
 
-            String stdout = (String) response.get(KEY_STDOUT);
-            String stderr = (String) response.get(KEY_STDERR);
-            String compileOutput = (String) response.get(KEY_COMPILE_OUTPUT);
+            String stdout = decode((String) response.get(KEY_STDOUT));
+            String stderr = decode((String) response.get(KEY_STDERR));
+            String compileOutput = decode((String) response.get(KEY_COMPILE_OUTPUT));
             String timeStr = (String) response.get(KEY_TIME);
             Number memoryNum = (Number) response.get(KEY_MEMORY);
 
@@ -260,5 +271,26 @@ public class CompilerSnippetService {
         }
 
         return trimmed;
+    }
+
+    private static String encode(String value) {
+        if (value == null) return null;
+        return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Reads a base64 field back.
+     *
+     * <p>Falls back to the value as it arrived rather than throwing: a proxy or a Judge0 build that
+     * ignores {@code base64_encoded} answers in plain text, and losing the compiler's message is a
+     * far worse failure than showing it undecoded.
+     */
+    private static String decode(String value) {
+        if (value == null || value.isEmpty()) return value;
+        try {
+            return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException notBase64) {
+            return value;
+        }
     }
 }

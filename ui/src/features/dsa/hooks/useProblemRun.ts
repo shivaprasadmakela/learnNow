@@ -3,14 +3,21 @@ import {
     runDsaProblem,
     submitDsaProblem,
     type DsaRunResult,
-    type DsaSubmitResult,
-    type DsaSample
+    type DsaSubmitResult
 } from '../api/dsa.api';
-import { executeJavaScriptLocally } from '../utils/dsaExecutionHelper';
 
 export type RunPhase = 'idle' | 'running' | 'submitting';
 
-export const useProblemRun = (problemId: string | undefined, samples: DsaSample[] = []) => {
+/**
+ * Run and Submit against the server judge.
+ *
+ * <p>There is deliberately no in-browser fallback. A verdict has to mean the same thing every
+ * time, and a client-side evaluator cannot produce one: it never sees the hidden cases, it cannot
+ * run the four non-JavaScript languages, and - worst of the three - it turns "the judge was
+ * unreachable" into a green ACCEPTED. A failed request surfaces as an error, and the learner knows
+ * their answer has not been checked.
+ */
+export const useProblemRun = (problemId: string | undefined) => {
     const [phase, setPhase] = useState<RunPhase>('idle');
     const [runResult, setRunResult] = useState<DsaRunResult | null>(null);
     const [submitResult, setSubmitResult] = useState<DsaSubmitResult | null>(null);
@@ -26,31 +33,17 @@ export const useProblemRun = (problemId: string | undefined, samples: DsaSample[
             setError(null);
             setSubmitResult(null);
 
-            const isJsFamily = language.toLowerCase() === 'javascript' || language.toLowerCase() === 'typescript';
-
             try {
-                const serverRes = await runDsaProblem(problemId, language, code, extraCases);
-                setRunResult(serverRes);
-            } catch (err: any) {
-                // If server harness is missing and language is JS/TS, fallback to local execution against sample cases
-                if (isJsFamily && samples && samples.length > 0) {
-                    try {
-                        const localRes = executeJavaScriptLocally(code, samples);
-                        setRunResult(localRes);
-                        return;
-                    } catch (localErr: any) {
-                        setError(localErr?.message || 'Could not execute code locally');
-                    }
-                } else {
-                    setError(err instanceof Error ? err.message : 'Could not run your code');
-                }
+                setRunResult(await runDsaProblem(problemId, language, code, extraCases));
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : 'Could not run your code');
                 setRunResult(null);
             } finally {
                 inFlight.current = false;
                 setPhase('idle');
             }
         },
-        [problemId, samples]
+        [problemId]
     );
 
     const submit = useCallback(
@@ -61,30 +54,12 @@ export const useProblemRun = (problemId: string | undefined, samples: DsaSample[
             setError(null);
             setRunResult(null);
 
-            const isJsFamily = language.toLowerCase() === 'javascript' || language.toLowerCase() === 'typescript';
-
             try {
                 const result = await submitDsaProblem(problemId, language, code);
                 setSubmitResult(result);
                 return result;
-            } catch (err: any) {
-                if (isJsFamily && samples && samples.length > 0) {
-                    try {
-                        const localRes = executeJavaScriptLocally(code, samples);
-                        const fallbackSubmitResult: DsaSubmitResult = {
-                            ...localRes,
-                            submissionId: `local-${Date.now()}`,
-                            newlySolved: localRes.verdict === 'ACCEPTED',
-                            pointsAwarded: localRes.verdict === 'ACCEPTED' ? 10 : 0
-                        };
-                        setSubmitResult(fallbackSubmitResult);
-                        return fallbackSubmitResult;
-                    } catch (localErr: any) {
-                        setError(localErr?.message || 'Could not submit your code');
-                    }
-                } else {
-                    setError(err instanceof Error ? err.message : 'Could not submit your code');
-                }
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : 'Could not submit your code');
                 setSubmitResult(null);
                 return null;
             } finally {
@@ -92,7 +67,7 @@ export const useProblemRun = (problemId: string | undefined, samples: DsaSample[
                 setPhase('idle');
             }
         },
-        [problemId, samples]
+        [problemId]
     );
 
     const clear = useCallback(() => {

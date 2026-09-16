@@ -77,7 +77,28 @@ export const apiFetch = async (url: string, options: RequestInit = {}): Promise<
 };
 
 /**
- * Reads the backend's `{ code, message }` error body and throws an Error carrying the
+ * A failed API call, carrying what the server actually said.
+ *
+ * The message alone is not enough to decide what to do: "the judge has no harness for this
+ * language" is a thing the UI can explain and route around, while "the gateway is down" is not.
+ * Callers that need to tell those apart read {@link status} and {@link code}; everything else
+ * keeps treating it as a plain Error.
+ */
+export class ApiError extends Error {
+    readonly status: number;
+    /** The backend's machine-readable `code`, when the body carried one. */
+    readonly code: string | null;
+
+    constructor(message: string, status: number, code: string | null) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.code = code;
+    }
+}
+
+/**
+ * Reads the backend's `{ code, message }` error body and throws an {@link ApiError} carrying the
  * server's own message, so callers surface something actionable instead of a generic
  * "request failed".
  */
@@ -85,13 +106,15 @@ export const apiFetchJson = async <T>(url: string, options: RequestInit = {}): P
     const response = await apiFetch(url, options);
     if (!response.ok) {
         let message = `Request failed (${response.status})`;
+        let code: string | null = null;
         try {
             const body = await response.json();
             if (body?.message) message = body.message;
+            if (typeof body?.code === 'string') code = body.code;
         } catch {
             /* non-JSON body - keep the status-based message */
         }
-        throw new Error(message);
+        throw new ApiError(message, response.status, code);
     }
     return response.json() as Promise<T>;
 };

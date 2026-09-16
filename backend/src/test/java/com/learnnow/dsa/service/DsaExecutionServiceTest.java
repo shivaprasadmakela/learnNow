@@ -159,6 +159,65 @@ class DsaExecutionServiceTest {
     }
 
     @Test
+    void aCompilerWarningIsShownButDoesNotFailTheRun() {
+        // An unfinished method body warns ("non-void function does not return a value") on every
+        // C++ starter in the sheet. The program still compiled and still ran, so the answers are
+        // what decide the verdict - but the warning is the most useful thing the learner could
+        // read, so it is carried through rather than dropped.
+        when(compilerService.executeCode(any()))
+                .thenReturn(
+                        ExecuteCodeResponse.builder()
+                                .stdout(delimited("1"))
+                                .compileOutput(
+                                        "main.cpp:5:5: warning: non-void function does not return"
+                                                + " a value")
+                                .statusCode(3)
+                                .build());
+
+        var outcome =
+                service.execute(
+                        PROBLEM_ID,
+                        "cpp",
+                        "class Solution {};",
+                        List.of(testCase(1, "a\n", "1", true)));
+
+        assertThat(outcome.verdict()).isEqualTo(DsaVerdict.ACCEPTED);
+        assertThat(outcome.passedCount()).isEqualTo(1);
+        assertThat(outcome.compileOutput()).contains("warning");
+    }
+
+    @Test
+    void theCaseDelimiterNeverReachesTheLearner() {
+        // It is plumbing between the driver and splitCases. A solution that printed nothing used
+        // to show a "raw output" panel containing the markers and nothing else.
+        when(compilerService.executeCode(any())).thenReturn(ok(delimited("1", "2")));
+
+        var outcome =
+                service.execute(
+                        PROBLEM_ID,
+                        "cpp",
+                        "class Solution {};",
+                        List.of(testCase(1, "a\n", "1", true), testCase(2, "b\n", "2", true)));
+
+        assertThat(outcome.stdout()).doesNotContain(DsaExecutionService.CASE_DELIMITER);
+        assertThat(outcome.stdout()).contains("1").contains("2");
+    }
+
+    @Test
+    void outputThatIsNothingButDelimitersIsReportedAsNoOutputAtAll() {
+        when(compilerService.executeCode(any())).thenReturn(ok(delimited("", "")));
+
+        var outcome =
+                service.execute(
+                        PROBLEM_ID,
+                        "cpp",
+                        "class Solution {};",
+                        List.of(testCase(1, "a\n", "1", true), testCase(2, "b\n", "2", true)));
+
+        assertThat(outcome.stdout()).isNull();
+    }
+
+    @Test
     void aTimeoutIsReportedAsSuchRatherThanAsAWrongAnswer() {
         when(compilerService.executeCode(any()))
                 .thenReturn(ExecuteCodeResponse.builder().statusCode(5).build());

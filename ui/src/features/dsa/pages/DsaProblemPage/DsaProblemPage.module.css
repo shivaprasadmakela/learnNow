@@ -511,18 +511,72 @@
     box-sizing: border-box;
 }
 
-.consoleHint { font-size: 0.8rem; color: var(--text-tertiary); line-height: 1.6; }
+.consoleHint {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+}
+
+.consoleHint svg { vertical-align: -2px; }
+
+/* Solving a problem for the first time is the one moment in this pane worth colouring. */
+.solvedNotice {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 13px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--color-green-600, #15803d) 12%, transparent);
+    color: var(--color-green-600, #15803d);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.customInput {
+    width: 100%;
+    min-height: 74px;
+    padding: 9px 11px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.76rem;
+    line-height: 1.6;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.customInput:focus-visible {
+    outline: 2px solid var(--color-primary, #38bdf8);
+    outline-offset: 1px;
+}
 
 /* ─── Submissions ─── */
 
 .subRow {
     display: grid;
-    grid-template-columns: auto 1fr auto auto;
+    grid-template-columns: auto 1fr auto auto auto;
     align-items: center;
     gap: 11px;
-    padding: 10px 0;
+    width: 100%;
+    padding: 10px 6px;
+    border: none;
     border-bottom: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: none;
+    color: inherit;
+    font: inherit;
     font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.subRow:hover,
+.subRow:focus-visible {
+    background: var(--bg-secondary);
 }
 
 .subRow:last-child { border-bottom: none; }

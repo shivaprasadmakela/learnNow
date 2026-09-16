@@ -84,11 +84,24 @@ public class DsaSubmissionService {
             }
         }
 
+        // An ad-hoc case is compared against an empty expected output, so the engine always calls
+        // it wrong. Relabelling the case alone was not enough: the overall verdict and the
+        // first-failed pointer still came back from that comparison, and a correct solution read
+        // as "Wrong answer, failed on case 4" the moment the learner typed anything into the
+        // custom input box. The samples are the only cases a Run can be judged on.
+        String verdict = outcome.verdict().name();
+        Integer firstFailed = outcome.firstFailedCase();
+        if (adHocFrom < cases.size() && isAnswerVerdict(verdict)) {
+            boolean sampleFailed = firstFailed != null && firstFailed <= adHocFrom;
+            verdict = sampleFailed ? DsaVerdict.WRONG_ANSWER.name() : DsaVerdict.ACCEPTED.name();
+            firstFailed = sampleFailed ? firstFailed : null;
+        }
+
         return new DsaRunResultDto(
-                outcome.verdict().name(),
+                verdict,
                 outcome.passedCount(),
                 Math.min(outcome.totalCount(), adHocFrom),
-                outcome.firstFailedCase(),
+                firstFailed,
                 relabelled,
                 outcome.compileOutput(),
                 outcome.stderr(),
@@ -221,5 +234,15 @@ public class DsaSubmissionService {
         if (problem.getStatus() != DsaProblemStatus.PUBLISHED) {
             throw new NotFoundException("dsa_problem_not_found");
         }
+    }
+
+    /**
+     * Whether a verdict is a statement about the answers rather than about the run itself. A
+     * compile error, a crash or a timeout is true regardless of which cases were being judged;
+     * accepted and wrong answer are not.
+     */
+    private static boolean isAnswerVerdict(String verdict) {
+        return DsaVerdict.ACCEPTED.name().equals(verdict)
+                || DsaVerdict.WRONG_ANSWER.name().equals(verdict);
     }
 }

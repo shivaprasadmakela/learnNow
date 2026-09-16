@@ -150,6 +150,16 @@ public class DsaExecutionService {
                 allStdout.append(response.getStdout());
             }
 
+            // A diagnostic from a build that nonetheless ran is a warning worth showing. It is
+            // renumbered against the learner's own lines like any other.
+            if (compileOutput == null
+                    && response.getCompileOutput() != null
+                    && !response.getCompileOutput().isBlank()) {
+                compileOutput =
+                        DsaCompileErrorRewriter.rewrite(
+                                response.getCompileOutput(), linesBefore, userLines);
+            }
+
             DsaVerdict engineVerdict = classifyEngineFailure(response);
             if (engineVerdict != null) {
                 compileOutput =
@@ -220,7 +230,7 @@ public class DsaExecutionService {
                 firstFailed,
                 blankToNull(compileOutput),
                 blankToNull(stderr),
-                allStdout.toString(),
+                stripDelimiters(allStdout.toString()),
                 runtimeMs,
                 memoryKb,
                 truncationNotice);
@@ -295,19 +305,29 @@ public class DsaExecutionService {
      * Maps an engine response to a verdict, or null when the code ran and only the answers are in
      * question.
      *
-     * <p>Judge0 status ids: 3 accepted, 5 time limit, 6 compilation error, 7-12 runtime signals.
+     * <p>Judge0 status ids: 3 accepted, 4 wrong answer, 5 time limit, 6 compilation error, 7-12
+     * runtime signals, 13-14 engine trouble.
+     *
+     * <p>The status is read first and, when it says the program ran, believed. Treating any
+     * compiler output as a failure before looking failed every C++ submission whose only diagnostic
+     * was a warning - and an unfinished method body is exactly such a warning ("non-void function
+     * does not return a value"), so the first Run of a fresh starter reported a compile error
+     * against a program that had compiled and run. Warnings are still shown; they are just no
+     * longer a verdict.
      */
     DsaVerdict classifyEngineFailure(ExecuteCodeResponse response) {
         Integer status = response.getStatusCode();
 
-        if (response.getCompileOutput() != null && !response.getCompileOutput().isBlank()) {
-            return DsaVerdict.COMPILE_ERROR;
-        }
         if (status != null) {
             if (status == 5) return DsaVerdict.TIME_LIMIT;
             if (status == 6) return DsaVerdict.COMPILE_ERROR;
             if (status >= 7 && status <= 12) return DsaVerdict.RUNTIME_ERROR;
             if (status == 13 || status == 14) return DsaVerdict.ENGINE_ERROR;
+            if (status == 3 || status == 4) return null;
+        }
+
+        if (response.getCompileOutput() != null && !response.getCompileOutput().isBlank()) {
+            return DsaVerdict.COMPILE_ERROR;
         }
         if (response.getStderr() != null && !response.getStderr().isBlank()) {
             return DsaVerdict.RUNTIME_ERROR;
@@ -347,5 +367,19 @@ public class DsaExecutionService {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    /**
+     * The combined stdout with the driver's case markers taken back out.
+     *
+     * <p>The delimiter is plumbing between the driver and {@link #splitCases}; the learner has no
+     * idea what {@code <<<LN-CASE-END>>>} is, and a solution that printed nothing showed them a
+     * "raw output" panel containing nothing else. Blank once the markers are gone means there was
+     * genuinely no output, and the panel hides itself.
+     */
+    static String stripDelimiters(String stdout) {
+        if (stdout == null || stdout.isEmpty()) return stdout;
+        String cleaned = stdout.replace(CASE_DELIMITER, "").strip();
+        return cleaned.isEmpty() ? null : cleaned;
     }
 }

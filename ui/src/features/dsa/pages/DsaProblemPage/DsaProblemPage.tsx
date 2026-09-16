@@ -9,6 +9,7 @@ import {
     Maximize2,
     Minimize2,
     Play,
+    Plus,
     RotateCcw,
     Send,
     Sparkles,
@@ -23,17 +24,25 @@ import { ContentRenderer } from '../../../../shared/components/content-renderer'
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { BookmarkButton, NotesPanel, useBookmarks, useNote } from '../../../notes';
 import { useDsaProblem } from '../../hooks/useDsaProblem';
-import { useProblemRun } from '../../hooks/useProblemRun';
-import { useCodeBuffer } from '../../hooks/useCodeBuffer';
+import { useProblemRun, type RunPhase } from '../../hooks/useProblemRun';
+import { useCodeBuffer, writeDraft } from '../../hooks/useCodeBuffer';
 import { useSplitPane } from '../../hooks/useSplitPane';
 import { useIsMobile } from '../../../../shared/hooks/useMediaQuery';
-import { DSA_SUPPORTED_LANGUAGES, getStarterCode } from '../../utils/dsaExecutionHelper';
+import {
+    DEFAULT_DSA_LANGUAGE,
+    defaultLanguageFor,
+    getStarterCode,
+    languagesForProblem,
+    monacoLanguageFor
+} from '../../utils/dsaExecutionHelper';
 import type {
     DsaApproach,
     DsaCaseResult,
     DsaRunResult,
+    DsaSubmission,
     DsaSubmitResult
 } from '../../api/dsa.api';
+import type { editor as monacoEditor } from 'monaco-editor';
 
 export interface DsaProblemPageProps {
     problemSlug: string;
@@ -54,7 +63,10 @@ const VERDICT_LABEL: Record<string, string> = {
     COMPILE_ERROR: 'Compile error',
     RUNTIME_ERROR: 'Runtime error',
     TIME_LIMIT: 'Time limit exceeded',
-    ENGINE_ERROR: 'The judge is unavailable'
+    ENGINE_ERROR: 'The judge is unavailable',
+    /** An ad-hoc case the learner typed: it ran, but there is no expected answer to judge it by. */
+    EXECUTED: 'Ran',
+    NOT_RUN: 'Not run yet'
 };
 
 export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
@@ -71,9 +83,13 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     /** Which single pane is showing on a phone. Ignored on desktop, where all three are visible. */
     const [mobilePane, setMobilePane] = useState<MobilePane>('problem');
     const isMobile = useIsMobile();
-    const [language, setLanguage] = useState<string>('javascript');
+    const [language, setLanguage] = useState<string>(DEFAULT_DSA_LANGUAGE);
     const [revealedHints, setRevealedHints] = useState(0);
     const [approachIndex, setApproachIndex] = useState(0);
+    /** An extra case the learner typed, sent along with the samples on Run. */
+    const [customInput, setCustomInput] = useState('');
+    /** Bumped after a submit so the submissions tab refetches instead of showing a stale list. */
+    const [submissionsVersion, setSubmissionsVersion] = useState(0);
 
     const horizontalContainerRef = React.useRef<HTMLDivElement | null>(null);
     const verticalContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -95,24 +111,40 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
         storageKey: 'dsa_split_y'
     });
 
-    // Default to JavaScript, or what the learner last used on this problem.
+    /**
+     * Every problem opens in JavaScript.
+     *
+     * The one exception is a problem with no JavaScript harness, which cannot be judged in it -
+     * there the first language it *can* be judged in is chosen, because the alternative is a
+     * picker whose default selection is guaranteed to 404 on Run.
+     */
     useEffect(() => {
         if (!problem) return;
-        const last = problem.progress?.lastLanguage;
-        setLanguage(last && last.trim().length > 0 ? last.toLowerCase() : 'javascript');
+        setLanguage(defaultLanguageFor(problem.harnesses));
         setRevealedHints(0);
         setApproachIndex(0);
         setLeftTab('description');
+        setCustomInput('');
     }, [problem]);
+
+    /** Only the languages this problem actually ships a judge harness for. */
+    const languageOptions = useMemo(
+        () => languagesForProblem(problem?.harnesses),
+        [problem?.harnesses]
+    );
 
     const starterCode = useMemo(() => {
         if (!problem) return '';
         return getStarterCode(problem, language);
     }, [problem, language]);
 
-    const { code, setCode, resetCode } = useCodeBuffer(problemSlug, language || 'javascript', starterCode);
+    const { code, setCode, resetCode } = useCodeBuffer(
+        problemSlug,
+        language || DEFAULT_DSA_LANGUAGE,
+        starterCode
+    );
 
-    const editorRef = React.useRef<any>(null);
+    const editorRef = React.useRef<monacoEditor.IStandaloneCodeEditor | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const handleFormat = useCallback(() => {
@@ -129,31 +161,59 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
         }
     }, []);
 
-    const run = useProblemRun(problem?.id, problem?.samples ?? []);
+    const run = useProblemRun(problem?.id);
 
-    const monacoLanguage = useMemo(() => {
-        const match = DSA_SUPPORTED_LANGUAGES.find(l => l.id.toLowerCase() === language.toLowerCase());
-        return match?.monacoLanguage ?? language;
-    }, [language]);
+    const monacoLanguage = useMemo(() => monacoLanguageFor(language), [language]);
 
     const doRun = useCallback(() => {
         if (!problem || !language || run.isBusy) return;
         // On a phone the console is a pane you are not looking at, so bring it forward.
         if (isMobile) setMobilePane('tests');
-        run.run(language, code);
-    }, [problem, language, run, code, isMobile]);
+        const extraCases = customInput.trim() ? [customInput] : [];
+        run.run(language, code, extraCases);
+    }, [problem, language, run, code, isMobile, customInput]);
 
     const doSubmit = useCallback(async () => {
         if (!problem || !language || run.isBusy) return;
         if (isMobile) setMobilePane('tests');
         const result = await run.submit(language, code);
+        setSubmissionsVersion(n => n + 1);
         if (result?.verdict === 'ACCEPTED') reload();
     }, [problem, language, run, code, reload, isMobile]);
 
-    // Ctrl/Cmd+Enter runs, adding Shift submits.
+    /** Puts an earlier submission back in the editor, switching language with it. */
+    const loadSubmission = useCallback(
+        (submission: DsaSubmission) => {
+            const submissionLanguage = submission.language.toLowerCase();
+            // The draft has to land before the language switch, or the buffer's reload for the new
+            // language overwrites it with whatever was last saved there.
+            writeDraft(problemSlug, submissionLanguage, submission.code);
+            setLanguage(submissionLanguage);
+            setCode(submission.code);
+            if (isMobile) setMobilePane('code');
+        },
+        [problemSlug, setCode, isMobile]
+    );
+
+    /*
+     * Ctrl/Cmd+Enter runs, adding Shift submits.
+     *
+     * Monaco binds the same pair itself, so this listener is for the rest of the page - and it has
+     * to keep its hands off the note editor and any other text field, where the same chord means
+     * "new line" to the person typing.
+     */
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
             if (!(event.metaKey || event.ctrlKey) || event.key !== 'Enter') return;
+
+            const target = event.target as HTMLElement | null;
+            const inTextField =
+                target != null &&
+                (target.tagName === 'INPUT' ||
+                    target.tagName === 'TEXTAREA' ||
+                    target.isContentEditable);
+            if (inTextField) return;
+
             event.preventDefault();
             if (event.shiftKey) doSubmit();
             else doRun();
@@ -493,7 +553,11 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                         )}
 
                         {leftTab === 'submissions' && (
-                            <SubmissionsTab problemId={problem.id} />
+                            <SubmissionsTab
+                                problemId={problem.id}
+                                refreshKey={submissionsVersion}
+                                onLoadSubmission={loadSubmission}
+                            />
                         )}
 
                         {leftTab === 'note' && <NoteTab problemId={problem.id} />}
@@ -520,7 +584,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                                 onChange={e => setLanguage(e.target.value)}
                                 aria-label="Language"
                             >
-                                {DSA_SUPPORTED_LANGUAGES.map(item => (
+                                {languageOptions.map(item => (
                                     <option key={item.id} value={item.id}>
                                         {item.name}
                                     </option>
@@ -566,6 +630,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                                 language={monacoLanguage}
                                 onChange={setCode}
                                 onRun={doRun}
+                                onSubmit={doSubmit}
                                 onMountEditor={ed => {
                                     editorRef.current = ed;
                                 }}
@@ -585,8 +650,15 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                             result={run.result}
                             error={run.error}
                             totalCases={problem.samples.length}
+                            hiddenCases={Math.max(
+                                0,
+                                problem.totalTestCases - problem.samples.length
+                            )}
                             isBusy={run.isBusy}
+                            phase={run.phase}
                             judgeable={problem.judgeable}
+                            customInput={customInput}
+                            onCustomInputChange={setCustomInput}
                         />
                     </div>
                 </div>
@@ -602,19 +674,43 @@ interface ConsolePaneProps {
     result: DsaRunResult | DsaSubmitResult | null;
     error: string | null;
     totalCases: number;
+    /** How many cases the learner never sees. Shown so a submit verdict reads honestly. */
+    hiddenCases: number;
     isBusy: boolean;
+    phase: RunPhase;
     judgeable: boolean;
+    customInput: string;
+    onCustomInputChange: (value: string) => void;
 }
+
+const FAILING_VERDICTS = new Set(['WRONG_ANSWER', 'RUNTIME_ERROR', 'TIME_LIMIT', 'COMPILE_ERROR']);
 
 const ConsolePane: React.FC<ConsolePaneProps> = ({
     samples,
     result,
     error,
     totalCases,
+    hiddenCases,
     isBusy,
-    judgeable
+    phase,
+    judgeable,
+    customInput,
+    onCustomInputChange
 }) => {
     const [activeCase, setActiveCase] = useState(0);
+    const [showCustom, setShowCustom] = useState(false);
+
+    /*
+     * A fresh verdict should land on the case that explains it. Every judge does this: you press
+     * Run, and what you are looking at is the first case that failed, not case 1. Adjusting the
+     * selection while rendering the new result - rather than in an effect - means the pane never
+     * paints the stale selection first.
+     */
+    const [seenResult, setSeenResult] = useState(result);
+    if (result !== seenResult) {
+        setSeenResult(result);
+        setActiveCase(result?.firstFailedCase ? result.firstFailedCase - 1 : 0);
+    }
 
     const verdict = result?.verdict ?? null;
     const results: DsaCaseResult[] = result?.cases ?? [];
@@ -631,10 +727,11 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
                   actualOutput: null
               }));
 
-    const current = cases[Math.min(activeCase, cases.length - 1)];
+    const current = cases[Math.min(Math.max(activeCase, 0), cases.length - 1)];
     const passed = result?.passedCount ?? 0;
     const compileOutput = result?.compileOutput || result?.stderr || null;
     const stdout = result && 'stdout' in result ? (result.stdout ?? null) : null;
+    const submitted = result != null && 'submissionId' in result;
     const message =
         error ??
         (verdict === 'WRONG_ANSWER' && result?.firstFailedCase
@@ -648,6 +745,11 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
               ? styles.verdictWarn
               : styles.verdictBad;
 
+    /** Runtime and memory only mean something once the code actually ran. */
+    const metrics: string[] = [];
+    if (result?.runtimeMs != null) metrics.push(`${result.runtimeMs} ms`);
+    if (result?.memoryKb != null) metrics.push(`${Math.round(result.memoryKb / 1024)} MB`);
+
     return (
         <>
             <div className={styles.caseTabs}>
@@ -658,21 +760,27 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
                         className={`${styles.caseTab} ${
                             index === activeCase ? styles.caseTabActive : ''
                         } ${c.verdict === 'ACCEPTED' ? styles.casePass : ''} ${
-                            c.verdict === 'WRONG_ANSWER' ||
-                            c.verdict === 'RUNTIME_ERROR' ||
-                            c.verdict === 'TIME_LIMIT'
-                                ? styles.caseFail
-                                : ''
+                            FAILING_VERDICTS.has(c.verdict) ? styles.caseFail : ''
                         }`}
                         onClick={() => setActiveCase(index)}
                     >
                         {c.verdict === 'ACCEPTED' && <Check size={10} />}
-                        {(c.verdict === 'WRONG_ANSWER' || c.verdict === 'RUNTIME_ERROR') && (
-                            <X size={10} />
-                        )}
-                        Case {c.caseNumber}
+                        {FAILING_VERDICTS.has(c.verdict) && <X size={10} />}
+                        {c.expectedOutput == null && c.verdict === 'EXECUTED'
+                            ? 'Custom'
+                            : `Case ${c.caseNumber}`}
                     </button>
                 ))}
+                {judgeable && (
+                    <button
+                        type="button"
+                        className={`${styles.caseTab} ${showCustom ? styles.caseTabActive : ''}`}
+                        onClick={() => setShowCustom(open => !open)}
+                        title="Run your own input alongside the examples"
+                    >
+                        <Plus size={10} /> Custom input
+                    </button>
+                )}
             </div>
 
             <div className={styles.consoleBody}>
@@ -683,6 +791,15 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
                     </p>
                 ) : (
                     <>
+                        {isBusy && (
+                            <p className={styles.consoleHint}>
+                                <Loader2 size={12} className={styles.spin} />{' '}
+                                {phase === 'submitting'
+                                    ? 'Judging every case...'
+                                    : 'Running the examples...'}
+                            </p>
+                        )}
+
                         {verdict && (
                             <div className={`${styles.verdictBanner} ${verdictClass}`}>
                                 {VERDICT_LABEL[verdict] ?? verdict}
@@ -691,17 +808,72 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
                                         ? `${passed} of ${result.totalCount} passed`
                                         : `${totalCases} cases`}
                                 </span>
+                                {metrics.length > 0 && (
+                                    <span className={styles.verdictCount}>
+                                        {metrics.join(' · ')}
+                                    </span>
+                                )}
                             </div>
                         )}
 
+                        {/*
+                          A Run only ever sees the examples. Saying so stops "3 of 3 passed" from
+                          being read as "solved" when a submit still has hidden cases to try.
+                        */}
+                        {verdict && !submitted && hiddenCases > 0 && (
+                            <p className={styles.consoleHint}>
+                                These are the examples only. Submit to run all{' '}
+                                {totalCases + hiddenCases} cases, including the{' '}
+                                {hiddenCases} hidden {hiddenCases === 1 ? 'one' : 'ones'}.
+                            </p>
+                        )}
+
+                        {submitted &&
+                            (result as DsaSubmitResult).newlySolved &&
+                            (result as DsaSubmitResult).pointsAwarded > 0 && (
+                                <p className={styles.solvedNotice}>
+                                    <Check size={12} /> Solved, and{' '}
+                                    {(result as DsaSubmitResult).pointsAwarded} points added to your
+                                    progress.
+                                </p>
+                            )}
+
                         {message && <p className={styles.consoleHint}>{message}</p>}
+
+                        {showCustom && (
+                            <div className={styles.ioBlock}>
+                                <span className={styles.ioLabel}>
+                                    Custom input (runs after the examples)
+                                </span>
+                                <textarea
+                                    className={styles.customInput}
+                                    value={customInput}
+                                    onChange={event => onCustomInputChange(event.target.value)}
+                                    placeholder={samples[0]?.input.trim() ?? 'One case, as stdin'}
+                                    rows={4}
+                                    spellCheck={false}
+                                    aria-label="Custom test input"
+                                />
+                                <span className={styles.consoleHint}>
+                                    It has no expected answer, so it is reported as run rather than
+                                    judged.
+                                </span>
+                            </div>
+                        )}
 
                         {current && (
                             <>
-                                <div className={styles.ioBlock}>
-                                    <span className={styles.ioLabel}>Input</span>
-                                    <pre className={styles.ioValue}>{current.input?.trim()}</pre>
-                                </div>
+                                {current.input == null ? (
+                                    <p className={styles.consoleHint}>
+                                        Case {current.caseNumber} is hidden. It reports its verdict
+                                        and nothing else.
+                                    </p>
+                                ) : (
+                                    <div className={styles.ioBlock}>
+                                        <span className={styles.ioLabel}>Input</span>
+                                        <pre className={styles.ioValue}>{current.input.trim()}</pre>
+                                    </div>
+                                )}
                                 {current.expectedOutput != null && (
                                     <div className={styles.ioBlock}>
                                         <span className={styles.ioLabel}>Expected</span>
@@ -715,7 +887,7 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
                                         <span className={styles.ioLabel}>Your output</span>
                                         <pre
                                             className={`${styles.ioValue} ${
-                                                current.verdict !== 'ACCEPTED'
+                                                FAILING_VERDICTS.has(current.verdict)
                                                     ? styles.ioValueBad
                                                     : ''
                                             }`}
@@ -746,7 +918,7 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
                         {!verdict && !isBusy && (
                             <p className={styles.consoleHint}>
                                 Run to check your answer against the examples, or Submit to run every
-                                case. Ctrl/Cmd+Enter runs.
+                                case. Ctrl/Cmd+Enter runs, adding Shift submits.
                             </p>
                         )}
                     </>
@@ -758,27 +930,42 @@ const ConsolePane: React.FC<ConsolePaneProps> = ({
 
 /* -------------------------------------------------------------- submissions */
 
-const SubmissionsTab: React.FC<{ problemId: string }> = ({ problemId }) => {
-    const [rows, setRows] = useState<
-        { id: string; verdict: string; language: string; passedCount: number; totalCount: number; createdAt: string }[]
-    >([]);
-    const [isLoading, setIsLoading] = useState(true);
+interface SubmissionsTabProps {
+    problemId: string;
+    /** Changes after every submit, which is what makes this list refetch. */
+    refreshKey: number;
+    onLoadSubmission: (submission: DsaSubmission) => void;
+}
+
+const SubmissionsTab: React.FC<SubmissionsTabProps> = ({
+    problemId,
+    refreshKey,
+    onLoadSubmission
+}) => {
+    /*
+     * The fetched page is stored with the key it was fetched for, so "still loading" is a
+     * comparison rather than a second piece of state that has to be flipped back on every refetch.
+     */
+    const key = `${problemId}:${refreshKey}`;
+    const [loaded, setLoaded] = useState<{ key: string; rows: DsaSubmission[] } | null>(null);
 
     useEffect(() => {
         let cancelled = false;
         import('../../api/dsa.api')
             .then(m => m.fetchDsaSubmissions(problemId, 0, 20))
             .then(page => {
-                if (!cancelled) setRows(page.content);
+                if (!cancelled) setLoaded({ key, rows: page.content });
             })
-            .catch(() => undefined)
-            .finally(() => {
-                if (!cancelled) setIsLoading(false);
+            .catch(() => {
+                if (!cancelled) setLoaded({ key, rows: [] });
             });
         return () => {
             cancelled = true;
         };
-    }, [problemId]);
+    }, [problemId, key]);
+
+    const isLoading = loaded?.key !== key;
+    const rows = loaded?.rows ?? [];
 
     if (isLoading) return <p className={styles.consoleHint}>Loading submissions...</p>;
     if (rows.length === 0)
@@ -787,7 +974,13 @@ const SubmissionsTab: React.FC<{ problemId: string }> = ({ problemId }) => {
     return (
         <div>
             {rows.map(row => (
-                <div key={row.id} className={styles.subRow}>
+                <button
+                    key={row.id}
+                    type="button"
+                    className={styles.subRow}
+                    onClick={() => onLoadSubmission(row)}
+                    title="Put this attempt back in the editor"
+                >
                     <span
                         className={styles.subVerdict}
                         style={{
@@ -803,10 +996,13 @@ const SubmissionsTab: React.FC<{ problemId: string }> = ({ problemId }) => {
                     <span className={styles.subMeta}>
                         {row.passedCount}/{row.totalCount}
                     </span>
+                    {row.runtimeMs != null && (
+                        <span className={styles.subMeta}>{row.runtimeMs} ms</span>
+                    )}
                     <span className={styles.subMeta}>
                         {new Date(row.createdAt).toLocaleString()}
                     </span>
-                </div>
+                </button>
             ))}
         </div>
     );

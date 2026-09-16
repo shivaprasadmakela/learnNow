@@ -15,13 +15,34 @@ function isBrokenEmptyDraft(codeStr: string): boolean {
     );
 }
 
+/** Where one problem's draft for one language lives. */
+export const draftKey = (problemSlug: string, language: string) =>
+    `dsa_code_${problemSlug}_${language}`;
+
+/**
+ * Writes a draft for a language that may not be the one on screen.
+ *
+ * Loading an old submission back into the editor switches language and content together, and the
+ * buffer reloads itself from storage whenever the language changes - so setting the code alone
+ * would be undone a render later by the draft that was already saved for the language being
+ * switched to. Writing the draft first means the reload restores the submission.
+ */
+export const writeDraft = (problemSlug: string, language: string, code: string) => {
+    if (typeof localStorage === 'undefined') return;
+    try {
+        localStorage.setItem(draftKey(problemSlug, language), code);
+    } catch {
+        // Quota / private mode. The in-memory setCode still applies.
+    }
+};
+
 /**
  * Single code buffer per problem and language.
  *
  * Saves drafts in localStorage keyed by problem slug and language.
  */
 export const useCodeBuffer = (problemSlug: string, language: string, starterCode: string) => {
-    const storageKey = `dsa_code_${problemSlug}_${language}`;
+    const storageKey = draftKey(problemSlug, language);
 
     const [code, setCodeState] = useState<string>(() => {
         if (typeof localStorage !== 'undefined' && storageKey) {

@@ -5,8 +5,8 @@ GEMINI.md
 docs/
 .claude/
 
-# Authored course content. Seed data for the DSA import endpoint, kept
-# out of the repo and loaded locally.
+# Authored course content and the generator that produces it (content/dsa/tools).
+# Seed data for the DSA import endpoint, kept out of the repo and loaded locally.
 content/
 
 # Backend (Maven / Java / Spring Boot)

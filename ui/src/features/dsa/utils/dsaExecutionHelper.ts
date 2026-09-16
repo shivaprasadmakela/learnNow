@@ -1,4 +1,4 @@
-import type { DsaCaseResult, DsaProblemDetail, DsaRunResult, DsaSample } from '../api/dsa.api';
+import type { DsaHarnessStub, DsaProblemDetail } from '../api/dsa.api';
 
 export interface DsaLanguageOption {
     id: string;
@@ -143,128 +143,44 @@ void ${methodName}() {
     }
 }
 
+/** What the language picker opens on, and the id every other default is measured against. */
+export const DEFAULT_DSA_LANGUAGE = 'javascript';
+
 /**
- * Safely executes JavaScript code against problem sample cases dynamically in the client sandbox.
+ * The languages this problem can actually be judged in.
+ *
+ * A verdict comes from the server, and the server needs a harness - a driver that reads stdin,
+ * calls the learner's method and prints the answer - for the exact language being run. Offering a
+ * language with no harness only buys a 404 the moment Run is pressed, so the picker is narrowed to
+ * what the problem ships. JavaScript is floated to the front because it is the default.
+ *
+ * A problem with no harnesses at all is not judgeable, and its Run button is replaced by "Mark
+ * solved" - the whole catalogue is returned there so the editor still has a syntax mode to offer.
  */
-export function executeJavaScriptLocally(
-    userCode: string,
-    samples: DsaSample[]
-): DsaRunResult {
-    const startTime = performance.now();
-    const cases: DsaCaseResult[] = [];
-    let passedCount = 0;
-    let firstFailedCase: number | null = null;
-    let compileError: string | null = null;
+export function languagesForProblem(
+    harnesses: DsaHarnessStub[] | undefined
+): DsaLanguageOption[] {
+    if (!harnesses || harnesses.length === 0) return DSA_SUPPORTED_LANGUAGES;
 
-    for (let i = 0; i < samples.length; i++) {
-        const sample = samples[i];
-        const caseNumber = i + 1;
-        let actualOutput: string;
+    const available = new Set(harnesses.map(h => h.language.trim().toLowerCase()));
+    const supported = DSA_SUPPORTED_LANGUAGES.filter(option => available.has(option.id));
 
-        // eslint-disable-next-line no-console
-        const originalLog = console.log;
-        try {
-            const logsCaptured: string[] = [];
-            // eslint-disable-next-line no-console
-            console.log = (...args: unknown[]) => {
-                logsCaptured.push(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
-            };
+    return supported.length > 0 ? supported : DSA_SUPPORTED_LANGUAGES;
+}
 
-            try {
-                const inputTrimmed = sample.input.trim();
-                const inputTokens = inputTrimmed.split(/\s+/).filter(Boolean);
+/**
+ * JavaScript unless this problem cannot be judged in it, in which case the first language it can.
+ */
+export function defaultLanguageFor(harnesses: DsaHarnessStub[] | undefined): string {
+    const options = languagesForProblem(harnesses);
+    const js = options.find(option => option.id === DEFAULT_DSA_LANGUAGE);
+    return js ? js.id : options[0].id;
+}
 
-                // Execute user code dynamically in sandboxed Function
-                const wrappedCode = `
-                ${userCode}
-
-                let executionResult = undefined;
-
-                if (typeof Solution !== 'undefined') {
-                    const sol = new Solution();
-                    const proto = Object.getPrototypeOf(sol);
-                    const methods = Object.getOwnPropertyNames(proto).filter(m => m !== 'constructor' && typeof sol[m] === 'function');
-                    if (methods.length > 0) {
-                        const targetMethod = methods[0];
-                        const parsedArgs = ${JSON.stringify(inputTokens)}.map(t => isNaN(Number(t)) ? t : Number(t));
-                        executionResult = sol[targetMethod](...parsedArgs);
-                    }
-                } else if (typeof solve === 'function') {
-                    const parsedArgs = ${JSON.stringify(inputTokens)}.map(t => isNaN(Number(t)) ? t : Number(t));
-                    executionResult = solve(...parsedArgs);
-                }
-
-                if (executionResult !== undefined) {
-                    console.log(typeof executionResult === 'object' ? JSON.stringify(executionResult) : executionResult);
-                }
-            `;
-
-                const fn = new Function(wrappedCode);
-                fn();
-
-                actualOutput = logsCaptured.join('\n').trim();
-            } finally {
-                // eslint-disable-next-line no-console
-                console.log = originalLog;
-            }
-        } catch (err: unknown) {
-            compileError = err instanceof Error ? err.message : String(err);
-            cases.push({
-                caseNumber,
-                sample: true,
-                verdict: 'RUNTIME_ERROR',
-                input: sample.input,
-                expectedOutput: sample.expectedOutput,
-                actualOutput: compileError
-            });
-            if (firstFailedCase === null) firstFailedCase = caseNumber;
-            continue;
-        }
-
-        const expectedTrimmed = sample.expectedOutput.trim();
-        const isMatch = actualOutput === expectedTrimmed;
-
-        if (isMatch) {
-            passedCount++;
-            cases.push({
-                caseNumber,
-                sample: true,
-                verdict: 'ACCEPTED',
-                input: sample.input,
-                expectedOutput: sample.expectedOutput,
-                actualOutput
-            });
-        } else {
-            if (firstFailedCase === null) firstFailedCase = caseNumber;
-            cases.push({
-                caseNumber,
-                sample: true,
-                verdict: 'WRONG_ANSWER',
-                input: sample.input,
-                expectedOutput: sample.expectedOutput,
-                actualOutput
-            });
-        }
-    }
-
-    const elapsedMs = Math.round(performance.now() - startTime);
-    const overallVerdict =
-        compileError != null
-            ? 'RUNTIME_ERROR'
-            : passedCount === samples.length
-              ? 'ACCEPTED'
-              : 'WRONG_ANSWER';
-
-    return {
-        verdict: overallVerdict,
-        passedCount,
-        totalCount: samples.length,
-        firstFailedCase,
-        cases,
-        compileOutput: compileError,
-        stderr: null,
-        stdout: cases.map(c => c.actualOutput).filter(Boolean).join('\n'),
-        runtimeMs: elapsedMs,
-        memoryKb: 2048
-    };
+/** The Monaco syntax mode for a language id, falling back to the id itself. */
+export function monacoLanguageFor(language: string): string {
+    const match = DSA_SUPPORTED_LANGUAGES.find(
+        option => option.id.toLowerCase() === language.toLowerCase()
+    );
+    return match?.monacoLanguage ?? language;
 }

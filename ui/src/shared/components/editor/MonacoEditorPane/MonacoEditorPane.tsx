@@ -8,8 +8,12 @@ export interface MonacoEditorPaneProps {
     code: string;
     language: string;
     onChange: (val: string) => void;
+    /** Ctrl/Cmd+Enter inside the editor. */
     onRun?: () => void;
+    /** Ctrl/Cmd+Shift+Enter inside the editor. */
+    onSubmit?: () => void;
     onMountEditor?: (editor: editor.IStandaloneCodeEditor) => void;
+    readOnly?: boolean;
 }
 
 export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
@@ -17,10 +21,25 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
     language,
     onChange,
     onRun,
-    onMountEditor
+    onSubmit,
+    onMountEditor,
+    readOnly = false
 }) => {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const monacoRef = useRef<Monaco | null>(null);
+
+    /*
+     * Monaco commands are registered once, at mount, and keep whatever closure they were given.
+     * The handlers passed in are rebuilt on every render and close over the current code, so
+     * binding them directly meant Ctrl+Enter ran whatever was in the buffer when the editor
+     * mounted - the starter code, every time. The commands read these refs instead.
+     */
+    const onRunRef = useRef(onRun);
+    const onSubmitRef = useRef(onSubmit);
+    useEffect(() => {
+        onRunRef.current = onRun;
+        onSubmitRef.current = onSubmit;
+    }, [onRun, onSubmit]);
 
     const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
         if (typeof document !== 'undefined') {
@@ -120,9 +139,15 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
     const handleMount: OnMount = (editor, monaco) => {
         editorRef.current = editor;
         monacoRef.current = monaco;
-        if (onRun) {
-            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => onRun());
-        }
+
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
+            onRunRef.current?.()
+        );
+        editor.addCommand(
+            monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+            () => onSubmitRef.current?.()
+        );
+
         if (onMountEditor) {
             onMountEditor(editor);
         }
@@ -149,7 +174,30 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
                     lineNumbers: 'on',
                     cursorBlinking: 'smooth',
                     smoothScrolling: true,
-                    padding: { top: 14, bottom: 14 }
+                    padding: { top: 14, bottom: 14 },
+                    readOnly,
+                    // The editor often sits in a short pane inside a split. Without this the
+                    // completion list and parameter hints are clipped by the pane instead of
+                    // floating over it, which reads as autocomplete being broken.
+                    fixedOverflowWidgets: true,
+                    // Bracket-pair colouring and bracket guides draw coloured vertical rules down
+                    // the indentation. In a pane this narrow they read as stray green and blue
+                    // lines through the code rather than as structure, so both stay off and the
+                    // theme's single muted indent guide is all that is drawn.
+                    bracketPairColorization: { enabled: false },
+                    guides: { bracketPairs: false, indentation: true, highlightActiveIndentation: false },
+                    autoClosingBrackets: 'languageDefined',
+                    autoClosingQuotes: 'languageDefined',
+                    autoIndent: 'full',
+                    formatOnPaste: true,
+                    tabCompletion: 'on',
+                    suggestOnTriggerCharacters: true,
+                    quickSuggestions: { other: true, comments: false, strings: false },
+                    acceptSuggestionOnEnter: 'smart',
+                    snippetSuggestions: 'inline',
+                    renderLineHighlight: 'all',
+                    renderWhitespace: 'selection',
+                    scrollbar: { alwaysConsumeMouseWheel: false }
                 }}
             />
         </div>
