@@ -21,15 +21,20 @@ public record AdminDsaSheetDto(
             List<AdminDsaSectionDto> sections) {}
 
     /**
-     * A section in the authoring tree. Flat list in tree order, with {@code depth} for indentation
-     * rather than actual nesting - the admin view is a table, and indenting a flat list is simpler
-     * to render and to scan than nested containers.
+     * A section in the authoring tree, sent as a flat list in tree order.
+     *
+     * <p>It stays flat over the wire and is rebuilt into a tree on the client. {@code depth} alone
+     * would be enough to do that from a correctly ordered list, but {@code parentSectionId} is sent
+     * as well so the rebuild is a lookup rather than a guess - a list that arrives out of order
+     * then renders wrongly instead of silently reparenting a whole subtree.
      */
     public record AdminDsaSectionDto(
             UUID id,
+            UUID parentSectionId,
             int orderIndex,
             int depth,
             String title,
+            String description,
             List<AdminDsaProblemRowDto> problems) {}
 
     public record AdminDsaProblemRowDto(

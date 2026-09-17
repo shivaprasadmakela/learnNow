@@ -168,6 +168,25 @@ public class DsaCatalogService {
         return assembleDetail(problem, userId);
     }
 
+    /**
+     * The learner-shaped detail for any problem, published or not.
+     *
+     * <p>Only the authoring endpoint calls this. It exists so the admin preview renders the real
+     * learner view rather than a second rendering of the same content built from admin DTOs - a
+     * preview that goes through different code is a preview of something other than what ships.
+     *
+     * <p>Note what it does <em>not</em> relax: the DTO is still {@link DsaProblemDetailDto}, so
+     * driver code, reference solutions and hidden expected output have no field to travel in.
+     */
+    @Transactional(readOnly = true)
+    public DsaProblemDetailDto previewById(UUID problemId, String userId) {
+        DsaProblem problem =
+                problemRepository
+                        .findById(problemId)
+                        .orElseThrow(() -> new NotFoundException("dsa_problem_not_found"));
+        return assembleDetail(problem, userId);
+    }
+
     @Transactional(readOnly = true)
     public DsaProblemDetailDto problemBySlug(String slug, String userId) {
         DsaProblem problem =
