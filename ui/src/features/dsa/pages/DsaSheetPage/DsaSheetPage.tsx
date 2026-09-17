@@ -7,6 +7,7 @@ import { Loader } from '../../../../shared/components/ui/Loader';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { ProgressRing } from '../../../../shared/components/ui/ProgressRing';
 import { SidebarWidget } from '../../../../shared/components/ui/SidebarWidget';
+import { Select } from '../../../../shared/components';
 import { useDsaSheet } from '../../hooks/useDsaSheet';
 import {
     setDsaProblemStatus,
@@ -23,6 +24,20 @@ export interface DsaSheetPageProps {
 
 type DifficultyFilter = 'ALL' | DsaDifficulty;
 type StatusFilter = 'ALL' | 'TODO' | 'SOLVED' | 'BOOKMARKED';
+
+const DIFFICULTY_OPTIONS: { value: DifficultyFilter; label: string }[] = [
+    { value: 'ALL', label: 'All Levels' },
+    { value: 'EASY', label: 'Easy' },
+    { value: 'MEDIUM', label: 'Medium' },
+    { value: 'HARD', label: 'Hard' }
+];
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+    { value: 'ALL', label: 'All Status' },
+    { value: 'TODO', label: 'Unsolved' },
+    { value: 'SOLVED', label: 'Solved' },
+    { value: 'BOOKMARKED', label: 'Bookmarked' }
+];
 
 /** 14-day (2-week) daily curated quotes and mindset tips */
 const DAILY_TIPS = [
@@ -286,44 +301,31 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
                             />
                         </div>
 
-                        <div className={styles.difficultyFilters}>
-                            {(['ALL', 'EASY', 'MEDIUM', 'HARD'] as DifficultyFilter[]).map(level => (
-                                <button
-                                    key={level}
-                                    type="button"
-                                    className={`${styles.pill} ${difficulty === level ? styles.pillActive : ''}`}
-                                    onClick={() => setDifficulty(level)}
-                                    aria-pressed={difficulty === level}
-                                >
-                                    {level === 'ALL' ? 'All Levels' : level.charAt(0) + level.slice(1).toLowerCase()}
-                                </button>
-                            ))}
+                        <div className={styles.filterDropdown}>
+                            <Select
+                                aria-label="Filter by difficulty"
+                                value={difficulty}
+                                options={DIFFICULTY_OPTIONS}
+                                onChange={e => setDifficulty(e.target.value as DifficultyFilter)}
+                                className={styles.selectControl}
+                            />
                         </div>
 
-                        <div className={styles.statusFilters}>
-                            {(['ALL', 'TODO', 'SOLVED', 'BOOKMARKED'] as StatusFilter[]).map(value => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    className={`${styles.pill} ${status === value ? styles.pillActive : ''}`}
-                                    onClick={() => {
-                                        if (!isLoggedIn && (value === 'SOLVED' || value === 'BOOKMARKED')) {
-                                            onRequireLogin();
-                                            return;
-                                        }
-                                        setStatus(value);
-                                    }}
-                                    aria-pressed={status === value}
-                                >
-                                    {value === 'ALL'
-                                        ? 'All Status'
-                                        : value === 'TODO'
-                                          ? 'Unsolved'
-                                          : value === 'SOLVED'
-                                            ? 'Solved'
-                                            : 'Bookmarked'}
-                                </button>
-                            ))}
+                        <div className={styles.filterDropdown}>
+                            <Select
+                                aria-label="Filter by status"
+                                value={status}
+                                options={STATUS_OPTIONS}
+                                onChange={e => {
+                                    const nextStatus = e.target.value as StatusFilter;
+                                    if (!isLoggedIn && (nextStatus === 'SOLVED' || nextStatus === 'BOOKMARKED')) {
+                                        onRequireLogin();
+                                        return;
+                                    }
+                                    setStatus(nextStatus);
+                                }}
+                                className={styles.selectControl}
+                            />
                         </div>
                     </div>
 

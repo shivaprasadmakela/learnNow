@@ -14,11 +14,14 @@
     align-items: center;
     min-width: 0;
     overflow-x: auto;
-    scrollbar-width: thin;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-.tablist::-webkit-scrollbar { height: 4px; }
-.tablist::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+.tablist::-webkit-scrollbar {
+    display: none;
+}
 
 .tab {
     display: inline-flex;
@@ -51,10 +54,13 @@
 
 /* ─── underline ─── */
 
-.underline { gap: 28px; padding-bottom: 2px; }
+.underline {
+    gap: 28px;
+    padding-bottom: 4px;
+}
 
 .underline .tab {
-    padding: 12px 4px;
+    padding: 8px 4px 10px 4px;
     font-size: 1.05rem;
     position: relative;
 }
@@ -64,7 +70,7 @@
 .underline .tabActive::after {
     content: '';
     position: absolute;
-    bottom: -4px;
+    bottom: 0;
     left: 0;
     right: 0;
     height: 3px;
@@ -86,6 +92,7 @@
     font-size: 0.85rem;
     color: var(--text-tertiary);
     border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
 }
 
 .compact .tabActive { color: var(--tech-blue); border-bottom-color: var(--tech-blue); }
