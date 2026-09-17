@@ -21,6 +21,7 @@
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
+    flex: none;
 }
 
 .badgeDraft { color: var(--color-yellow-600, #b45309); }
@@ -41,31 +42,57 @@
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
+    flex: none;
 }
 
 .btn:hover:not(:disabled) { border-color: var(--tech-blue); color: var(--tech-blue); }
 .btn:disabled { opacity: 0.5; cursor: default; }
 
-.step {
-    border: 1px solid var(--border-color);
-    border-radius: 11px;
-    background: var(--bg-card);
-    overflow: hidden;
+.btnPrimary {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+    background: var(--accent-blue-light, var(--bg-secondary));
 }
 
-.stepHead {
-    display: flex;
+.btnDanger:hover:not(:disabled) {
+    border-color: var(--color-red-500, #ef4444);
+    color: var(--color-red-500, #ef4444);
+}
+
+.iconBtn {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 12px 15px;
-    border: none;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    /* A flex child with a declared width still shrinks without this. */
+    flex: none;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
     background: transparent;
+    color: var(--text-tertiary);
     cursor: pointer;
-    text-align: left;
 }
 
-.stepHead:hover { background: var(--bg-secondary); }
+.iconBtn:hover:not(:disabled) {
+    border-color: var(--border-color);
+    color: var(--tech-blue);
+}
+
+.iconBtn:disabled { opacity: 0.4; cursor: default; }
+
+.spin { animation: dsaAdminSpin 0.9s linear infinite; }
+
+@keyframes dsaAdminSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─── step ─── */
+
+.step { border-radius: 11px; }
+
+.stepHeader { gap: 10px; }
 
 .stepIndex {
     font-size: 0.68rem;
@@ -76,28 +103,94 @@
     flex: none;
 }
 
-.stepTitle { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+.stepTitle { font-size: 0.92rem; font-weight: 700; }
 
-.stepMeta { margin-left: auto; font-size: 0.75rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.stepBody { display: flex; flex-direction: column; }
 
-.table { border-top: 1px solid var(--border-color); }
+/* ─── section ─── */
 
-.sectionLabel {
-    padding: 8px 15px;
-    background: var(--bg-secondary);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
+.section {
+    border: none;
+    border-radius: 0;
+    border-top: 1px solid var(--border-color);
+    background: transparent;
 }
+
+.section:first-child { border-top: none; }
+
+/*
+ * Indent by depth, the same scale the learner sheet uses, so the two views of the same tree
+ * read the same way.
+ */
+.sectionHeader {
+    padding-left: calc(15px + var(--section-depth, 0) * 16px);
+    background: var(--bg-secondary);
+}
+
+.sectionHeader:hover { background: var(--bg-tertiary); }
+
+.sectionTitle { font-size: 0.84rem; font-weight: 700; }
+
+.section .section .sectionTitle {
+    font-size: 0.79rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.sectionBody { border-top: 1px solid var(--border-color); }
+
+/* ─── shared header parts ─── */
+
+.titleGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    /* Takes the slack so the meta text and the delete button stay hard right. */
+    flex: 1;
+}
+
+.nodeTitle {
+    color: var(--text-primary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.untitled { color: var(--text-tertiary); font-style: italic; font-weight: 500; }
+
+.nodeMeta {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex: none;
+}
+
+.inlineInput {
+    flex: 1;
+    min-width: 120px;
+    padding: 4px 8px;
+    border: 1px solid var(--tech-blue);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.inlineInput:focus { outline: 2px solid var(--tech-blue); outline-offset: 1px; }
+
+/* ─── problem row ─── */
 
 .row {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
-    padding: 10px 15px;
+    padding: 10px 15px 10px calc(20px + var(--section-depth, 0) * 16px);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -115,6 +208,19 @@
     flex-wrap: wrap;
 }
 
+/* The title is the primary way in, so it is a real button rather than decoration. */
+.rowTitleBtn {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+}
+
+.rowTitleBtn:hover { color: var(--tech-blue); text-decoration: underline; }
+
 .slug {
     font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
     font-size: 0.7rem;
@@ -129,6 +235,15 @@
 .flagOk { color: var(--color-green-600, #15803d); }
 
 .rowActions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+.emptyNode {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+/* ─── status ─── */
 
 .state { padding: 30px 0; text-align: center; font-size: 0.87rem; color: var(--text-tertiary); }
 
@@ -153,7 +268,23 @@
     word-break: break-word;
 }
 
-@media (max-width: 700px) {
-    .row { grid-template-columns: 1fr; }
+@media (pointer: coarse) {
+    .iconBtn { min-width: 40px; min-height: 40px; }
+    .btn { min-height: 40px; }
+}
+
+/*
+ * Nesting costs width, and on a phone there is none to spare. Same halved step the learner
+ * sheet uses, and the actions drop below the title rather than competing with it for the row.
+ */
+@media (max-width: 768px) {
+    .sectionHeader { padding-left: calc(15px + var(--section-depth, 0) * 8px); }
+
+    .row {
+        grid-template-columns: 1fr;
+        padding-left: calc(12px + var(--section-depth, 0) * 8px);
+    }
+
     .rowActions { justify-content: flex-start; }
+    .nodeMeta { display: none; }
 }

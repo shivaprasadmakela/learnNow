@@ -5,6 +5,7 @@ import {
     withPageParams,
     type PageResponse
 } from '../../../shared/api/pagination';
+import type { DsaProblemDetail } from './dsa.api';
 
 /**
  * Admin-side DSA calls.
@@ -31,8 +32,12 @@ export interface AdminDsaProblemRow {
 
 export interface AdminDsaSection {
     id: string;
+    /** Null at the top level. The manager rebuilds the tree from this. */
+    parentSectionId?: string | null;
     orderIndex: number;
+    depth: number;
     title?: string;
+    description?: string;
     problems: AdminDsaProblemRow[];
 }
 
@@ -72,6 +77,33 @@ export interface AdminDsaTestCase {
     explanation?: string;
 }
 
+export interface AdminDsaCheck {
+    id: string;
+    orderIndex: number;
+    prompt: string;
+    options: string[];
+    correctAnswer: string;
+    explanation?: string;
+    points: number;
+}
+
+export interface AdminDsaApproach {
+    id: string;
+    kind: 'BRUTE' | 'BETTER' | 'OPTIMAL';
+    orderIndex: number;
+    intuition: string;
+    timeComplexity?: string;
+    spaceComplexity?: string;
+    language?: string;
+    code?: string;
+}
+
+export interface AdminDsaHint {
+    id: string;
+    orderIndex: number;
+    body: string;
+}
+
 export interface AdminDsaProblem {
     id: string;
     slug: string;
@@ -87,8 +119,59 @@ export interface AdminDsaProblem {
     status: 'DRAFT' | 'PUBLISHED';
     sectionId: string;
     orderIndex: number;
+    approaches: AdminDsaApproach[];
+    hints: AdminDsaHint[];
     harnesses: AdminDsaHarness[];
     testCases: AdminDsaTestCase[];
+    checks: AdminDsaCheck[];
+}
+
+/**
+ * What the authoring modal sends back.
+ *
+ * Every collection is optional, and that is deliberate rather than laziness: omitting one leaves
+ * the stored rows alone, while sending an empty array clears them. Without that distinction a tab
+ * the author never opened would wipe the rows it never loaded.
+ */
+export interface DsaProblemUpdate {
+    title: string;
+    statement: string;
+    difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+    tags?: string[];
+    estimatedMinutes?: number;
+    youtubeUrl?: string | null;
+    youtubePosition?: number | null;
+    practiceUrl?: string | null;
+    practicePlatform?: string | null;
+    status?: 'DRAFT' | 'PUBLISHED';
+    hints?: string[];
+    approaches?: Array<{
+        kind: string;
+        intuition: string;
+        timeComplexity?: string | null;
+        spaceComplexity?: string | null;
+        language?: string | null;
+        code?: string | null;
+    }>;
+    testCases?: Array<{
+        input: string;
+        expectedOutput?: string;
+        sample: boolean;
+        explanation?: string | null;
+    }>;
+    checks?: Array<{
+        prompt: string;
+        options: string[];
+        correctAnswer: string;
+        explanation?: string | null;
+        points?: number;
+    }>;
+    harnesses?: Array<{
+        language: string;
+        starterCode: string;
+        driverCode: string;
+        referenceSolution?: string | null;
+    }>;
 }
 
 export interface DsaImportResult {
@@ -171,3 +254,67 @@ export const deleteDsaProblem = async (problemId: string): Promise<void> => {
     const res = await apiFetch(`/api/admin/dsa/problems/${problemId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Could not delete that problem');
 };
+
+/**
+ * Rewrites one problem.
+ *
+ * Returns the stored result rather than nothing, so the modal reseeds from what the server
+ * actually kept — the generate-expected pass, the order indexes and the harness normalisation all
+ * happen server-side, and a form left holding what it sent drifts from the row it is editing.
+ */
+export const updateDsaProblem = (
+    problemId: string,
+    payload: DsaProblemUpdate
+): Promise<AdminDsaProblem> =>
+    apiFetchJson<AdminDsaProblem>(`/api/admin/dsa/problems/${problemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+export const updateDsaSection = async (
+    sectionId: string,
+    payload: { title?: string | null; description?: string | null }
+): Promise<void> => {
+    const res = await apiFetch(`/api/admin/dsa/sections/${sectionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Could not rename that section');
+};
+
+/** Deletes the section, its sub-sections and every problem in them. */
+export const deleteDsaSection = async (sectionId: string): Promise<void> => {
+    const res = await apiFetch(`/api/admin/dsa/sections/${sectionId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Could not delete that section');
+};
+
+export const updateDsaStep = async (
+    stepId: string,
+    payload: { title: string; description?: string | null }
+): Promise<void> => {
+    const res = await apiFetch(`/api/admin/dsa/steps/${stepId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Could not rename that step');
+};
+
+/** Deletes the step and everything under it. */
+export const deleteDsaStep = async (stepId: string): Promise<void> => {
+    const res = await apiFetch(`/api/admin/dsa/steps/${stepId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Could not delete that step');
+};
+
+/**
+ * One problem in the shape learners receive it, whether or not it is published.
+ *
+ * This is what lets the authoring preview render the real workspace instead of a second rendering
+ * built from admin DTOs — a preview that goes through different code is a preview of something
+ * other than what ships. It returns `DsaProblemDetail`, the learner type, so driver code and
+ * hidden expected output have no field to arrive in even here.
+ */
+export const fetchDsaProblemPreview = (problemId: string): Promise<DsaProblemDetail> =>
+    apiFetchJson<DsaProblemDetail>(`/api/admin/dsa/problems/${problemId}/preview`);

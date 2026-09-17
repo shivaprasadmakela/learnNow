@@ -45,13 +45,25 @@ import type {
 import type { editor as monacoEditor } from 'monaco-editor';
 
 export interface DsaProblemPageProps {
-    problemSlug: string;
+    /** Ignored when `previewProblemId` is set, which is the admin's way in. */
+    problemSlug?: string;
     isLoggedIn: boolean;
-    onBackToSheet: () => void;
-    onNavigateProblem: (stepSlug: string, problemSlug: string) => void;
-    onRequireLogin: () => void;
+    onBackToSheet?: () => void;
+    onNavigateProblem?: (stepSlug: string, problemSlug: string) => void;
+    onRequireLogin?: () => void;
     /** Hands the current buffer to the standalone console, which stays a separate tool. */
     onOpenFullCompiler?: (code: string, language: string) => void;
+    /**
+     * Renders this problem from the authoring endpoint, published or not.
+     *
+     * The admin preview is this component, not a copy of it. That is the point: an author checking
+     * whether a statement reads well, whether the examples line up and whether the harness actually
+     * judges their reference solution is looking at what learners will run, so a rendering
+     * difference cannot hide between the two. What the flag drops is only the chrome that has
+     * nowhere to go inside a dialog - the back link, the breadcrumb, the bookmark and the
+     * previous/next stepper.
+     */
+    previewProblemId?: string;
 }
 
 type LeftTab = 'description' | 'editorial' | 'submissions' | 'note';
@@ -74,9 +86,11 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     isLoggedIn,
     onBackToSheet,
     onNavigateProblem,
-    onRequireLogin
+    onRequireLogin,
+    previewProblemId
 }) => {
-    const { problem, isLoading, error, reload } = useDsaProblem(problemSlug);
+    const isPreview = Boolean(previewProblemId);
+    const { problem, isLoading, error, reload } = useDsaProblem(problemSlug, previewProblemId);
     const { isBookmarked, toggleBookmark } = useBookmarks(true, 'DSA_PROBLEM');
 
     const [leftTab, setLeftTab] = useState<LeftTab>('description');
@@ -138,8 +152,15 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
         return getStarterCode(problem, language);
     }, [problem, language]);
 
+    /**
+     * Drafts are keyed by slug. A preview has no slug of its own on the way in, and even once the
+     * problem loads it must not share a key with the learner view - an author trying a reference
+     * solution would otherwise overwrite their own half-finished attempt at the same problem.
+     */
+    const bufferKey = previewProblemId ? `preview_${previewProblemId}` : (problemSlug ?? '');
+
     const { code, setCode, resetCode } = useCodeBuffer(
-        problemSlug,
+        bufferKey,
         language || DEFAULT_DSA_LANGUAGE,
         starterCode
     );
@@ -187,7 +208,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
             const submissionLanguage = submission.language.toLowerCase();
             // The draft has to land before the language switch, or the buffer's reload for the new
             // language overwrites it with whatever was last saved there.
-            writeDraft(problemSlug, submissionLanguage, submission.code);
+            writeDraft(bufferKey, submissionLanguage, submission.code);
             setLanguage(submissionLanguage);
             setCode(submission.code);
             if (isMobile) setMobilePane('code');
@@ -245,43 +266,61 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
         <div className={`${styles.shell} ${isAnyDragging ? styles.dragging : ''}`}>
             {/* ── top bar ── */}
             <header className={styles.topBar}>
-                <button type="button" className={styles.backBtn} onClick={onBackToSheet}>
-                    <ArrowLeft size={14} /> Sheet
-                </button>
-                <span className={styles.crumb}>{problem.stepTitle}</span>
+                {!isPreview && (
+                    <>
+                        <button
+                            type="button"
+                            className={styles.backBtn}
+                            onClick={() => onBackToSheet?.()}
+                        >
+                            <ArrowLeft size={14} /> Sheet
+                        </button>
+                        <span className={styles.crumb}>{problem.stepTitle}</span>
+                    </>
+                )}
                 <span className={styles.topTitle}>{problem.title}</span>
 
                 <div className={styles.spacer} />
 
-                <BookmarkButton
-                    isBookmarked={bookmarked}
-                    onToggle={() => (isLoggedIn ? toggleBookmark(problem.id) : onRequireLogin())}
-                    showLabel={false}
-                    targetNoun="problem"
-                    targetName={problem.title}
-                    size={14}
-                />
+                {!isPreview && (
+                    <>
+                        <BookmarkButton
+                            isBookmarked={bookmarked}
+                            onToggle={() =>
+                                isLoggedIn ? toggleBookmark(problem.id) : onRequireLogin?.()
+                            }
+                            showLabel={false}
+                            targetNoun="problem"
+                            targetName={problem.title}
+                            size={14}
+                        />
 
-                <button
-                    type="button"
-                    className={styles.iconBtn}
-                    disabled={!problem.previousSlug}
-                    onClick={() =>
-                        problem.previousSlug && onNavigateProblem(problem.stepSlug, problem.previousSlug)
-                    }
-                    title="Previous problem"
-                >
-                    <ChevronLeft size={14} />
-                </button>
-                <button
-                    type="button"
-                    className={styles.iconBtn}
-                    disabled={!problem.nextSlug}
-                    onClick={() => problem.nextSlug && onNavigateProblem(problem.stepSlug, problem.nextSlug)}
-                    title="Next problem"
-                >
-                    <ChevronRight size={14} />
-                </button>
+                        <button
+                            type="button"
+                            className={styles.iconBtn}
+                            disabled={!problem.previousSlug}
+                            onClick={() =>
+                                problem.previousSlug &&
+                                onNavigateProblem?.(problem.stepSlug, problem.previousSlug)
+                            }
+                            title="Previous problem"
+                        >
+                            <ChevronLeft size={14} />
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.iconBtn}
+                            disabled={!problem.nextSlug}
+                            onClick={() =>
+                                problem.nextSlug &&
+                                onNavigateProblem?.(problem.stepSlug, problem.nextSlug)
+                            }
+                            title="Next problem"
+                        >
+                            <ChevronRight size={14} />
+                        </button>
+                    </>
+                )}
 
                 {problem.judgeable ? (
                     <>
@@ -314,6 +353,10 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                             Submit
                         </button>
                     </>
+                ) : isPreview ? (
+                    <span className={styles.crumb}>
+                        Not judgeable yet - it needs a harness and at least one test case
+                    </span>
                 ) : (
                     <ManualSolveButton problemId={problem.id} solved={solved} onDone={reload} />
                 )}

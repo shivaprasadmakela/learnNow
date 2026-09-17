@@ -5,26 +5,40 @@ import {
     type DsaProblemDetail,
     type DsaProgressStatus
 } from '../api/dsa.api';
+import { fetchDsaProblemPreview } from '../api/adminDsa.api';
 
-/** One problem, plus optimistic writes to the learner's own progress on it. */
-export const useDsaProblem = (slug: string | undefined) => {
+/**
+ * One problem, plus optimistic writes to the learner's own progress on it.
+ *
+ * `previewProblemId` switches the source to the authoring endpoint, which serves drafts. It is a
+ * plain id rather than an injected fetch function on purpose: a function prop would be a new
+ * identity on every render and would restart the load in a loop through the `useCallback` below.
+ *
+ * The admin endpoint returns the same learner DTO, so nothing here changes shape and no admin-only
+ * field can reach this hook's consumers.
+ */
+export const useDsaProblem = (slug: string | undefined, previewProblemId?: string) => {
     const [problem, setProblem] = useState<DsaProblemDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const load = useCallback(async () => {
-        if (!slug) return;
+        if (!previewProblemId && !slug) return;
         setIsLoading(true);
         setError(null);
         try {
-            setProblem(await fetchDsaProblem(slug));
+            setProblem(
+                previewProblemId
+                    ? await fetchDsaProblemPreview(previewProblemId)
+                    : await fetchDsaProblem(slug as string)
+            );
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Could not load this problem');
             setProblem(null);
         } finally {
             setIsLoading(false);
         }
-    }, [slug]);
+    }, [slug, previewProblemId]);
 
     useEffect(() => {
         load();

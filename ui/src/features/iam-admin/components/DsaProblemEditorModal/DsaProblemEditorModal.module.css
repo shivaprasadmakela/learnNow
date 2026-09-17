@@ -1,0 +1,294 @@
+/*
+ * The dialog's body is a column: tabs, then whichever pane is showing, which takes the rest.
+ * The shared Modal caps the whole thing at the viewport, so the scrolling happens in here.
+ */
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tabs {
+    padding: 10px 16px 0;
+    flex: none;
+}
+
+.pane {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+}
+
+.dirty {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--color-yellow-600, #b45309);
+    white-space: nowrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    flex: none;
+}
+
+.btnPrimary {
+    border-color: var(--tech-blue);
+    background: var(--tech-blue);
+    color: #fff;
+}
+
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+.spin { animation: dsaEditorSpin 0.9s linear infinite; }
+
+@keyframes dsaEditorSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─── preview ─── */
+
+.previewPane {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.previewNote {
+    margin: 0 16px 10px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--tech-blue);
+    border-radius: 0 8px 8px 0;
+    background: var(--bg-secondary);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    flex: none;
+}
+
+/*
+ * The workspace sizes itself to its container rather than to the viewport, so it needs one with
+ * a real height. `display: flex` is what gives its `flex: 1 1 auto` shell something to fill.
+ */
+.previewHost {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    border-top: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+/* ─── forms ─── */
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 4px 16px 20px;
+    overflow: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+.sectionHead {
+    margin: 0 0 4px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.sectionNote {
+    margin: 0 0 12px;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--text-tertiary);
+}
+
+.sectionNote code {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.74rem;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.checkRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.issues {
+    display: flex;
+    gap: 9px;
+    margin: 0 16px;
+    padding: 10px 13px;
+    border: 1px solid var(--color-red-500, #ef4444);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--color-red-500, #ef4444);
+    font-size: 0.79rem;
+    flex: none;
+}
+
+.issues ul {
+    margin: 0;
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1.5;
+}
+
+.state,
+.empty {
+    margin: 0;
+    padding: 24px 16px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+/* ─── list editor ─── */
+
+.list { display: flex; flex-direction: column; gap: 12px; }
+
+.card {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cardTitle {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    flex: 1;
+}
+
+.cardActions { display: flex; gap: 4px; flex: none; }
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.iconBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+
+.iconBtn:hover:not(:disabled) {
+    border-color: var(--border-color);
+    color: var(--tech-blue);
+}
+
+.iconBtnDanger:hover:not(:disabled) { color: var(--color-red-500, #ef4444); }
+.iconBtn:disabled { opacity: 0.35; cursor: default; }
+
+.addBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 8px 14px;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.addBtn:hover { border-color: var(--tech-blue); color: var(--tech-blue); }
+
+/* ─── code fields ─── */
+
+.codeField { display: flex; flex-direction: column; gap: 6px; }
+
+.codeLabel {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Monaco fills its host, so the host is what decides how tall each editor is. */
+.codeHost {
+    height: 260px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+@media (pointer: coarse) {
+    .iconBtn { min-width: 40px; min-height: 40px; }
+    .btn { min-height: 40px; }
+}
+
+@media (max-width: 768px) {
+    .tabs { padding: 8px 12px 0; }
+    .form { padding: 4px 12px 20px; }
+    .previewNote { margin: 0 12px 8px; }
+    .issues { margin: 0 12px; }
+    .codeHost { height: 200px; }
+}
