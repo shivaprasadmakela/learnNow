@@ -41,6 +41,36 @@
     box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
 }
 
+.hint {
+    font-size: 0.74rem;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+}
+
+.textarea {
+    height: auto;
+    min-height: 74px;
+    padding: 10px var(--space-4);
+    line-height: 1.5;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.mono {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.78rem;
+    /* Test-case input and driver code are position-significant; wrapping hides a stray newline. */
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+}
+
+.select {
+    padding-right: var(--space-2);
+    font-family: inherit;
+    cursor: pointer;
+}
+
 .errorText {
     font-size: 0.75rem;
     color: var(--tech-red);

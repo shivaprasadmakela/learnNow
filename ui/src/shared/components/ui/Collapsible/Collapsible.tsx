@@ -53,7 +53,20 @@ export const Collapsible: React.FC<CollapsibleProps> = ({
         >
             <div
                 className={`${styles.headerRow} ${headerClassName}`.trim()}
-                onClick={onToggle}
+                onClick={event => {
+                    /*
+                     * A click on a control inside the header is not a click on the row.
+                     *
+                     * Without this guard the authoring headers - which carry Rename and Delete
+                     * next to the title - collapse the very section the author just acted on,
+                     * and a rename input cannot be clicked into at all.
+                     */
+                    const target = event.target as HTMLElement | null;
+                    if (target?.closest('button, a, input, select, textarea, label, [role="button"]')) {
+                        return;
+                    }
+                    onToggle();
+                }}
                 // Not a button: the header may contain links and buttons of its own.
                 role="presentation"
             >
