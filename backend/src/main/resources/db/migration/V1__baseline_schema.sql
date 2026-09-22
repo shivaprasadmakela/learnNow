@@ -2,14 +2,24 @@
 -- learnNow — baseline schema
 -- ============================================================================
 --
--- Consolidates the previous V1–V5 migrations into a single baseline. Those were
--- incremental steps taken before the platform had been deployed anywhere, so
--- there is no history worth preserving and a great deal of noise worth removing:
--- the old V1 created a topics.path_id column that V4 superseded with a join
--- table and never dropped, leaving two sources of truth for the same
--- relationship. That ambiguity was a live bug — topics attached through the
--- admin UI had a null path_id, and code reading it crashed — so the column is
--- gone here rather than carried forward.
+-- The single migration the database is built from. It is a consolidation: the
+-- schema arrived incrementally during development, but none of those steps ever
+-- ran outside a developer's machine, so there is no deployment history worth
+-- preserving and a great deal of noise worth removing. What is written here is
+-- the end state, as if it had been designed this way — no column added and then
+-- dropped, no table created and then migrated away from.
+--
+-- Two consolidations in particular are worth knowing about, because the
+-- intermediate shapes still turn up in older branches and in conversation:
+--
+--   * Topics used to carry a path_id column *and* sit in a path_topics join
+--     table, leaving two sources of truth for one relationship. Only the join
+--     table survives. Nothing may reintroduce that column.
+--   * Notes and bookmarks used to be one table per target kind — subtopic
+--     notes, topic notes, DSA problem notes, topic bookmarks. They are now one
+--     `notes` table and one `bookmarks` table, each with a nullable FK per
+--     target kind and a CHECK that exactly one is set. The reasoning is in
+--     SECTION 5.
 --
 -- Conventions used throughout:
 --
@@ -28,8 +38,9 @@
 --   * Tables and non-obvious columns carry COMMENT metadata, which surfaces in
 --     psql (\d+) and any schema browser.
 --
--- Ordering below follows dependency order: content, then identity, then the
--- per-user data that references both.
+-- Ordering below follows dependency order: course content, then identity, then
+-- per-user progress, then the DSA sheet, then the learner-authored tables that
+-- reference both content trees.
 -- ============================================================================
 
 -- gen_random_uuid() lives in pgcrypto before Postgres 13 and in core after.
@@ -430,42 +441,418 @@ CREATE INDEX idx_daily_activity_user_date ON user_learning_daily_activity (user_
 
 
 -- ============================================================================
--- SECTION 4 — Learner-authored data
+-- SECTION 4 — DSA sheet
+--
+-- A structured problem sheet as a module of its own, a sibling of the course
+-- catalogue rather than a special case of it: nothing here references paths,
+-- topics or subtopics.
+--
+-- The content spine is sheet -> step -> section -> problem, where sections
+-- nest to any depth. Around the problem sit four tables of editorial depth;
+-- the two that make the coding workspace possible are dsa_harnesses and
+-- dsa_test_cases. The rest would be recognisable to anyone who has read
+-- SECTION 1.
 -- ============================================================================
 
-CREATE TABLE subtopic_notes (
+-- ----------------------------------------------------------------------------
+-- Content spine
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE dsa_sheets (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug         VARCHAR(120) NOT NULL UNIQUE,
+    title        VARCHAR(255) NOT NULL,
+    description  VARCHAR(1000),
+    playlist_url VARCHAR(512),
+    status       VARCHAR(16) NOT NULL DEFAULT 'DRAFT'
+                 CONSTRAINT ck_dsa_sheets_status CHECK (status IN ('DRAFT', 'PUBLISHED')),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE  dsa_sheets IS 'A problem sheet. More than one is allowed by design; one ships.';
+COMMENT ON COLUMN dsa_sheets.playlist_url IS 'YouTube playlist backing the sheet. Problems deep-link into it by position.';
+
+CREATE INDEX idx_dsa_sheets_status ON dsa_sheets (status);
+
+
+CREATE TABLE dsa_steps (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     VARCHAR(255) NOT NULL REFERENCES users(id)     ON DELETE CASCADE,
-    subtopic_id UUID NOT NULL REFERENCES subtopics(id) ON DELETE CASCADE,
-    content     TEXT NOT NULL DEFAULT '',
+    sheet_id    UUID NOT NULL REFERENCES dsa_sheets(id) ON DELETE CASCADE,
+    slug        VARCHAR(120) NOT NULL,
+    order_index INT NOT NULL,
+    title       VARCHAR(255) NOT NULL,
+    description VARCHAR(1000),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT uq_notes_user_subtopic UNIQUE (user_id, subtopic_id)
+    CONSTRAINT uq_dsa_steps_sheet_slug  UNIQUE (sheet_id, slug),
+    CONSTRAINT uq_dsa_steps_sheet_order UNIQUE (sheet_id, order_index)
 );
 
-COMMENT ON TABLE  subtopic_notes IS 'Private per-lesson notes. Visible only to their author.';
-COMMENT ON COLUMN subtopic_notes.content IS 'Markdown. Rendered through an escaping renderer, never as raw HTML.';
+COMMENT ON COLUMN dsa_steps.slug IS 'Stable URL segment. Unique per sheet, so /dsa/:stepSlug/:problemSlug never shifts.';
 
-CREATE INDEX idx_subtopic_notes_user ON subtopic_notes (user_id);
-CREATE INDEX idx_subtopic_notes_subtopic ON subtopic_notes (subtopic_id);
+CREATE INDEX idx_dsa_steps_sheet ON dsa_steps (sheet_id, order_index);
 
 
-CREATE TABLE topic_bookmarks (
-    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id    VARCHAR(255) NOT NULL REFERENCES users(id)  ON DELETE CASCADE,
-    topic_id   UUID NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT uq_bookmarks_user_topic UNIQUE (user_id, topic_id)
+-- ----------------------------------------------------------------------------
+-- Sections are a tree, not a single layer: a step's section may split into
+-- sub-sections, and those into further levels again.
+--
+-- On ordering a tree
+-- ------------------
+-- Problems are paginated, so the database has to be able to order them in tree
+-- order without the application's help. A recursive CTE could do it at read
+-- time, but it would run on every page of every step.
+--
+-- Instead each section stores a materialised `path`: its ancestors' order
+-- indexes, zero-padded and dot-joined ('003', '003.001', '003.001.002').
+-- Sorting by that string is tree order, it is a plain btree index, and it costs
+-- nothing to read. The price is that the path must be rewritten when a section
+-- moves, which the authoring service owns -- a fair trade for a structure that
+-- is written rarely and read constantly.
+--
+-- Zero-padding to three digits caps a level at 999 siblings. Well past what a
+-- sheet needs, and without it '10' sorts before '2'.
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE dsa_sections (
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    step_id           UUID NOT NULL REFERENCES dsa_steps(id) ON DELETE CASCADE,
+    parent_section_id UUID REFERENCES dsa_sections(id) ON DELETE CASCADE,
+    order_index       INT NOT NULL,
+    depth             INT NOT NULL DEFAULT 0,
+    path              VARCHAR(255) NOT NULL DEFAULT '',
+    title             VARCHAR(255),
+    description       VARCHAR(1000),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-COMMENT ON TABLE topic_bookmarks IS 'Topics a learner saved for later.';
+COMMENT ON TABLE dsa_sections IS
+  'A grouping level inside a step, nestable to any depth. May hold problems, sub-sections, or '
+  'both. A step whose problems sit in one untitled root section renders flat.';
+COMMENT ON COLUMN dsa_sections.title IS
+  'Nullable on purpose: the single implicit section of a flat step has no heading.';
+COMMENT ON COLUMN dsa_sections.parent_section_id IS
+  'Null for a top-level section. Cascades, so deleting a section takes its whole subtree.';
+COMMENT ON COLUMN dsa_sections.depth IS
+  'Zero for a top-level section. Derived from the parent chain; stored so the UI can indent '
+  'without walking it.';
+COMMENT ON COLUMN dsa_sections.path IS
+  'Ancestor order indexes, zero-padded and dot-joined. Sorting by this is tree order. '
+  'Maintained on write by the authoring and import services.';
 
-CREATE INDEX idx_topic_bookmarks_user  ON topic_bookmarks (user_id);
-CREATE INDEX idx_topic_bookmarks_topic ON topic_bookmarks (topic_id);
+CREATE INDEX idx_dsa_sections_step   ON dsa_sections (step_id, order_index);
+CREATE INDEX idx_dsa_sections_parent ON dsa_sections (parent_section_id);
+CREATE INDEX idx_dsa_sections_path   ON dsa_sections (step_id, path);
+
+-- Uniqueness is per parent, not per step: two sub-sections under different
+-- parents may both be the first of their group. A plain
+-- UNIQUE (step_id, parent_section_id, order_index) would not constrain the top
+-- level at all, because Postgres treats NULLs as distinct and every root
+-- section has a NULL parent. So it takes two partial indexes.
+CREATE UNIQUE INDEX uq_dsa_sections_root_order
+    ON dsa_sections (step_id, order_index) WHERE parent_section_id IS NULL;
+
+CREATE UNIQUE INDEX uq_dsa_sections_child_order
+    ON dsa_sections (parent_section_id, order_index) WHERE parent_section_id IS NOT NULL;
+
+
+CREATE TABLE dsa_problems (
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    section_id        UUID NOT NULL REFERENCES dsa_sections(id) ON DELETE CASCADE,
+    slug              VARCHAR(160) NOT NULL UNIQUE,
+    order_index       INT NOT NULL,
+    title             VARCHAR(255) NOT NULL,
+    statement         TEXT NOT NULL DEFAULT '',
+    difficulty        VARCHAR(8) NOT NULL
+                      CONSTRAINT ck_dsa_problems_difficulty
+                      CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD')),
+    tags              JSONB NOT NULL DEFAULT '[]',
+    estimated_minutes INT NOT NULL DEFAULT 20,
+    youtube_url       VARCHAR(512),
+    youtube_position  INT,
+    practice_url      VARCHAR(512),
+    practice_platform VARCHAR(32),
+    status            VARCHAR(16) NOT NULL DEFAULT 'DRAFT'
+                      CONSTRAINT ck_dsa_problems_status CHECK (status IN ('DRAFT', 'PUBLISHED')),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_dsa_problems_section_order UNIQUE (section_id, order_index)
+);
+
+COMMENT ON COLUMN dsa_problems.slug IS
+  'Stable import key. Re-importing a step matches on this and updates in place -- never '
+  'delete-and-recreate, or every learner loses their progress and submissions.';
+COMMENT ON COLUMN dsa_problems.statement IS
+  'Markdown, written by us. Third-party problem statements are not ours to copy.';
+COMMENT ON COLUMN dsa_problems.youtube_position IS
+  'One-based index in the sheet playlist, for the "watch on the channel" deep link.';
+
+CREATE INDEX idx_dsa_problems_section ON dsa_problems (section_id, order_index);
+CREATE INDEX idx_dsa_problems_status  ON dsa_problems (status);
+
+
+-- ----------------------------------------------------------------------------
+-- Per-problem editorial depth
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE dsa_approaches (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    problem_id       UUID NOT NULL REFERENCES dsa_problems(id) ON DELETE CASCADE,
+    kind             VARCHAR(8) NOT NULL
+                     CONSTRAINT ck_dsa_approaches_kind
+                     CHECK (kind IN ('BRUTE', 'BETTER', 'OPTIMAL')),
+    order_index      INT NOT NULL,
+    intuition        TEXT NOT NULL DEFAULT '',
+    time_complexity  VARCHAR(64),
+    space_complexity VARCHAR(64),
+    language         VARCHAR(24),
+    code             TEXT,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_dsa_approaches_problem_order UNIQUE (problem_id, order_index)
+);
+
+COMMENT ON TABLE dsa_approaches IS
+  'Our editorial. The UI reveals these in order, so a learner walks past brute force '
+  'before optimal appears.';
+
+CREATE INDEX idx_dsa_approaches_problem ON dsa_approaches (problem_id, order_index);
+
+
+CREATE TABLE dsa_hints (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    problem_id  UUID NOT NULL REFERENCES dsa_problems(id) ON DELETE CASCADE,
+    order_index INT NOT NULL,
+    body        TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_dsa_hints_problem_order UNIQUE (problem_id, order_index)
+);
+
+COMMENT ON TABLE dsa_hints IS 'Progressive hints, revealed one at a time rather than paywalled.';
+
+CREATE INDEX idx_dsa_hints_problem ON dsa_hints (problem_id, order_index);
+
+
+CREATE TABLE dsa_harnesses (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    problem_id         UUID NOT NULL REFERENCES dsa_problems(id) ON DELETE CASCADE,
+    language           VARCHAR(24) NOT NULL,
+    starter_code       TEXT NOT NULL,
+    driver_code        TEXT NOT NULL,
+    reference_solution TEXT,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_dsa_harnesses_problem_lang UNIQUE (problem_id, language),
+    CONSTRAINT ck_dsa_harnesses_placeholder
+        CHECK (position('{{USER_CODE}}' in driver_code) > 0)
+);
+
+COMMENT ON TABLE  dsa_harnesses IS
+  'What turns a fragment into a program. One row per problem per language.';
+COMMENT ON COLUMN dsa_harnesses.starter_code IS
+  'The stub the editor shows. The only column of this table a learner ever sees.';
+COMMENT ON COLUMN dsa_harnesses.driver_code IS
+  'Full compilable program with {{USER_CODE}} where the learner''s class is spliced in. '
+  'Reads a case count from stdin, loops, prints a delimiter after each case. NEVER '
+  'serialised to a non-admin client -- it embeds the I/O contract and often the answer shape.';
+COMMENT ON COLUMN dsa_harnesses.reference_solution IS
+  'Our own working solution. Drives the generate-expected-output action. Never serialised '
+  'to a non-admin client.';
+
+CREATE INDEX idx_dsa_harnesses_problem ON dsa_harnesses (problem_id);
+
+
+CREATE TABLE dsa_test_cases (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    problem_id      UUID NOT NULL REFERENCES dsa_problems(id) ON DELETE CASCADE,
+    order_index     INT NOT NULL,
+    input           TEXT NOT NULL,
+    expected_output TEXT NOT NULL DEFAULT '',
+    is_sample       BOOLEAN NOT NULL DEFAULT FALSE,
+    explanation     TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_dsa_test_cases_problem_order UNIQUE (problem_id, order_index)
+);
+
+COMMENT ON COLUMN dsa_test_cases.is_sample IS
+  'Sample cases are public: they render as the Examples in the statement and are the only '
+  'ones Run executes. Non-sample rows and their expected output are admin-only.';
+COMMENT ON COLUMN dsa_test_cases.expected_output IS
+  'Defaults to empty so a case can be imported before the reference solution has generated it.';
+
+CREATE INDEX idx_dsa_test_cases_problem ON dsa_test_cases (problem_id, order_index);
+
+
+CREATE TABLE dsa_checks (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    problem_id     UUID NOT NULL REFERENCES dsa_problems(id) ON DELETE CASCADE,
+    order_index    INT NOT NULL DEFAULT 1,
+    prompt         TEXT NOT NULL,
+    options        JSONB NOT NULL DEFAULT '[]',
+    correct_answer VARCHAR(512) NOT NULL,
+    explanation    TEXT,
+    points         INT NOT NULL DEFAULT 2,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_dsa_checks_problem_order UNIQUE (problem_id, order_index)
+);
+
+COMMENT ON TABLE  dsa_checks IS
+  'The inline "now your turn" question inside a statement. Answered against the server.';
+COMMENT ON COLUMN dsa_checks.correct_answer IS
+  'Stripped from every learner-facing response and compared server-side, the same rule the '
+  'subtopic quiz already follows.';
+
+CREATE INDEX idx_dsa_checks_problem ON dsa_checks (problem_id, order_index);
+
+
+-- ----------------------------------------------------------------------------
+-- Per-learner DSA data
+--
+-- Saved-for-later lives in `bookmarks` (SECTION 5) rather than as a flag here,
+-- and notes live in `notes` for the same reason.
+-- ----------------------------------------------------------------------------
+
+CREATE TABLE user_dsa_problem_progress (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    problem_id    UUID NOT NULL REFERENCES dsa_problems(id) ON DELETE CASCADE,
+    status        VARCHAR(16) NOT NULL DEFAULT 'NOT_STARTED'
+                  CONSTRAINT ck_user_dsa_progress_status
+                  CHECK (status IN ('NOT_STARTED', 'ATTEMPTED', 'SOLVED')),
+    attempt_count INT NOT NULL DEFAULT 0,
+    last_language VARCHAR(24),
+    solved_at     TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_user_dsa_progress UNIQUE (user_id, problem_id)
+);
+
+COMMENT ON COLUMN user_dsa_problem_progress.solved_at IS
+  'Also the once-ever points guard: points are awarded only on the transition from null.';
+
+CREATE INDEX idx_user_dsa_progress_user    ON user_dsa_problem_progress (user_id);
+CREATE INDEX idx_user_dsa_progress_problem ON user_dsa_problem_progress (problem_id);
+
+
+CREATE TABLE user_dsa_submissions (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id      VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    problem_id   UUID NOT NULL REFERENCES dsa_problems(id) ON DELETE CASCADE,
+    language     VARCHAR(24) NOT NULL,
+    code         TEXT NOT NULL,
+    verdict      VARCHAR(16) NOT NULL
+                 CONSTRAINT ck_user_dsa_submissions_verdict
+                 CHECK (verdict IN ('ACCEPTED', 'WRONG_ANSWER', 'COMPILE_ERROR',
+                                    'RUNTIME_ERROR', 'TIME_LIMIT', 'ENGINE_ERROR')),
+    passed_count INT NOT NULL DEFAULT 0,
+    total_count  INT NOT NULL DEFAULT 0,
+    runtime_ms   INT,
+    memory_kb    BIGINT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE user_dsa_submissions IS
+  'Every Submit, pass or fail. ENGINE_ERROR rows are recorded for diagnostics but never '
+  'count as an attempt against the learner.';
+
+CREATE INDEX idx_user_dsa_submissions_user_problem
+    ON user_dsa_submissions (user_id, problem_id, created_at DESC);
 
 
 -- ============================================================================
--- SECTION 5 — Code playground
+-- SECTION 5 — Learner-authored data
+--
+-- One notes table and one bookmarks table, across every kind of content. "My
+-- notes" and "my bookmarks" are then single queries the UI can filter, rather
+-- than a union that grows a branch every time a new kind of thing becomes
+-- noteable.
+--
+-- On the shape of the target reference
+-- ------------------------------------
+-- The obvious way to point at "any kind of thing" is a (target_type, target_id)
+-- pair. It is rejected here: target_id can carry no foreign key, so deleting a
+-- topic would silently leave notes pointing at nothing, and this schema's
+-- conventions commit to indexing and cascading every reference.
+--
+-- Instead there is one nullable, properly-constrained FK column per target kind
+-- and a CHECK that exactly one is populated. That keeps ON DELETE CASCADE doing
+-- its job, keeps every reference indexed, and makes "only DSA bookmarks" a
+-- plain indexed predicate. The cost is that a fourth kind of target needs a
+-- migration rather than a new enum value -- which is a fair price for not being
+-- able to orphan a row, and forces a moment's thought about cascade behaviour
+-- each time.
+--
+-- These tables sit last because they reference both content trees.
+-- ============================================================================
+
+CREATE TABLE notes (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id        VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    subtopic_id    UUID REFERENCES subtopics(id)    ON DELETE CASCADE,
+    topic_id       UUID REFERENCES topics(id)       ON DELETE CASCADE,
+    dsa_problem_id UUID REFERENCES dsa_problems(id) ON DELETE CASCADE,
+
+    content        TEXT NOT NULL DEFAULT '',
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT ck_notes_exactly_one_target
+        CHECK (num_nonnulls(subtopic_id, topic_id, dsa_problem_id) = 1)
+);
+
+COMMENT ON TABLE  notes IS
+  'Private learner notes against any kind of content. Exactly one target column is set; '
+  'which one it is *is* the note''s type, so there is no separate discriminator to keep honest.';
+COMMENT ON COLUMN notes.content IS
+  'Markdown. Rendered through an escaping renderer, never as raw HTML.';
+COMMENT ON CONSTRAINT ck_notes_exactly_one_target ON notes IS
+  'Rejects both a note pointing at nothing and a note pointing at two things at once.';
+
+-- Uniqueness is per target kind, so the partial indexes double as the lookup
+-- indexes for each kind. A plain UNIQUE across all three columns would treat
+-- NULLs as distinct and let a learner accumulate duplicate notes on one target.
+CREATE UNIQUE INDEX uq_notes_subtopic
+    ON notes (user_id, subtopic_id) WHERE subtopic_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_notes_topic
+    ON notes (user_id, topic_id) WHERE topic_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_notes_dsa_problem
+    ON notes (user_id, dsa_problem_id) WHERE dsa_problem_id IS NOT NULL;
+
+CREATE INDEX idx_notes_user ON notes (user_id);
+
+
+CREATE TABLE bookmarks (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id        VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    topic_id       UUID REFERENCES topics(id)       ON DELETE CASCADE,
+    dsa_problem_id UUID REFERENCES dsa_problems(id) ON DELETE CASCADE,
+
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT ck_bookmarks_exactly_one_target
+        CHECK (num_nonnulls(topic_id, dsa_problem_id) = 1)
+);
+
+COMMENT ON TABLE bookmarks IS
+  'Saved-for-later, across content types. A DSA problem marked for revision is a bookmark '
+  'like any other -- the two were the same idea wearing different clothes.';
+
+CREATE UNIQUE INDEX uq_bookmarks_topic
+    ON bookmarks (user_id, topic_id) WHERE topic_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_bookmarks_dsa_problem
+    ON bookmarks (user_id, dsa_problem_id) WHERE dsa_problem_id IS NOT NULL;
+
+CREATE INDEX idx_bookmarks_user ON bookmarks (user_id, created_at DESC);
+
+
+-- ============================================================================
+-- SECTION 6 — Code playground
 -- ============================================================================
 
 CREATE TABLE shared_snippets (
@@ -491,7 +878,7 @@ CREATE INDEX idx_shared_snippets_last_accessed ON shared_snippets (last_accessed
 
 
 -- ============================================================================
--- SECTION 6 — Payments
+-- SECTION 7 — Payments
 --
 -- Donations only; nothing here gates access to content.
 -- ============================================================================
@@ -526,7 +913,7 @@ CREATE INDEX idx_donation_orders_status ON donation_orders (status);
 
 
 -- ============================================================================
--- SECTION 7 — updated_at triggers
+-- SECTION 8 — updated_at triggers
 -- ============================================================================
 
 CREATE TRIGGER trg_paths_updated_at
@@ -550,9 +937,19 @@ CREATE TRIGGER trg_prefs_updated_at
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE TRIGGER trg_notes_updated_at
-    BEFORE UPDATE ON subtopic_notes
+    BEFORE UPDATE ON notes
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE TRIGGER trg_donation_orders_updated_at
     BEFORE UPDATE ON donation_orders
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_dsa_sheets_updated_at        BEFORE UPDATE ON dsa_sheets                FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_dsa_steps_updated_at         BEFORE UPDATE ON dsa_steps                 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_dsa_sections_updated_at      BEFORE UPDATE ON dsa_sections              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_dsa_problems_updated_at      BEFORE UPDATE ON dsa_problems              FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_dsa_approaches_updated_at    BEFORE UPDATE ON dsa_approaches            FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_dsa_harnesses_updated_at     BEFORE UPDATE ON dsa_harnesses             FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_dsa_test_cases_updated_at    BEFORE UPDATE ON dsa_test_cases            FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_dsa_checks_updated_at        BEFORE UPDATE ON dsa_checks                FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_user_dsa_progress_updated_at BEFORE UPDATE ON user_dsa_problem_progress FOR EACH ROW EXECUTE FUNCTION set_updated_at();

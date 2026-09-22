@@ -9,9 +9,9 @@ import org.hibernate.annotations.CreationTimestamp;
 /**
  * Saved for later, across content types.
  *
- * <p>Replaces both {@code topic_bookmarks} and the {@code marked_for_revision} flag that DSA
- * progress carried: starring a problem to come back to and bookmarking a topic are the same idea,
- * so they are the same table and the same filterable list.
+ * <p>Starring a DSA problem to come back to and bookmarking a topic are the same idea, so they are
+ * the same table and the same filterable list. Exactly one target column is set; which one it is
+ * <em>is</em> the bookmark's type.
  */
 @Entity
 @Table(name = "bookmarks")
