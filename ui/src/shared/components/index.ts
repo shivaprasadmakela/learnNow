@@ -12,4 +12,7 @@ export * from './ui/Collapsible';
 export * from './ui/ContentHeroBanner';
 export * from './ui/ProgressRing';
 export * from './ui/SidebarWidget';
-export * from './code-playground';
+// code-playground is deliberately NOT re-exported here. It mounts Monaco, so anything importing
+// this barrel would pull the 4 MB editor chunk into its graph -- and App.tsx imports this barrel
+// eagerly, which put Monaco in the entry bundle and preloaded it on every page, editor or not.
+// Its one consumer, ContentRenderer, imports it directly from './code-playground'.

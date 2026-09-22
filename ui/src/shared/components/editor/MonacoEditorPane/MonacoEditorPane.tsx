@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+// Side-effect import: points the wrapper below at the bundled Monaco instead of a CDN our
+// Content-Security-Policy blocks. It lives here, next to the only component that mounts an
+// editor, so the 4 MB Monaco chunk stays inside the lazily-loaded routes that actually use one
+// rather than becoming a dependency of the entry bundle. See the note in monacoSetup.ts.
+import '../monacoSetup';
 import Editor from '@monaco-editor/react';
 import type { Monaco, OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
