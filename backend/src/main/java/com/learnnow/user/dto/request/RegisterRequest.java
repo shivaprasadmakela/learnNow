@@ -1,9 +1,12 @@
 package com.learnnow.user.dto.request;
 
+import com.learnnow.privacy.dto.request.ConsentDecisionRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 public record RegisterRequest(
         // Bounded and pattern-restricted because these values are interpolated into
@@ -28,4 +31,10 @@ public record RegisterRequest(
         // BCrypt do unbounded work on every login attempt.
         @NotBlank(message = "password_required")
                 @Size(min = 12, max = 128, message = "password_too_weak")
-                String password) {}
+                String password,
+        // What the learner ticked on the itemised DPDP notice shown beside the form.
+        // Optional in the payload, not optional in effect: ConsentService records an
+        // explicit refusal for every purpose left out, so the absence of a tick is
+        // stored as a decision rather than as a gap. ESSENTIAL is recorded as granted
+        // regardless, because creating the account is the affirmative action for it.
+        @Valid List<ConsentDecisionRequest> consents) {}

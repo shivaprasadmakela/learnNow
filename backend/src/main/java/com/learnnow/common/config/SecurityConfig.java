@@ -83,6 +83,15 @@ public class SecurityConfig {
                                         // Auth flows
                                         .requestMatchers("/api/auth/**", "/api/health", "/error")
                                         .permitAll()
+                                        // Who to contact about personal data, published under
+                                        // DPDP s.8(9). Public because the person most likely to
+                                        // need it is one who cannot sign in; requiring a token to
+                                        // find out where to complain would defeat the section.
+                                        // Only the contact details are open -- everything under
+                                        // /api/me/privacy is a learner's own data and stays
+                                        // behind the authenticated catch-all.
+                                        .requestMatchers(HttpMethod.GET, "/api/privacy/contact")
+                                        .permitAll()
                                         // Liveness and readiness only. Orchestrator probes
                                         // cannot present a token, and details are hidden by
                                         // management.endpoint.health.show-details=never. The

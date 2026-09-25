@@ -13,6 +13,9 @@ public interface UserDsaProblemProgressRepository
 
     Optional<UserDsaProblemProgress> findByUserIdAndProblemId(String userId, UUID problemId);
 
+    /** Every problem this learner has touched. Used by the DPDP data export (s.11). */
+    List<UserDsaProblemProgress> findByUserId(String userId);
+
     List<UserDsaProblemProgress> findByUserIdAndProblemIdIn(String userId, List<UUID> problemIds);
 
     @Query(

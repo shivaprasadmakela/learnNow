@@ -11,6 +11,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.learnnow.common.exception.AuthException;
 import com.learnnow.common.security.ResendEmailClient;
 import com.learnnow.common.security.TokenService;
+import com.learnnow.privacy.service.ConsentService;
 import com.learnnow.user.dto.request.LoginRequest;
 import com.learnnow.user.dto.request.RegisterRequest;
 import com.learnnow.user.entity.User;
@@ -37,6 +38,7 @@ class AuthServiceTest {
     private TokenService tokenService;
     private UserDtoMapper userDtoMapper;
     private GoogleIdTokenVerifier googleIdTokenVerifier;
+    private ConsentService consentService;
     private AuthService authService;
 
     @BeforeEach
@@ -50,6 +52,7 @@ class AuthServiceTest {
         tokenService = Mockito.mock(TokenService.class);
         userDtoMapper = Mockito.mock(UserDtoMapper.class);
         googleIdTokenVerifier = Mockito.mock(GoogleIdTokenVerifier.class);
+        consentService = Mockito.mock(ConsentService.class);
 
         authService =
                 new AuthService(
@@ -61,7 +64,8 @@ class AuthServiceTest {
                         emailClient,
                         tokenService,
                         userDtoMapper,
-                        googleIdTokenVerifier);
+                        googleIdTokenVerifier,
+                        consentService);
     }
 
     @Test
@@ -108,7 +112,8 @@ class AuthServiceTest {
         when(userRepository.existsByEmailIgnoreCase("taken@example.com")).thenReturn(true);
 
         RegisterRequest req =
-                new RegisterRequest("Ada", "Lovelace", "taken@example.com", "correcthorsebattery");
+                new RegisterRequest(
+                        "Ada", "Lovelace", "taken@example.com", "correcthorsebattery", null);
 
         // No exception: reporting the collision was an enumeration oracle.
         assertDoesNotThrow(() -> authService.register(req));

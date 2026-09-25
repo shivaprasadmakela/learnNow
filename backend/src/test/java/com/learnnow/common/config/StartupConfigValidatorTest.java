@@ -34,6 +34,11 @@ class StartupConfigValidatorTest {
         ReflectionTestUtils.setField(v, "googleClientId", "client-id.apps.googleusercontent.com");
         ReflectionTestUtils.setField(v, "razorpayKeyId", "rzp_test_x");
         ReflectionTestUtils.setField(v, "paymentsMockEnabled", false);
+        // These tests run with no active profile, so the production-only checks apply. The
+        // privacy contact is not what any of them is about, so it is set to something valid
+        // and left alone; PrivacyContactValidationTest covers the check itself.
+        ReflectionTestUtils.setField(v, "grievanceOfficerEmail", "privacy@learnnow.test");
+        ReflectionTestUtils.setField(v, "grievanceOfficerAddress", "1 Example Road, Bengaluru");
         return v;
     }
 

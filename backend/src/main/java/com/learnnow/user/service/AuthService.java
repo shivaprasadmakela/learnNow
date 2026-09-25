@@ -5,6 +5,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.learnnow.common.exception.AuthException;
 import com.learnnow.common.exception.ValidationException;
 import com.learnnow.common.security.*;
+import com.learnnow.privacy.service.ConsentService;
 import com.learnnow.user.dto.request.*;
 import com.learnnow.user.dto.response.*;
 import com.learnnow.user.entity.*;
@@ -40,6 +41,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final UserDtoMapper userDtoMapper;
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final ConsentService consentService;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String appBaseUrl;
@@ -53,7 +55,8 @@ public class AuthService {
             ResendEmailClient emailClient,
             TokenService tokenService,
             UserDtoMapper userDtoMapper,
-            GoogleIdTokenVerifier googleIdTokenVerifier) {
+            GoogleIdTokenVerifier googleIdTokenVerifier,
+            ConsentService consentService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
@@ -63,6 +66,7 @@ public class AuthService {
         this.tokenService = tokenService;
         this.userDtoMapper = userDtoMapper;
         this.googleIdTokenVerifier = googleIdTokenVerifier;
+        this.consentService = consentService;
     }
 
     /**
@@ -96,6 +100,7 @@ public class AuthService {
                         .build();
 
         userRepository.save(user);
+        consentService.recordSignupConsent(userId, req.consents());
         issueVerificationToken(user);
     }
 
@@ -277,6 +282,14 @@ public class AuthService {
                             .build();
 
             userRepository.save(user);
+
+            // A Google sign-in that creates an account is a registration, so it consents the
+            // same way. Nothing optional is passed: the Google button carries no itemised
+            // notice, so the only thing that can honestly be recorded is ESSENTIAL, and the
+            // rest are stored as explicit refusals for the learner to change in the consent
+            // centre. Granting analytics or marketing off the back of a sign-in button would
+            // be exactly the bundled consent s.6(1) rules out.
+            consentService.recordSignupConsent(user.getId(), null);
         }
 
         return issueSession(user);

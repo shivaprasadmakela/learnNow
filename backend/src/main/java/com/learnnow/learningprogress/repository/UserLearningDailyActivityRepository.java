@@ -18,6 +18,9 @@ public interface UserLearningDailyActivityRepository
     List<UserLearningDailyActivity> findByUserIdAndActivityDateIn(
             String userId, List<LocalDate> dates);
 
+    /** The learner's whole activity history. Used by the DPDP data export (s.11). */
+    List<UserLearningDailyActivity> findByUserIdOrderByActivityDateDesc(String userId);
+
     List<UserLearningDailyActivity> findByActivityDateBetween(
             LocalDate startDate, LocalDate endDate);
 

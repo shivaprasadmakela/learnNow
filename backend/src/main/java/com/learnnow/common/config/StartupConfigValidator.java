@@ -49,6 +49,12 @@ public class StartupConfigValidator {
     @Value("${app.payments.mock-enabled:false}")
     private boolean paymentsMockEnabled;
 
+    @Value("${app.privacy.grievance-officer-email}")
+    private String grievanceOfficerEmail;
+
+    @Value("${app.privacy.grievance-officer-address}")
+    private String grievanceOfficerAddress;
+
     public StartupConfigValidator(Environment environment) {
         this.environment = environment;
     }
@@ -64,6 +70,7 @@ public class StartupConfigValidator {
 
         if (!mockPermitted) {
             validateProductionPayments();
+            validatePrivacyContact();
         } else if (paymentsMockEnabled) {
             log.warn(
                     "Payment mock is ENABLED. Payment signatures are accepted without"
@@ -174,6 +181,34 @@ public class StartupConfigValidator {
                 || razorpayKeyId.contains("placeholder")) {
             throw new IllegalStateException(
                     "RAZORPAY_KEY_ID is missing or still a placeholder outside local development.");
+        }
+    }
+
+    /**
+     * Refuses to serve a privacy notice that tells learners to complain into the void.
+     *
+     * <p>DPDP s.8(9) requires the contact details of whoever answers questions about personal data
+     * to be published, and the application publishes whatever is configured. Shipping the
+     * placeholders would put an address nobody reads on a page that promises a reply, which is
+     * worse than having no page: a learner may only escalate to the Data Protection Board after
+     * exhausting a grievance route that, in that state, does not exist.
+     *
+     * <p>Only enforced outside local and test, where the placeholders are the point.
+     */
+    private void validatePrivacyContact() {
+        if (grievanceOfficerEmail == null
+                || grievanceOfficerEmail.isBlank()
+                || grievanceOfficerEmail.endsWith("@example.com")) {
+            throw new IllegalStateException(
+                    "GRIEVANCE_OFFICER_EMAIL is unset or still the placeholder. DPDP s.8(9)"
+                            + " requires a real contact for personal data questions.");
+        }
+        if (grievanceOfficerAddress == null
+                || grievanceOfficerAddress.isBlank()
+                || grievanceOfficerAddress.equals("Address not configured")) {
+            throw new IllegalStateException(
+                    "GRIEVANCE_OFFICER_ADDRESS is unset or still the placeholder. DPDP s.8(9)"
+                            + " requires a published business address.");
         }
     }
 }
