@@ -1,0 +1,42 @@
+/*
+ * The wordmark. Moved here from Navigation.module.css, where it sat beside the header and sidebar
+ * styles and could only be used by whatever imported that file.
+ */
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    cursor: pointer;
+    font-family: var(--font-family-mono);
+    font-weight: 700;
+    font-size: 1.15rem;
+    user-select: none;
+    /* Resets for the button form; harmless on the div. */
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.logoBrand {
+    font-family: var(--font-family-mono);
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: -0.05em;
+    background: linear-gradient(135deg, #005995, #99bdd5);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* In the footer the mark stands alone rather than beside a menu button, so it carries a little
+   more size and does not need to align to a 1.15rem row. */
+.logoFooter .logoBrand {
+    font-size: 1.55rem;
+}
+
+.logo:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+}

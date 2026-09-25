@@ -147,13 +147,7 @@ export const useProfileDashboard = () => {
         }
     };
 
-    const signUp = async (
-        firstName: string,
-        lastName: string,
-        email: string,
-        pass: string,
-        consents: string[] = []
-    ) => {
+    const signUp = async (firstName: string, lastName: string, email: string, pass: string) => {
         setError(null);
         const response = await apiFetch('/api/auth/register', {
             method: 'POST',
@@ -162,11 +156,10 @@ export const useProfileDashboard = () => {
                 firstName,
                 lastName,
                 email,
-                password: pass,
-                // Only what they ticked. The server records an explicit refusal for every
-                // purpose absent from this list, so a short list is a set of decisions
-                // rather than a gap.
-                consents: consents.map(purpose => ({ purpose, granted: true }))
+                password: pass
+                // No consent payload. Signing up grants only ESSENTIAL, and the server records
+                // an explicit refusal for every optional purpose, so each one stays a separate
+                // decision the learner makes later in the consent centre.
             })
         });
 

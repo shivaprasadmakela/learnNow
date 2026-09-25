@@ -1,4 +1,5 @@
 import React from 'react';
+import { Logo } from '../Logo';
 import styles from '../Navigation.module.css';
 import type { HeaderProps } from './Header.types';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -29,12 +30,10 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                     <i className="fa-solid fa-bars" style={{ fontSize: '1.25rem' }} />
                 </button>
-                <div
-                    className={styles.logo}
+                <Logo
                     onClick={() => changeView(isLoggedIn ? 'DASHBOARD' : 'HOME')}
-                >
-                    <span className={styles.logoBrand}>learnNow</span>
-                </div>
+                    ariaLabel="learnNow home"
+                />
             </div>
 
             <div className={styles.headerRight}>

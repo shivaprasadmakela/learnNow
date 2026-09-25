@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Checkbox } from '../../../shared/components';
 import { useToast } from '../../../shared/components/feedback/Toast';
 import {
     CONSENT_LABELS,
@@ -110,17 +111,19 @@ export const ConsentCentreSection: React.FC = () => {
                             )}
                         </div>
 
-                        <label className={styles.switch}>
-                            <input
-                                type="checkbox"
-                                className={styles.switchInput}
-                                checked={consent.granted}
-                                disabled={consent.required || pending === consent.purpose}
-                                onChange={e => handleToggle(consent.purpose, e.target.checked)}
-                                aria-label={label.title}
-                            />
-                            <span className={styles.switchTrack} />
-                        </label>
+                        {/*
+                          * The shared Checkbox, the same control the sign-in and signup forms
+                          * use. This was a bespoke sliding switch, which was the only one in the
+                          * application and so read as a different kind of control rather than a
+                          * more emphatic one.
+                          */}
+                        <Checkbox
+                            className={styles.consentToggle}
+                            checked={consent.granted}
+                            disabled={consent.required || pending === consent.purpose}
+                            onChange={e => handleToggle(consent.purpose, e.target.checked)}
+                            aria-label={label.title}
+                        />
                     </div>
                 );
             })}

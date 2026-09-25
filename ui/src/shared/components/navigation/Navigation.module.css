@@ -24,27 +24,7 @@
     padding: var(--space-4) 0;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    cursor: pointer;
-    font-family: var(--font-family-mono);
-    font-weight: 700;
-    font-size: 1.15rem;
-    user-select: none;
-}
-
-.logoBrand {
-    font-family: var(--font-family-mono);
-    font-weight: 700;
-    font-size: 1.4rem;
-    letter-spacing: -0.05em;
-    background: linear-gradient(135deg, #005995, #99bdd5);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+/* .logo and .logoBrand moved to Logo/Logo.module.css, which Header and SiteFooter share. */
 
 .logoAcademy {
     color: var(--text-primary);

@@ -3,6 +3,7 @@ import {
     fetchPrivacyContact,
     type PrivacyContactDto
 } from '../../../../features/privacy/api/privacy.api';
+import { Logo } from '../Logo';
 import type { FooterView, SiteFooterProps } from './SiteFooter.types';
 import styles from './SiteFooter.module.css';
 
@@ -90,13 +91,11 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({ changeView, isLoggedIn }
         <footer className={styles.footer}>
             <div className={styles.inner}>
                 <div className={styles.brandColumn}>
-                    <button
-                        className={styles.brand}
+                    <Logo
+                        variant="footer"
                         onClick={() => changeView('HOME')}
-                        aria-label="learnNow home"
-                    >
-                        learn<span className={styles.brandAccent}>Now</span>
-                    </button>
+                        ariaLabel="learnNow home"
+                    />
                     <p className={styles.tagline}>
                         Interactive engineering courses, a structured DSA sheet, and a playground
                         that runs your code — built for people becoming career ready.

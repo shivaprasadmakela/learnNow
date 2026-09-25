@@ -262,67 +262,13 @@
 }
 
 /*
- * A plain checkbox-driven switch. Built on a real <input type="checkbox"> rather than a div with a
- * click handler so it keeps keyboard focus, the space bar, and screen-reader semantics for free -
- * a consent control that cannot be operated without a mouse is not a consent control.
+ * The consent control is the shared Checkbox; only its placement in the row belongs here. The
+ * bespoke sliding switch that used to live in this file was the only switch in the application,
+ * so it read as a different kind of control rather than a more emphatic one.
  */
-.switch {
-    position: relative;
+.consentToggle {
     flex-shrink: 0;
-    width: 44px;
-    height: 24px;
-}
-
-.switchInput {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.switchInput:disabled {
-    cursor: not-allowed;
-}
-
-.switchTrack {
-    position: absolute;
-    inset: 0;
-    border-radius: var(--radius-pill);
-    background-color: var(--border-color-light);
-    transition: background-color 0.18s ease;
-    pointer-events: none;
-}
-
-.switchTrack::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background-color: var(--color-white);
-    transition: transform 0.18s ease;
-}
-
-.switchInput:checked + .switchTrack {
-    background-color: var(--accent-primary);
-}
-
-.switchInput:checked + .switchTrack::after {
-    transform: translateX(20px);
-}
-
-.switchInput:focus-visible + .switchTrack {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-.switchInput:disabled + .switchTrack {
-    opacity: 0.55;
+    align-self: center;
 }
 
 /* ------------------------------------------------------------- data rights */
