@@ -9,13 +9,7 @@ import { Loader } from '../../../shared/components/ui/Loader';
 
 export interface LoginPageProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
-    signUp: (
-        firstName: string,
-        lastName: string,
-        email: string,
-        pass: string,
-        consents: string[]
-    ) => Promise<unknown>;
+    signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
     signInWithGoogle?: (idToken: string) => Promise<unknown>;
     changeView: (
         view:
@@ -40,6 +34,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 }) => {
     const form = useAuthForm({ signIn, signUp });
     const [isGoogleAuthenticating, setIsGoogleAuthenticating] = useState(false);
+
+    const handleGoogleError = (err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Google authentication failed';
+        form.showToast(msg, 'error');
+    };
 
     const handleGoogleSuccess = async (idToken: string) => {
         if (!signInWithGoogle) return;
@@ -89,10 +88,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                 onToggleAuthMode={form.toggleAuthMode}
                                 onForgotPassword={() => form.showToast('Forgot password logic is coming soon!', 'info')}
                                 onGoogleSuccess={signInWithGoogle ? handleGoogleSuccess : undefined}
-                                onGoogleError={(err) => {
-                                    const msg = err instanceof Error ? err.message : 'Google authentication failed';
-                                    form.showToast(msg, 'error');
-                                }}
+                                onGoogleError={handleGoogleError}
+                                onOpenPrivacyNotice={() => changeView('PRIVACY')}
                             />
                         ) : (
                             <SignUpForm
@@ -108,9 +105,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                 setPasswordConfirmation={form.setPasswordConfirmation}
                                 loading={form.loading}
                                 onSubmit={form.handleSignUpSubmit}
-                                consents={form.consents}
-                                onToggleConsent={form.toggleConsent}
+                                noticeAccepted={form.noticeAccepted}
+                                onNoticeAcceptedChange={form.setNoticeAccepted}
                                 onOpenPrivacyNotice={() => changeView('PRIVACY')}
+                                onGoogleSuccess={signInWithGoogle ? handleGoogleSuccess : undefined}
+                                onGoogleError={handleGoogleError}
                                 onToggleAuthMode={form.toggleAuthMode}
                             />
                         )}

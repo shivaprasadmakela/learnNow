@@ -15,6 +15,8 @@ interface SignInFormProps {
     onToggleAuthMode: () => void;
     onForgotPassword: () => void;
     onGoogleSuccess?: (idToken: string) => void;
+    /** Opens the privacy notice from the line under the Google button. */
+    onOpenPrivacyNotice: () => void;
     onGoogleError?: (error: unknown) => void;
 }
 
@@ -30,13 +32,18 @@ export const SignInForm: React.FC<SignInFormProps> = ({
     onToggleAuthMode,
     onForgotPassword,
     onGoogleSuccess,
+    onOpenPrivacyNotice,
     onGoogleError
 }) => {
     return (
         <form onSubmit={onSubmit} className={styles.authForm}>
             {onGoogleSuccess && (
                 <>
-                    <GoogleLoginButton onSuccess={onGoogleSuccess} onError={onGoogleError} />
+                    <GoogleLoginButton
+                        onSuccess={onGoogleSuccess}
+                        onError={onGoogleError}
+                        onOpenPrivacyNotice={onOpenPrivacyNotice}
+                    />
                     <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', width: '100%' }}>
                         <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }} />
                         <span style={{ padding: '0 12px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>OR</span>

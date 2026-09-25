@@ -1,75 +1,13 @@
 /*
- * The consent notice on the signup form.
+ * The privacy tick on the signup form.
  *
- * Quieter than the fields above it but not hidden: it sits in its own panel so it reads as
- * information rather than as more form to fill in, while staying plainly visible. Collapsing it
- * behind a "learn more" would defeat s.5, which asks for the notice to be given, not offered.
+ * The control itself is the shared Checkbox — the same one the sign-in form uses for "Remember
+ * Me", so the two views of this form no longer show two different checkboxes. All that is left
+ * here is the spacing around it and the link inside its label.
  */
 
-.notice {
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-tertiary);
-    padding: var(--space-4);
+.consentCheckbox {
     margin-top: var(--space-2);
-}
-
-.noticeIntro {
-    font-size: 0.82rem;
-    line-height: 1.6;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-3);
-}
-
-.options {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    margin-bottom: var(--space-3);
-}
-
-.option {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-3);
-    cursor: pointer;
-}
-
-.checkbox {
-    margin-top: 2px;
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    accent-color: var(--accent-primary);
-    cursor: pointer;
-}
-
-.optionText {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.optionTitle {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.optionDescription {
-    font-size: 0.78rem;
-    line-height: 1.55;
-    color: var(--text-tertiary);
-}
-
-.noticeFooter {
-    font-size: 0.78rem;
-    line-height: 1.6;
-    color: var(--text-tertiary);
-    margin: 0;
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--border-color);
 }
 
 .inlineLink {

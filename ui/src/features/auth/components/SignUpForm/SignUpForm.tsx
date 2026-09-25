@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Input } from '../../../../shared/components';
-import type { ConsentPurpose } from '../../../privacy/api/privacy.api';
+import { GoogleLoginButton } from '../GoogleLoginButton';
 import { SignUpConsent } from '../SignUpConsent';
 import styles from '../../styles/LoginPage.module.css';
 
@@ -18,10 +18,12 @@ interface SignUpFormProps {
     loading: boolean;
     onSubmit: (e: React.FormEvent) => void;
     onToggleAuthMode: () => void;
-    /** Optional DPDP purposes the learner has ticked. Empty until they tick something. */
-    consents: ConsentPurpose[];
-    onToggleConsent: (purpose: ConsentPurpose, granted: boolean) => void;
+    /** Whether the learner has confirmed they read the privacy notice. Required to submit. */
+    noticeAccepted: boolean;
+    onNoticeAcceptedChange: (accepted: boolean) => void;
     onOpenPrivacyNotice: () => void;
+    onGoogleSuccess?: (idToken: string) => void;
+    onGoogleError?: (error: unknown) => void;
 }
 
 export const SignUpForm: React.FC<SignUpFormProps> = ({
@@ -38,9 +40,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     loading,
     onSubmit,
     onToggleAuthMode,
-    consents,
-    onToggleConsent,
-    onOpenPrivacyNotice
+    noticeAccepted,
+    onNoticeAcceptedChange,
+    onOpenPrivacyNotice,
+    onGoogleSuccess,
+    onGoogleError
 }) => {
     return (
         <form onSubmit={onSubmit} className={styles.authForm}>
@@ -87,11 +91,32 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
             </div>
 
             <SignUpConsent
-                granted={consents}
-                onToggle={onToggleConsent}
+                accepted={noticeAccepted}
+                onChange={onNoticeAcceptedChange}
                 onOpenPrivacyNotice={onOpenPrivacyNotice}
                 disabled={loading}
             />
+
+            {/*
+              * Google is offered here too, but only once the notice has been confirmed. Before
+              * this it sat on the sign-in tab alone, so a first-time visitor could create an
+              * account through it without ever meeting the notice or the tick.
+              */}
+            {onGoogleSuccess && (
+                <>
+                    <div className={styles.dividerContainer}>
+                        <span className={styles.dividerLine} />
+                        <span className={styles.dividerText}>OR</span>
+                        <span className={styles.dividerLine} />
+                    </div>
+                    <GoogleLoginButton
+                        onSuccess={onGoogleSuccess}
+                        onError={onGoogleError}
+                        onOpenPrivacyNotice={onOpenPrivacyNotice}
+                        disabled={!noticeAccepted}
+                    />
+                </>
+            )}
 
             <div className={styles.actionsRow}>
                 <span className={styles.blueLinkBold} onClick={onToggleAuthMode}>

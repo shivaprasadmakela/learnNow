@@ -1,6 +1,11 @@
+/*
+ * A column, not a row. This centred a single child horizontally; with the privacy line added
+ * beneath the button, a row put the two side by side.
+ */
 .googleContainer {
     width: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     margin-bottom: 24px;
@@ -53,4 +58,36 @@
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+}
+/*
+ * The privacy line under the button. Small and quiet, but always present: continuing with Google
+ * creates an account for a first-time visitor, and this is the only place the notice is given on
+ * that route.
+ */
+.privacyLine {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-tertiary);
+    text-align: center;
+    margin: var(--space-2) 0 0;
+}
+
+.privacyLink {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--accent-blue-text);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/*
+ * Google's button is an iframe and cannot take a disabled attribute, so the wrapper blocks it.
+ * pointer-events on the wrapper stops the click ever reaching the frame.
+ */
+.gated {
+    opacity: 0.45;
+    pointer-events: none;
+    filter: grayscale(1);
 }

@@ -1,16 +1,9 @@
 import { useState } from 'react';
 import { useToast } from '../../../shared/components/feedback/Toast';
-import type { ConsentPurpose } from '../../privacy/api/privacy.api';
 
 interface UseAuthFormProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
-    signUp: (
-        firstName: string,
-        lastName: string,
-        email: string,
-        pass: string,
-        consents: ConsentPurpose[]
-    ) => Promise<unknown>;
+    signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
 }
 
 export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
@@ -30,16 +23,15 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
 
     /**
-     * Optional DPDP purposes the learner has ticked. Starts empty and stays empty unless they
-     * act — s.6(1) needs a clear affirmative action, so nothing may be pre-selected here.
+     * Whether the learner has confirmed they read the privacy notice. Starts false and is never
+     * pre-ticked: a box that arrives already checked records an acknowledgement the person never
+     * made.
+     *
+     * It grants nothing optional. Analytics, course email and recommendations are refused at
+     * signup and opted into later in the consent centre, so that each stays a specific decision
+     * as s.6(1) requires.
      */
-    const [consents, setConsents] = useState<ConsentPurpose[]>([]);
-
-    const toggleConsent = (purpose: ConsentPurpose, granted: boolean) => {
-        setConsents(current =>
-            granted ? [...current, purpose] : current.filter(p => p !== purpose)
-        );
-    };
+    const [noticeAccepted, setNoticeAccepted] = useState(false);
 
     const validateEmail = (val: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -105,10 +97,14 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
             showToast('Passwords do not match.', 'error');
             return;
         }
+        if (!noticeAccepted) {
+            showToast('Please confirm you have read the privacy notice.', 'error');
+            return;
+        }
 
         setLoading(true);
         try {
-            await signUp(firstName.trim(), lastName.trim(), email, password, consents);
+            await signUp(firstName.trim(), lastName.trim(), email, password);
             setIsRegisteredSuccess(true);
 
             setFirstName('');
@@ -116,7 +112,7 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
             setEmail('');
             setPassword('');
             setPasswordConfirmation('');
-            setConsents([]);
+            setNoticeAccepted(false);
         } catch (err: unknown) {
             console.error('Sign up error:', err);
             const message = err instanceof Error ? err.message : 'An error occurred during registration. Please try again.';
@@ -150,8 +146,8 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
         setPasswordConfirmation,
         handleSignInSubmit,
         handleSignUpSubmit,
-        consents,
-        toggleConsent,
+        noticeAccepted,
+        setNoticeAccepted,
         toggleAuthMode,
         showToast
     };

@@ -54,3 +54,24 @@
     color: var(--text-secondary);
     font-weight: 500;
 }
+
+/*
+ * For a label that runs to more than one line. Centred alignment puts the box halfway down a
+ * wrapped paragraph; this keeps it against the first line, where the eye expects it. The small
+ * top offset lines the box up with the cap height of that line rather than its box.
+ */
+.alignStart {
+    align-items: flex-start;
+}
+
+.alignStart .customCheckmark {
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+/* See Navigation.module.css: touch needs a 44px target, mouse does not. */
+@media (pointer: coarse) {
+    .checkboxContainer {
+        min-height: 44px;
+    }
+}
