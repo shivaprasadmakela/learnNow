@@ -1,5 +1,7 @@
 import React from 'react';
 import { Button, Input } from '../../../../shared/components';
+import type { ConsentPurpose } from '../../../privacy/api/privacy.api';
+import { SignUpConsent } from '../SignUpConsent';
 import styles from '../../styles/LoginPage.module.css';
 
 interface SignUpFormProps {
@@ -16,6 +18,10 @@ interface SignUpFormProps {
     loading: boolean;
     onSubmit: (e: React.FormEvent) => void;
     onToggleAuthMode: () => void;
+    /** Optional DPDP purposes the learner has ticked. Empty until they tick something. */
+    consents: ConsentPurpose[];
+    onToggleConsent: (purpose: ConsentPurpose, granted: boolean) => void;
+    onOpenPrivacyNotice: () => void;
 }
 
 export const SignUpForm: React.FC<SignUpFormProps> = ({
@@ -31,7 +37,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     setPasswordConfirmation,
     loading,
     onSubmit,
-    onToggleAuthMode
+    onToggleAuthMode,
+    consents,
+    onToggleConsent,
+    onOpenPrivacyNotice
 }) => {
     return (
         <form onSubmit={onSubmit} className={styles.authForm}>
@@ -76,6 +85,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                     disabled={loading}
                 />
             </div>
+
+            <SignUpConsent
+                granted={consents}
+                onToggle={onToggleConsent}
+                onOpenPrivacyNotice={onOpenPrivacyNotice}
+                disabled={loading}
+            />
 
             <div className={styles.actionsRow}>
                 <span className={styles.blueLinkBold} onClick={onToggleAuthMode}>

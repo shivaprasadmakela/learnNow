@@ -1,0 +1,251 @@
+/*
+ * The site footer.
+ *
+ * Sits on --bg-secondary with a top border rather than floating as a card: the landing page above
+ * it is a run of rounded panels on a gradient, so one more panel would read as another section.
+ * A flat band that runs edge to edge is what tells you the page has ended.
+ *
+ * Everything is in the existing tokens, so it follows light and dark without knowing which is on.
+ */
+
+.footer {
+    width: 100%;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    /* Cancels the gradient the landing wrapper paints, so the band is genuinely flat. */
+    background-image: none;
+}
+
+.inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-12) var(--space-8) var(--space-8);
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr);
+    gap: var(--space-12);
+    align-items: start;
+}
+
+/* ------------------------------------------------------------------ brand */
+
+.brandColumn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+    min-width: 0;
+}
+
+.brand {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.brand:hover {
+    opacity: 0.8;
+}
+
+.brandAccent {
+    color: var(--tech-blue);
+}
+
+.tagline {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 42ch;
+}
+
+.ctaLink {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.ctaLink:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+    transform: translateY(-1px);
+}
+
+/* ------------------------------------------------------------- link columns */
+
+/*
+ * auto-fit rather than a fixed three: the Account column is hidden from signed-out visitors, and
+ * a fixed track count left the remaining two bunched against the left edge with a dead third of
+ * the row beside them.
+ *
+ * The 110px floor is deliberately low. The sidebar and the brand column leave this nav under
+ * 500px on a 1024 screen, and at a 140px floor the third column did not fit and wrapped onto a
+ * row of its own — an orphan under the first column, which looks like a bug rather than a
+ * layout. Three tracks plus two gaps now come to 378px, so all three hold down to the point
+ * where .inner stacks anyway.
+ */
+.linkColumns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: var(--space-6);
+}
+
+.column {
+    min-width: 0;
+}
+
+.columnHeading {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin: 0 0 var(--space-4);
+}
+
+.linkList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+/*
+ * These are buttons, not anchors: navigation here is a pushState call rather than a document
+ * load. Styled back to looking like links, and they keep button keyboard semantics for free.
+ */
+.link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.link:hover {
+    color: var(--tech-blue);
+}
+
+.link:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+/* --------------------------------------------------------------- bottom bar */
+
+.bottomBar {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-8) var(--space-8);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.copyright,
+.contactLine {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.heart {
+    color: var(--tech-red);
+}
+
+/*
+ * The contact line is a compliance obligation (s.8(9)), not decoration, so the tag marks it as
+ * such without shouting. Quiet enough that it does not compete with the page above it.
+ */
+.dpdpTag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    padding: 2px var(--space-2);
+}
+
+.contactLink {
+    color: var(--accent-blue-text);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.contactLink:hover {
+    text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ mobile */
+
+@media (max-width: 900px) {
+    .inner {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-10);
+        padding: var(--space-10) var(--space-5) var(--space-6);
+    }
+
+    .bottomBar {
+        padding: var(--space-5) var(--space-5) var(--space-6);
+    }
+}
+
+@media (max-width: 560px) {
+    /*
+     * Two columns rather than one. Stacked, three short link lists turn the footer into a long
+     * scroll of single words; paired, it stays one glance.
+     */
+    .linkColumns {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-6);
+    }
+
+    .bottomBar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* See Navigation.module.css: touch needs a 44px target, mouse does not. */
+@media (pointer: coarse) {
+    .link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .linkList {
+        gap: 0;
+    }
+}

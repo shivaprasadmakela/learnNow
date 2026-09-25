@@ -1,8 +1,23 @@
+/*
+ * Shell around the form and the footer.
+ *
+ * authPageContainer centres the card and owns the page gradient, so the footer cannot live inside
+ * it without being centred and gradient-washed too. The shell takes over the page height; the
+ * container grows to fill whatever the footer does not use, which keeps the card vertically placed
+ * exactly as before on a tall screen and lets the footer sit under it on a short one.
+ */
+.authPageShell {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - var(--header-height));
+    width: 100%;
+}
+
 .authPageContainer {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    min-height: calc(100vh - var(--header-height));
+    flex-grow: 1;
     padding: 2rem 1rem 2rem 1rem;
     background-color: var(--bg-primary);
     background-image:
@@ -11,7 +26,13 @@
         radial-gradient(ellipse 45% 35% at 15% 65%, rgba(16, 185, 129, 0.08), transparent);
     box-sizing: border-box;
     transition: background-color var(--transition-normal);
-    overflow-y: auto;
+    /*
+     * flex: 1 0 auto, and no overflow of its own. With `flex: 1` alone the container was allowed
+     * to shrink below its content to fit the shell's height, and the sign-up form — which is
+     * taller than the viewport — was cut off behind the footer. Growing but never shrinking lets
+     * the whole shell scroll as one page instead, which is what a page with a footer should do.
+     */
+    flex-shrink: 0;
 }
 
 

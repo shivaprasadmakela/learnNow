@@ -1,0 +1,1 @@
+export { SignUpConsent } from './SignUpConsent';

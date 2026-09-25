@@ -1,0 +1,167 @@
+/*
+ * The privacy notice.
+ *
+ * Deliberately plain: one column, generous line height, no cards or panels. s.5 requires the
+ * notice to be in clear and plain language, and a legal notice broken into styled tiles reads as
+ * marketing — people skim it exactly the way they skim a landing page.
+ */
+
+/*
+ * Shell around the notice and its footer. The notice is a narrow reading column; the footer runs
+ * edge to edge, so it cannot sit inside that column. The shell also holds the page to full height
+ * so a short notice does not leave the footer floating halfway up the screen.
+ */
+.shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    width: 100%;
+}
+
+.page {
+    flex: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-4) var(--space-16);
+    width: 100%;
+    color: var(--text-primary);
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 var(--space-2);
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-8);
+    line-height: 1.6;
+}
+
+.meta {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+    padding-bottom: var(--space-6);
+    margin-bottom: var(--space-8);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section {
+    margin-bottom: var(--space-10);
+}
+
+.sectionTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0 0 var(--space-3);
+    color: var(--text-primary);
+}
+
+.section p {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-4);
+}
+
+.section p:last-child {
+    margin-bottom: 0;
+}
+
+.section a {
+    color: var(--accent-blue-text);
+}
+
+.list {
+    margin: 0 0 var(--space-4);
+    padding-left: var(--space-5);
+}
+
+.list li {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2);
+}
+
+.list li strong {
+    color: var(--text-primary);
+}
+
+/* The rights table: what you can do, and where. */
+.rights {
+    display: grid;
+    gap: var(--space-3);
+    margin: var(--space-5) 0;
+}
+
+.right {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background-color: var(--bg-card);
+}
+
+.rightTitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-1);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.rightRef {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    padding: 2px var(--space-2);
+}
+
+.rightBody {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.contactBlock {
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+
+.contactBlock strong {
+    color: var(--text-primary);
+}
+
+.inlineLink {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--accent-blue-text);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+    .title {
+        font-size: 1.6rem;
+    }
+
+    .page {
+        padding-top: var(--space-6);
+    }
+}

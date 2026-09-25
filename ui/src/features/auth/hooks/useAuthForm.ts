@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { useToast } from '../../../shared/components/feedback/Toast';
+import type { ConsentPurpose } from '../../privacy/api/privacy.api';
 
 interface UseAuthFormProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
-    signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
+    signUp: (
+        firstName: string,
+        lastName: string,
+        email: string,
+        pass: string,
+        consents: ConsentPurpose[]
+    ) => Promise<unknown>;
 }
 
 export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
@@ -21,6 +28,18 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
+
+    /**
+     * Optional DPDP purposes the learner has ticked. Starts empty and stays empty unless they
+     * act — s.6(1) needs a clear affirmative action, so nothing may be pre-selected here.
+     */
+    const [consents, setConsents] = useState<ConsentPurpose[]>([]);
+
+    const toggleConsent = (purpose: ConsentPurpose, granted: boolean) => {
+        setConsents(current =>
+            granted ? [...current, purpose] : current.filter(p => p !== purpose)
+        );
+    };
 
     const validateEmail = (val: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,7 +108,7 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
 
         setLoading(true);
         try {
-            await signUp(firstName.trim(), lastName.trim(), email, password);
+            await signUp(firstName.trim(), lastName.trim(), email, password, consents);
             setIsRegisteredSuccess(true);
 
             setFirstName('');
@@ -97,6 +116,7 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
             setEmail('');
             setPassword('');
             setPasswordConfirmation('');
+            setConsents([]);
         } catch (err: unknown) {
             console.error('Sign up error:', err);
             const message = err instanceof Error ? err.message : 'An error occurred during registration. Please try again.';
@@ -130,6 +150,8 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
         setPasswordConfirmation,
         handleSignInSubmit,
         handleSignUpSubmit,
+        consents,
+        toggleConsent,
         toggleAuthMode,
         showToast
     };
