@@ -81,13 +81,3 @@
     cursor: pointer;
     text-decoration: underline;
 }
-
-/*
- * Google's button is an iframe and cannot take a disabled attribute, so the wrapper blocks it.
- * pointer-events on the wrapper stops the click ever reaching the frame.
- */
-.gated {
-    opacity: 0.45;
-    pointer-events: none;
-    filter: grayscale(1);
-}

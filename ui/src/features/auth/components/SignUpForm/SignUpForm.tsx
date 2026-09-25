@@ -98,9 +98,11 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
             />
 
             {/*
-              * Google is offered here too, but only once the notice has been confirmed. Before
-              * this it sat on the sign-in tab alone, so a first-time visitor could create an
-              * account through it without ever meeting the notice or the tick.
+              * Google is offered here too. Before this it sat on the sign-in tab alone, so a
+              * first-time visitor could create an account through it without ever meeting the
+              * notice. It is not gated on the tick above: the button carries its own line saying
+              * that continuing confirms the notice was read, which is the s.5 requirement, and
+              * the tick belongs to the email form it sits under.
               */}
             {onGoogleSuccess && (
                 <>
@@ -113,7 +115,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                         onSuccess={onGoogleSuccess}
                         onError={onGoogleError}
                         onOpenPrivacyNotice={onOpenPrivacyNotice}
-                        disabled={!noticeAccepted}
                     />
                 </>
             )}

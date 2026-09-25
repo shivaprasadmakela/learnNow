@@ -10,13 +10,12 @@ interface GoogleLoginButtonProps {
      * Required, not optional. Continuing with Google creates an account for a first-time visitor,
      * so the notice has to be on screen at that moment — s.5 wants it given at or before consent.
      * Making it part of this component means the button cannot be placed anywhere without it.
+     *
+     * This line is also the whole of the confirmation for the Google route. The button is never
+     * gated behind a separate tick: the line below it says what continuing means, which is what
+     * s.5 asks for, and an inert button that has to be unlocked first only reads as broken.
      */
     onOpenPrivacyNotice: () => void;
-    /**
-     * Blocks the button and One Tap. Used on the signup tab, where the privacy tick gates it, so
-     * the two routes to an account ask for the same confirmation.
-     */
-    disabled?: boolean;
 }
 
 const DEFAULT_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -49,8 +48,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     onSuccess,
     onError,
     clientId = DEFAULT_CLIENT_ID,
-    onOpenPrivacyNotice,
-    disabled = false
+    onOpenPrivacyNotice
 }) => {
     if (!clientId) {
         return (
@@ -58,7 +56,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
                 <button
                     type="button"
                     className={styles.googleBtn}
-                    disabled={disabled}
                     onClick={() => {
                         if (onError) {
                             onError(new Error('Google Client ID is not configured (VITE_GOOGLE_CLIENT_ID missing).'));
@@ -76,35 +73,23 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     return (
         <GoogleOAuthProvider clientId={clientId}>
             <div className={styles.googleContainer}>
-                {/*
-                  * Google renders its button in an iframe, so it cannot be given a disabled
-                  * attribute. The wrapper takes the pointer events instead, and One Tap is
-                  * switched off in the same state — One Tap can create an account with no click
-                  * on the button at all, which would walk straight past the gate.
-                  */}
-                <div
-                    className={disabled ? styles.gated : undefined}
-                    aria-disabled={disabled || undefined}
-                >
-                    <GoogleLogin
-                        onSuccess={(credentialResponse) => {
-                            if (disabled) return;
-                            if (credentialResponse.credential) {
-                                onSuccess(credentialResponse.credential);
-                            }
-                        }}
-                        onError={() => {
-                            if (onError) onError(new Error('Google sign-in was unsuccessful.'));
-                        }}
-                        theme="outline"
-                        size="large"
-                        shape="rectangular"
-                        width="100%"
-                        text="continue_with"
-                        logo_alignment="center"
-                        useOneTap={!disabled}
-                    />
-                </div>
+                <GoogleLogin
+                    onSuccess={(credentialResponse) => {
+                        if (credentialResponse.credential) {
+                            onSuccess(credentialResponse.credential);
+                        }
+                    }}
+                    onError={() => {
+                        if (onError) onError(new Error('Google sign-in was unsuccessful.'));
+                    }}
+                    theme="outline"
+                    size="large"
+                    shape="rectangular"
+                    width="100%"
+                    text="continue_with"
+                    logo_alignment="center"
+                    useOneTap
+                />
                 <PrivacyLine onOpen={onOpenPrivacyNotice} />
             </div>
         </GoogleOAuthProvider>
