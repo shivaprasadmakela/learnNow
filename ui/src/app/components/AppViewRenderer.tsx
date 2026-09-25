@@ -15,6 +15,8 @@ const ConfigurationEditor = React.lazy(() => import('../../features/iam-admin').
 const CourseImporter = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.CourseImporter })));
 const CompilerPage = React.lazy(() => import('../../features/compiler').then(m => ({ default: m.CompilerPage })));
 const DsaSheetPage = React.lazy(() => import('../../features/dsa').then(m => ({ default: m.DsaSheetPage })));
+const ProfilePage = React.lazy(() => import('../../features/profile').then(m => ({ default: m.ProfilePage })));
+const PrivacyPolicyPage = React.lazy(() => import('../../features/privacy').then(m => ({ default: m.PrivacyPolicyPage })));
 const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
 import { fetchAdminPathById, saveAdminPath, type AdminSubtopicData } from '../../features/iam-admin/api/admin.api';
 
@@ -48,6 +50,9 @@ interface AppViewRendererProps {
     handleLoginSuccess: (token: string, profile: UserProfile) => void;
     refreshUserData: (force?: boolean) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
+    onSaveProfile: (fullName: string, avatar: string, bio: string) => void;
+    /** Called once the learner has erased their account, so the session can be ended. */
+    onAccountErased: () => void;
 }
 
 export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
@@ -77,7 +82,9 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     changeView,
     handleLoginSuccess,
     refreshUserData,
-    onMetricsLoaded
+    onMetricsLoaded,
+    onSaveProfile,
+    onAccountErased
 }) => {
     const isAdmin = isLoggedIn && profile?.role?.toUpperCase() === 'ADMIN';
 
@@ -85,9 +92,9 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
         <div className={
             activeView === 'COMPILER'
                 ? styles.pageContentCompiler
-                : activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
+                : activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'PRIVACY' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
                     ? styles.pageContentFull
-                    : activeView === 'DASHBOARD' || activeView === 'DSA'
+                    : activeView === 'DASHBOARD' || activeView === 'DSA' || activeView === 'PROFILE'
                         ? styles.pageContentDashboard
                         : styles.pageContent
         }>
@@ -142,6 +149,23 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                     <VerifyEmailPage
                         changeView={changeView}
                         onVerificationSuccess={handleLoginSuccess}
+                    />
+                )}
+
+                {activeView === 'PROFILE' && (
+                    <ProfilePage
+                        profile={profile}
+                        onSaveProfile={onSaveProfile}
+                        onAccountErased={onAccountErased}
+                    />
+                )}
+
+                {/* Readable signed out: a privacy notice you must log in to read is not a notice. */}
+                {activeView === 'PRIVACY' && (
+                    <PrivacyPolicyPage
+                        isLoggedIn={isLoggedIn}
+                        onOpenProfile={() => changeView('PROFILE')}
+                        changeView={changeView}
                     />
                 )}
 

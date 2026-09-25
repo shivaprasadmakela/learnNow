@@ -1,6 +1,8 @@
 export type ViewState =
     | 'HOME'
     | 'DASHBOARD'
+    | 'PROFILE'
+    | 'PRIVACY'
     | 'LOGIN'
     | 'PATHS'
     | 'TOPICS'
@@ -37,6 +39,8 @@ export const parseRoute = (pathname: string): ParsedRoute => {
 
     if (parts.length === 1) {
         if (first === 'dashboard') return { view: 'DASHBOARD' };
+        if (first === 'profile') return { view: 'PROFILE' };
+        if (first === 'privacy') return { view: 'PRIVACY' };
         if (first === 'login') return { view: 'LOGIN' };
         if (first === 'verify-email') return { view: 'VERIFY_EMAIL' };
         if (first === 'paths') return { view: 'PATHS' };
@@ -79,6 +83,10 @@ export const routeToPath = (
     switch (view) {
         case 'DASHBOARD':
             return '/dashboard';
+        case 'PROFILE':
+            return '/profile';
+        case 'PRIVACY':
+            return '/privacy';
         case 'LOGIN':
             return '/login';
         case 'VERIFY_EMAIL':

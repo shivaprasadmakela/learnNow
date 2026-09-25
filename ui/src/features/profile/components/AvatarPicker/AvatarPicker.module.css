@@ -77,3 +77,29 @@
     border-color: var(--tech-blue);
     color: var(--tech-blue);
 }
+
+/*
+ * At phone width the header ran out of room and the caption collapsed to one word per line, the
+ * shuffle button holding the space hostage. This component used to sit only in a 550px dialog
+ * where that never happened; it is now on the account page, which is narrower on a phone.
+ *
+ * Wrapping the row is enough: the avatar and caption take the first line, the button drops below
+ * it, and nothing shrinks to a column of single words.
+ */
+@media (max-width: 480px) {
+    .previewHeader {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .previewLeft {
+        gap: 12px;
+        /* Without this the caption cannot wrap normally inside a flex child. */
+        min-width: 0;
+    }
+
+    .shuffleBtn {
+        width: 100%;
+        justify-content: center;
+    }
+}

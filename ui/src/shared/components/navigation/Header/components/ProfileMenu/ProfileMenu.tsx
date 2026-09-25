@@ -91,6 +91,16 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                         <div
                             className={styles.menuItem}
                             onClick={() => {
+                                changeView('PROFILE');
+                                setShowProfileMenu(false);
+                            }}
+                        >
+                            <i className="fa-solid fa-user-shield" style={{ width: '18px', textAlign: 'center' }} />
+                            <span>Account &amp; privacy</span>
+                        </div>
+                        <div
+                            className={styles.menuItem}
+                            onClick={() => {
                                 onOpenSettings?.();
                                 setShowProfileMenu(false);
                             }}
@@ -113,7 +123,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
                     <div className={styles.dropdownFooter}>
                         <span
                             onClick={() => {
-                                showToast('Privacy policy details: Coming soon!', 'info');
+                                changeView('PRIVACY');
                                 setShowProfileMenu(false);
                             }}
                         >

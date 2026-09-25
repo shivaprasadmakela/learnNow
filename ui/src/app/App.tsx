@@ -8,7 +8,6 @@ import { useUserData } from './hooks/useUserData';
 import { useTopicSession } from './hooks/useTopicSession';
 import { AppViewRenderer } from './components/AppViewRenderer';
 
-const ProfileEditModal = React.lazy(() => import('../features/dashboard/components/ProfileEditModal/ProfileEditModal').then(m => ({ default: m.ProfileEditModal })));
 const StudyConsole = React.lazy(() => import('../features/topics/components/StudyConsole/StudyConsole').then(m => ({ default: m.StudyConsole })));
 const PathCelebrationModal = React.lazy(() => import('./components/PathCelebrationModal').then(m => ({ default: m.PathCelebrationModal })));
 const BuyMeACoffeeModal = React.lazy(() => import('../features/donation/components/BuyMeACoffeeModal').then(m => ({ default: m.BuyMeACoffeeModal })));
@@ -34,7 +33,6 @@ export default function App() {
     } = useProfileDashboard();
 
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
     const { showToast } = useToast();
 
@@ -160,6 +158,17 @@ export default function App() {
         if (view === 'DASHBOARD') setDashboardTab('activities');
     };
 
+    /**
+     * After the account is gone there is no session to return to, so this ends it the same way
+     * signing out does and sends them to the landing page. Routing to the dashboard instead would
+     * fire a profile fetch against a user the server has just deleted.
+     */
+    const handleAccountErased = () => {
+        showToast('Your account and all of its data have been deleted.', 'success');
+        signOut();
+        changeView('HOME');
+    };
+
     const isDsaView =
         activeView === 'DSA' || activeView === 'DSA_PROBLEM';
 
@@ -245,7 +254,7 @@ export default function App() {
                     toggleTheme={toggleTheme}
                     isLoggedIn={isLoggedIn}
                     signOut={signOut}
-                    onOpenSettings={() => setIsEditingProfile(true)}
+                    onOpenSettings={() => handleViewChange('PROFILE')}
                     points={userPoints ?? profile?.gemsCount ?? profile?.points ?? 0}
                     streak={userStreak ?? profile?.streakCount ?? 0}
                 />
@@ -376,22 +385,14 @@ export default function App() {
                             handleLoginSuccess={handleLoginSuccess}
                             refreshUserData={refreshUserData}
                             onMetricsLoaded={updateMetrics}
+                            onSaveProfile={saveProfile}
+                            onAccountErased={handleAccountErased}
                         />
                     </main>
                 )}
             </div>
 
             {/* Modals & Celebration */}
-            {isEditingProfile && profile && (
-                <Suspense fallback={null}>
-                    <ProfileEditModal
-                        profile={profile}
-                        onClose={() => setIsEditingProfile(false)}
-                        onSaveProfile={saveProfile}
-                    />
-                </Suspense>
-            )}
-
             <Suspense fallback={null}>
                 <PathCelebrationModal
                     path={celebratingPath}

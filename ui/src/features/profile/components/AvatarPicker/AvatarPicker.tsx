@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar } from '../../../../../../shared/components/ui/Avatar';
+import { Avatar } from '../../../../shared/components/ui/Avatar';
 import { ShuffleButton } from './components/ShuffleButton';
 import styles from './AvatarPicker.module.css';
 

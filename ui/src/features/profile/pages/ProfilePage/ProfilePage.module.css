@@ -1,0 +1,561 @@
+/*
+ * The profile page, and every DPDP section inside it.
+ *
+ * One stylesheet rather than one per section: the sections are panels of a single page and share
+ * their card, row, field and action styles wholesale. Split across five modules those would be
+ * five copies that drift, and the theme would stop being consistent exactly where it is most
+ * visible.
+ *
+ * Everything below is expressed in the existing tokens - no literal colours - so the page follows
+ * the light and dark themes without knowing which one is active.
+ */
+
+.page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4) var(--space-12);
+    width: 100%;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding-bottom: var(--space-6);
+    margin-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.headerAvatar {
+    flex-shrink: 0;
+}
+
+.headerText {
+    min-width: 0;
+}
+
+.headerName {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-1);
+    overflow-wrap: anywhere;
+}
+
+.headerEmail {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+/* -------------------------------------------------------------- navigation */
+
+.layout {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: start;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    position: sticky;
+    top: var(--space-6);
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--transition-fast, 0.15s ease),
+        color var(--transition-fast, 0.15s ease);
+}
+
+.navItem:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.navItemActive {
+    background-color: var(--accent-blue-light);
+    color: var(--accent-blue-text);
+    font-weight: 600;
+}
+
+.navIcon {
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* -------------------------------------------------------------- section shell */
+
+.section {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-5);
+}
+
+.sectionTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-2);
+}
+
+.sectionIntro {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-5);
+}
+
+/*
+ * The Act reference on each panel. Small and quiet on purpose: it is there so a learner can match
+ * what they are reading to the law, not to make the page look official.
+ */
+.lawRef {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    padding: 2px var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+/* ------------------------------------------------------------------ fields */
+
+.fieldGrid {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.fieldLabel {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.fieldHint {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+}
+
+.input,
+.textarea,
+.select {
+    width: 100%;
+    padding: var(--space-3);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 96px;
+    line-height: 1.6;
+}
+
+/* Read-only values such as the email address, which is the account identifier. */
+.readOnlyValue {
+    padding: var(--space-3);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------------------------- consent */
+
+.consentRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.consentRow:last-of-type {
+    border-bottom: none;
+}
+
+.consentText {
+    min-width: 0;
+}
+
+.consentTitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-1);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.consentDescription {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.requiredTag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-tertiary);
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-pill);
+    padding: 2px var(--space-2);
+}
+
+.consentMeta {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin: var(--space-2) 0 0;
+}
+
+/*
+ * A plain checkbox-driven switch. Built on a real <input type="checkbox"> rather than a div with a
+ * click handler so it keeps keyboard focus, the space bar, and screen-reader semantics for free -
+ * a consent control that cannot be operated without a mouse is not a consent control.
+ */
+.switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 44px;
+    height: 24px;
+}
+
+.switchInput {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.switchInput:disabled {
+    cursor: not-allowed;
+}
+
+.switchTrack {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-pill);
+    background-color: var(--border-color-light);
+    transition: background-color 0.18s ease;
+    pointer-events: none;
+}
+
+.switchTrack::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: var(--color-white);
+    transition: transform 0.18s ease;
+}
+
+.switchInput:checked + .switchTrack {
+    background-color: var(--accent-primary);
+}
+
+.switchInput:checked + .switchTrack::after {
+    transform: translateX(20px);
+}
+
+.switchInput:focus-visible + .switchTrack {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.switchInput:disabled + .switchTrack {
+    opacity: 0.55;
+}
+
+/* ------------------------------------------------------------- data rights */
+
+.actionRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.actionRow:last-of-type {
+    border-bottom: none;
+}
+
+.actionText {
+    min-width: 0;
+}
+
+.actionTitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-1);
+}
+
+.actionDescription {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/*
+ * Account deletion. Bordered in the warning colour rather than filled with it: the panel has to
+ * read as serious without looking like an error the learner has already caused.
+ */
+.dangerZone {
+    border-color: var(--tech-red);
+}
+
+.dangerTitle {
+    color: var(--tech-red);
+}
+
+.dangerButton {
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--tech-red);
+    background-color: transparent;
+    color: var(--tech-red);
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dangerButton:hover:not(:disabled) {
+    background-color: var(--tech-red);
+    color: var(--color-white);
+}
+
+.dangerButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------- grievances */
+
+.grievanceList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+}
+
+.grievanceCard {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    background-color: var(--bg-secondary);
+}
+
+.grievanceHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-2);
+}
+
+.grievanceRef {
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+.grievanceSubject {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-2);
+    overflow-wrap: anywhere;
+}
+
+.grievanceBody {
+    font-size: 0.87rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.grievanceResponse {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-color);
+    font-size: 0.87rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+}
+
+.statusBadge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-radius: var(--radius-pill);
+    padding: 3px var(--space-3);
+}
+
+.statusOpen {
+    color: var(--tech-yellow);
+    background-color: color-mix(in srgb, var(--tech-yellow) 16%, transparent);
+}
+
+.statusInProgress {
+    color: var(--accent-blue-text);
+    background-color: var(--accent-blue-light);
+}
+
+.statusResolved {
+    color: var(--tech-green);
+    background-color: color-mix(in srgb, var(--tech-green) 16%, transparent);
+}
+
+.statusClosed {
+    color: var(--text-tertiary);
+    background-color: var(--bg-tertiary);
+}
+
+/* ------------------------------------------------------------------- misc */
+
+.actions {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.emptyState {
+    font-size: 0.88rem;
+    color: var(--text-tertiary);
+    padding: var(--space-5) 0;
+    text-align: center;
+}
+
+.contactCard {
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-top: var(--space-5);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+.contactCard strong {
+    color: var(--text-primary);
+}
+
+.inlineError {
+    font-size: 0.85rem;
+    color: var(--tech-red);
+    margin-top: var(--space-3);
+}
+
+/* ------------------------------------------------------------------ mobile */
+
+@media (max-width: 860px) {
+    .layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-5);
+    }
+
+    /*
+     * The section nav becomes a horizontal scroller. Sticky positioning is dropped with it:
+     * pinned to the top of a phone viewport it would eat a third of the screen.
+     */
+    .nav {
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: var(--space-2);
+        scrollbar-width: none;
+    }
+
+    .nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .navItem {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .header {
+        gap: var(--space-4);
+    }
+
+    .headerName {
+        font-size: 1.3rem;
+    }
+
+    .consentRow,
+    .actionRow {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+}

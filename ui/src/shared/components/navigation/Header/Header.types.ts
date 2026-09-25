@@ -9,7 +9,9 @@ export interface HeaderUserProfile {
 export interface HeaderProps {
     isExpanded: boolean;
     setIsExpanded: (val: boolean) => void;
-    changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
+    changeView: (
+        view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS' | 'PROFILE' | 'PRIVACY'
+    ) => void;
     profile: HeaderUserProfile | null;
     theme: 'light' | 'dark';
     toggleTheme: () => void;

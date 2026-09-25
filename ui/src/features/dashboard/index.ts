@@ -2,7 +2,6 @@ export * from './pages/Dashboard';
 export * from './hooks/useProfileDashboard';
 export * from './hooks/useDashboard';
 export * from './types';
-export * from './components/ProfileEditModal';
 export * from './components/DashboardHeader';
 export * from './components/DashboardTabs';
 export * from './components/RecentTopicsList';
