@@ -5,6 +5,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.learnnow.common.exception.AuthException;
 import com.learnnow.common.exception.ValidationException;
 import com.learnnow.common.security.*;
+import com.learnnow.privacy.entity.ConsentSource;
 import com.learnnow.privacy.service.ConsentService;
 import com.learnnow.user.dto.request.*;
 import com.learnnow.user.dto.response.*;
@@ -100,7 +101,7 @@ public class AuthService {
                         .build();
 
         userRepository.save(user);
-        consentService.recordSignupConsent(userId, req.consents());
+        consentService.recordSignupConsent(userId, ConsentSource.SIGNUP_NOTICE);
         issueVerificationToken(user);
     }
 
@@ -283,13 +284,10 @@ public class AuthService {
 
             userRepository.save(user);
 
-            // A Google sign-in that creates an account is a registration, so it consents the
-            // same way. Nothing optional is passed: the Google button carries no itemised
-            // notice, so the only thing that can honestly be recorded is ESSENTIAL, and the
-            // rest are stored as explicit refusals for the learner to change in the consent
-            // centre. Granting analytics or marketing off the back of a sign-in button would
-            // be exactly the bundled consent s.6(1) rules out.
-            consentService.recordSignupConsent(user.getId(), null);
+            // A Google sign-in that creates an account is a registration, so it grants the same
+            // thing the form does: ESSENTIAL only. Recorded under its own source because the
+            // notice is shown beside the button rather than confirmed by a tick.
+            consentService.recordSignupConsent(user.getId(), ConsentSource.GOOGLE_SIGNUP);
         }
 
         return issueSession(user);

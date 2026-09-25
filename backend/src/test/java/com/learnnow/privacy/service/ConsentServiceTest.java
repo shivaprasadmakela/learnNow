@@ -18,7 +18,6 @@ import com.learnnow.privacy.repository.UserConsentRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -108,12 +107,11 @@ class ConsentServiceTest {
     }
 
     @Test
-    @DisplayName("signup forces ESSENTIAL on and writes an explicit refusal for anything unticked")
+    @DisplayName("signup grants ESSENTIAL and refuses every optional purpose explicitly")
     void signupRecordsEveryPurpose() {
         when(consentRepository.findByUserId(USER)).thenReturn(List.of());
 
-        consentService.recordSignupConsent(
-                USER, List.of(new ConsentDecisionRequest(ConsentPurpose.PRODUCT_ANALYTICS, true)));
+        consentService.recordSignupConsent(USER, ConsentSource.SIGNUP_NOTICE);
 
         ArgumentCaptor<UserConsent> saved = ArgumentCaptor.forClass(UserConsent.class);
         verify(consentRepository, times(ConsentPurpose.values().length)).save(saved.capture());
@@ -124,31 +122,57 @@ class ConsentServiceTest {
 
         assertThat(stored)
                 .containsEntry(ConsentPurpose.ESSENTIAL, true)
-                .containsEntry(ConsentPurpose.PRODUCT_ANALYTICS, true)
-                // Not merely absent: an explicit no, so the ledger shows they were asked.
+                // Not merely absent: an explicit no for each, so the consent centre opens on a
+                // real state and the ledger shows what was recorded at signup.
+                .containsEntry(ConsentPurpose.PRODUCT_ANALYTICS, false)
                 .containsEntry(ConsentPurpose.MARKETING_EMAILS, false)
                 .containsEntry(ConsentPurpose.PERSONALISATION, false);
     }
 
     @Test
-    @DisplayName("a Google sign-up consents to nothing optional")
-    void googleSignupGrantsOnlyEssential() {
+    @DisplayName("the signup tick never bundles an optional purpose behind it")
+    void signupGrantsNothingOptional() {
         when(consentRepository.findByUserId(USER)).thenReturn(List.of());
 
-        consentService.recordSignupConsent(USER, null);
+        consentService.recordSignupConsent(USER, ConsentSource.SIGNUP_NOTICE);
 
-        ArgumentCaptor<UserConsent> saved = ArgumentCaptor.forClass(UserConsent.class);
-        verify(consentRepository, times(ConsentPurpose.values().length)).save(saved.capture());
+        ArgumentCaptor<UserConsentEvent> events = ArgumentCaptor.forClass(UserConsentEvent.class);
+        verify(eventRepository, times(ConsentPurpose.values().length)).save(events.capture());
 
-        Map<ConsentPurpose, UserConsent> stored =
-                saved.getAllValues().stream()
-                        .collect(Collectors.toMap(UserConsent::getPurpose, Function.identity()));
+        // The form takes one tick confirming the notice was read. If that tick ever starts
+        // granting analytics or marketing too, it becomes one consent covering four unrelated
+        // things, which s.6(1) does not accept as consent to any of them. Both signup paths -
+        // the form and Google - come through here, so this covers both.
+        assertThat(
+                        events.getAllValues().stream()
+                                .filter(UserConsentEvent::isGranted)
+                                .map(UserConsentEvent::getPurpose)
+                                .toList())
+                .containsExactly(ConsentPurpose.ESSENTIAL);
+        assertThat(events.getAllValues())
+                .allMatch(e -> e.getSource() == ConsentSource.SIGNUP_NOTICE);
+    }
 
-        assertThat(stored.get(ConsentPurpose.ESSENTIAL).isGranted()).isTrue();
-        // The sign-in button carries no itemised notice, so anything else would be the
-        // bundled consent s.6(1) rules out.
-        assertThat(stored.get(ConsentPurpose.PRODUCT_ANALYTICS).isGranted()).isFalse();
-        assertThat(stored.get(ConsentPurpose.MARKETING_EMAILS).isGranted()).isFalse();
+    @Test
+    @DisplayName("a Google signup is recorded under its own source, granting the same thing")
+    void googleSignupUsesItsOwnSource() {
+        when(consentRepository.findByUserId(USER)).thenReturn(List.of());
+
+        consentService.recordSignupConsent(USER, ConsentSource.GOOGLE_SIGNUP);
+
+        ArgumentCaptor<UserConsentEvent> events = ArgumentCaptor.forClass(UserConsentEvent.class);
+        verify(eventRepository, times(ConsentPurpose.values().length)).save(events.capture());
+
+        // The Google button shows the notice but takes no tick, so the ledger must not claim
+        // the confirmation the form's SIGNUP_NOTICE stands for.
+        assertThat(events.getAllValues())
+                .allMatch(e -> e.getSource() == ConsentSource.GOOGLE_SIGNUP);
+        assertThat(
+                        events.getAllValues().stream()
+                                .filter(UserConsentEvent::isGranted)
+                                .map(UserConsentEvent::getPurpose)
+                                .toList())
+                .containsExactly(ConsentPurpose.ESSENTIAL);
     }
 
     @Test

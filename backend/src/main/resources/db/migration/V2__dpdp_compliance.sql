@@ -96,12 +96,15 @@ CREATE TABLE user_consent_events (
                                       'MARKETING_EMAILS', 'PERSONALISATION')),
     granted        BOOLEAN NOT NULL,
     notice_version VARCHAR(16) NOT NULL,
-    -- How the decision reached us. There is no value for account deletion: these
-    -- rows cascade with the user, so an event recorded while erasing an account
-    -- would be deleted by the same transaction that wrote it.
+    -- How the decision reached us. SIGNUP_NOTICE and GOOGLE_SIGNUP are kept apart
+    -- because the form takes an explicit tick against the notice and the Google
+    -- button does not -- collapsing them would have this table claim a
+    -- confirmation that was never given. There is no value for account deletion:
+    -- these rows cascade with the user, so an event recorded while erasing an
+    -- account would be deleted by the same transaction that wrote it.
     source         VARCHAR(24) NOT NULL
                    CONSTRAINT ck_user_consent_events_source
-                   CHECK (source IN ('SIGNUP_NOTICE', 'CONSENT_CENTRE')),
+                   CHECK (source IN ('SIGNUP_NOTICE', 'GOOGLE_SIGNUP', 'CONSENT_CENTRE')),
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

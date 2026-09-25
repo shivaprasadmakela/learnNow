@@ -112,8 +112,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmailIgnoreCase("taken@example.com")).thenReturn(true);
 
         RegisterRequest req =
-                new RegisterRequest(
-                        "Ada", "Lovelace", "taken@example.com", "correcthorsebattery", null);
+                new RegisterRequest("Ada", "Lovelace", "taken@example.com", "correcthorsebattery");
 
         // No exception: reporting the collision was an enumeration oracle.
         assertDoesNotThrow(() -> authService.register(req));

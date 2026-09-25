@@ -115,38 +115,33 @@ public class ConsentService {
     }
 
     /**
-     * Records the consent given when an account is created.
+     * Records the consent given when an account is created: ESSENTIAL, and nothing else.
      *
-     * <p>Two things happen that {@link #applyDecisions} alone would not do. ESSENTIAL is recorded
-     * as granted regardless of what was submitted, because creating the account *is* the
-     * affirmative action for it and the alternative is an account that exists without consent to
-     * run it. And every optional purpose the caller did not mention is written as an explicit
-     * refusal rather than left absent.
+     * <p>Creating the account *is* the affirmative action for ESSENTIAL, so it is granted. Every
+     * optional purpose is written as an explicit refusal rather than left absent.
      *
      * <p>That second part matters more than it looks. A missing row and a refusal both read as "no"
      * to {@link #hasConsent}, but only one of them is a decision. Writing them means the consent
-     * centre shows the learner what they actually chose at signup, and the event ledger can show
-     * that they were asked — which is the thing s.6 puts on us to demonstrate.
+     * centre shows the learner a real starting state, and the event ledger can show what was
+     * recorded at signup — which is the thing s.6 puts on us to demonstrate.
+     *
+     * <p>{@code source} distinguishes the two routes: the form takes an explicit tick against the
+     * notice, the Google button shows the notice but takes no tick. Both grant exactly the same
+     * thing; only the record of how it was obtained differs.
+     *
+     * <p>Nothing optional is granted here by design, and that is the rule to keep if the signup
+     * screen changes again. The form shows the notice and takes one tick confirming it was read; a
+     * tick that also switched on analytics, email and recommendations would be one consent covering
+     * four unrelated things, which s.6(1) does not accept as consent to any of them.
      */
     @Transactional
-    public void recordSignupConsent(String userId, List<ConsentDecisionRequest> submitted) {
-        Map<ConsentPurpose, Boolean> answers = new EnumMap<>(ConsentPurpose.class);
-        if (submitted != null) {
-            submitted.forEach(d -> answers.put(d.purpose(), d.granted()));
-        }
-
+    public void recordSignupConsent(String userId, ConsentSource source) {
         List<ConsentDecisionRequest> decisions =
                 java.util.Arrays.stream(ConsentPurpose.values())
-                        .map(
-                                purpose ->
-                                        new ConsentDecisionRequest(
-                                                purpose,
-                                                purpose.isRequired()
-                                                        || Boolean.TRUE.equals(
-                                                                answers.get(purpose))))
+                        .map(purpose -> new ConsentDecisionRequest(purpose, purpose.isRequired()))
                         .toList();
 
-        applyDecisions(userId, decisions, ConsentSource.SIGNUP_NOTICE);
+        applyDecisions(userId, decisions, source);
     }
 
     /**
