@@ -4,6 +4,8 @@ import Hero from '../components/Hero';
 import CatalogBlock from '../components/CatalogBlock';
 import Community from '../components/Community';
 import FinalCTA from '../components/FinalCTA';
+import PlatformTour from '../components/PlatformTour';
+import Reveal from '../components/Reveal';
 import { SiteFooter } from '../../../shared/components/navigation/SiteFooter';
 import styles from '../styles/Home.module.css';
 
@@ -37,14 +39,27 @@ export const Home: React.FC<HomeProps> = ({
     return (
         <div className={styles.homeWrapper}>
             <div className={styles.scrollContainer}>
+                {/*
+                  * The hero is not wrapped in Reveal: it is already on screen when the page
+                  * loads, so fading it in would only delay the first thing anyone sees.
+                  */}
                 <Hero isLoggedIn={isLoggedIn} changeView={changeView} />
-                <CatalogBlock
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    onSelectCourse={onSelectCourse}
-                />
-                <Community onSelectCourse={onSelectCourse} />
-                <FinalCTA onSelectCourse={onSelectCourse} isLoggedIn={isLoggedIn} changeView={changeView} />
+                <Reveal>
+                    <CatalogBlock
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        onSelectCourse={onSelectCourse}
+                    />
+                </Reveal>
+                <Reveal>
+                    <PlatformTour />
+                </Reveal>
+                <Reveal>
+                    <Community onSelectCourse={onSelectCourse} />
+                </Reveal>
+                <Reveal>
+                    <FinalCTA onSelectCourse={onSelectCourse} isLoggedIn={isLoggedIn} changeView={changeView} />
+                </Reveal>
             </div>
 
             {/*

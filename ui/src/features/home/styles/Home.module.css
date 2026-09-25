@@ -910,3 +910,449 @@
         min-height: 44px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Interactive layer
+   
+   Everything below was added to make the page respond to the person
+   reading it. It is additive on purpose: the sections above keep the
+   layout they always had, and these rules only govern arrival,
+   hover, expansion and the tour. Each one has a
+   prefers-reduced-motion answer at the bottom of the file.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Scroll reveal ───────────────────────────────────────────── */
+.reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+}
+
+.revealVisible {
+    opacity: 1;
+    transform: none;
+    /* Dropped once the animation is done so the wrapper stops being a containing block. */
+    will-change: auto;
+}
+
+/* ─── Rotating headline word ──────────────────────────────────── */
+/*
+ * All the words occupy one grid cell, so the element is always as wide as the longest of them
+ * and the centred headline does not shift as they swap. Only the active one is visible.
+ */
+.wordRotator {
+    display: inline-grid;
+    vertical-align: bottom;
+}
+
+.rotatorWord {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transform: translateY(0.35em);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    /* Keeps the hidden words out of the accessibility tree and off the pointer. */
+    pointer-events: none;
+    user-select: none;
+}
+
+.rotatorWordActive {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    user-select: auto;
+}
+
+/* ─── Hero card pointer glow ──────────────────────────────────── */
+.heroCardWrapper {
+    position: relative;
+    border-radius: 16px;
+}
+
+/*
+ * A highlight that follows the cursor across the card. The coordinates arrive as custom
+ * properties set from JavaScript rather than as React state — this fires on every mouse move,
+ * and re-rendering three dashboard widgets at that rate to light a card is not a trade worth
+ * making. The overlay sits above the card but takes no pointer events, so the click still
+ * lands on the card itself.
+ */
+.heroCardWrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    background: radial-gradient(
+        260px circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+        rgba(56, 189, 248, 0.16),
+        transparent 65%
+    );
+}
+
+.heroCardWrapper:hover::after,
+.heroCardWrapper:focus-visible::after {
+    opacity: 1;
+}
+
+.heroCardWrapper:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 3px;
+}
+
+/* ─── Catalog: shared tab bar + syllabus preview ──────────────── */
+/* The shared Tabs component is left-aligned by default; the catalog header is centred. */
+.catalogTabs {
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.pathCardOpen {
+    border-color: var(--tech-blue);
+}
+
+.syllabusToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.syllabusToggle:hover {
+    color: var(--tech-blue);
+}
+
+.syllabusChevron {
+    transition: transform var(--transition-normal);
+}
+
+.syllabusChevronOpen {
+    transform: rotate(180deg);
+}
+
+.syllabusList {
+    list-style: none;
+    margin: 0;
+    padding: 12px 0 0 0;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.syllabusItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    opacity: 0;
+    animation: syllabusIn 0.35s ease forwards;
+}
+
+.syllabusTick {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--tech-blue);
+}
+
+@keyframes syllabusIn {
+    from {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* "Start Path" became a real button so it can be reached by keyboard. Strips the chrome. */
+.startPathBtnText {
+    padding: 0;
+    background: none;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.startPathBtnText:hover {
+    text-decoration: underline;
+}
+
+/* ─── Platform tour ───────────────────────────────────────────── */
+.tourSection {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.tourIntro {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.tourLayout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 40px;
+    align-items: center;
+}
+
+.tourList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tourItem {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    padding: 18px 20px;
+    text-align: left;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color var(--transition-normal), background var(--transition-normal),
+        transform var(--transition-normal);
+}
+
+.tourItem:hover {
+    border-color: var(--tech-blue);
+    transform: translateX(3px);
+}
+
+.tourItemActive {
+    border-color: var(--tech-blue);
+    background: var(--bg-primary);
+}
+
+.tourItemIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--accent-blue-light);
+    color: var(--tech-blue);
+}
+
+.tourItemText {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.tourItemTitle {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.tourItemBody {
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+/*
+ * The countdown to the next panel. Duration matches STEP_MS in PlatformTour.tsx; the element is
+ * keyed on the active id there, so React replaces it on every change and the animation restarts
+ * from zero rather than resuming part-filled.
+ */
+.tourItemTimer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    transform-origin: left;
+    background: var(--tech-blue);
+    animation: tourTimer 7000ms linear forwards;
+}
+
+@keyframes tourTimer {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+.tourStage {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 28px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    /* Holds the panel height steady so the page does not jump as panels swap. */
+    min-height: 320px;
+    justify-content: center;
+}
+
+.tourStageLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.tourStageBody {
+    animation: tourPanelIn 0.4s ease;
+}
+
+@keyframes tourPanelIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.tourRings {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* ─── Community: the pipeline became controls ─────────────────── */
+.pipelineNode {
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.pipelineNode:hover {
+    border-color: var(--tech-blue);
+}
+
+.pipelineDetail {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    animation: tourPanelIn 0.3s ease;
+}
+
+.pipelineDetail svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: var(--tech-blue);
+}
+
+/* ─── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .tourLayout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    /* The preview leads on a narrow screen: it is the thing worth scrolling to. */
+    .tourStage {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .tourSection {
+        gap: 28px;
+    }
+
+    .tourItem {
+        padding: 14px 16px;
+    }
+
+    .tourStage {
+        padding: 20px 16px;
+        min-height: 0;
+    }
+}
+
+/*
+ * Motion is decoration here, never content. With reduced motion every panel, list and section is
+ * in its final state immediately, and the tour stops advancing on its own in PlatformTour.tsx.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .revealVisible {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .rotatorWord {
+        transition: none;
+    }
+
+    .syllabusItem,
+    .tourStageBody,
+    .pipelineDetail {
+        opacity: 1;
+        animation: none;
+    }
+
+    .tourItemTimer {
+        animation: none;
+        transform: scaleX(1);
+    }
+
+    .heroCardWrapper::after,
+    .tourItem,
+    .syllabusChevron {
+        transition: none;
+    }
+
+    .tourItem:hover {
+        transform: none;
+    }
+}
+
+/*
+ * A section that has not been scrolled to has not been revealed, and a printed page is never
+ * scrolled. Without this the printout is mostly blank — the one failure mode of a reveal that
+ * leaves no trace, because nothing errors and the content is still in the DOM.
+ */
+@media print {
+    .reveal {
+        opacity: 1;
+        transform: none;
+    }
+}

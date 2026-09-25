@@ -44,7 +44,9 @@ export const MEDIA = {
     /** Tablet and below — where side-by-side panes stop earning their keep. */
     compact: '(max-width: 1024px)',
     /** A touch pointer, whatever the width. */
-    touch: '(pointer: coarse)'
+    touch: '(pointer: coarse)',
+    /** The visitor has asked for less animation. Everything decorative should check this. */
+    reducedMotion: '(prefers-reduced-motion: reduce)'
 } as const;
 
 export const useIsMobile = () => useMediaQuery(MEDIA.mobile);

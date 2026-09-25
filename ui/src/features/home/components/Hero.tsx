@@ -1,32 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sparkles, ChevronDown } from 'lucide-react';
 import styles from '../styles/Home.module.css';
 import { StreakCalendar } from '../../dashboard/components/StreakCalendar';
 import { WeeklyLeagueBoard } from '../../dashboard/components/WeeklyLeagueBoard';
 import { LearningCard } from '../../../shared/components/cards';
-import type { WeeklyCalendarDay, WeeklyLeaderboardEntry } from '../../dashboard/types';
+import { usePrefersReducedMotion } from '../../../shared/hooks';
+import { DEMO_LEADERBOARD, DEMO_WEEKLY_CALENDAR } from '../demoData';
 
 interface HeroProps {
     isLoggedIn: boolean;
     changeView: (view: 'HOME' | 'DASHBOARD' | 'LOGIN' | 'PATHS' | 'TOPICS') => void;
 }
 
-const DUMMY_WEEKLY_CALENDAR: WeeklyCalendarDay[] = [
-    { name: 'Mon', date: '2026-07-20', completed: true, isDotted: false },
-    { name: 'Tue', date: '2026-07-21', completed: true, isDotted: false },
-    { name: 'Wed', date: '2026-07-22', completed: true, isDotted: false },
-    { name: 'Thu', date: '2026-07-23', completed: true, isDotted: false },
-    { name: 'Fri', date: '2026-07-24', completed: true, isDotted: false },
-    { name: 'Sat', date: '2026-07-25', completed: false, isDotted: true },
-    { name: 'Sun', date: '2026-07-26', completed: false, isDotted: true },
-];
-
-const DUMMY_LEADERBOARD: WeeklyLeaderboardEntry[] = [
-    { userId: '1', fullName: 'Shiva Prasad', avatar: '', weeklyPoints: 480, currentStreak: 7, rank: 1, badge: 'GOLD', isCurrentUser: true },
-    { userId: '2', fullName: 'Alex M.', avatar: '', weeklyPoints: 410, currentStreak: 5, rank: 2, badge: 'SILVER', isCurrentUser: false },
-];
+/**
+ * The word that changes in the headline.
+ *
+ * All four are rendered stacked in one grid cell, so the container is always as wide as the
+ * longest of them and the centred headline never jumps as the word swaps.
+ */
+const ROTATING_WORDS = ['Conquer.', 'Ship it.', 'Debug it.', 'Deploy.'];
+const WORD_MS = 2600;
 
 export const Hero: React.FC<HeroProps> = ({ isLoggedIn, changeView }) => {
+    const prefersReducedMotion = usePrefersReducedMotion();
+    const [wordIndex, setWordIndex] = useState(0);
+
+    useEffect(() => {
+        if (prefersReducedMotion) return;
+        const timer = window.setInterval(
+            () => setWordIndex(index => (index + 1) % ROTATING_WORDS.length),
+            WORD_MS
+        );
+        return () => window.clearInterval(timer);
+    }, [prefersReducedMotion]);
+
     const handleCardClick = () => {
         if (isLoggedIn) {
             changeView('DASHBOARD');
@@ -35,8 +42,36 @@ export const Hero: React.FC<HeroProps> = ({ isLoggedIn, changeView }) => {
         }
     };
 
+    const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleCardClick();
+        }
+    };
+
+    /*
+     * Feeds the pointer position to the card's glow. Written as custom properties rather than as
+     * React state because it fires on every mouse move — state here would re-render the three
+     * dashboard widgets dozens of times a second for a lighting effect.
+     */
+    const handleCardPointer = (event: React.MouseEvent<HTMLDivElement>) => {
+        const element = event.currentTarget;
+        const bounds = element.getBoundingClientRect();
+        element.style.setProperty('--pointer-x', `${event.clientX - bounds.left}px`);
+        element.style.setProperty('--pointer-y', `${event.clientY - bounds.top}px`);
+    };
+
     const scrollToCatalog = () => {
         document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const cardProps = {
+        className: styles.heroCardWrapper,
+        role: 'button' as const,
+        tabIndex: 0,
+        onClick: handleCardClick,
+        onKeyDown: handleCardKeyDown,
+        onMouseMove: handleCardPointer
     };
 
     return (
@@ -46,7 +81,19 @@ export const Hero: React.FC<HeroProps> = ({ isLoggedIn, changeView }) => {
             </div>
             <h1 className={styles.heroTitle}>
                 Learn. Streak.{' '}
-                <span className={styles.heroTitleHighlight}>Conquer.</span>
+                <span className={styles.wordRotator}>
+                    {ROTATING_WORDS.map((word, index) => (
+                        <span
+                            key={word}
+                            className={`${styles.heroTitleHighlight} ${styles.rotatorWord} ${
+                                index === wordIndex ? styles.rotatorWordActive : ''
+                            }`}
+                            aria-hidden={index === wordIndex ? undefined : true}
+                        >
+                            {word}
+                        </span>
+                    ))}
+                </span>
             </h1>
             <p className={styles.heroSubtitle}>
                 The gamified way to master software engineering—from core fundamentals to advanced architectures.
@@ -54,20 +101,20 @@ export const Hero: React.FC<HeroProps> = ({ isLoggedIn, changeView }) => {
 
             {/* 3 Equal-Width & Equal-Height Hero Cards */}
             <div className={styles.widgetsGrid}>
-                <div className={styles.heroCardWrapper} onClick={handleCardClick}>
+                <div {...cardProps} aria-label="See your streak on the dashboard">
                     <StreakCalendar
                         currentStreak={7}
-                        weeklyCalendar={DUMMY_WEEKLY_CALENDAR}
+                        weeklyCalendar={DEMO_WEEKLY_CALENDAR}
                     />
                 </div>
 
-                <div className={styles.heroCardWrapper} onClick={handleCardClick}>
+                <div {...cardProps} aria-label="See the weekly league">
                     <WeeklyLeagueBoard
-                        entries={DUMMY_LEADERBOARD}
+                        entries={DEMO_LEADERBOARD.slice(0, 2)}
                     />
                 </div>
 
-                <div className={styles.heroCardWrapper} onClick={handleCardClick}>
+                <div {...cardProps} aria-label="Open a learning path">
                     <LearningCard
                         badgeLabel="Backend Engineering"
                         title="Spring Boot & Java 21 Monolith"

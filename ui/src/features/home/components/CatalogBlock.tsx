@@ -1,5 +1,7 @@
-import React from 'react';
-import { BookOpen, Clock, Layers, ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Clock, Layers, ArrowUpRight, ChevronDown, Check } from 'lucide-react';
+import { Tabs } from '../../../shared/components';
+import type { TabItem } from '../../../shared/components/ui/Tabs';
 import styles from '../styles/Home.module.css';
 
 interface CatalogBlockProps {
@@ -17,7 +19,14 @@ const FEATURED_PATHS = [
         topicsCount: 8,
         duration: '14 Hours',
         level: 'Intermediate',
-        badge: 'Popular'
+        badge: 'Popular',
+        topics: [
+            'Java 21 records, sealed types and pattern matching',
+            'Spring Boot 3 modular service layout',
+            'JPA entities, relationships and the N+1 trap',
+            'Flyway migrations and schema versioning',
+            'JWT security, filters and method-level rules'
+        ]
     },
     {
         id: 2,
@@ -27,7 +36,14 @@ const FEATURED_PATHS = [
         topicsCount: 6,
         duration: '10 Hours',
         level: 'All Levels',
-        badge: 'Updated'
+        badge: 'Updated',
+        topics: [
+            'Feature-first folder structure that survives growth',
+            'CSS Modules and a design-token theme engine',
+            'Typed API clients and error boundaries',
+            'Vite chunking, lazy routes and bundle budgets',
+            'Testing components without testing React'
+        ]
     },
     {
         id: 3,
@@ -37,7 +53,14 @@ const FEATURED_PATHS = [
         topicsCount: 5,
         duration: '8 Hours',
         level: 'Advanced',
-        badge: 'Essential'
+        badge: 'Essential',
+        topics: [
+            'Normalisation, and when to stop normalising',
+            'Indexes: what they cost as well as what they save',
+            'Reading EXPLAIN ANALYZE without guessing',
+            'Window functions and set-returning queries',
+            'Migrations that are safe to run on live data'
+        ]
     }
 ];
 
@@ -46,11 +69,30 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
     setActiveTab,
     onSelectCourse
 }) => {
-    const tabs = ['Featured', 'Backend', 'Fullstack', 'Database'];
+    /*
+     * Which card has its syllabus open. One at a time — the cards sit in a grid row, and two open
+     * at once pushes the row's height around for a card nobody asked about.
+     */
+    const [openPathId, setOpenPathId] = useState<number | null>(null);
 
-    const displayedPaths = activeTab === 'Featured'
-        ? FEATURED_PATHS
-        : FEATURED_PATHS.filter(p => p.category === activeTab);
+    const categories = ['Featured', 'Backend', 'Fullstack', 'Database'];
+
+    const pathsFor = (tab: string) =>
+        tab === 'Featured' ? FEATURED_PATHS : FEATURED_PATHS.filter(path => path.category === tab);
+
+    /*
+     * The shared tab bar rather than a hand-rolled pill row: it brings arrow-key navigation and
+     * a single tab stop for the group, which the original buttons did not have. The counts are
+     * new — knowing a filter holds one path before clicking it is the difference between
+     * exploring and guessing.
+     */
+    const tabItems: TabItem[] = categories.map(category => ({
+        id: category,
+        label: category,
+        count: pathsFor(category).length
+    }));
+
+    const displayedPaths = pathsFor(activeTab);
 
     return (
         <section id="catalog-section" className={styles.catalogSection}>
@@ -63,46 +105,87 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
                     Hands-on structured tracks built with real-world architectures, zero fluff, and instant progress tracking.
                 </p>
 
-                {/* Category Pills */}
-                <div className={styles.categoryTabsRow}>
-                    {tabs.map(tab => (
-                        <button
-                            key={tab}
-                            className={`${styles.categoryTabBtn} ${activeTab === tab ? styles.categoryTabActive : ''}`}
-                            onClick={() => setActiveTab(tab)}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
+                <Tabs
+                    items={tabItems}
+                    activeId={activeTab}
+                    onChange={setActiveTab}
+                    variant="pill"
+                    label="Learning path categories"
+                    className={styles.catalogTabs}
+                />
             </div>
 
             {/* Path Cards Grid */}
             <div className={styles.pathsCardsGrid}>
-                {displayedPaths.map(path => (
-                    <div
-                        key={path.id}
-                        className={styles.pathCardItem}
-                        onClick={() => onSelectCourse(path.id)}
-                    >
-                        <div className={styles.pathCardTopRow}>
-                            <span className={styles.pathCategoryTag}>{path.category}</span>
-                            <span className={styles.pathBadgeTag}>{path.badge}</span>
+                {displayedPaths.map(path => {
+                    const isOpen = openPathId === path.id;
+                    return (
+                        <div
+                            key={path.id}
+                            className={`${styles.pathCardItem} ${isOpen ? styles.pathCardOpen : ''}`}
+                            onClick={event => {
+                                /*
+                                 * A click on the syllabus toggle is not a click on the card. Same
+                                 * split the shared Collapsible makes: the row is a mouse
+                                 * convenience, the buttons inside it are the real controls.
+                                 */
+                                if ((event.target as HTMLElement | null)?.closest('button')) return;
+                                onSelectCourse(path.id);
+                            }}
+                        >
+                            <div className={styles.pathCardTopRow}>
+                                <span className={styles.pathCategoryTag}>{path.category}</span>
+                                <span className={styles.pathBadgeTag}>{path.badge}</span>
+                            </div>
+                            <h3 className={styles.pathCardTitle}>{path.title}</h3>
+                            <p className={styles.pathCardDesc}>{path.description}</p>
+                            <div className={styles.pathMetaRow}>
+                                <span><Layers size={14} /> {path.topicsCount} Topics</span>
+                                <span><Clock size={14} /> {path.duration}</span>
+                            </div>
+
+                            <button
+                                type="button"
+                                className={styles.syllabusToggle}
+                                aria-expanded={isOpen}
+                                onClick={() => setOpenPathId(isOpen ? null : path.id)}
+                            >
+                                <ChevronDown
+                                    size={14}
+                                    className={`${styles.syllabusChevron} ${isOpen ? styles.syllabusChevronOpen : ''}`}
+                                />
+                                {isOpen ? 'Hide what’s inside' : 'See what’s inside'}
+                            </button>
+
+                            {isOpen && (
+                                <ul className={styles.syllabusList}>
+                                    {path.topics.map((topic, index) => (
+                                        <li
+                                            key={topic}
+                                            className={styles.syllabusItem}
+                                            // Staggers the list so it unrolls rather than appearing.
+                                            style={{ animationDelay: `${index * 45}ms` }}
+                                        >
+                                            <Check size={13} className={styles.syllabusTick} />
+                                            {topic}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            <div className={styles.pathCardFooter}>
+                                <span className={styles.pathLevelText}>{path.level}</span>
+                                <button
+                                    type="button"
+                                    className={styles.startPathBtnText}
+                                    onClick={() => onSelectCourse(path.id)}
+                                >
+                                    Start Path <ArrowUpRight size={14} />
+                                </button>
+                            </div>
                         </div>
-                        <h3 className={styles.pathCardTitle}>{path.title}</h3>
-                        <p className={styles.pathCardDesc}>{path.description}</p>
-                        <div className={styles.pathMetaRow}>
-                            <span><Layers size={14} /> {path.topicsCount} Topics</span>
-                            <span><Clock size={14} /> {path.duration}</span>
-                        </div>
-                        <div className={styles.pathCardFooter}>
-                            <span className={styles.pathLevelText}>{path.level}</span>
-                            <span className={styles.startPathBtnText}>
-                                Start Path <ArrowUpRight size={14} />
-                            </span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </section>
     );
