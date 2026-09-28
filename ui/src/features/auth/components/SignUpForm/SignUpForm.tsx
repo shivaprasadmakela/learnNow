@@ -48,6 +48,21 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 }) => {
     return (
         <form onSubmit={onSubmit} className={styles.authForm}>
+            {onGoogleSuccess && (
+                <>
+                    <GoogleLoginButton
+                        onSuccess={onGoogleSuccess}
+                        onError={onGoogleError}
+                        onOpenPrivacyNotice={onOpenPrivacyNotice}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0', width: '100%' }}>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }} />
+                        <span style={{ padding: '0 12px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>OR</span>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }} />
+                    </div>
+                </>
+            )}
+
             <div className={styles.inputGrid}>
                 <Input
                     type="text"
@@ -96,28 +111,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                 onOpenPrivacyNotice={onOpenPrivacyNotice}
                 disabled={loading}
             />
-
-            {/*
-              * Google is offered here too. Before this it sat on the sign-in tab alone, so a
-              * first-time visitor could create an account through it without ever meeting the
-              * notice. It is not gated on the tick above: the button carries its own line saying
-              * that continuing confirms the notice was read, which is the s.5 requirement, and
-              * the tick belongs to the email form it sits under.
-              */}
-            {onGoogleSuccess && (
-                <>
-                    <div className={styles.dividerContainer}>
-                        <span className={styles.dividerLine} />
-                        <span className={styles.dividerText}>OR</span>
-                        <span className={styles.dividerLine} />
-                    </div>
-                    <GoogleLoginButton
-                        onSuccess={onGoogleSuccess}
-                        onError={onGoogleError}
-                        onOpenPrivacyNotice={onOpenPrivacyNotice}
-                    />
-                </>
-            )}
 
             <div className={styles.actionsRow}>
                 <span className={styles.blueLinkBold} onClick={onToggleAuthMode}>
