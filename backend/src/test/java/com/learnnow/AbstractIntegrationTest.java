@@ -2,8 +2,8 @@ package com.learnnow;
 
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
@@ -23,7 +23,31 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
-    @Container @ServiceConnection
+    /**
+     * One container for the whole run, started here rather than by {@code @Container}.
+     *
+     * <p>{@code @Container} on a static field is per-class: JUnit stops the container when the
+     * first test class finishes and starts a fresh one, on a new random port, for the next. Spring
+     * does not follow, because every class here shares one configuration and therefore one cached
+     * application context - so the second class onwards holds a DataSource pointed at a port
+     * nothing is listening on, and every test fails with "Could not open JPA EntityManager for
+     * transaction" after the connection timeout.
+     *
+     * <p>Nothing caught this while the suite had only one class able to reach Docker. It appeared
+     * the moment a second one could.
+     *
+     * <p>Starting it once and never stopping it is the documented singleton pattern: Ryuk removes
+     * the container when the JVM exits, so nothing is left behind. The Docker check keeps this
+     * static initialiser from throwing on a machine without a daemon, where the annotation above is
+     * about to skip these classes anyway.
+     */
+    @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("learnnow_test");
+
+    static {
+        if (DockerClientFactory.instance().isDockerAvailable()) {
+            POSTGRES.start();
+        }
+    }
 }

@@ -151,6 +151,38 @@
 					<!-- Mockito attaches its agent at runtime; declaring it keeps this
 					     working once dynamic agent loading is refused by default. -->
 					<argLine>-XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
+					<systemPropertyVariables>
+						<!-- docker-java falls back to Docker API 1.32 when it cannot read a
+						     version from configuration, and every current daemon (Colima,
+						     Docker Desktop, Rancher) refuses anything below 1.40 outright:
+						     the request goes to /v1.32/_ping and comes back 400. Testcontainers
+						     then reports "Could not find a valid Docker environment", which
+						     reads like a missing daemon rather than a rejected one, and all 27
+						     integration tests silently skip.
+
+						     This is docker-java's own `api.version` key, and it has to be set
+						     as a system property - the DOCKER_* environment variables it reads
+						     have no equivalent for the API version, so exporting
+						     DOCKER_API_VERSION does nothing. 1.40 is the floor those daemons
+						     accept, not a ceiling: the daemon negotiates upward from here. -->
+						<api.version>1.40</api.version>
+					</systemPropertyVariables>
+					<environmentVariables>
+						<!-- Ryuk, the container Testcontainers uses to clean up after a run,
+						     bind-mounts the Docker socket into itself using the path from
+						     DOCKER_HOST. Under a VM-backed daemon that path is a macOS path the
+						     VM cannot see, so the mount fails with "operation not supported" and
+						     every container-backed test errors. This is the path *inside* the
+						     daemon's own host, which is /var/run/docker.sock for Colima, Docker
+						     Desktop and Rancher alike - so setting it is a no-op where it was
+						     already right.
+
+						     DOCKER_HOST itself stays out of the build: it is genuinely
+						     per-machine (Colima puts it under ~/.colima). Export it in your
+						     shell, e.g.
+						       export DOCKER_HOST=unix://$HOME/.colima/default/docker.sock -->
+						<TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE>/var/run/docker.sock</TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE>
+					</environmentVariables>
 				</configuration>
 			</plugin>
 			<plugin>

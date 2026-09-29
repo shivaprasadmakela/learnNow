@@ -6,10 +6,15 @@ import com.learnnow.dsa.dto.response.DsaImportResultDto;
 import com.learnnow.dsa.entity.*;
 import com.learnnow.dsa.repository.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,6 +49,52 @@ public class DsaImportService {
     private final DsaCheckRepository checkRepository;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Everything already stored that this import might touch, read once before the walk begins.
+     *
+     * <p>The walk used to ask the database about each problem as it reached it - does this slug
+     * exist, what hints does it have, what approaches, what harnesses, what test cases - which is
+     * around seven queries per problem before a single row was written. That is invisible against a
+     * local database and ruinous against a remote one: the service runs in Mumbai and the database
+     * in Singapore, so every one of those queries costs a ~63 ms round trip however trivial it is.
+     * A 54-problem step took 62 seconds, and the cost was almost exactly linear in problem count.
+     *
+     * <p>Six queries now answer all of it, whatever the file contains. The queries themselves were
+     * never the expense; their number was.
+     */
+    private record ExistingContent(
+            Map<String, DsaProblem> problemsBySlug,
+            Map<UUID, List<DsaHint>> hints,
+            Map<UUID, List<DsaApproach>> approaches,
+            Map<UUID, List<DsaCheck>> checks,
+            Map<UUID, List<DsaHarness>> harnesses,
+            Map<UUID, List<DsaTestCase>> testCases) {
+
+        /**
+         * A problem created by this import has nothing stored against it yet, so every lookup for
+         * it is legitimately empty rather than unknown.
+         */
+        List<DsaHint> hintsFor(UUID problemId) {
+            return hints.getOrDefault(problemId, List.of());
+        }
+
+        List<DsaApproach> approachesFor(UUID problemId) {
+            return approaches.getOrDefault(problemId, List.of());
+        }
+
+        List<DsaCheck> checksFor(UUID problemId) {
+            return checks.getOrDefault(problemId, List.of());
+        }
+
+        List<DsaHarness> harnessesFor(UUID problemId) {
+            return harnesses.getOrDefault(problemId, List.of());
+        }
+
+        List<DsaTestCase> testCasesFor(UUID problemId) {
+            return testCases.getOrDefault(problemId, List.of());
+        }
+    }
+
     /** Counters threaded through the walk, so the result can distinguish created from updated. */
     private static final class Tally {
         int stepsCreated;
@@ -60,6 +111,9 @@ public class DsaImportService {
     public DsaImportResultDto validate(DsaImportRequest request) {
         Tally tally = new Tally();
         Optional<DsaSheet> sheet = sheetRepository.findBySlug(request.sheetSlug());
+        // One lookup for the whole file, for the same reason the real import does it. A dry run
+        // that takes a minute is a dry run nobody waits for.
+        Map<String, DsaProblem> known = existingProblemsBySlug(request);
 
         for (DsaImportRequest.ImportStep step : request.steps()) {
             boolean stepExists =
@@ -70,7 +124,7 @@ public class DsaImportService {
 
             for (DsaImportRequest.ImportSection section : safe(step.sections())) {
                 for (DsaImportRequest.ImportProblem problem : safe(section.problems())) {
-                    if (problemRepository.findBySlug(problem.slug()).isPresent()) {
+                    if (known.containsKey(problem.slug())) {
                         tally.problemsUpdated++;
                     } else {
                         tally.problemsCreated++;
@@ -92,9 +146,95 @@ public class DsaImportService {
                 tally.warnings);
     }
 
+    /** Every problem slug the file mentions, at any nesting depth. */
+    private void collectProblemSlugs(
+            List<DsaImportRequest.ImportSection> sections, List<String> into) {
+        for (DsaImportRequest.ImportSection section : safe(sections)) {
+            for (DsaImportRequest.ImportProblem problem : safe(section.problems())) {
+                if (problem.slug() != null) into.add(problem.slug());
+            }
+            collectProblemSlugs(section.sections(), into);
+        }
+    }
+
+    private List<String> problemSlugsIn(DsaImportRequest request) {
+        List<String> slugs = new ArrayList<>();
+        for (DsaImportRequest.ImportStep step : safe(request.steps())) {
+            collectProblemSlugs(step.sections(), slugs);
+        }
+        return slugs;
+    }
+
+    /**
+     * The problems the file names that already exist, keyed by slug. One query.
+     *
+     * <p>Split out because a dry run needs only this much: {@code validate} reports what would be
+     * created and what updated, and never looks at hints, harnesses or test cases.
+     */
+    private Map<String, DsaProblem> existingProblemsBySlug(DsaImportRequest request) {
+        List<String> slugs = problemSlugsIn(request);
+        List<DsaProblem> problems =
+                slugs.isEmpty() ? List.of() : problemRepository.findAllBySlugIn(slugs);
+
+        // A slug is unique in the schema, so a duplicate here can only come from the file listing
+        // the same problem twice. Keeping the first is arbitrary but stable - they are the same
+        // row.
+        return problems.stream()
+                .collect(
+                        Collectors.toMap(
+                                DsaProblem::getSlug,
+                                Function.identity(),
+                                (first, second) -> first,
+                                LinkedHashMap::new));
+    }
+
+    /** See {@link ExistingContent}. Six queries, regardless of how large the file is. */
+    private ExistingContent loadExistingContent(DsaImportRequest request) {
+        Map<String, DsaProblem> bySlug = existingProblemsBySlug(request);
+        List<UUID> ids = bySlug.values().stream().map(DsaProblem::getId).toList();
+        if (ids.isEmpty()) {
+            // Nothing exists yet, so there is nothing to fetch. Skipping the five IN queries also
+            // avoids handing the database an empty IN list.
+            return new ExistingContent(bySlug, Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+        }
+
+        return new ExistingContent(
+                bySlug,
+                byProblem(
+                        hintRepository.findByProblemIdInOrderByOrderIndexAsc(ids),
+                        h -> h.getProblem().getId()),
+                byProblem(
+                        approachRepository.findByProblemIdInOrderByOrderIndexAsc(ids),
+                        a -> a.getProblem().getId()),
+                byProblem(
+                        checkRepository.findByProblemIdInOrderByOrderIndexAsc(ids),
+                        c -> c.getProblem().getId()),
+                byProblem(harnessRepository.findByProblemIdIn(ids), h -> h.getProblem().getId()),
+                byProblem(
+                        testCaseRepository.findByProblemIdInOrderByOrderIndexAsc(ids),
+                        t -> t.getProblem().getId()));
+    }
+
+    /**
+     * Groups fetched children by their owning problem.
+     *
+     * <p>{@code getProblem().getId()} reads the identifier straight off the lazy proxy without
+     * initialising it, so grouping costs no further queries. Fetching the parent here would undo
+     * the point of the exercise.
+     */
+    private static <T> Map<UUID, List<T>> byProblem(
+            Collection<T> rows, Function<T, UUID> problemIdOf) {
+        Map<UUID, List<T>> grouped = new HashMap<>();
+        for (T row : rows) {
+            grouped.computeIfAbsent(problemIdOf.apply(row), id -> new ArrayList<>()).add(row);
+        }
+        return grouped;
+    }
+
     @Transactional
     public DsaImportResultDto importContent(DsaImportRequest request) {
         Tally tally = new Tally();
+        ExistingContent existing = loadExistingContent(request);
 
         DsaSheet sheet =
                 sheetRepository
@@ -121,7 +261,12 @@ public class DsaImportService {
             stepOrder++;
             DsaStep step = upsertStep(sheet, importStep, stepOrder, tally);
 
-            importSections(step, null, safe(importStep.sections()), tally);
+            // One read of the step's existing sections, shared by every level of the recursion
+            // below, in place of a findSiblings per section.
+            Map<UUID, List<DsaSection>> siblings =
+                    byParent(sectionRepository.findByStepIdOrderByPathAsc(step.getId()));
+
+            importSections(step, null, safe(importStep.sections()), siblings, existing, tally);
         }
 
         return new DsaImportResultDto(
@@ -169,46 +314,61 @@ public class DsaImportService {
             DsaStep step,
             DsaSection parent,
             List<DsaImportRequest.ImportSection> sources,
+            Map<UUID, List<DsaSection>> siblingsByParent,
+            ExistingContent existing,
             Tally tally) {
 
         int order = 0;
         for (DsaImportRequest.ImportSection source : sources) {
             order++;
-            DsaSection section = upsertSection(step, parent, source, order);
+            DsaSection section = upsertSection(step, parent, source, order, siblingsByParent);
 
             int problemOrder = 0;
             for (DsaImportRequest.ImportProblem importProblem : safe(source.problems())) {
                 problemOrder++;
-                upsertProblem(section, importProblem, problemOrder, tally);
+                upsertProblem(section, importProblem, problemOrder, existing, tally);
             }
 
-            importSections(step, section, safe(source.sections()), tally);
+            importSections(
+                    step, section, safe(source.sections()), siblingsByParent, existing, tally);
         }
+    }
+
+    /** A step's existing sections, grouped by parent. The root sections sit under a null key. */
+    private static Map<UUID, List<DsaSection>> byParent(List<DsaSection> sections) {
+        Map<UUID, List<DsaSection>> grouped = new HashMap<>();
+        for (DsaSection section : sections) {
+            UUID parentId = section.getParent() == null ? null : section.getParent().getId();
+            grouped.computeIfAbsent(parentId, id -> new ArrayList<>()).add(section);
+        }
+        return grouped;
     }
 
     private DsaSection upsertSection(
             DsaStep step,
             DsaSection parent,
             DsaImportRequest.ImportSection source,
-            int fallbackOrder) {
+            int fallbackOrder,
+            Map<UUID, List<DsaSection>> siblingsByParent) {
 
         int order = source.orderIndex() != null ? source.orderIndex() : fallbackOrder;
+        UUID parentId = parent == null ? null : parent.getId();
 
         // Matched among siblings, not across the whole step: two sub-sections under different
         // parents may both be the first of their group.
         DsaSection section =
-                sectionRepository
-                        .findSiblings(step.getId(), parent == null ? null : parent.getId())
-                        .stream()
+                siblingsByParent.getOrDefault(parentId, List.of()).stream()
                         .filter(s -> s.getOrderIndex() == order)
                         .findFirst()
-                        .orElseGet(
-                                () ->
-                                        DsaSection.builder()
-                                                .step(step)
-                                                .parent(parent)
-                                                .orderIndex(order)
-                                                .build());
+                        .orElse(null);
+
+        if (section == null) {
+            section = DsaSection.builder().step(step).parent(parent).orderIndex(order).build();
+            // A section created here becomes a parent one level down, so the group it belongs to
+            // has to know about it. The old code re-queried for this and still could not see it,
+            // because it had not been flushed.
+            siblingsByParent.computeIfAbsent(parentId, id -> new ArrayList<>()).add(section);
+        }
 
         section.setParent(parent);
         section.setTitle(source.title());
@@ -225,14 +385,16 @@ public class DsaImportService {
             DsaSection section,
             DsaImportRequest.ImportProblem source,
             int fallbackOrder,
+            ExistingContent existing,
             Tally tally) {
 
-        Optional<DsaProblem> existing = problemRepository.findBySlug(source.slug());
-        DsaProblem problem =
-                existing.orElseGet(() -> DsaProblem.builder().slug(source.slug()).build());
-
-        if (existing.isPresent()) tally.problemsUpdated++;
-        else tally.problemsCreated++;
+        DsaProblem problem = existing.problemsBySlug().get(source.slug());
+        if (problem == null) {
+            problem = DsaProblem.builder().slug(source.slug()).build();
+            tally.problemsCreated++;
+        } else {
+            tally.problemsUpdated++;
+        }
 
         problem.setSection(section);
         problem.setTitle(source.title());
@@ -252,87 +414,129 @@ public class DsaImportService {
         problem.setStatus(parseStatus(source.status()));
 
         DsaProblem saved = problemRepository.save(problem);
+        UUID problemId = saved.getId();
+        // A file that lists the same slug twice used to find its own first pass on the second,
+        // because every lookup went to the database. The working set has to learn about rows this
+        // import creates, or the second mention would try to insert the slug again.
+        existing.problemsBySlug().put(saved.getSlug(), saved);
 
-        replaceHints(saved, source.hints());
-        replaceApproaches(saved, source.approaches(), tally);
-        replaceCheck(saved, source.check());
-        upsertHarnesses(saved, source.harnesses(), tally);
-        upsertTestCases(saved, source.testCases(), tally);
+        replaceHints(saved, source.hints(), existing.hintsFor(problemId));
+        replaceApproaches(saved, source.approaches(), existing.approachesFor(problemId), tally);
+        replaceCheck(saved, source.check(), existing.checksFor(problemId));
+        upsertHarnesses(saved, source.harnesses(), existing.harnessesFor(problemId), tally);
+        upsertTestCases(saved, source.testCases(), existing.testCasesFor(problemId), tally);
     }
 
     /**
-     * Hints and approaches are pure editorial with nothing referencing them, so replacing the set
-     * wholesale is safe and keeps the JSON authoritative. Test cases and harnesses are handled
-     * differently below - those are matched by position so expected outputs already generated are
-     * not thrown away.
+     * Hints and approaches are pure editorial with nothing referencing them, so the JSON stays
+     * authoritative: a set the file omits entirely is left alone, and a set it provides replaces
+     * what was there. Test cases and harnesses are handled differently below - those are matched by
+     * position so expected outputs already generated are not thrown away.
+     *
+     * <p>The rows are now rewritten in place rather than deleted and recreated, which removes the
+     * reason this code used to flush. Deleting then inserting collided with {@code
+     * uq_dsa_hints_problem_order}: Hibernate runs inserts before entity deletions, and the
+     * application asks for ordered inserts on top of that, so the replacement row for position 1
+     * reached the database while the original was still sitting there. The old fix was to flush
+     * between the two, three times per problem, which on a remote database cost more than every
+     * other write in the import put together. Reusing the row at each position makes the collision
+     * impossible rather than racing it.
      */
-    private void replaceHints(DsaProblem problem, List<String> hints) {
+    private void replaceHints(DsaProblem problem, List<String> hints, List<DsaHint> existing) {
         if (hints == null) return;
-        hintRepository.deleteAll(
-                hintRepository.findByProblemIdOrderByOrderIndexAsc(problem.getId()));
-        // The flush is required, not tidiness. Hibernate's action queue runs inserts before
-        // entity deletions, and the application sets hibernate.order_inserts=true on top of
-        // that -- so on a re-import the new rows would collide with the old ones on
-        // uq_dsa_hints_problem_order before the deletes ever reached the database.
-        hintRepository.flush();
+
+        Map<Integer, DsaHint> byOrder = new HashMap<>();
+        for (DsaHint hint : existing) byOrder.put(hint.getOrderIndex(), hint);
+
         int order = 0;
         for (String body : hints) {
             if (body == null || body.isBlank()) continue;
             order++;
-            hintRepository.save(
-                    DsaHint.builder().problem(problem).orderIndex(order).body(body).build());
+            DsaHint hint = byOrder.get(order);
+            if (hint == null) {
+                hint = DsaHint.builder().problem(problem).orderIndex(order).build();
+            }
+            hint.setBody(body);
+            hintRepository.save(hint);
         }
+
+        int kept = order;
+        List<DsaHint> surplus =
+                existing.stream().filter(hint -> hint.getOrderIndex() > kept).toList();
+        if (!surplus.isEmpty()) hintRepository.deleteAll(surplus);
     }
 
+    /** See {@link #replaceHints}: same position-matched replacement, more fields. */
     private void replaceApproaches(
-            DsaProblem problem, List<DsaImportRequest.ImportApproach> approaches, Tally tally) {
+            DsaProblem problem,
+            List<DsaImportRequest.ImportApproach> approaches,
+            List<DsaApproach> existing,
+            Tally tally) {
+
         if (approaches == null) return;
-        approachRepository.deleteAll(
-                approachRepository.findByProblemIdOrderByOrderIndexAsc(problem.getId()));
-        // See replaceHints: inserts flush before deletes, so uq_dsa_approaches_problem_order
-        // would fire on a re-import without this.
-        approachRepository.flush();
+
+        Map<Integer, DsaApproach> byOrder = new HashMap<>();
+        for (DsaApproach approach : existing) byOrder.put(approach.getOrderIndex(), approach);
+
         int order = 0;
         for (DsaImportRequest.ImportApproach source : approaches) {
             order++;
-            approachRepository.save(
-                    DsaApproach.builder()
-                            .problem(problem)
-                            .kind(parseApproachKind(source.kind(), tally, problem.getSlug()))
-                            .orderIndex(order)
-                            .intuition(source.intuition() == null ? "" : source.intuition())
-                            .timeComplexity(source.timeComplexity())
-                            .spaceComplexity(source.spaceComplexity())
-                            .language(source.language())
-                            .code(source.code())
-                            .build());
+            DsaApproach approach = byOrder.get(order);
+            if (approach == null) {
+                approach = DsaApproach.builder().problem(problem).orderIndex(order).build();
+            }
+            approach.setKind(parseApproachKind(source.kind(), tally, problem.getSlug()));
+            approach.setIntuition(source.intuition() == null ? "" : source.intuition());
+            approach.setTimeComplexity(source.timeComplexity());
+            approach.setSpaceComplexity(source.spaceComplexity());
+            approach.setLanguage(source.language());
+            approach.setCode(source.code());
+            approachRepository.save(approach);
         }
+
+        int kept = order;
+        List<DsaApproach> surplus =
+                existing.stream().filter(approach -> approach.getOrderIndex() > kept).toList();
+        if (!surplus.isEmpty()) approachRepository.deleteAll(surplus);
     }
 
-    private void replaceCheck(DsaProblem problem, DsaImportRequest.ImportCheck source) {
+    /** One check per problem, always at position 1. See {@link #replaceHints}. */
+    private void replaceCheck(
+            DsaProblem problem, DsaImportRequest.ImportCheck source, List<DsaCheck> existing) {
+
         if (source == null) return;
-        checkRepository.deleteAll(
-                checkRepository.findByProblemIdOrderByOrderIndexAsc(problem.getId()));
-        // See replaceHints: uq_dsa_checks_problem_order would fire on a re-import without this.
-        checkRepository.flush();
-        checkRepository.save(
-                DsaCheck.builder()
-                        .problem(problem)
-                        .orderIndex(1)
-                        .prompt(source.prompt())
-                        .options(writeJson(source.options()))
-                        .correctAnswer(source.correctAnswer() == null ? "" : source.correctAnswer())
-                        .explanation(source.explanation())
-                        .points(source.points() != null ? source.points() : 2)
-                        .build());
+
+        DsaCheck check =
+                existing.stream()
+                        .filter(candidate -> candidate.getOrderIndex() == 1)
+                        .findFirst()
+                        .orElseGet(() -> DsaCheck.builder().problem(problem).orderIndex(1).build());
+
+        check.setPrompt(source.prompt());
+        check.setOptions(writeJson(source.options()));
+        check.setCorrectAnswer(source.correctAnswer() == null ? "" : source.correctAnswer());
+        check.setExplanation(source.explanation());
+        check.setPoints(source.points() != null ? source.points() : 2);
+        checkRepository.save(check);
+
+        List<DsaCheck> surplus =
+                existing.stream().filter(candidate -> candidate.getOrderIndex() != 1).toList();
+        if (!surplus.isEmpty()) checkRepository.deleteAll(surplus);
     }
 
     private void upsertHarnesses(
             DsaProblem problem,
             Map<String, DsaImportRequest.ImportHarness> harnesses,
+            List<DsaHarness> existing,
             Tally tally) {
 
         if (harnesses == null) return;
+
+        Map<String, DsaHarness> byLanguage = new HashMap<>();
+        for (DsaHarness harness : existing) {
+            byLanguage.put(harness.getLanguage().toLowerCase(), harness);
+        }
+
         for (Map.Entry<String, DsaImportRequest.ImportHarness> entry : harnesses.entrySet()) {
             String language = entry.getKey();
             DsaImportRequest.ImportHarness source = entry.getValue();
@@ -365,15 +569,14 @@ public class DsaImportService {
                 continue;
             }
 
-            DsaHarness harness =
-                    harnessRepository
-                            .findByProblemIdAndLanguageIgnoreCase(problem.getId(), language)
-                            .orElseGet(
-                                    () ->
-                                            DsaHarness.builder()
-                                                    .problem(problem)
-                                                    .language(language.toLowerCase())
-                                                    .build());
+            DsaHarness harness = byLanguage.get(language.toLowerCase());
+            if (harness == null) {
+                harness =
+                        DsaHarness.builder()
+                                .problem(problem)
+                                .language(language.toLowerCase())
+                                .build();
+            }
             harness.setStarterCode(source.starterCode());
             harness.setDriverCode(source.driverCode());
             if (source.referenceSolution() != null) {
@@ -388,25 +591,34 @@ public class DsaImportService {
      * Test cases are matched by position, and a blank {@code expectedOutput} in the JSON does not
      * overwrite one already stored. That is what lets the generate-expected-output action run once
      * and survive every later re-import of the same file.
+     *
+     * <p>Cases the file no longer lists are kept, not deleted - the same as before. The count of
+     * cases still missing an expected output is taken from the rows in hand rather than by reading
+     * them back, which is what the old code did immediately after writing them.
      */
     private void upsertTestCases(
-            DsaProblem problem, List<DsaImportRequest.ImportTestCase> cases, Tally tally) {
+            DsaProblem problem,
+            List<DsaImportRequest.ImportTestCase> cases,
+            List<DsaTestCase> existing,
+            Tally tally) {
 
         if (cases == null) return;
 
-        Map<Integer, DsaTestCase> existing = new HashMap<>();
-        for (DsaTestCase testCase :
-                testCaseRepository.findByProblemIdOrderByOrderIndexAsc(problem.getId())) {
-            existing.put(testCase.getOrderIndex(), testCase);
-        }
+        Map<Integer, DsaTestCase> byOrder = new HashMap<>();
+        for (DsaTestCase testCase : existing) byOrder.put(testCase.getOrderIndex(), testCase);
+
+        // Every case the problem ends up with: the stored ones, which are updated in place, plus
+        // any this file adds beyond them.
+        List<DsaTestCase> allCases = new ArrayList<>(existing);
 
         int order = 0;
         for (DsaImportRequest.ImportTestCase source : cases) {
             order++;
-            DsaTestCase testCase =
-                    existing.getOrDefault(
-                            order,
-                            DsaTestCase.builder().problem(problem).orderIndex(order).build());
+            DsaTestCase testCase = byOrder.get(order);
+            if (testCase == null) {
+                testCase = DsaTestCase.builder().problem(problem).orderIndex(order).build();
+                allCases.add(testCase);
+            }
 
             testCase.setInput(source.input() == null ? "" : source.input());
             if (source.expectedOutput() != null && !source.expectedOutput().isBlank()) {
@@ -421,7 +633,7 @@ public class DsaImportService {
         }
 
         long missing =
-                testCaseRepository.findByProblemIdOrderByOrderIndexAsc(problem.getId()).stream()
+                allCases.stream()
                         .filter(
                                 tc ->
                                         tc.getExpectedOutput() == null
