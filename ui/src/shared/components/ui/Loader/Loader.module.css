@@ -250,10 +250,11 @@
     }
 }
 
-/* ─── Cold-start card ─────────────────────────────────────────────
-   One contained block rather than a loose stack, so the wait reads
-   as a deliberate piece of the page instead of debris left behind
-   by something that failed.
+/* ─── Cold-start block ────────────────────────────────────────────
+   Deliberately unframed: no border, no surface, no shadow. A panel
+   floating on the page reads as a thing that has gone wrong, and
+   this is a wait, not an error. Sitting directly on the page
+   background lets it feel like the page is still arriving.
    ───────────────────────────────────────────────────────────────── */
 
 .coldStartCard {
@@ -265,10 +266,9 @@
     max-width: 400px;
     padding: 32px 28px 24px;
     box-sizing: border-box;
-    background: var(--bg-card, var(--bg-secondary));
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl, 20px);
-    box-shadow: var(--shadow-lg);
+    /* Transparent rather than a colour of its own, so this keeps matching
+       whatever it is placed on - the page, or the overlay variant's scrim. */
+    background: transparent;
     text-align: center;
     animation: cardIn 0.4s ease;
 }
