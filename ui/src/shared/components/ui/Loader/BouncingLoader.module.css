@@ -1,0 +1,210 @@
+/*
+ * The cold-start animations.
+ *
+ * All five are pure CSS. They replaced three GIFs that together cost a few hundred KB and had to
+ * be fetched over the network at precisely the moment the network was the thing we were waiting
+ * for — so the loader could itself be waiting to load. These paint immediately, scale to any size
+ * and take their colours from the theme.
+ *
+ * Colour comes from two custom properties the caller sets, rather than the fixed palette these
+ * were written with, so the same animation reads correctly in light and dark and can pick up the
+ * accent of the current time of day:
+ *
+ *   --loader-frame : the structure (box, plank, ground)
+ *   --loader-ball  : the moving part
+ */
+
+.stage {
+    height: 60px;
+    position: relative;
+    display: block;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    /* Keeps the click target comfortable without changing the drawn size. */
+    margin: 0 auto;
+}
+
+.stage:focus-visible {
+    outline: 2px solid var(--loader-ball);
+    outline-offset: 8px;
+    border-radius: 4px;
+}
+
+/* ─── 1. Two balls in a box ─────────────────────────────────── */
+.twoBall {
+    aspect-ratio: 1;
+    border: 3px solid var(--loader-frame);
+}
+
+.twoBall::before,
+.twoBall::after {
+    content: '';
+    position: absolute;
+    width: 20%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--loader-ball);
+    animation:
+        ball-up 0.57s infinite alternate linear -0.13s,
+        ball-across 0.35s infinite alternate linear -0.23s;
+}
+
+.twoBall::after {
+    background: var(--loader-frame);
+    animation:
+        ball-up 0.29s infinite alternate linear -0.11s,
+        ball-across 0.51s infinite alternate linear -0.34s;
+}
+
+@keyframes ball-up {
+    0%, 5% { bottom: 0%; }
+    95%, to { bottom: 80%; }
+}
+
+@keyframes ball-across {
+    0%, 5% { left: 0%; }
+    95%, to { left: 80%; }
+}
+
+/* ─── 2. Ball on a tilting plank ────────────────────────────── */
+.seesaw {
+    aspect-ratio: 2;
+}
+
+.seesaw::before {
+    content: '';
+    position: absolute;
+    inset: 100% 75% -3px 0;
+    background: var(--loader-frame);
+    animation: plank-tilt 1s linear infinite alternate;
+}
+
+.seesaw::after {
+    content: '';
+    position: absolute;
+    inset: auto 42.5% 0;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--loader-ball);
+    animation:
+        hop 1s cubic-bezier(0, 700, 1, 700) infinite alternate,
+        slide-wide 1s linear infinite alternate;
+}
+
+@keyframes plank-tilt {
+    0%, 30% { translate: 0% -2px; rotate: 20deg; }
+    70%, to { translate: 300% -2px; rotate: -20deg; }
+}
+
+@keyframes slide-wide {
+    0% { translate: -220%; }
+    to { translate: 220%; }
+}
+
+/* ─── 3. Ball in a turning square ───────────────────────────── */
+.turningBox {
+    aspect-ratio: 1;
+    border: 3px solid transparent;
+}
+
+.turningBox::before {
+    content: '';
+    position: absolute;
+    inset: auto 35% 0;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--loader-ball);
+    animation: hop 0.5s cubic-bezier(0, 800, 1, 800) infinite;
+}
+
+.turningBox::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    outline: 3px solid var(--loader-frame);
+    animation: quarter-turn 0.5s linear infinite;
+}
+
+@keyframes quarter-turn {
+    0%, 30% { rotate: 0deg; }
+    70%, to { rotate: 90deg; }
+}
+
+/* ─── 4. Ball on moving ground ──────────────────────────────── */
+.road {
+    aspect-ratio: 2;
+    border-bottom: 3px solid transparent;
+    background:
+        linear-gradient(90deg, var(--loader-frame) 50%, transparent 0)
+        -25% 100% / 50% 3px repeat-x border-box;
+    animation: ground-scroll 0.75s linear infinite;
+}
+
+.road::before {
+    content: '';
+    position: absolute;
+    inset: auto 42.5% 0;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--loader-ball);
+    animation: hop 0.75s cubic-bezier(0, 900, 1, 900) infinite;
+}
+
+@keyframes ground-scroll {
+    to { background-position: -125% 100%; }
+}
+
+/* ─── 5. Ball in a cup ──────────────────────────────────────── */
+.cup {
+    aspect-ratio: 1;
+    border: 3px solid var(--loader-frame);
+    border-top: none;
+}
+
+.cup::before {
+    content: '';
+    position: absolute;
+    width: 30%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--loader-ball);
+    animation:
+        hop 0.5s cubic-bezier(0, 800, 1, 800) infinite -0.25s,
+        slide-narrow 0.5s linear infinite alternate;
+}
+
+@keyframes slide-narrow {
+    0%, 8% { left: 0%; }
+    92%, to { left: 70%; }
+}
+
+/* Shared by every variant that bounces a ball off the floor. */
+@keyframes hop {
+    0%, 2% { bottom: 0%; }
+    98%, to { bottom: 0.1%; }
+}
+
+/*
+ * Reduced motion gets the shapes without the bouncing. The frame still reads as a loader because
+ * of the pulsing ball, which is a single gentle opacity change rather than seven keyframes of
+ * travel.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .stage,
+    .stage::before,
+    .stage::after {
+        animation: none !important;
+    }
+
+    .stage::before {
+        animation: rest-pulse 1.8s ease-in-out infinite !important;
+    }
+}
+
+@keyframes rest-pulse {
+    0%, to { opacity: 0.35; }
+    50% { opacity: 1; }
+}

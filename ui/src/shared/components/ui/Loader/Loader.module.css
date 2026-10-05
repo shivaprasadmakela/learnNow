@@ -146,22 +146,7 @@
     }
 }
 
-.gifLoaderContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 24px;
-    animation: pulseGlow 2.5s ease-in-out infinite;
-}
 
-.gifLoaderImage {
-    width: 140px;
-    height: 140px;
-    object-fit: contain;
-    border-radius: 20px;
-    background: transparent;
-    animation: fadeIn 0.4s ease-out;
-}
 
 /* ─── Cold-start progress ─────────────────────────────────────────
    The bar is driven by the measured start-up profile in Loader.tsx
@@ -255,6 +240,189 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .progressFill {
+        transition: none;
+    }
+
+    .progressFillAnimated {
+        background-image: none;
+        animation: none;
+    }
+}
+
+/* ─── Cold-start card ─────────────────────────────────────────────
+   One contained block rather than a loose stack, so the wait reads
+   as a deliberate piece of the page instead of debris left behind
+   by something that failed.
+   ───────────────────────────────────────────────────────────────── */
+
+.coldStartCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 400px;
+    padding: 32px 28px 24px;
+    box-sizing: border-box;
+    background: var(--bg-card, var(--bg-secondary));
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl, 20px);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    animation: cardIn 0.4s ease;
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Fixed height so swapping between animations of different aspect ratios
+   does not make the whole card jump. */
+.animationSlot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 68px;
+    margin-bottom: 2px;
+}
+
+.retryBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.retryBtn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+.hint {
+    margin: 2px 0 0;
+    font-size: 0.68rem;
+    color: var(--text-tertiary);
+    opacity: 0.75;
+}
+
+/* ─── Cold-start progress ─────────────────────────────────────────
+   The bar is driven by the measured start-up profile in Loader.tsx
+   and by a health poll, so it reflects real stages rather than a
+   decorative animation. It never reaches 100%: see the note there.
+   ───────────────────────────────────────────────────────────────── */
+
+.progressBlock {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.progressHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.stageLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-secondary);
+    /* The stage name is the long part; let it shrink before the timer does. */
+    min-width: 0;
+    text-align: left;
+}
+
+.stageTick {
+    flex-shrink: 0;
+    color: #10b981;
+}
+
+.elapsed {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+.progressTrack {
+    width: 100%;
+    height: 5px;
+    border-radius: var(--radius-pill, 999px);
+    background: var(--border-color, rgba(148, 163, 184, 0.25));
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--tech-blue, #0b57d0);
+    /* Matches the 500ms tick in Loader.tsx, so the bar glides between
+       samples instead of stepping. */
+    transition: width 0.5s linear, background-color var(--transition-normal);
+}
+
+/*
+ * A sheen travelling along the filled portion. Purely to signal "still working" during the
+ * seconds where the width barely moves - the bar is slowest exactly where the server is slowest.
+ */
+.progressFillAnimated {
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 180px 100%;
+    background-repeat: no-repeat;
+    animation: progressSheen 1.4s ease-in-out infinite;
+}
+
+.progressFillReady {
+    background-color: #10b981;
+}
+
+@keyframes progressSheen {
+    from {
+        background-position: -180px 0;
+    }
+    to {
+        background-position: calc(100% + 180px) 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .coldStartCard {
+        padding: 24px 18px 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coldStartCard {
+        animation: none;
+    }
+
     .progressFill {
         transition: none;
     }

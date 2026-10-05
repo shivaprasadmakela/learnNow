@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Loader } from './Loader';
 
 /**
@@ -85,6 +85,32 @@ describe('Loader cold start', () => {
         await vi.advanceTimersByTimeAsync(40000);
 
         expect(screen.getByText(/slower than usual/i)).toBeInTheDocument();
+    });
+
+    it('lets the animation be changed, as a real button', async () => {
+        vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+        render(<Loader variant="inline" />);
+        await vi.advanceTimersByTimeAsync(3000);
+
+        // A button rather than a div with a click handler, so the one thing there is to do during
+        // a twenty second wait is reachable from the keyboard too.
+        const toggle = screen.getByRole('button', { name: /change the animation/i });
+        const before = toggle.className;
+
+        fireEvent.click(toggle);
+
+        expect(toggle.className).not.toBe(before);
+    });
+
+    it('offers a way out once it has clearly overrun', async () => {
+        vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+        render(<Loader variant="inline" />);
+
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(screen.queryByRole('button', { name: /reload/i })).not.toBeInTheDocument();
+
+        await vi.advanceTimersByTimeAsync(30000);
+        expect(screen.getByRole('button', { name: /reload/i })).toBeInTheDocument();
     });
 
     it('stays quiet and ordinary for a short wait', async () => {
