@@ -162,3 +162,105 @@
     background: transparent;
     animation: fadeIn 0.4s ease-out;
 }
+
+/* ─── Cold-start progress ─────────────────────────────────────────
+   The bar is driven by the measured start-up profile in Loader.tsx
+   and by a health poll, so it reflects real stages rather than a
+   decorative animation. It never reaches 100%: see the note there.
+   ───────────────────────────────────────────────────────────────── */
+
+.progressBlock {
+    width: 100%;
+    max-width: 320px;
+    margin: 14px auto 2px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.progressHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.stageLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-secondary);
+    /* The stage name is the long part; let it shrink before the timer does. */
+    min-width: 0;
+    text-align: left;
+}
+
+.stageTick {
+    flex-shrink: 0;
+    color: #10b981;
+}
+
+.elapsed {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+.progressTrack {
+    width: 100%;
+    height: 5px;
+    border-radius: var(--radius-pill, 999px);
+    background: var(--border-color, rgba(148, 163, 184, 0.25));
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--tech-blue, #0b57d0);
+    /* Matches the 500ms tick in Loader.tsx, so the bar glides between
+       samples instead of stepping. */
+    transition: width 0.5s linear, background-color var(--transition-normal);
+}
+
+/*
+ * A sheen that travels along the filled portion. Purely to signal "still working" during the
+ * seconds where the width barely moves - the bar is slowest exactly where the server is slowest.
+ */
+.progressFillAnimated {
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 180px 100%;
+    background-repeat: no-repeat;
+    animation: progressSheen 1.4s ease-in-out infinite;
+}
+
+.progressFillReady {
+    background-color: #10b981;
+}
+
+@keyframes progressSheen {
+    from {
+        background-position: -180px 0;
+    }
+    to {
+        background-position: calc(100% + 180px) 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .progressFill {
+        transition: none;
+    }
+
+    .progressFillAnimated {
+        background-image: none;
+        animation: none;
+    }
+}
