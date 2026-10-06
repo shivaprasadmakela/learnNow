@@ -1,9 +1,21 @@
+/*
+ * One problem in the sheet, as a table row.
+ *
+ * The grid is the whole design. Everything right of the title is a fixed column, so time,
+ * difficulty and the action icons line up down the page and can be scanned without reading. The
+ * title takes the slack and truncates, which is also what stops a wide monitor opening a corridor
+ * of dead space between the tags and the buttons.
+ *
+ * Column widths are deliberately not in custom properties: they are load-bearing for the
+ * alignment, and a caller overriding one would break the column for every other row.
+ */
+
 .row {
     display: grid;
-    grid-template-columns: 24px 1fr auto;
+    grid-template-columns: 22px minmax(0, 1fr) 40px 76px 100px;
     align-items: center;
     gap: 14px;
-    padding: 10px 16px;
+    padding: 7px 14px;
     border-bottom: 1px solid var(--border-color);
     background: var(--bg-card);
     transition: background 0.12s ease;
@@ -16,6 +28,16 @@
 .row:hover {
     background: var(--bg-secondary);
 }
+
+/*
+ * A solved row recedes rather than disappears. It still has to be findable - people come back to
+ * re-read a solution - so this is a tint, not a strikethrough.
+ */
+.rowSolved .title {
+    color: var(--text-secondary);
+}
+
+/* ─── Status ─────────────────────────────────────────────────── */
 
 .checkbox {
     display: inline-flex;
@@ -32,7 +54,7 @@
     transition: all 0.12s ease;
 }
 
-.checkbox:hover {
+.checkbox:hover:not(:disabled) {
     border-color: var(--tech-blue);
 }
 
@@ -46,65 +68,103 @@
     border-color: var(--color-yellow-500, #f59e0b);
 }
 
-.main {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+.checkboxLocked {
+    opacity: 0.35;
+    cursor: default;
 }
 
-.titleRow {
+/* ─── Title and tags ─────────────────────────────────────────── */
+
+/*
+ * A real button, not a div with a click handler: this is the primary action of the row and it has
+ * to be reachable by keyboard without the parent inventing its own key handling.
+ */
+.main {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 
 .title {
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-primary);
-    background: none;
-    border: none;
-    padding: 0;
-    text-align: left;
-    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: color 0.12s ease;
 }
 
-.title:hover {
+.main:hover .title {
     color: var(--tech-blue);
-    text-decoration: underline;
 }
 
-.meta {
+.main:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* Secondary by design: tags are for recognition, not for reading. They are the first thing to go
+   when the row runs out of room. */
+.tags {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.72rem;
-    color: var(--text-tertiary);
-    flex-wrap: wrap;
-}
-
-.timeBadge {
-    color: var(--text-tertiary);
-    font-weight: 500;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .tag {
-    padding: 1px 8px;
+    flex-shrink: 0;
+    padding: 1px 7px;
     border-radius: 4px;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    font-size: 0.68rem;
+    color: var(--text-tertiary);
+    font-size: 0.67rem;
     font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ─── Fixed columns ──────────────────────────────────────────── */
+
+.time {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-align: right;
+    /* Lines the digits up so the column reads as numbers rather than as text. */
+    font-variant-numeric: tabular-nums;
+}
+
+.difficulty {
+    display: flex;
+    justify-content: flex-start;
 }
 
 .actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
+}
+
+/* Holds the column open whether or not the row has that action. */
+.slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
 }
 
 .iconBtn {
@@ -126,24 +186,13 @@
     color: var(--tech-blue);
 }
 
-.iconBtnDisabled {
-    opacity: 0.3;
-    cursor: default;
-}
-
-.iconBtnDisabled:hover {
-    background: transparent;
-    color: var(--text-tertiary);
-}
-
-/* Walkthrough / Play circular button */
 .playBtn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: 1.5px solid var(--border-color);
+    width: 26px;
+    height: 26px;
+    border: 1.5px solid var(--tech-blue);
     border-radius: 50%;
     background: transparent;
     color: var(--tech-blue);
@@ -151,36 +200,78 @@
     transition: all 0.15s ease;
 }
 
-.playIcon {
-    margin-left: 2px;
-}
-
-.playBtnActive {
-    border-color: var(--tech-blue);
-    color: var(--tech-blue);
-}
-
-.playBtnActive:hover {
+.playBtn:hover {
     background: var(--tech-blue);
     color: #ffffff;
-    transform: scale(1.05);
 }
 
-.playBtnDisabled {
-    border-color: var(--border-color);
-    color: var(--text-tertiary);
-    opacity: 0.4;
-    cursor: default;
+.playIcon {
+    margin-left: 1px;
 }
 
-@media (max-width: 640px) {
+/* ─── Narrower screens ───────────────────────────────────────────
+   Columns are dropped in order of how little they are scanned:
+   tags first, then the time, then the difficulty label shrinks.
+   The status, the title and the actions never go.
+   ─────────────────────────────────────────────────────────────── */
+
+/*
+ * On a wide screen the spare width goes off the end of the row rather than into the title, so the
+ * columns stay packed together near the content they describe. Letting the title column keep
+ * absorbing it is what opened a corridor of nothing between the tags and the buttons on a large
+ * monitor - the row got wider and wider while the content stayed the same size.
+ *
+ * The row itself still spans the full width, so the background and the rule between rows run edge
+ * to edge and the list still reads as one continuous table.
+ */
+@media (min-width: 1280px) {
     .row {
-        grid-template-columns: 20px 1fr;
-        gap: 8px;
+        grid-template-columns: 22px minmax(0, 640px) 40px 76px 100px 1fr;
     }
+}
+
+@media (max-width: 1100px) {
+    .tags {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .row {
+        grid-template-columns: 22px minmax(0, 1fr) 76px 100px;
+        gap: 10px;
+    }
+
+    .time {
+        display: none;
+    }
+}
+
+/*
+ * On a phone the difficulty stays and the practice link goes.
+ *
+ * Difficulty is the attribute people filter by in their heads - "give me an easy one" - so losing
+ * it costs more than losing a link to an external judge, which the problem page carries anyway.
+ */
+@media (max-width: 520px) {
+    .row {
+        grid-template-columns: 20px minmax(0, 1fr) 66px 64px;
+        gap: 8px;
+        padding: 8px 12px;
+    }
+
+    .practiceSlot {
+        display: none;
+    }
+
     .actions {
-        grid-column: 2;
-        justify-content: flex-start;
-        margin-top: 4px;
+        gap: 4px;
+    }
+}
+
+/* Touch has no hover, so nothing may depend on it to be discoverable. */
+@media (pointer: coarse) {
+    .row {
+        padding: 10px 14px;
     }
 }
