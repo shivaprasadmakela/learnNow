@@ -5,7 +5,9 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "dsa_approaches")
@@ -42,11 +44,18 @@ public class DsaApproach {
     @Column(name = "space_complexity", length = 64)
     private String spaceComplexity;
 
-    @Column(length = 24)
-    private String language;
-
-    @Column(columnDefinition = "TEXT")
-    private String code;
+    /**
+     * The approach's code in every language it is written in, as a JSON array of {@code {language,
+     * code}} objects. Read and written through {@code DsaApproachSolutions}, which normalises the
+     * language ids and keeps the order stable.
+     *
+     * <p>See the note on {@code DsaProblem.tags}: without {@code @JdbcTypeCode} the varchar binding
+     * is rejected.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "JSONB", nullable = false)
+    @Builder.Default
+    private String solutions = "[]";
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

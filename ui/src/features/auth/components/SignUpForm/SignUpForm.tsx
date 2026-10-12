@@ -91,7 +91,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
             <div className={styles.inputGrid}>
                 <Input
                     type="password"
-                    placeholder="Password*"
+                    placeholder="Password* (12+ characters)"
+                    aria-label="Password, at least 12 characters"
+                    autoComplete="new-password"
+                    minLength={12}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
@@ -99,6 +102,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
                 <Input
                     type="password"
                     placeholder="Password confirmation*"
+                    aria-label="Confirm password"
+                    autoComplete="new-password"
                     value={passwordConfirmation}
                     onChange={(e) => setPasswordConfirmation(e.target.value)}
                     disabled={loading}

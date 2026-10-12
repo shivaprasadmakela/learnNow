@@ -49,6 +49,7 @@ public class DsaCatalogService {
     private final DsaProgressDao progressDao;
     private final NotesService notesService;
     private final ObjectMapper objectMapper;
+    private final DsaApproachSolutions approachSolutions;
 
     @Transactional(readOnly = true)
     public PageResponse<DsaSheetSummaryDto> listSheets(String userId, Pageable pageable) {
@@ -222,17 +223,7 @@ public class DsaCatalogService {
 
         List<DsaApproachDto> approaches =
                 approachRepository.findByProblemIdOrderByOrderIndexAsc(problemId).stream()
-                        .map(
-                                a ->
-                                        new DsaApproachDto(
-                                                a.getId(),
-                                                a.getKind().name(),
-                                                a.getOrderIndex(),
-                                                a.getIntuition(),
-                                                a.getTimeComplexity(),
-                                                a.getSpaceComplexity(),
-                                                a.getLanguage(),
-                                                a.getCode()))
+                        .map(approachSolutions::toDto)
                         .toList();
 
         List<DsaCheckDto> checks =

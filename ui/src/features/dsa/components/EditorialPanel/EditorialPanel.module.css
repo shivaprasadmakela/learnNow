@@ -2,94 +2,46 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 18px 20px 40px;
 }
 
-.tabs {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-}
-
-.tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 13px;
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-.tab:hover:not(:disabled) { border-color: var(--tech-blue); color: var(--tech-blue); }
-
-.tabActive {
-    background: var(--tech-blue);
-    border-color: var(--tech-blue);
-    color: #ffffff;
-}
-
-.tabActive:hover { color: #ffffff; }
-
-.tabLocked {
-    opacity: 0.5;
-    cursor: default;
-    border-style: dashed;
-}
-
-.complexity {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.chip {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 5px 11px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-secondary);
-    font-size: 0.8rem;
-}
-
-.chipLabel {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-}
-
-.chipValue {
-    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-    font-weight: 600;
-    color: var(--text-primary);
-}
+/* ── spoiler gate ── */
 
 .gate {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
-    padding: 22px;
+    margin-top: 8px;
+    padding: 28px 22px;
     border: 1px dashed var(--border-color-light);
-    border-radius: 10px;
+    border-radius: 12px;
     background: var(--bg-secondary);
+    text-align: center;
+}
+
+.gateIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent-blue-light);
+    color: var(--tech-blue);
+}
+
+.gateTitle {
+    margin: 4px 0 0;
+    font-size: 1rem;
+    font-weight: 650;
+    color: var(--text-primary);
 }
 
 .gateText {
     margin: 0;
-    max-width: 52ch;
-    font-size: 0.88rem;
+    max-width: 46ch;
+    font-size: 0.85rem;
+    line-height: 1.6;
     color: var(--text-secondary);
 }
 
@@ -97,20 +49,191 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 9px 16px;
+    margin-top: 6px;
+    padding: 9px 18px;
     border: none;
     border-radius: 8px;
     background: var(--tech-blue);
     color: #ffffff;
+    font: inherit;
     font-size: 0.84rem;
     font-weight: 600;
-    font-family: inherit;
     cursor: pointer;
+    transition: background-color var(--transition-fast);
 }
 
+.gateBtn:hover {
+    background: var(--tech-blue-hover, var(--tech-blue));
+}
+
+.gateBtn:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+}
+
+/* ── one approach ── */
+
+.approach {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.approachHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.approachTitle {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    font-size: 1.08rem;
+    font-weight: 650;
+    color: var(--text-primary);
+}
+
+.approachNumber {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.complexity {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
+.chip dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.chip dd {
+    margin: 0;
+    font-family: 'JetBrains Mono', var(--font-family-mono), ui-monospace, Menlo, monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.intuition {
+    min-width: 0;
+}
+
+/* The shared renderer leaves paragraphs unspaced here, which ran an intuition's paragraphs together. */
+.intuition :global(p) {
+    margin: 0 0 10px;
+    line-height: 1.65;
+}
+
+.intuition :global(p:last-child) {
+    margin-bottom: 0;
+}
+
+.languageTabs {
+    border-bottom: none;
+}
+
+.languageName {
+    padding: 0 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ── previous / next ── */
+
+.stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.stepBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.stepBtn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+.stepBtn:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+}
+
+.stepBtnNext {
+    margin-left: auto;
+}
+
+/* ── empty and video ── */
+
 .empty {
-    padding: 30px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 0;
+    color: var(--text-tertiary);
     text-align: center;
-    font-size: 0.88rem;
+}
+
+.empty p {
+    margin: 0;
+    font-size: 0.86rem;
+}
+
+.walkthrough {
+    display: flex;
+    flex-direction: column;
+}
+
+.sectionHead {
+    margin: 12px 0 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
     color: var(--text-tertiary);
 }

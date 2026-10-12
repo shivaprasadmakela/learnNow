@@ -4,6 +4,7 @@ import { useAuthForm } from '../hooks/useAuthForm';
 import { SignInForm } from '../components/SignInForm';
 import { SignUpForm } from '../components/SignUpForm';
 import { RegistrationSuccess } from '../components/RegistrationSuccess';
+import { ForgotPasswordForm } from '../components/ForgotPasswordForm';
 import { SiteFooter } from '../../../shared/components/navigation/SiteFooter';
 import { Loader } from '../../../shared/components/ui/Loader';
 
@@ -34,6 +35,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 }) => {
     const form = useAuthForm({ signIn, signUp });
     const [isGoogleAuthenticating, setIsGoogleAuthenticating] = useState(false);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
 
     const handleGoogleError = (err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Google authentication failed';
@@ -69,6 +71,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                             form.setIsSignUp(false);
                         }}
                     />
+                ) : isForgotPassword ? (
+                    <div className={styles.authCard}>
+                        <h2 className={styles.viewTitle}>Reset your password</h2>
+                        <ForgotPasswordForm
+                            initialEmail={form.email}
+                            onBackToSignIn={() => setIsForgotPassword(false)}
+                        />
+                    </div>
                 ) : (
                     <div className={styles.authCard}>
                         <h2 className={styles.viewTitle}>
@@ -86,7 +96,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                                 loading={form.loading}
                                 onSubmit={form.handleSignInSubmit}
                                 onToggleAuthMode={form.toggleAuthMode}
-                                onForgotPassword={() => form.showToast('Forgot password logic is coming soon!', 'info')}
+                                onForgotPassword={() => setIsForgotPassword(true)}
                                 onGoogleSuccess={signInWithGoogle ? handleGoogleSuccess : undefined}
                                 onGoogleError={handleGoogleError}
                                 onOpenPrivacyNotice={() => changeView('PRIVACY')}

@@ -7,6 +7,7 @@ import { Input, Select, Textarea } from '../../../../shared/components/ui/Input'
 import { MonacoEditorPane } from '../../../../shared/components/editor';
 import { DsaProblemPage } from '../../../dsa';
 import { ListEditor } from './ListEditor';
+import { SolutionsEditor } from './SolutionsEditor';
 import {
     toDraft,
     toPayload,
@@ -429,10 +430,10 @@ export const DsaProblemEditorModal: React.FC<DsaProblemEditorModalProps> = ({
                     {tab === 'editorial' && (
                         <div className={styles.form}>
                             <p className={styles.sectionNote}>
-                                Approaches unlock in order too: a learner reads brute force before
-                                optimal is clickable. The intuition is rendered as markdown, and the
-                                code block below it is appended to that, so it is fenced
-                                automatically.
+                                Learners see approaches in this order, brute force first, behind a
+                                spoiler prompt until they have solved the problem. The intuition is
+                                markdown. Add the code in every language the problem is judged in:
+                                the editorial opens on whichever language the learner is coding in.
                             </p>
                             <ListEditor<ApproachDraft>
                                 items={draft.approaches}
@@ -442,8 +443,7 @@ export const DsaProblemEditorModal: React.FC<DsaProblemEditorModalProps> = ({
                                     intuition: '',
                                     timeComplexity: '',
                                     spaceComplexity: '',
-                                    language: 'cpp',
-                                    code: ''
+                                    solutions: []
                                 })}
                                 itemLabel={index => `Approach ${index + 1}`}
                                 addLabel="Add an approach"
@@ -465,6 +465,7 @@ export const DsaProblemEditorModal: React.FC<DsaProblemEditorModalProps> = ({
                                             <Input
                                                 label="Time complexity"
                                                 value={approach.timeComplexity}
+                                                maxLength={64}
                                                 onChange={e =>
                                                     update({ timeComplexity: e.target.value })
                                                 }
@@ -472,17 +473,10 @@ export const DsaProblemEditorModal: React.FC<DsaProblemEditorModalProps> = ({
                                             <Input
                                                 label="Space complexity"
                                                 value={approach.spaceComplexity}
+                                                maxLength={64}
                                                 onChange={e =>
                                                     update({ spaceComplexity: e.target.value })
                                                 }
-                                            />
-                                            <Input
-                                                label="Code language"
-                                                value={approach.language}
-                                                onChange={e =>
-                                                    update({ language: e.target.value })
-                                                }
-                                                hint="Used for syntax highlighting."
                                             />
                                         </div>
                                         <Textarea
@@ -491,12 +485,9 @@ export const DsaProblemEditorModal: React.FC<DsaProblemEditorModalProps> = ({
                                             value={approach.intuition}
                                             onChange={e => update({ intuition: e.target.value })}
                                         />
-                                        <Textarea
-                                            label="Code"
-                                            mono
-                                            rows={10}
-                                            value={approach.code}
-                                            onChange={e => update({ code: e.target.value })}
+                                        <SolutionsEditor
+                                            solutions={approach.solutions}
+                                            onChange={solutions => update({ solutions })}
                                         />
                                     </>
                                 )}

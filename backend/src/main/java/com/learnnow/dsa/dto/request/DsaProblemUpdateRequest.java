@@ -35,14 +35,21 @@ public record DsaProblemUpdateRequest(
         @Valid List<CheckUpdate> checks,
         @Valid List<HarnessUpdate> harnesses) {
 
-    /** One editorial write-up. {@code kind} is BRUTE, BETTER or OPTIMAL. */
+    /**
+     * One editorial write-up. {@code kind} is BRUTE, BETTER or OPTIMAL.
+     *
+     * <p>{@code solutions} replaces the approach's code wholesale: a language left out is removed.
+     */
     public record ApproachUpdate(
             @NotBlank String kind,
             @NotNull String intuition,
-            String timeComplexity,
-            String spaceComplexity,
-            String language,
-            String code) {}
+            // The columns are VARCHAR(64); past that the insert fails as a bare 409 "conflict".
+            @Size(max = 64, message = "dsa_complexity_too_long") String timeComplexity,
+            @Size(max = 64, message = "dsa_complexity_too_long") String spaceComplexity,
+            @Valid List<SolutionUpdate> solutions) {}
+
+    /** One language's code for an approach. */
+    public record SolutionUpdate(@NotBlank String language, @NotNull String code) {}
 
     /**
      * One test case.

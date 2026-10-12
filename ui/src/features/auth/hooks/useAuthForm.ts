@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '../../../shared/components/feedback/Toast';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../api/passwordReset.api';
 
 interface UseAuthFormProps {
     signIn: (email: string, pass: string) => Promise<unknown>;
@@ -89,8 +90,14 @@ export function useAuthForm({ signIn, signUp }: UseAuthFormProps) {
             showToast('Password is required.', 'error');
             return;
         }
-        if (password.length < 6) {
-            showToast('Password must be at least 6 characters.', 'error');
+        // The server's rule (RegisterRequest). Checking only 6 here let 6-11 character passwords
+        // through to a raw "validation_failed" from the API.
+        if (password.length < PASSWORD_MIN_LENGTH) {
+            showToast(`Password must be at least ${PASSWORD_MIN_LENGTH} characters.`, 'error');
+            return;
+        }
+        if (password.length > PASSWORD_MAX_LENGTH) {
+            showToast(`Password must be at most ${PASSWORD_MAX_LENGTH} characters.`, 'error');
             return;
         }
         if (password !== passwordConfirmation) {

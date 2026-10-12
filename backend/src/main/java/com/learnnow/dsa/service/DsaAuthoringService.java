@@ -16,6 +16,7 @@ import com.learnnow.dsa.service.DsaExecutionService.CaseOutcome;
 import com.learnnow.dsa.service.DsaExecutionService.ExecutionOutcome;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -57,6 +58,7 @@ public class DsaAuthoringService {
     private final DsaCheckRepository checkRepository;
     private final DsaExecutionService executionService;
     private final ObjectMapper objectMapper;
+    private final DsaApproachSolutions approachSolutions;
 
     @Transactional(readOnly = true)
     public PageResponse<AdminDsaSheetDto> listSheets(Pageable pageable) {
@@ -363,10 +365,24 @@ public class DsaAuthoringService {
                             .intuition(source.intuition() == null ? "" : source.intuition())
                             .timeComplexity(blankToNull(source.timeComplexity()))
                             .spaceComplexity(blankToNull(source.spaceComplexity()))
-                            .language(blankToNull(source.language()))
-                            .code(blankToNull(source.code()))
+                            .solutions(approachSolutions.write(solutionsByLanguage(source)))
                             .build());
         }
+    }
+
+    private static Map<String, String> solutionsByLanguage(
+            DsaProblemUpdateRequest.ApproachUpdate source) {
+        Map<String, String> byLanguage = new LinkedHashMap<>();
+        if (source.solutions() == null) return byLanguage;
+        for (DsaProblemUpdateRequest.SolutionUpdate solution : source.solutions()) {
+            String language = DsaApproachSolutions.normalizeLanguage(solution.language());
+            if (language == null) continue;
+            if (byLanguage.containsKey(language)) {
+                throw new ValidationException("dsa_solution_language_duplicate");
+            }
+            byLanguage.put(language, solution.code());
+        }
+        return byLanguage;
     }
 
     private void replaceChecks(
@@ -613,17 +629,7 @@ public class DsaAuthoringService {
 
         List<DsaApproachDto> approaches =
                 approachRepository.findByProblemIdOrderByOrderIndexAsc(id).stream()
-                        .map(
-                                a ->
-                                        new DsaApproachDto(
-                                                a.getId(),
-                                                a.getKind().name(),
-                                                a.getOrderIndex(),
-                                                a.getIntuition(),
-                                                a.getTimeComplexity(),
-                                                a.getSpaceComplexity(),
-                                                a.getLanguage(),
-                                                a.getCode()))
+                        .map(approachSolutions::toDto)
                         .toList();
 
         List<DsaHintDto> hints =

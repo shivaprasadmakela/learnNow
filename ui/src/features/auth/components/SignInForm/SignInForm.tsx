@@ -54,6 +54,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             <Input
                 type="email"
                 placeholder="Email*"
+                aria-label="Email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
@@ -61,6 +63,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             <Input
                 type="password"
                 placeholder="Password*"
+                aria-label="Password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
@@ -73,12 +77,14 @@ export const SignInForm: React.FC<SignInFormProps> = ({
                     onChange={(e) => setRememberMe(e.target.checked)}
                     disabled={loading}
                 />
-                <span
-                    className={styles.blueLink}
+                <button
+                    type="button"
+                    className={`${styles.blueLink} ${styles.textButton}`}
                     onClick={onForgotPassword}
+                    disabled={loading}
                 >
                     Forgot password?
-                </span>
+                </button>
             </div>
 
             <div className={styles.actionsRow}>

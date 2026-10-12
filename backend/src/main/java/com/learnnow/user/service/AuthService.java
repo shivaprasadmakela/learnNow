@@ -201,19 +201,21 @@ public class AuthService {
         PasswordResetToken token =
                 passwordResetTokenRepository
                         .findByTokenHash(sha256(rawToken))
-                        .orElseThrow(() -> new AuthException("token_invalid"));
+                        .orElseThrow(() -> new AuthException("reset_token_invalid"));
 
+        // Distinct from the verification codes: those messages talk about a "verification link",
+        // which is the wrong thing to tell someone holding a reset link.
         if (token.isUsed()) {
-            throw new AuthException("token_already_used");
+            throw new AuthException("reset_token_already_used");
         }
         if (token.getExpiresAt().isBefore(Instant.now())) {
-            throw new AuthException("token_expired");
+            throw new AuthException("reset_token_expired");
         }
 
         User user =
                 userRepository
                         .findById(token.getUserId())
-                        .orElseThrow(() -> new AuthException("user_not_found"));
+                        .orElseThrow(() -> new AuthException("reset_token_invalid"));
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         // A reset proves control of the mailbox, so it also settles verification.

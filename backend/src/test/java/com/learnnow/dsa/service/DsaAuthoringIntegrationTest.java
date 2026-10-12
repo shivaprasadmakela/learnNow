@@ -297,4 +297,134 @@ class DsaAuthoringIntegrationTest extends com.learnnow.AbstractIntegrationTest {
         assertEquals(0, root.depth());
         assertEquals(1, child.depth());
     }
+
+    private DsaProblemUpdateRequest withApproaches(
+            List<DsaProblemUpdateRequest.ApproachUpdate> approaches) {
+        return new DsaProblemUpdateRequest(
+                "Renamed problem",
+                "A rewritten statement",
+                "HARD",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                approaches,
+                null,
+                null,
+                null);
+    }
+
+    /** The JSONB column round-trips, with ids normalised and the picker's order applied. */
+    @Test
+    void storesAnApproachInSeveralLanguages() {
+        authoringService.updateProblem(
+                problemId,
+                withApproaches(
+                        List.of(
+                                new DsaProblemUpdateRequest.ApproachUpdate(
+                                        "OPTIMAL",
+                                        "Add them.",
+                                        "O(1)",
+                                        "O(1)",
+                                        List.of(
+                                                new DsaProblemUpdateRequest.SolutionUpdate(
+                                                        "C++", "int solve() {}"),
+                                                new DsaProblemUpdateRequest.SolutionUpdate(
+                                                        "Java", "class Solution {}"),
+                                                new DsaProblemUpdateRequest.SolutionUpdate(
+                                                        "python", "   "))))));
+
+        DsaProblemDetailDto preview = catalogService.previewById(problemId, null);
+        assertEquals(1, preview.approaches().size());
+        assertEquals(
+                List.of("java", "cpp"),
+                preview.approaches().get(0).solutions().stream()
+                        .map(com.learnnow.dsa.dto.response.DsaSolutionDto::language)
+                        .toList());
+    }
+
+    @Test
+    void refusesTwoSolutionsInTheSameLanguage() {
+        assertThrows(
+                com.learnnow.common.exception.ValidationException.class,
+                () ->
+                        authoringService.updateProblem(
+                                problemId,
+                                withApproaches(
+                                        List.of(
+                                                new DsaProblemUpdateRequest.ApproachUpdate(
+                                                        "BRUTE",
+                                                        "Try everything.",
+                                                        null,
+                                                        null,
+                                                        List.of(
+                                                                new DsaProblemUpdateRequest
+                                                                        .SolutionUpdate("js", "a"),
+                                                                new DsaProblemUpdateRequest
+                                                                        .SolutionUpdate(
+                                                                        "javascript", "b")))))));
+    }
+
+    /** Import files written before {@code solutions} existed still carry their one language. */
+    @Test
+    void importsTheLegacySingleLanguageApproach() {
+        DsaImportRequest.ImportProblem legacy =
+                new DsaImportRequest.ImportProblem(
+                        "alpha",
+                        "Problem alpha",
+                        "Original statement",
+                        "EASY",
+                        List.of("array"),
+                        10,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "DRAFT",
+                        List.of(),
+                        null,
+                        List.of(
+                                new DsaImportRequest.ImportApproach(
+                                        "OPTIMAL",
+                                        "Direct.",
+                                        "O(1)",
+                                        "O(1)",
+                                        Map.of("python", "class Solution: pass"),
+                                        "java",
+                                        "class Solution {}")),
+                        Map.of(
+                                "cpp",
+                                new DsaImportRequest.ImportHarness("// starter", DRIVER, null)),
+                        List.of(new DsaImportRequest.ImportTestCase("1 2", "3", true, null)));
+        importService.importContent(
+                new DsaImportRequest(
+                        "authoring-test-sheet",
+                        "Authoring test",
+                        null,
+                        null,
+                        List.of(
+                                new DsaImportRequest.ImportStep(
+                                        "step-one",
+                                        1,
+                                        "Step one",
+                                        null,
+                                        List.of(
+                                                new DsaImportRequest.ImportSection(
+                                                        "Basics",
+                                                        null,
+                                                        1,
+                                                        List.of(legacy),
+                                                        null))))));
+
+        DsaProblemDetailDto preview = catalogService.previewById(problemId, null);
+        assertEquals(
+                List.of("python", "java"),
+                preview.approaches().get(0).solutions().stream()
+                        .map(com.learnnow.dsa.dto.response.DsaSolutionDto::language)
+                        .toList());
+    }
 }

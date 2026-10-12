@@ -21,7 +21,7 @@ import { MonacoEditorPane } from '../../../../shared/components/editor';
 import { Tabs } from '../../../../shared/components/ui/Tabs';
 import { DifficultyBadge } from '../../../../shared/components/ui/Badge';
 import { ContentRenderer } from '../../../../shared/components/content-renderer';
-import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
+import { EditorialPanel } from '../../components/EditorialPanel';
 import { BookmarkButton, NotesPanel, useBookmarks, useNote } from '../../../notes';
 import { useDsaProblem } from '../../hooks/useDsaProblem';
 import { useProblemRun, type RunPhase } from '../../hooks/useProblemRun';
@@ -36,7 +36,6 @@ import {
     monacoLanguageFor
 } from '../../utils/dsaExecutionHelper';
 import type {
-    DsaApproach,
     DsaCaseResult,
     DsaRunResult,
     DsaSubmission,
@@ -99,7 +98,6 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     const isMobile = useIsMobile();
     const [language, setLanguage] = useState<string>(DEFAULT_DSA_LANGUAGE);
     const [revealedHints, setRevealedHints] = useState(0);
-    const [approachIndex, setApproachIndex] = useState(0);
     /** An extra case the learner typed, sent along with the samples on Run. */
     const [customInput, setCustomInput] = useState('');
     /** Bumped after a submit so the submissions tab refetches instead of showing a stale list. */
@@ -136,7 +134,6 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
         if (!problem) return;
         setLanguage(defaultLanguageFor(problem.harnesses));
         setRevealedHints(0);
-        setApproachIndex(0);
         setLeftTab('description');
         setCustomInput('');
     }, [problem]);
@@ -258,8 +255,6 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
 
     const solved = problem.progress?.status === 'SOLVED';
     const bookmarked = isBookmarked(problem.id);
-    const approaches = problem.approaches;
-    const visibleApproach: DsaApproach | undefined = approaches[approachIndex];
     const isAnyDragging = horizontal.isDragging || vertical.isDragging;
 
     return (
@@ -424,9 +419,13 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                                             </span>
                                         )}
                                         {problem.youtubeUrl && (
-                                            <span className={styles.metaText}>
-                                                <Video size={11} /> walkthrough below
-                                            </span>
+                                            <button
+                                                type="button"
+                                                className={styles.metaLink}
+                                                onClick={() => setLeftTab('editorial')}
+                                            >
+                                                <Video size={11} /> Video walkthrough in Editorial
+                                            </button>
                                         )}
                                     </div>
                                 </div>
@@ -441,6 +440,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                                         }
                                     ]}
                                     hideHeader
+                                    runnableCode={false}
                                 />
 
                                 {problem.samples.length > 0 && (
@@ -511,88 +511,14 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                         )}
 
                         {leftTab === 'editorial' && (
-                            <>
-                                {approaches.length === 0 ? (
-                                    <p className={styles.consoleHint}>
-                                        The write-up for this problem is still being written.
-                                    </p>
-                                ) : (
-                                    <>
-                                        <div className={styles.approachTabs}>
-                                            {approaches.map((approach, index) => (
-                                                <button
-                                                    key={approach.id}
-                                                    type="button"
-                                                    className={`${styles.approachTab} ${
-                                                        index === approachIndex
-                                                            ? styles.approachTabActive
-                                                            : ''
-                                                    }`}
-                                                    disabled={index > approachIndex + 1}
-                                                    onClick={() => setApproachIndex(index)}
-                                                    title={
-                                                        index > approachIndex + 1
-                                                            ? 'Read the earlier approaches first'
-                                                            : undefined
-                                                    }
-                                                >
-                                                    {approach.kind}
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        {visibleApproach && (
-                                            <>
-                                                <div className={styles.complexityRow}>
-                                                    {visibleApproach.timeComplexity && (
-                                                        <span className={styles.complexity}>
-                                                            <span
-                                                                className={styles.complexityLabel}
-                                                            >
-                                                                time
-                                                            </span>
-                                                            {visibleApproach.timeComplexity}
-                                                        </span>
-                                                    )}
-                                                    {visibleApproach.spaceComplexity && (
-                                                        <span className={styles.complexity}>
-                                                            <span
-                                                                className={styles.complexityLabel}
-                                                            >
-                                                                space
-                                                            </span>
-                                                            {visibleApproach.spaceComplexity}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                <ContentRenderer
-                                                    blocks={[
-                                                        {
-                                                            id: `${visibleApproach.id}-intuition`,
-                                                            orderIndex: 0,
-                                                            type: 'markdown',
-                                                            body:
-                                                                visibleApproach.intuition +
-                                                                (visibleApproach.code
-                                                                    ? `\n\n\`\`\`${visibleApproach.language ?? ''}\n${visibleApproach.code}\n\`\`\``
-                                                                    : '')
-                                                        }
-                                                    ]}
-                                                    hideHeader
-                                                />
-                                            </>
-                                        )}
-                                    </>
-                                )}
-
-                                {problem.youtubeUrl && (
-                                    <>
-                                        <h2 className={styles.sectionHead}>Walkthrough</h2>
-                                        <YouTubeEmbed url={problem.youtubeUrl} />
-                                    </>
-                                )}
-                            </>
+                            <EditorialPanel
+                                key={problem.id}
+                                problemId={problem.id}
+                                approaches={problem.approaches}
+                                preferredLanguage={language}
+                                solved={solved}
+                                youtubeUrl={problem.youtubeUrl}
+                            />
                         )}
 
                         {leftTab === 'submissions' && (

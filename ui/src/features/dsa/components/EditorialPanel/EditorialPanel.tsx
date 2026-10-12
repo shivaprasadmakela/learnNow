@@ -1,150 +1,260 @@
 import React, { useMemo, useState } from 'react';
-import { Eye, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Eye, HardDrive, Lightbulb } from 'lucide-react';
 import styles from './EditorialPanel.module.css';
 import { ContentRenderer } from '../../../../shared/components/content-renderer';
-import type { DsaApproach } from '../../api/dsa.api';
+import { CodeViewer } from '../../../../shared/components/editor/CodeViewer';
+import { Tabs } from '../../../../shared/components/ui/Tabs';
+import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
+import type { DsaApproach, DsaApproachKind } from '../../api/dsa.api';
+import { languageLabel, monacoLanguageFor } from '../../utils/dsaExecutionHelper';
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<DsaApproachKind, string> = {
     BRUTE: 'Brute force',
     BETTER: 'Better',
     OPTIMAL: 'Optimal'
 };
 
 export interface EditorialPanelProps {
+    problemId: string;
     approaches: DsaApproach[];
-    onOpenFullCompiler?: (code: string, language: string) => void;
+    /** The workspace's language. The code opens in it when the approach is written in it. */
+    preferredLanguage: string;
+    /** A learner who has solved the problem is not asked to confirm the spoiler. */
+    solved: boolean;
+    youtubeUrl?: string;
 }
 
+const revealKey = (problemId: string) => `dsa_editorial_revealed:${problemId}`;
+
+const readRevealed = (problemId: string): boolean => {
+    try {
+        return window.localStorage.getItem(revealKey(problemId)) === '1';
+    } catch {
+        return false;
+    }
+};
+
 /**
- * Our written solution, revealed in order.
+ * The written solution: one tab per approach, brute force first, each with its reasoning, its
+ * complexity and its code in every language it was written in.
  *
- * The gating is pedagogical rather than commercial: the reference sheet locks its editorial behind a
- * subscription, we lock it behind having looked at the cheaper approach first. Reading why brute
- * force is O(n²) is most of the value of being told the optimal answer, and a learner who jumps
- * straight to the bottom skips it.
+ * The editorial is a spoiler, so an unsolved problem asks once before showing it - opening the tab
+ * by accident should not cost someone the problem. The answer is remembered per problem.
  */
 export const EditorialPanel: React.FC<EditorialPanelProps> = ({
+    problemId,
     approaches,
-    onOpenFullCompiler
+    preferredLanguage,
+    solved,
+    youtubeUrl
 }) => {
     const sorted = useMemo(
         () => [...approaches].sort((a, b) => a.orderIndex - b.orderIndex),
         [approaches]
     );
 
-    const [unlocked, setUnlocked] = useState(0);
-    const [active, setActive] = useState(0);
+    const [revealed, setRevealed] = useState(() => solved || readRevealed(problemId));
+    const [activeIndex, setActiveIndex] = useState(0);
+    /** The language the learner picked in the editorial, which then sticks across approaches. */
+    const [chosenLanguage, setChosenLanguage] = useState<string | null>(null);
+
+    const reveal = () => {
+        setRevealed(true);
+        try {
+            window.localStorage.setItem(revealKey(problemId), '1');
+        } catch {
+            /* Private mode: it just asks again next time. */
+        }
+    };
 
     if (sorted.length === 0) {
         return (
             <div className={styles.panel}>
-                <p className={styles.empty}>
-                    The written solution for this problem is still being drafted.
-                </p>
+                <div className={styles.empty}>
+                    <Lightbulb size={22} aria-hidden="true" />
+                    <p>The write-up for this problem is still being written.</p>
+                </div>
+                <Walkthrough url={youtubeUrl} />
             </div>
         );
     }
 
-    const approach = sorted[Math.min(active, unlocked)];
-    const isLocked = unlocked === 0;
+    if (!revealed && !solved) {
+        return (
+            <div className={styles.panel}>
+                <div className={styles.gate}>
+                    <span className={styles.gateIcon} aria-hidden="true">
+                        <Eye size={22} />
+                    </span>
+                    <h2 className={styles.gateTitle}>The editorial gives the solution away</h2>
+                    <p className={styles.gateText}>
+                        {sorted.length === 1
+                            ? 'It walks through the approach and its code.'
+                            : `It walks through ${sorted.length} approaches, from ${KIND_LABELS[
+                                  sorted[0].kind
+                              ].toLowerCase()} to ${KIND_LABELS[
+                                  sorted[sorted.length - 1].kind
+                              ].toLowerCase()}, with code for each.`}{' '}
+                        Even a rough attempt first makes it land far better - and the hints on the
+                        Description tab are a smaller nudge.
+                    </p>
+                    <button type="button" className={styles.gateBtn} onClick={reveal}>
+                        <Eye size={15} aria-hidden="true" /> Show the editorial
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
-    const blocks = approach
-        ? [
-              {
-                  id: `${approach.id}-intuition`,
-                  orderIndex: 1,
-                  type: 'markdown' as const,
-                  body: approach.code
-                      ? `${approach.intuition}\n\n\`\`\`${approach.language || 'cpp'}\n${approach.code}\n\`\`\``
-                      : approach.intuition
-              }
-          ]
-        : [];
+    const index = Math.min(activeIndex, sorted.length - 1);
+    const approach = sorted[index];
+    const title = approachTitle(sorted, index);
+
+    const solutions = approach.solutions ?? [];
+    const available = solutions.map(solution => solution.language);
+    const language =
+        [chosenLanguage, preferredLanguage].find(
+            (candidate): candidate is string => candidate != null && available.includes(candidate)
+        ) ?? available[0];
+    const solution = solutions.find(item => item.language === language);
 
     return (
         <div className={styles.panel}>
-            <div className={styles.tabs}>
-                {sorted.map((item, index) => {
-                    const locked = index >= unlocked;
-                    return (
-                        <button
-                            key={item.id}
-                            type="button"
-                            className={[
-                                styles.tab,
-                                !locked && index === active ? styles.tabActive : '',
-                                locked ? styles.tabLocked : ''
-                            ]
-                                .filter(Boolean)
-                                .join(' ')}
-                            onClick={() => !locked && setActive(index)}
-                            disabled={locked}
-                            title={locked ? 'Read the previous approach first' : undefined}
-                        >
-                            {locked && <Lock size={12} />}
-                            {KIND_LABELS[item.kind] ?? item.kind}
-                        </button>
-                    );
-                })}
-            </div>
+            {sorted.length > 1 && (
+                <Tabs
+                    items={sorted.map((_item, i) => ({
+                        id: String(i),
+                        label: approachTitle(sorted, i)
+                    }))}
+                    activeId={String(index)}
+                    onChange={id => setActiveIndex(Number(id))}
+                    variant="pill"
+                    label="Approaches"
+                />
+            )}
 
-            {isLocked ? (
-                <div className={styles.gate}>
-                    <p className={styles.gateText}>
-                        Have a go first — even a brute-force attempt makes the optimal approach land
-                        much harder. The walkthrough is not going anywhere.
-                    </p>
-                    <button
-                        type="button"
-                        className={styles.gateBtn}
-                        onClick={() => setUnlocked(1)}
-                    >
-                        <Eye size={15} /> Show the {KIND_LABELS[sorted[0].kind]?.toLowerCase()} approach
-                    </button>
-                </div>
-            ) : (
-                <>
+            <article className={styles.approach} aria-labelledby={`${approach.id}-title`}>
+                <header className={styles.approachHead}>
+                    <h2 id={`${approach.id}-title`} className={styles.approachTitle}>
+                        {sorted.length > 1 && (
+                            <span className={styles.approachNumber}>Approach {index + 1}</span>
+                        )}
+                        {title}
+                    </h2>
                     {(approach.timeComplexity || approach.spaceComplexity) && (
-                        <div className={styles.complexity}>
+                        <dl className={styles.complexity}>
                             {approach.timeComplexity && (
-                                <span className={styles.chip}>
-                                    <span className={styles.chipLabel}>Time</span>
-                                    <span className={styles.chipValue}>{approach.timeComplexity}</span>
-                                </span>
+                                <div className={styles.chip}>
+                                    <dt>
+                                        <Clock size={12} aria-hidden="true" /> Time
+                                    </dt>
+                                    <dd>{approach.timeComplexity}</dd>
+                                </div>
                             )}
                             {approach.spaceComplexity && (
-                                <span className={styles.chip}>
-                                    <span className={styles.chipLabel}>Space</span>
-                                    <span className={styles.chipValue}>{approach.spaceComplexity}</span>
-                                </span>
+                                <div className={styles.chip}>
+                                    <dt>
+                                        <HardDrive size={12} aria-hidden="true" /> Space
+                                    </dt>
+                                    <dd>{approach.spaceComplexity}</dd>
+                                </div>
                             )}
-                        </div>
+                        </dl>
                     )}
+                </header>
 
-                    <ContentRenderer
-                        blocks={blocks}
-                        hideHeader
-                        onOpenFullCompiler={onOpenFullCompiler}
+                {approach.intuition.trim() && (
+                    <div className={styles.intuition}>
+                        <ContentRenderer
+                            blocks={[
+                                {
+                                    id: `${approach.id}-intuition`,
+                                    orderIndex: 0,
+                                    type: 'markdown',
+                                    body: approach.intuition
+                                }
+                            ]}
+                            hideHeader
+                            runnableCode={false}
+                        />
+                    </div>
+                )}
+
+                {solution && (
+                    <CodeViewer
+                        code={solution.code}
+                        language={monacoLanguageFor(solution.language)}
+                        label={`${title} in ${languageLabel(solution.language)}`}
+                        toolbar={
+                            solutions.length > 1 ? (
+                                <Tabs
+                                    items={solutions.map(item => ({
+                                        id: item.language,
+                                        label: languageLabel(item.language)
+                                    }))}
+                                    activeId={solution.language}
+                                    onChange={setChosenLanguage}
+                                    variant="compact"
+                                    label="Solution language"
+                                    className={styles.languageTabs}
+                                />
+                            ) : (
+                                <span className={styles.languageName}>
+                                    {languageLabel(solution.language)}
+                                </span>
+                            )
+                        }
                     />
+                )}
+            </article>
 
-                    {unlocked < sorted.length && (
+            {sorted.length > 1 && (
+                <nav className={styles.stepper} aria-label="Approach navigation">
+                    {index > 0 ? (
                         <button
                             type="button"
-                            className={styles.gateBtn}
-                            style={{ alignSelf: 'flex-start' }}
-                            onClick={() => {
-                                setUnlocked(n => n + 1);
-                                setActive(unlocked);
-                            }}
+                            className={styles.stepBtn}
+                            onClick={() => setActiveIndex(index - 1)}
                         >
-                            <Eye size={15} /> Show the{' '}
-                            {KIND_LABELS[sorted[unlocked].kind]?.toLowerCase()} approach
+                            <ChevronLeft size={15} aria-hidden="true" />
+                            {approachTitle(sorted, index - 1)}
+                        </button>
+                    ) : (
+                        <span />
+                    )}
+                    {index < sorted.length - 1 && (
+                        <button
+                            type="button"
+                            className={`${styles.stepBtn} ${styles.stepBtnNext}`}
+                            onClick={() => setActiveIndex(index + 1)}
+                        >
+                            Next: {approachTitle(sorted, index + 1)}
+                            <ChevronRight size={15} aria-hidden="true" />
                         </button>
                     )}
-                </>
+                </nav>
             )}
+
+            <Walkthrough url={youtubeUrl} />
         </div>
     );
 };
+
+/** "Brute force", or "Brute force 2" when an editorial has two approaches of the same kind. */
+const approachTitle = (approaches: DsaApproach[], index: number): string => {
+    const kind = approaches[index].kind;
+    const label = KIND_LABELS[kind] ?? kind;
+    const sameKind = approaches.filter(item => item.kind === kind);
+    if (sameKind.length < 2) return label;
+    return `${label} ${sameKind.indexOf(approaches[index]) + 1}`;
+};
+
+const Walkthrough: React.FC<{ url?: string }> = ({ url }) =>
+    url ? (
+        <section className={styles.walkthrough}>
+            <h2 className={styles.sectionHead}>Video walkthrough</h2>
+            <YouTubeEmbed url={url} />
+        </section>
+    ) : null;
 
 export default EditorialPanel;

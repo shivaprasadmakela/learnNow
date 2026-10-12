@@ -15,6 +15,14 @@ export const DSA_SUPPORTED_LANGUAGES: DsaLanguageOption[] = [
     { id: 'c', name: 'C', monacoLanguage: 'c' }
 ];
 
+/** The display name for a language id - "C++" for `cpp` - or the id itself for one we do not list. */
+export function languageLabel(language: string): string {
+    const match = DSA_SUPPORTED_LANGUAGES.find(
+        option => option.id === language.trim().toLowerCase()
+    );
+    return match?.name ?? language;
+}
+
 /**
  * Extracts method name dynamically from the problem's JSON harnesses, approaches, slug, or title.
  */
@@ -36,8 +44,8 @@ export function extractMethodNameFromProblem(problem: Partial<DsaProblemDetail>)
     // 2. Check editorial approaches in the problem JSON
     if (problem.approaches && problem.approaches.length > 0) {
         for (const app of problem.approaches) {
-            if (app.code) {
-                const match = app.code.match(METHOD_REGEX);
+            for (const solution of app.solutions ?? []) {
+                const match = solution.code.match(METHOD_REGEX);
                 if (match && match[1] && match[1] !== 'main' && match[1] !== 'constructor') {
                     return match[1];
                 }

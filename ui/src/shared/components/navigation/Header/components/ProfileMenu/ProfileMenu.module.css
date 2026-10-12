@@ -1,0 +1,190 @@
+.wrapper {
+    position: relative;
+    flex: none;
+}
+
+.trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    /* A flex child with a declared width still shrinks without this - it was rendering 29px. */
+    flex: none;
+    padding: 0;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    background-color: var(--bg-secondary);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.trigger:hover,
+.triggerOpen {
+    border-color: var(--tech-blue);
+}
+
+.trigger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-blue-light);
+    border-color: var(--tech-blue);
+}
+
+/* Anchored to the avatar, not to a guess at the header height. */
+.menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: var(--z-modal);
+    display: flex;
+    flex-direction: column;
+    width: 288px;
+    max-width: calc(100vw - 24px);
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-card);
+    box-shadow: var(--shadow-lg);
+    animation: menuIn 120ms ease-out;
+    transform-origin: top right;
+}
+
+@keyframes menuIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu {
+        animation: none;
+    }
+}
+
+.identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 10px 12px;
+}
+
+.identityAvatar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    background-color: var(--bg-secondary);
+}
+
+.identityText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 650;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.roleBadge {
+    flex: none;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-blue-light);
+    color: var(--tech-blue);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.email {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 10px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.item svg {
+    flex: none;
+    color: var(--text-tertiary);
+    transition: color var(--transition-fast);
+}
+
+.item:hover,
+.item:focus-visible {
+    outline: none;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.item:hover svg,
+.item:focus-visible svg {
+    color: var(--text-primary);
+}
+
+.itemText {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.itemHint {
+    font-size: 0.74rem;
+    font-weight: 400;
+    color: var(--text-tertiary);
+}
+
+.itemSignOut:hover,
+.itemSignOut:focus-visible,
+.itemSignOut:hover svg,
+.itemSignOut:focus-visible svg {
+    color: var(--tech-red);
+}

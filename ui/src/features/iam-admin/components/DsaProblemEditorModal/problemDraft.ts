@@ -15,13 +15,18 @@ export interface HintDraft {
     body: string;
 }
 
+export interface SolutionDraft {
+    /** A compiler language id - `java`, `cpp`, `python`, `javascript`. */
+    language: string;
+    code: string;
+}
+
 export interface ApproachDraft {
     kind: 'BRUTE' | 'BETTER' | 'OPTIMAL';
     intuition: string;
     timeComplexity: string;
     spaceComplexity: string;
-    language: string;
-    code: string;
+    solutions: SolutionDraft[];
 }
 
 export interface TestCaseDraft {
@@ -84,8 +89,10 @@ export const toDraft = (problem: AdminDsaProblem): ProblemDraft => ({
         intuition: approach.intuition,
         timeComplexity: approach.timeComplexity ?? '',
         spaceComplexity: approach.spaceComplexity ?? '',
-        language: approach.language ?? '',
-        code: approach.code ?? ''
+        solutions: (approach.solutions ?? []).map(solution => ({
+            language: solution.language,
+            code: solution.code
+        }))
     })),
     testCases: (problem.testCases ?? []).map(testCase => ({
         input: testCase.input,
@@ -137,8 +144,10 @@ export const toPayload = (draft: ProblemDraft): DsaProblemUpdate => ({
         intuition: approach.intuition,
         timeComplexity: approach.timeComplexity.trim() || null,
         spaceComplexity: approach.spaceComplexity.trim() || null,
-        language: approach.language.trim() || null,
-        code: approach.code.trim() || null
+        // A language tab added and never filled in is dropped rather than saved empty.
+        solutions: approach.solutions
+            .filter(solution => solution.code.trim())
+            .map(solution => ({ language: solution.language, code: solution.code }))
     })),
     testCases: draft.testCases.map(testCase => ({
         input: testCase.input,
