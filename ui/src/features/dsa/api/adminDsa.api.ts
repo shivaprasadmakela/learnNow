@@ -94,8 +94,7 @@ export interface AdminDsaApproach {
     intuition: string;
     timeComplexity?: string;
     spaceComplexity?: string;
-    language?: string;
-    code?: string;
+    solutions: Array<{ language: string; code: string }>;
 }
 
 export interface AdminDsaHint {
@@ -150,8 +149,8 @@ export interface DsaProblemUpdate {
         intuition: string;
         timeComplexity?: string | null;
         spaceComplexity?: string | null;
-        language?: string | null;
-        code?: string | null;
+        /** Replaces the approach's code wholesale: a language left out is removed. */
+        solutions: Array<{ language: string; code: string }>;
     }>;
     testCases?: Array<{
         input: string;

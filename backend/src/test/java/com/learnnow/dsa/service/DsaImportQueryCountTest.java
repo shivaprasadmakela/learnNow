@@ -110,7 +110,13 @@ class DsaImportQueryCountTest extends com.learnnow.AbstractIntegrationTest {
                         "Is this cheap?", List.of("yes", "no"), "yes", null, 2),
                 List.of(
                         new DsaImportRequest.ImportApproach(
-                                "OPTIMAL", "Do it directly", "O(n)", "O(1)", "cpp", "// code")),
+                                "OPTIMAL",
+                                "Do it directly",
+                                "O(n)",
+                                "O(1)",
+                                Map.of("cpp", "// code"),
+                                null,
+                                null)),
                 Map.of("cpp", new DsaImportRequest.ImportHarness("// starter", DRIVER, null)),
                 List.of(
                         new DsaImportRequest.ImportTestCase("1 2", "3", true, null),

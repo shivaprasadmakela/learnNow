@@ -209,6 +209,28 @@
 .medium { color: var(--color-yellow-600, #b45309); }
 .hard { color: var(--color-red-500, #ef4444); }
 
+.metaLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--tech-blue);
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.metaLink:hover { text-decoration: underline; }
+
+.metaLink:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
 .metaText { font-size: 0.76rem; color: var(--text-tertiary); }
 
 .solvedPill {
@@ -313,37 +335,6 @@
 .revealBtn:hover { border-color: var(--tech-blue); color: var(--tech-blue); }
 
 /* ─── Approaches ─── */
-
-.approachTabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
-
-.approachTab {
-    padding: 6px 13px;
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    font-size: 0.78rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-.approachTabActive { border-color: var(--tech-blue); background: var(--tech-blue); color: #ffffff; }
-.approachTab:disabled { opacity: 0.45; cursor: default; }
-
-.complexityRow { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-
-.complexity {
-    padding: 5px 11px;
-    border: 1px solid var(--border-color);
-    border-radius: 7px;
-    background: var(--bg-secondary);
-    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-    font-size: 0.74rem;
-    color: var(--text-primary);
-}
-
-.complexityLabel { color: var(--text-tertiary); margin-right: 5px; }
 
 /* ─── Editor pane ─── */
 

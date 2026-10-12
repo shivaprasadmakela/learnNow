@@ -48,6 +48,7 @@ public class DsaImportService {
     private final DsaTestCaseRepository testCaseRepository;
     private final DsaCheckRepository checkRepository;
     private final ObjectMapper objectMapper;
+    private final DsaApproachSolutions approachSolutions;
 
     /**
      * Everything already stored that this import might touch, read once before the walk begins.
@@ -489,8 +490,10 @@ public class DsaImportService {
             approach.setIntuition(source.intuition() == null ? "" : source.intuition());
             approach.setTimeComplexity(source.timeComplexity());
             approach.setSpaceComplexity(source.spaceComplexity());
-            approach.setLanguage(source.language());
-            approach.setCode(source.code());
+            approach.setSolutions(
+                    approachSolutions.write(
+                            DsaApproachSolutions.collect(
+                                    source.solutions(), source.language(), source.code())));
             approachRepository.save(approach);
         }
 

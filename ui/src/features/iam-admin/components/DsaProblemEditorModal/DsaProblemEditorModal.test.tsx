@@ -47,8 +47,7 @@ const PROBLEM: AdminDsaProblem = {
             intuition: 'Add them.',
             timeComplexity: 'O(1)',
             spaceComplexity: 'O(1)',
-            language: 'cpp',
-            code: 'return a + b;'
+            solutions: [{ language: 'cpp', code: 'return a + b;' }]
         }
     ],
     hints: [
@@ -160,6 +159,44 @@ describe('DsaProblemEditorModal', () => {
         // Options are typed one per line and travel as an array.
         expect(payload.checks[0].options).toEqual(['O(1)', 'O(n)']);
         expect(onSaved).toHaveBeenCalled();
+    });
+
+    it('edits an approach\'s code per language and drops a language left empty', async () => {
+        await renderOpen();
+        openTab(/Editorial/);
+
+        // The stored C++ solution opens first.
+        expect(screen.getByTestId('monaco')).toHaveValue('return a + b;');
+
+        fireEvent.change(screen.getByLabelText('Add a language'), {
+            target: { value: 'python' }
+        });
+        fireEvent.change(screen.getByTestId('monaco'), {
+            target: { value: 'return a + b' }
+        });
+        // Added and never written: should not be saved as an empty solution.
+        fireEvent.change(screen.getByLabelText('Add a language'), {
+            target: { value: 'java' }
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /Save/ }));
+        await waitFor(() => expect(updateDsaProblem).toHaveBeenCalled());
+        expect(updateDsaProblem.mock.calls[0][1].approaches[0].solutions).toEqual([
+            { language: 'cpp', code: 'return a + b;' },
+            { language: 'python', code: 'return a + b' }
+        ]);
+    });
+
+    it('removes a language from an approach', async () => {
+        await renderOpen();
+        openTab(/Editorial/);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Remove the C++ solution' }));
+        expect(screen.getByText(/No code yet/)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /Save/ }));
+        await waitFor(() => expect(updateDsaProblem).toHaveBeenCalled());
+        expect(updateDsaProblem.mock.calls[0][1].approaches[0].solutions).toEqual([]);
     });
 
     it('adds, reorders and removes hints', async () => {

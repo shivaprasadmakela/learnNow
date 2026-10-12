@@ -14,6 +14,8 @@
  */
 export { MonacoEditorPane } from './MonacoEditorPane/MonacoEditorPane';
 export { CompilerOutputPane } from './CompilerOutputPane/CompilerOutputPane';
+export { CodeViewer } from './CodeViewer/CodeViewer';
+export type { CodeViewerProps } from './CodeViewer/CodeViewer';
 export { useCodeExecution } from './useCodeExecution';
 export type { ConsoleLogEntry } from './useCodeExecution';
 export { SUPPORTED_LANGUAGES } from './codeTemplates';

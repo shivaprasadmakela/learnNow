@@ -43,13 +43,19 @@ interface ContentRendererProps {
     onQuizAnswered?: (questionId: string, isCorrect: boolean, isFirstAttempt: boolean) => void;
     onAllQuizzesAnsweredChange?: (allAnswered: boolean) => void;
     onOpenFullCompiler?: (code: string, language: string) => void;
+    /**
+     * Whether fenced code offers "Try in Playground". On by default for lessons, where snippets are
+     * whole programs; off where they are fragments with no entry point, which could only fail.
+     */
+    runnableCode?: boolean;
 }
 
 const CodeBlockRenderer: React.FC<{
     codeString: string;
     lang: string;
     onOpenFullCompiler?: (code: string, language: string) => void;
-}> = ({ codeString, lang, onOpenFullCompiler }) => {
+    runnable: boolean;
+}> = ({ codeString, lang, onOpenFullCompiler, runnable }) => {
     const [copied, setCopied] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -68,7 +74,7 @@ const CodeBlockRenderer: React.FC<{
         );
     }
 
-    const executable = isExecutableLanguage(cleanLang);
+    const executable = runnable && isExecutableLanguage(cleanLang);
     const preparedCode = executable ? formatExecutableCode(codeString, cleanLang) : codeString;
 
     return (
@@ -122,7 +128,8 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
     hideHeader = false,
     onQuizAnswered,
     onAllQuizzesAnsweredChange,
-    onOpenFullCompiler
+    onOpenFullCompiler,
+    runnableCode = true
 }) => {
     const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
     const [attemptCounts, setAttemptCounts] = useState<Record<string, number>>({});
@@ -263,6 +270,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
                                 codeString={codeString}
                                 lang={lang}
                                 onOpenFullCompiler={onOpenFullCompiler}
+                                runnable={runnableCode}
                             />
                         );
                     }

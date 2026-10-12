@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +66,20 @@ public record DsaImportRequest(
             Map<String, ImportHarness> harnesses,
             @Valid List<ImportTestCase> testCases) {}
 
+    /**
+     * One editorial approach.
+     *
+     * <p>{@code solutions} is keyed by language id, like {@code harnesses}. {@code language} and
+     * {@code code} are the older single-language shape, still accepted so existing files import.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ImportApproach(
             String kind,
             String intuition,
-            String timeComplexity,
-            String spaceComplexity,
+            // The columns are VARCHAR(64); past that the insert fails as a bare 409 "conflict".
+            @Size(max = 64, message = "dsa_complexity_too_long") String timeComplexity,
+            @Size(max = 64, message = "dsa_complexity_too_long") String spaceComplexity,
+            Map<String, String> solutions,
             String language,
             String code) {}
 

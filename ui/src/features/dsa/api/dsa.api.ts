@@ -88,6 +88,12 @@ export interface DsaHint {
     body: string;
 }
 
+/** One language's code for an approach. `language` is a compiler id: `java`, `cpp`, `python`... */
+export interface DsaSolution {
+    language: string;
+    code: string;
+}
+
 export interface DsaApproach {
     id: string;
     kind: DsaApproachKind;
@@ -95,8 +101,8 @@ export interface DsaApproach {
     intuition: string;
     timeComplexity?: string;
     spaceComplexity?: string;
-    language?: string;
-    code?: string;
+    /** One entry per language the approach is written in. Empty for a prose-only approach. */
+    solutions: DsaSolution[];
 }
 
 export interface DsaCheck {

@@ -424,7 +424,9 @@ export const DsaSheetManager: React.FC<DsaSheetManagerProps> = ({ refreshToken =
         [busyId, runGenerate, runPublish]
     );
 
-    if (isLoading) {
+    // Only the first load replaces the page. A refresh - after a save in the problem editor, say -
+    // keeps the tree mounted, or the open editor would unmount with it and reopen on its first tab.
+    if (isLoading && sheets.length === 0) {
         return <p className={styles.state}>Loading authored sheets...</p>;
     }
 
