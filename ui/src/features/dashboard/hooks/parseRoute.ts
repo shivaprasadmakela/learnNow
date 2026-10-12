@@ -8,6 +8,7 @@ export type ViewState =
     | 'TOPICS'
     | 'STUDY'
     | 'VERIFY_EMAIL'
+    | 'RESET_PASSWORD'
     | 'COMPILER'
     | 'DSA'
     | 'DSA_PROBLEM'
@@ -43,6 +44,7 @@ export const parseRoute = (pathname: string): ParsedRoute => {
         if (first === 'privacy') return { view: 'PRIVACY' };
         if (first === 'login') return { view: 'LOGIN' };
         if (first === 'verify-email') return { view: 'VERIFY_EMAIL' };
+        if (first === 'reset-password') return { view: 'RESET_PASSWORD' };
         if (first === 'paths') return { view: 'PATHS' };
         if (first === 'dsa') return { view: 'DSA' };
         if (first === 'iamAdmin') return { view: 'ADMIN' };
@@ -91,6 +93,8 @@ export const routeToPath = (
             return '/login';
         case 'VERIFY_EMAIL':
             return `/verify-email${slug ? `?token=${slug}` : ''}`;
+        case 'RESET_PASSWORD':
+            return '/reset-password';
         case 'COMPILER':
             return `/compiler/${slug || 'javascript'}`;
         case 'PATHS':

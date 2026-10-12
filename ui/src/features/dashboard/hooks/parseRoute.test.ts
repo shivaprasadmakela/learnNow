@@ -12,6 +12,7 @@ describe('parseRoute', () => {
         ['/dashboard', 'DASHBOARD'],
         ['/login', 'LOGIN'],
         ['/verify-email', 'VERIFY_EMAIL'],
+        ['/reset-password', 'RESET_PASSWORD'],
         ['/compiler', 'COMPILER'],
         ['/compiler/python', 'COMPILER'],
         ['/paths', 'PATHS'],

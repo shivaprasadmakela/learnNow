@@ -8,6 +8,7 @@ const Home = React.lazy(() => import('../../features/home').then(m => ({ default
 const Dashboard = React.lazy(() => import('../../features/dashboard').then(m => ({ default: m.Dashboard })));
 const LoginPage = React.lazy(() => import('../../features/auth').then(m => ({ default: m.LoginPage })));
 const VerifyEmailPage = React.lazy(() => import('../../features/auth').then(m => ({ default: m.VerifyEmailPage })));
+const ResetPasswordPage = React.lazy(() => import('../../features/auth').then(m => ({ default: m.ResetPasswordPage })));
 const PathsPage = React.lazy(() => import('../../features/paths').then(m => ({ default: m.PathsPage })));
 const TopicsPage = React.lazy(() => import('../../features/topics').then(m => ({ default: m.TopicsPage })));
 const AdminDashboard = React.lazy(() => import('../../features/iam-admin').then(m => ({ default: m.AdminDashboard })));
@@ -53,6 +54,8 @@ interface AppViewRendererProps {
     onSaveProfile: (fullName: string, avatar: string, bio: string) => void;
     /** Called once the learner has erased their account, so the session can be ended. */
     onAccountErased: () => void;
+    /** Called after a password reset, which revoked every session including this tab's. */
+    onPasswordReset: () => void;
 }
 
 export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
@@ -84,7 +87,8 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     refreshUserData,
     onMetricsLoaded,
     onSaveProfile,
-    onAccountErased
+    onAccountErased,
+    onPasswordReset
 }) => {
     const isAdmin = isLoggedIn && profile?.role?.toUpperCase() === 'ADMIN';
 
@@ -92,7 +96,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
         <div className={
             activeView === 'COMPILER'
                 ? styles.pageContentCompiler
-                : activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'PRIVACY' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
+                : activeView === 'HOME' || activeView === 'LOGIN' || activeView === 'VERIFY_EMAIL' || activeView === 'RESET_PASSWORD' || activeView === 'PRIVACY' || activeView === 'ADMIN_CREATE_PATH' || activeView === 'ADMIN_EDIT_PATH' || activeView === 'ADMIN_IMPORT_COURSE'
                     ? styles.pageContentFull
                     : activeView === 'DASHBOARD' || activeView === 'DSA' || activeView === 'PROFILE'
                         ? styles.pageContentDashboard
@@ -149,6 +153,13 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                     <VerifyEmailPage
                         changeView={changeView}
                         onVerificationSuccess={handleLoginSuccess}
+                    />
+                )}
+
+                {activeView === 'RESET_PASSWORD' && (
+                    <ResetPasswordPage
+                        onResetComplete={onPasswordReset}
+                        onBackToSignIn={() => changeView('LOGIN')}
                     />
                 )}
 

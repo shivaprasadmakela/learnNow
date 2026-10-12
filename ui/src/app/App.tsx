@@ -169,6 +169,16 @@ export default function App() {
         changeView('HOME');
     };
 
+    /**
+     * The reset revoked every session server-side, this tab's included. Ending it here, rather
+     * than waiting for the next request to bounce, sends the learner straight to a working sign-in.
+     */
+    const handlePasswordReset = async () => {
+        // signOut lands on HOME when it finishes, so it has to finish before LOGIN is chosen.
+        if (isLoggedIn) await signOut();
+        changeView('LOGIN');
+    };
+
     const isDsaView =
         activeView === 'DSA' || activeView === 'DSA_PROBLEM';
 
@@ -267,7 +277,7 @@ export default function App() {
                 )}
 
                 {/* Sidebar */}
-                {activeView !== 'LOGIN' && activeView !== 'VERIFY_EMAIL' && activeView !== 'STUDY' && (
+                {activeView !== 'LOGIN' && activeView !== 'VERIFY_EMAIL' && activeView !== 'RESET_PASSWORD' && activeView !== 'STUDY' && (
                     <Sidebar
                         isExpanded={isExpanded}
                         setIsExpanded={setIsExpanded}
@@ -387,6 +397,7 @@ export default function App() {
                             onMetricsLoaded={updateMetrics}
                             onSaveProfile={saveProfile}
                             onAccountErased={handleAccountErased}
+                            onPasswordReset={handlePasswordReset}
                         />
                     </main>
                 )}
