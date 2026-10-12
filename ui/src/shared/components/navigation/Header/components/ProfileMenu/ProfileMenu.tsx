@@ -1,142 +1,176 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useToast } from '../../../../feedback/Toast';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { LogOut, ShieldCheck, UserRound } from 'lucide-react';
 import { Avatar } from '../../../../ui/Avatar';
-import styles from '../../../Navigation.module.css';
+import styles from './ProfileMenu.module.css';
 import type { ProfileMenuProps } from './ProfileMenu.types';
 
-export const ProfileMenu: React.FC<ProfileMenuProps> = ({
-    profile,
-    changeView,
-    signOut,
-    onOpenSettings
-}) => {
-    const { showToast } = useToast();
-    const [showProfileMenu, setShowProfileMenu] = useState(false);
+/**
+ * The avatar button and the account popover behind it.
+ *
+ * It only holds what is not already one click away. The sidebar carries Dashboard, Paths, DSA,
+ * the compiler and Admin, and the header carries the theme toggle, points and streak - repeating
+ * any of them here was noise. What is left is the account itself: who is signed in, the page that
+ * manages their profile and data, the privacy notice, and signing out.
+ *
+ * It behaves as a menu button should: Escape closes it and returns focus to the avatar, the arrow
+ * keys, Home and End move between items, Tab or a click outside closes it.
+ */
+export const ProfileMenu: React.FC<ProfileMenuProps> = ({ profile, changeView, signOut }) => {
+    const [open, setOpen] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
+    const menuId = useId();
+
+    const close = useCallback((returnFocus: boolean) => {
+        setOpen(false);
+        if (returnFocus) triggerRef.current?.focus();
+    }, []);
+
+    const items = () =>
+        Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setShowProfileMenu(false);
-            }
+        if (!open) return;
+        // The first item takes focus, so keyboard users land inside the menu they opened.
+        items()[0]?.focus();
+
+        const onPointerDown = (event: MouseEvent) => {
+            if (!wrapperRef.current?.contains(event.target as Node)) close(false);
         };
-        if (showProfileMenu) {
-            document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('mousedown', onPointerDown);
+        return () => document.removeEventListener('mousedown', onPointerDown);
+    }, [open, close]);
+
+    const onMenuKeyDown = (event: React.KeyboardEvent) => {
+        const list = items();
+        const index = list.indexOf(document.activeElement as HTMLElement);
+        switch (event.key) {
+            case 'Escape':
+                event.preventDefault();
+                close(true);
+                break;
+            case 'ArrowDown':
+                event.preventDefault();
+                list[(index + 1) % list.length]?.focus();
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                list[(index - 1 + list.length) % list.length]?.focus();
+                break;
+            case 'Home':
+                event.preventDefault();
+                list[0]?.focus();
+                break;
+            case 'End':
+                event.preventDefault();
+                list[list.length - 1]?.focus();
+                break;
+            case 'Tab':
+                close(false);
+                break;
         }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [showProfileMenu]);
+    };
+
+    const go = (view: 'PROFILE' | 'PRIVACY') => {
+        close(false);
+        changeView(view);
+    };
+
+    const name = profile?.fullName?.trim() || 'Learner';
+    const isAdmin = profile?.role?.toUpperCase() === 'ADMIN';
 
     return (
-        <div className={styles.avatarMenuWrapper} ref={menuRef}>
+        <div className={styles.wrapper} ref={wrapperRef}>
             <button
-                className={styles.avatarBtn}
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                title="Profile settings"
+                ref={triggerRef}
+                type="button"
+                className={`${styles.trigger} ${open ? styles.triggerOpen : ''}`}
+                onClick={() => setOpen(value => !value)}
+                onKeyDown={event => {
+                    if (event.key === 'ArrowDown' && !open) {
+                        event.preventDefault();
+                        setOpen(true);
+                    }
+                }}
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-controls={open ? menuId : undefined}
+                aria-label="Account menu"
+                title="Account"
             >
                 <Avatar avatar={profile?.avatar} size={32} />
             </button>
 
-            {showProfileMenu && (
-                <div className={styles.profileDropdown}>
-                    <div className={styles.profileDropdownHeader}>
-                        <div className={styles.dropdownAvatarCircle}>
-                            <Avatar avatar={profile?.avatar} size={48} />
-                        </div>
-                        <div className={styles.headerInfo}>
-                            <h4 className={styles.profileName}>{profile?.fullName || 'Learner'}</h4>
-                            <p className={styles.profileMemberDate}>Member since 2026</p>
-                            <div className={styles.subscriptionRow}>
-                                <span className={styles.tierBadge}>
-                                    <span className={styles.tierBadgeDot} />
-                                    Starter
+            {open && (
+                <div
+                    ref={menuRef}
+                    id={menuId}
+                    role="menu"
+                    aria-label="Account"
+                    className={styles.menu}
+                    onKeyDown={onMenuKeyDown}
+                >
+                    <div className={styles.identity}>
+                        <span className={styles.identityAvatar}>
+                            <Avatar avatar={profile?.avatar} size={44} />
+                        </span>
+                        <div className={styles.identityText}>
+                            <span className={styles.name} title={name}>
+                                {name}
+                                {isAdmin && <span className={styles.roleBadge}>Admin</span>}
+                            </span>
+                            {profile?.email && (
+                                <span className={styles.email} title={profile.email}>
+                                    {profile.email}
                                 </span>
-                                <span
-                                    className={styles.buySubscriptionLink}
-                                    onClick={() => {
-                                        showToast('Subscription purchases are coming soon!', 'info');
-                                        setShowProfileMenu(false);
-                                    }}
-                                >
-                                    Buy subscription
-                                </span>
-                            </div>
+                            )}
                         </div>
                     </div>
 
-                    <hr className={styles.dropdownDivider} />
-
-                    <div className={styles.menuLinksList}>
-                        <div
-                            className={styles.menuItem}
-                            onClick={() => {
-                                changeView('DASHBOARD');
-                                setShowProfileMenu(false);
-                            }}
+                    <div className={styles.group} role="none">
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className={styles.item}
+                            onClick={() => go('PROFILE')}
                         >
-                            <i className="fa-solid fa-gauge-high" style={{ width: '18px', textAlign: 'center' }} />
-                            <span>Dashboard</span>
-                        </div>
-                        <div
-                            className={styles.menuItem}
-                            onClick={() => {
-                                showToast('Progress tracking is coming soon!', 'info');
-                                setShowProfileMenu(false);
-                            }}
+                            <UserRound size={16} aria-hidden="true" />
+                            <span className={styles.itemText}>
+                                <span>Profile &amp; privacy</span>
+                                <span className={styles.itemHint}>
+                                    Name, avatar, consents and your data
+                                </span>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className={styles.item}
+                            onClick={() => go('PRIVACY')}
                         >
-                            <i className="fa-solid fa-list-check" style={{ width: '18px', textAlign: 'center' }} />
-                            <span>Progress</span>
-                        </div>
-                        <div
-                            className={styles.menuItem}
-                            onClick={() => {
-                                changeView('PROFILE');
-                                setShowProfileMenu(false);
-                            }}
-                        >
-                            <i className="fa-solid fa-user-shield" style={{ width: '18px', textAlign: 'center' }} />
-                            <span>Account &amp; privacy</span>
-                        </div>
-                        <div
-                            className={styles.menuItem}
-                            onClick={() => {
-                                onOpenSettings?.();
-                                setShowProfileMenu(false);
-                            }}
-                        >
-                            <i className="fa-solid fa-gear" style={{ width: '18px', textAlign: 'center' }} />
-                            <span>Settings</span>
-                        </div>
-                        <div
-                            className={styles.menuItem}
-                            onClick={() => {
-                                signOut();
-                                setShowProfileMenu(false);
-                            }}
-                        >
-                            <i className="fa-solid fa-right-from-bracket" style={{ width: '18px', textAlign: 'center' }} />
-                            <span>Sign Out</span>
-                        </div>
+                            <ShieldCheck size={16} aria-hidden="true" />
+                            <span className={styles.itemText}>
+                                <span>Privacy notice</span>
+                            </span>
+                        </button>
                     </div>
 
-                    <div className={styles.dropdownFooter}>
-                        <span
+                    <div className={styles.group} role="none">
+                        <button
+                            type="button"
+                            role="menuitem"
+                            className={`${styles.item} ${styles.itemSignOut}`}
                             onClick={() => {
-                                changeView('PRIVACY');
-                                setShowProfileMenu(false);
+                                close(false);
+                                void signOut();
                             }}
                         >
-                            Privacy
-                        </span>
-                        <span
-                            onClick={() => {
-                                showToast('Terms of service: Coming soon!', 'info');
-                                setShowProfileMenu(false);
-                            }}
-                        >
-                            Terms
-                        </span>
+                            <LogOut size={16} aria-hidden="true" />
+                            <span className={styles.itemText}>
+                                <span>Sign out</span>
+                            </span>
+                        </button>
                     </div>
                 </div>
             )}

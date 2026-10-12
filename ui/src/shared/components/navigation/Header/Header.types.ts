@@ -1,5 +1,7 @@
 export interface HeaderUserProfile {
     id?: string;
+    /** Shown under the name in the account menu. */
+    email?: string;
     fullName: string;
     avatar: string;
     role: string;
@@ -17,7 +19,6 @@ export interface HeaderProps {
     toggleTheme: () => void;
     isLoggedIn: boolean;
     signOut: () => Promise<void>;
-    onOpenSettings?: () => void;
     points?: number;
     streak?: number;
 }

@@ -16,7 +16,6 @@ export const Header: React.FC<HeaderProps> = ({
     toggleTheme,
     isLoggedIn,
     signOut,
-    onOpenSettings,
     points = 0,
     streak = 0
 }) => {
@@ -47,7 +46,6 @@ export const Header: React.FC<HeaderProps> = ({
                             profile={profile}
                             changeView={changeView}
                             signOut={signOut}
-                            onOpenSettings={onOpenSettings}
                         />
                     </div>
                 ) : (

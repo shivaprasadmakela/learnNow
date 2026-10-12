@@ -264,7 +264,6 @@ export default function App() {
                     toggleTheme={toggleTheme}
                     isLoggedIn={isLoggedIn}
                     signOut={signOut}
-                    onOpenSettings={() => handleViewChange('PROFILE')}
                     points={userPoints ?? profile?.gemsCount ?? profile?.points ?? 0}
                     streak={userStreak ?? profile?.streakCount ?? 0}
                 />
