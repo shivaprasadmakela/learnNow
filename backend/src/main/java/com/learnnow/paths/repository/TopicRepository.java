@@ -2,6 +2,7 @@ package com.learnnow.paths.repository;
 
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Topic;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,4 +57,10 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
             "SELECT COUNT(pt) FROM PathTopic pt WHERE pt.path.id = :pathId AND pt.topic.status ="
                     + " 'PUBLISHED'")
     long countPublishedTopicsByPathId(@Param("pathId") UUID pathId);
+
+    /** {@link #countPublishedTopicsByPathId} for a page of paths at once, as [pathId, count]. */
+    @Query(
+            "SELECT pt.path.id, COUNT(pt) FROM PathTopic pt WHERE pt.path.id IN :pathIds AND"
+                    + " pt.topic.status = 'PUBLISHED' GROUP BY pt.path.id")
+    List<Object[]> countPublishedTopicsByPathIds(@Param("pathIds") Collection<UUID> pathIds);
 }

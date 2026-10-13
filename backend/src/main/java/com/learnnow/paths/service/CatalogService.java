@@ -62,6 +62,14 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public PageResponse<CatalogPathDto> getPublicCatalogPaths(Pageable pageable) {
         Page<Path> page = pathRepository.findByStatus(ContentStatus.PUBLISHED, byTitle(pageable));
+        List<UUID> pathIds = page.getContent().stream().map(Path::getId).toList();
+        Map<UUID, Long> topicCounts =
+                pathIds.isEmpty()
+                        ? Map.of()
+                        : topicRepository.countPublishedTopicsByPathIds(pathIds).stream()
+                                .collect(
+                                        Collectors.toMap(
+                                                row -> (UUID) row[0], row -> (Long) row[1]));
         return PageResponse.of(
                 page.map(
                         path ->
@@ -70,7 +78,8 @@ public class CatalogService {
                                         path.getTitle(),
                                         path.getDescription(),
                                         path.getCategory(),
-                                        path.getManagedBy())));
+                                        path.getManagedBy(),
+                                        topicCounts.getOrDefault(path.getId(), 0L))));
     }
 
     @Transactional(readOnly = true)

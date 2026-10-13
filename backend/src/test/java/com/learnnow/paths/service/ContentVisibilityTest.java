@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.learnnow.admin.dto.response.AdminPathDto;
 import com.learnnow.admin.service.ContentAuthoringService;
+import com.learnnow.paths.dto.response.CatalogPathDto;
 import com.learnnow.paths.dto.response.TopicSummaryDto;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -59,6 +61,22 @@ class ContentVisibilityTest extends com.learnnow.AbstractIntegrationTest {
                                 assertThat(t.subtopics())
                                         .extracting(s -> s.title())
                                         .containsExactly("Live lesson"));
+    }
+
+    @Test
+    @Transactional
+    void thePublicCatalogCountsOnlyPublishedTopics() {
+        AdminPathDto path =
+                authoring.saveOrUpdatePath(
+                        livePath(
+                                topic("Ready", "PUBLISHED", List.of()),
+                                topic("Also ready", "PUBLISHED", List.of()),
+                                topic("Still being written", "DRAFT", List.of())));
+
+        assertThat(catalog.getPublicCatalogPaths(PageRequest.of(0, 100)).content())
+                .filteredOn(listed -> listed.id().equals(path.id()))
+                .extracting(CatalogPathDto::topicCount)
+                .containsExactly(2L);
     }
 
     private static AdminPathDto livePath(AdminPathDto.AdminTopicDto... topics) {
