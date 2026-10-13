@@ -41,4 +41,20 @@ self.MonacoEnvironment = {
     }
 };
 
+// Lesson snippets are fragments: they use names declared elsewhere and import modules this editor
+// cannot see, so type errors would mark correct examples red. Syntax errors are still shown.
+// Snippets also contain JSX, which TypeScript parses only when the jsx option is set - together
+// with the .tsx/.jsx model names MonacoEditorPane gives each editor.
+//
+// This used to be configured through monaco.languages.typescript, which monaco-editor 0.56 reduces
+// to a placeholder; the settings never reached the TypeScript worker, so neither took effect.
+for (const defaults of [monaco.typescript.typescriptDefaults, monaco.typescript.javascriptDefaults]) {
+    defaults.setDiagnosticsOptions({ noSemanticValidation: true, noSyntaxValidation: false });
+    defaults.setCompilerOptions({
+        ...defaults.getCompilerOptions(),
+        jsx: monaco.typescript.JsxEmit.Preserve,
+        allowNonTsExtensions: true,
+    });
+}
+
 loader.config({ monaco });

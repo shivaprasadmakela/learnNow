@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 // Side-effect import: points the wrapper below at the bundled Monaco instead of a CDN our
 // Content-Security-Policy blocks. It lives here, next to the only component that mounts an
 // editor, so the 4 MB Monaco chunk stays inside the lazily-loaded routes that actually use one
@@ -81,19 +81,17 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
         }
     }, [language]);
 
-    const handleBeforeMount = (monaco: Monaco) => {
-        // Prevent false semantic diagnostic errors on JS/TS
-        if (monaco.languages.typescript) {
-            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-                noSemanticValidation: true,
-                noSyntaxValidation: false
-            });
-            monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-                noSemanticValidation: true,
-                noSyntaxValidation: false
-            });
-        }
+    // Monaco picks a parser from the model's file name, and a model without one is parsed as plain
+    // .ts - so the JSX in every React example showed up as syntax errors. A name per editor with
+    // the right extension fixes that; it is unique so two snippets on one page never share a model.
+    const editorId = useId();
+    const jsxExtension =
+        language === 'typescript' ? 'tsx' : language === 'javascript' ? 'jsx' : undefined;
+    const modelPath = jsxExtension
+        ? `editor-${editorId.replace(/[^a-zA-Z0-9]/g, '')}.${jsxExtension}`
+        : undefined;
 
+    const handleBeforeMount = (monaco: Monaco) => {
         // Dark Theme
         monaco.editor.defineTheme('learnNowDark', {
             base: 'vs-dark',
@@ -162,6 +160,7 @@ export const MonacoEditorPane: React.FC<MonacoEditorPaneProps> = ({
         <div className={styles.editorWrapper}>
             <Editor
                 height="100%"
+                path={modelPath}
                 language={language}
                 theme={themeMode === 'light' ? 'learnNowLight' : 'learnNowDark'}
                 value={code}

@@ -21,6 +21,19 @@ function formatArg(a: unknown): string {
     return String(a);
 }
 
+/**
+ * Snippets run as the body of an async function so that top-level await works and output logged
+ * after a promise settles is captured. A plain Function returned before any of that output existed,
+ * which made asynchronous JavaScript - the part most worth demonstrating - impossible to run.
+ */
+type AsyncRunner = (console: unknown, stdin: string) => Promise<void>;
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (
+    ...params: string[]
+) => AsyncRunner;
+
+/** A snippet awaiting something that never settles must not leave the console spinning forever. */
+export const SNIPPET_TIMEOUT_MS = 10_000;
+
 export function useCodeExecution() {
     const [logs, setLogs] = useState<ConsoleLogEntry[]>([]);
     const [htmlPreview, setHtmlPreview] = useState<string>('');
@@ -58,9 +71,19 @@ export function useCodeExecution() {
                     capturedLogs.push({ type: 'info', message: `[stdin input]: ${stdin.trim()}`, timestamp });
                 }
 
-                // eslint-disable-next-line no-new-func
-                const runnerFn = new Function('console', 'stdin', code);
-                runnerFn(customConsole, stdin);
+                const runner = new AsyncFunction('console', 'stdin', code);
+                let timer: ReturnType<typeof setTimeout> | undefined;
+                const timedOut = new Promise<never>((_, reject) => {
+                    timer = setTimeout(
+                        () => reject(new Error(`still running after ${SNIPPET_TIMEOUT_MS / 1000} seconds`)),
+                        SNIPPET_TIMEOUT_MS
+                    );
+                });
+                try {
+                    await Promise.race([runner(customConsole, stdin), timedOut]);
+                } finally {
+                    clearTimeout(timer);
+                }
 
                 const hasOutput = capturedLogs.some(l => l.type !== 'info');
                 if (!hasOutput) {

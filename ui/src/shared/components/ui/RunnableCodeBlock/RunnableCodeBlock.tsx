@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MonacoEditorPane } from '../../editor/MonacoEditorPane/MonacoEditorPane';
 import { CompilerOutputPane } from '../../editor/CompilerOutputPane/CompilerOutputPane';
 import { useCodeExecution } from '../../editor/useCodeExecution';
+import { printedOutput } from '../../editor/consoleOutput';
 import { Play, RotateCcw, Copy, Check, CheckCircle2, AlertTriangle, Maximize2, Minimize2, X } from 'lucide-react';
 import type { RunnableCodeBlockProps } from './RunnableCodeBlock.types';
 import styles from './RunnableCodeBlock.module.css';
@@ -37,8 +38,7 @@ export const RunnableCodeBlock: React.FC<RunnableCodeBlockProps> = ({
     };
 
     // Calculate diff against expected output if provided
-    const lastLogEntry = logs.length > 0 ? logs[logs.length - 1] : null;
-    const actualOutput = lastLogEntry?.type === 'log' ? lastLogEntry.message.trim() : '';
+    const actualOutput = printedOutput(logs);
     const expected = (snippet.expectedOutput || '').trim();
 
     const isMatch = expected && hasExecuted && actualOutput === expected;
