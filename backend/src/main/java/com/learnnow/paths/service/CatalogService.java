@@ -242,6 +242,7 @@ public class CatalogService {
 
                             List<SubtopicDto> subtopics =
                                     topic.getSubtopics().stream()
+                                            .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
                                             .sorted(
                                                     java.util.Comparator.comparingInt(
                                                             Subtopic::getOrderIndex))

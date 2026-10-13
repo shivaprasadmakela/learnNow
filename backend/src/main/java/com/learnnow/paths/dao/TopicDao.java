@@ -34,6 +34,13 @@ public class TopicDao {
 
         Topic topic = topics.get(0);
 
+        // Checked here rather than in the query: filtering a fetch-joined collection leaves a
+        // partly loaded managed list, which is the wrong thing to hand back from a DAO. Subtopic
+        // status is applied where the response is built.
+        if (topic.getStatus() != status) {
+            return Optional.empty();
+        }
+
         // Fetch pathTopics in a separate query to avoid MultipleBagFetchException
         entityManager
                 .createQuery(

@@ -16,8 +16,8 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
     List<Topic> findByStatus(ContentStatus status);
 
     @Query(
-            "SELECT pt.topic FROM PathTopic pt WHERE pt.path.id = :pathId AND (pt.topic.status ="
-                    + " :status OR pt.path.status = :status) ORDER BY pt.orderIndex ASC")
+            "SELECT pt.topic FROM PathTopic pt WHERE pt.path.id = :pathId AND pt.topic.status ="
+                    + " :status AND pt.path.status = :status ORDER BY pt.orderIndex ASC")
     List<Topic> findByPathIdAndStatus(
             @Param("pathId") UUID pathId, @Param("status") ContentStatus status);
 
@@ -35,16 +35,22 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
     @Query(
             value =
                     "SELECT pt.topic FROM PathTopic pt WHERE pt.path.id = :pathId AND"
-                            + " (pt.topic.status = :status OR pt.path.status = :status) ORDER BY"
+                            + " pt.topic.status = :status AND pt.path.status = :status ORDER BY"
                             + " pt.orderIndex ASC",
             countQuery =
                     "SELECT COUNT(pt) FROM PathTopic pt WHERE pt.path.id = :pathId AND"
-                            + " (pt.topic.status = :status OR pt.path.status = :status)")
+                            + " pt.topic.status = :status AND pt.path.status = :status")
     Page<Topic> findByPathIdAndStatus(
             @Param("pathId") UUID pathId, @Param("status") ContentStatus status, Pageable pageable);
 
-    @Query("SELECT COUNT(st) FROM Subtopic st WHERE st.topic.id = :topicId")
-    long countSubtopicsByTopicId(@Param("topicId") UUID topicId);
+    /**
+     * Published subtopics only. Counting drafts would leave a topic forever short of complete,
+     * since a learner cannot open - let alone finish - a lesson that is still in draft.
+     */
+    @Query(
+            "SELECT COUNT(st) FROM Subtopic st WHERE st.topic.id = :topicId AND st.status ="
+                    + " com.learnnow.paths.entity.ContentStatus.PUBLISHED")
+    long countPublishedSubtopicsByTopicId(@Param("topicId") UUID topicId);
 
     @Query(
             "SELECT COUNT(pt) FROM PathTopic pt WHERE pt.path.id = :pathId AND pt.topic.status ="

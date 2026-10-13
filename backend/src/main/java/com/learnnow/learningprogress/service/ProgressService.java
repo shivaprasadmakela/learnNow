@@ -131,7 +131,7 @@ public class ProgressService {
         activityRecordingService.recordDailyPoints(
                 userId, ZoneId.of(prefs.getTimezone()), PointsConfig.SUBTOPIC_COMPLETED, prefs);
 
-        long totalSubtopics = topicRepository.countSubtopicsByTopicId(topicId);
+        long totalSubtopics = topicRepository.countPublishedSubtopicsByTopicId(topicId);
         long completedSubtopics =
                 subtopicProgressRepository.countByUserIdAndTopicIdAndCompletedTrue(userId, topicId);
 
