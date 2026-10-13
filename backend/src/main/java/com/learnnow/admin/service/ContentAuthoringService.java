@@ -35,9 +35,7 @@ public class ContentAuthoringService {
     private static final String STRATEGY_OVERWRITE = "OVERWRITE";
     private static final String STRATEGY_KEEP_BOTH = "KEEP_BOTH";
     private static final String STRATEGY_SKIP_EXISTING = "SKIP_EXISTING";
-    private static final String DEFAULT_CATEGORY_PATH = "General";
     private static final String DEFAULT_MANAGED_BY = "learnNow";
-    private static final String DEFAULT_CATEGORY_BACKEND = "Backend";
     private static final String DEFAULT_CATEGORY_TOPIC = "course";
     private static final String DEFAULT_DURATION_TOPIC = "1 hour";
     private static final String DEFAULT_LEVEL_SUBTOPIC = "beginner";
@@ -68,10 +66,7 @@ public class ContentAuthoringService {
                 Path.builder()
                         .title(request.title())
                         .description(request.description())
-                        .category(
-                                request.category() != null
-                                        ? request.category()
-                                        : DEFAULT_CATEGORY_PATH)
+                        .category(PathCategory.canonical(request.category(), PathCategory.BACKEND))
                         .managedBy(
                                 request.managedBy() != null
                                         ? request.managedBy()
@@ -192,8 +187,7 @@ public class ContentAuthoringService {
 
         path.setTitle(request.title());
         path.setDescription(request.description());
-        path.setCategory(
-                request.category() != null ? request.category() : DEFAULT_CATEGORY_BACKEND);
+        path.setCategory(PathCategory.canonical(request.category(), PathCategory.BACKEND));
         path.setManagedBy(request.managedBy() != null ? request.managedBy() : DEFAULT_MANAGED_BY);
         path.setStatus(parseStatus(request.status()));
         Path savedPath = pathRepository.save(path);
@@ -613,6 +607,10 @@ public class ContentAuthoringService {
         }
 
         boolean isAppend = request.pathId() != null;
+        // Checked before anything is written, so a bad category fails the whole import instead of
+        // part-way through it. Append mode never touches the path's category.
+        String category =
+                isAppend ? null : PathCategory.canonical(request.category(), PathCategory.BACKEND);
         Path path;
         int startOrderIndex;
 
@@ -640,7 +638,7 @@ public class ContentAuthoringService {
             if (existingPathOpt.isPresent() && STRATEGY_OVERWRITE.equals(strategy)) {
                 path = existingPathOpt.get();
                 if (request.description() != null) path.setDescription(request.description());
-                if (request.category() != null) path.setCategory(request.category());
+                if (request.category() != null) path.setCategory(category);
                 startOrderIndex =
                         path.getTopics().stream()
                                         .mapToInt(
@@ -662,10 +660,7 @@ public class ContentAuthoringService {
                                 .title(finalTitle)
                                 .description(
                                         request.description() != null ? request.description() : "")
-                                .category(
-                                        request.category() != null
-                                                ? request.category()
-                                                : DEFAULT_CATEGORY_BACKEND)
+                                .category(category)
                                 .managedBy(
                                         request.managedBy() != null
                                                 ? request.managedBy()

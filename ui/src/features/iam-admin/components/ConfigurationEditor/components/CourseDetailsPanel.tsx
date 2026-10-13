@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './CourseDetailsPanel.module.css';
+import { PATH_CATEGORIES, isPathCategory } from '../../../../../shared/utils/pathCategories';
 
 interface CourseDetailsPanelProps {
     title: string;
@@ -43,14 +44,23 @@ export const CourseDetailsPanel: React.FC<CourseDetailsPanelProps> = ({
         <div className={styles.formRow}>
             <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="course-category">Category</label>
-                <input
+                <select
                     id="course-category"
-                    type="text"
                     className={styles.inputField}
                     value={category}
                     onChange={e => onCategoryChange(e.target.value)}
-                    placeholder="e.g. Backend, DevOps, Frontend"
-                />
+                >
+                    {/* A path saved before the list existed can hold anything. Show it as it is
+                        rather than letting the select silently display the first option. */}
+                    {!isPathCategory(category) && (
+                        <option value={category} disabled>
+                            {category ? `${category} - no longer valid, choose one` : 'Choose a category'}
+                        </option>
+                    )}
+                    {PATH_CATEGORIES.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                    ))}
+                </select>
             </div>
             <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="course-managed-by">Managed By</label>

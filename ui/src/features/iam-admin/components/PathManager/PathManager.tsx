@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FolderPlus, BookOpen } from 'lucide-react';
 import styles from './PathManager.module.css';
 import type { AdminPath } from '../../hooks/useAdminContent';
+import { PATH_CATEGORIES } from '../../../../shared/utils/pathCategories';
 
 interface PathManagerProps {
     paths: AdminPath[];
@@ -19,7 +20,7 @@ export const PathManager: React.FC<PathManagerProps> = ({
     const [isCreating, setIsCreating] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('Backend');
+    const [category, setCategory] = useState<string>(PATH_CATEGORIES[0]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,13 +75,16 @@ export const PathManager: React.FC<PathManagerProps> = ({
                                 style={{ width: '100%', padding: '8px', marginBottom: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
                                 required
                             />
-                            <input
-                                type="text"
-                                placeholder="Category (e.g. Backend)..."
+                            <select
+                                aria-label="Category"
                                 value={category}
                                 onChange={e => setCategory(e.target.value)}
                                 style={{ width: '100%', padding: '8px', marginBottom: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
-                            />
+                            >
+                                {PATH_CATEGORIES.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
                             <textarea
                                 placeholder="Description..."
                                 value={description}

@@ -750,12 +750,12 @@
         justify-content: flex-start;
         overflow-x: auto;
         flex-wrap: nowrap;
-        padding-bottom: 12px;
+        padding-bottom: 8px;
         -webkit-overflow-scrolling: touch;
         width: 100%;
     }
 
-    .categoryItem {
+    .categoryChip {
         flex-shrink: 0;
     }
 }
@@ -764,61 +764,40 @@
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 40px;
-    padding-bottom: 16px;
-}
-
-.categoryItem {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 8px;
-    cursor: pointer;
-    padding: 12px;
-    border-radius: var(--radius-lg);
-    background-color: transparent;
-    transition: transform var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
-    width: 90px;
-    text-align: center;
-    color: var(--text-secondary);
-    border: 0;
-    font: inherit;
+    margin-bottom: 32px;
 }
 
-.categoryItem:hover {
-    transform: translateY(-2px);
-    background-color: var(--bg-primary);
+.categoryChip {
+    padding: 6px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    background-color: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.categoryChip:hover {
+    border-color: var(--text-tertiary);
     color: var(--text-primary);
 }
 
-.categoryItemActive {
-    background-color: var(--bg-primary) !important;
-    color: var(--tech-blue) !important;
-    font-weight: 600;
+.categoryChip:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
 }
 
-.categoryIcon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--bg-secondary);
-    color: inherit;
-    transition: background-color var(--transition-fast);
-}
-
-.categoryItemActive .categoryIcon {
+.categoryChipActive,
+.categoryChipActive:hover {
+    border-color: var(--tech-blue);
     background-color: rgba(26, 115, 232, 0.1);
     color: var(--tech-blue);
-}
-
-.categoryLabel {
-    font-size: 0.75rem;
-    font-weight: 500;
-    white-space: nowrap;
 }
 
 .breadcrumbLink {

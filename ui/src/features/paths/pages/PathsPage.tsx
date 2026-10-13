@@ -3,6 +3,7 @@ import type { Course } from '../../../types';
 import styles from '../styles/PathsPage.module.css';
 import { CategoryFilterPills } from '../components/CategoryFilterPills';
 import { PathsGrid } from '../components/PathsGrid';
+import { categoriesForFilter } from '../../../shared/utils/pathCategories';
 
 import { Loader } from '../../../shared/components/ui/Loader';
 import { InfiniteScrollSentinel } from '../../../shared/components/ui/InfiniteScrollSentinel';
@@ -30,7 +31,7 @@ export const PathsPage: React.FC<PathsPageProps> = ({
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
     const categories = useMemo(
-        () => ['All', ...Array.from(new Set(courses.map((course) => course.category).filter(Boolean)))],
+        () => ['All', ...categoriesForFilter(courses.map((course) => course.category))],
         [courses]
     );
 

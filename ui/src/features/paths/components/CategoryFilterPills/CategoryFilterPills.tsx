@@ -2,33 +2,29 @@ import React from 'react';
 import styles from '../../styles/PathsPage.module.css';
 import type { CategoryFilterPillsProps } from './CategoryFilterPills.types';
 
+/**
+ * Text chips, deliberately without icons: the icon used to be a globe for every category but one,
+ * so it carried no information and made each chip a 90px card. At this size a dozen fit on a line.
+ */
 export const CategoryFilterPills: React.FC<CategoryFilterPillsProps> = ({
     categories,
     selectedCategory,
     onSelectCategory
-}) => {
-    const getCategoryIcon = (category: string) => {
-        if (category === 'Backend') {
-            return <i className="fa-solid fa-code" style={{ fontSize: '1rem' }} aria-hidden="true" />;
-        }
-        return <i className="fa-solid fa-globe" style={{ fontSize: '1rem' }} aria-hidden="true" />;
-    };
-
-    return (
-        <div className={styles.categoriesRow} style={{ justifyContent: 'center', marginBottom: '32px' }}>
-            {categories.map((cat) => (
+}) => (
+    <div className={styles.categoriesRow} role="group" aria-label="Filter paths by category">
+        {categories.map((cat) => {
+            const active = selectedCategory === cat;
+            return (
                 <button
                     key={cat}
                     type="button"
-                    className={`${styles.categoryItem} ${selectedCategory === cat ? styles.categoryItemActive : ''}`}
+                    className={`${styles.categoryChip} ${active ? styles.categoryChipActive : ''}`}
+                    aria-pressed={active}
                     onClick={() => onSelectCategory(cat)}
                 >
-                    <div className={styles.categoryIcon}>
-                        {getCategoryIcon(cat)}
-                    </div>
-                    <span className={styles.categoryLabel}>{cat}</span>
+                    {cat}
                 </button>
-            ))}
-        </div>
-    );
-};
+            );
+        })}
+    </div>
+);
