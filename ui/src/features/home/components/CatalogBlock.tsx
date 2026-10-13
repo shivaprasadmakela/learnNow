@@ -1,70 +1,30 @@
 import React, { useState } from 'react';
-import { BookOpen, Clock, Layers, ArrowUpRight, ChevronDown, Check } from 'lucide-react';
+import { BookOpen, Layers, ArrowUpRight, ChevronDown, Check } from 'lucide-react';
 import { Tabs } from '../../../shared/components';
 import type { TabItem } from '../../../shared/components/ui/Tabs';
+import type { Course } from '../../../types';
+import { categoriesForFilter } from '../../../shared/utils/pathCategories';
 import styles from '../styles/Home.module.css';
 
 interface CatalogBlockProps {
+    /** The published paths, as loaded for the rest of the app. */
+    courses: Course[];
     activeTab: string;
     setActiveTab: (tab: string) => void;
     onSelectCourse: (courseId: number) => void;
 }
 
-const FEATURED_PATHS = [
-    {
-        id: 1,
-        title: 'Backend Engineering & Spring Boot Monolith',
-        category: 'Backend',
-        description: 'Master Java 21, Spring Boot 3, JPA/Hibernate, Flyway migrations, and JWT security.',
-        topicsCount: 8,
-        duration: '14 Hours',
-        level: 'Intermediate',
-        badge: 'Popular',
-        topics: [
-            'Java 21 records, sealed types and pattern matching',
-            'Spring Boot 3 modular service layout',
-            'JPA entities, relationships and the N+1 trap',
-            'Flyway migrations and schema versioning',
-            'JWT security, filters and method-level rules'
-        ]
-    },
-    {
-        id: 2,
-        title: 'Fullstack React 19 & TypeScript Architecture',
-        category: 'Fullstack',
-        description: 'Build modular React applications with custom CSS Module theme engines and Vite.',
-        topicsCount: 6,
-        duration: '10 Hours',
-        level: 'All Levels',
-        badge: 'Updated',
-        topics: [
-            'Feature-first folder structure that survives growth',
-            'CSS Modules and a design-token theme engine',
-            'Typed API clients and error boundaries',
-            'Vite chunking, lazy routes and bundle budgets',
-            'Testing components without testing React'
-        ]
-    },
-    {
-        id: 3,
-        title: 'PostgreSQL Relational Schema & Optimization',
-        category: 'Database',
-        description: 'Design robust schemas, indexes, projections, window functions, and Flyway migrations.',
-        topicsCount: 5,
-        duration: '8 Hours',
-        level: 'Advanced',
-        badge: 'Essential',
-        topics: [
-            'Normalisation, and when to stop normalising',
-            'Indexes: what they cost as well as what they save',
-            'Reading EXPLAIN ANALYZE without guessing',
-            'Window functions and set-returning queries',
-            'Migrations that are safe to run on live data'
-        ]
-    }
-];
+/** How many of a path's topic titles the "what's inside" list shows. */
+const SYLLABUS_LENGTH = 5;
 
+/*
+ * The real published paths. This block used to show three invented courses - "Fullstack React 19
+ * & TypeScript Architecture" among them - with made-up durations, levels and syllabuses, under
+ * categories no real path used. The duration and level on a Course are placeholders filled in for
+ * every path, so they are not shown here either.
+ */
 export const CatalogBlock: React.FC<CatalogBlockProps> = ({
+    courses,
     activeTab,
     setActiveTab,
     onSelectCourse
@@ -75,10 +35,10 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
      */
     const [openPathId, setOpenPathId] = useState<number | null>(null);
 
-    const categories = ['Featured', 'Backend', 'Fullstack', 'Database'];
+    const categories = ['All', ...categoriesForFilter(courses.map(course => course.category))];
 
     const pathsFor = (tab: string) =>
-        tab === 'Featured' ? FEATURED_PATHS : FEATURED_PATHS.filter(path => path.category === tab);
+        tab === 'All' ? courses : courses.filter(course => course.category === tab);
 
     /*
      * The shared tab bar rather than a hand-rolled pill row: it brings arrow-key navigation and
@@ -92,7 +52,12 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
         count: pathsFor(category).length
     }));
 
-    const displayedPaths = pathsFor(activeTab);
+    // A tab can outlive its category - the paths may reload without it - so fall back to All.
+    const shownTab = categories.includes(activeTab) ? activeTab : 'All';
+    const displayedPaths = pathsFor(shownTab);
+
+    // No published paths yet: an empty grid under "Curated Learning Paths" helps nobody.
+    if (courses.length === 0) return null;
 
     return (
         <section id="catalog-section" className={styles.catalogSection}>
@@ -107,7 +72,7 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
 
                 <Tabs
                     items={tabItems}
-                    activeId={activeTab}
+                    activeId={shownTab}
                     onChange={setActiveTab}
                     variant="pill"
                     label="Learning path categories"
@@ -119,6 +84,8 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
             <div className={styles.pathsCardsGrid}>
                 {displayedPaths.map(path => {
                     const isOpen = openPathId === path.id;
+                    const syllabus = (path.topics ?? []).slice(0, SYLLABUS_LENGTH).map(t => t.title);
+                    const topicCount = path.topicCount ?? path.topics?.length ?? 0;
                     return (
                         <div
                             key={path.id}
@@ -135,16 +102,18 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
                         >
                             <div className={styles.pathCardTopRow}>
                                 <span className={styles.pathCategoryTag}>{path.category}</span>
-                                <span className={styles.pathBadgeTag}>{path.badge}</span>
                             </div>
                             <h3 className={styles.pathCardTitle}>{path.title}</h3>
                             <p className={styles.pathCardDesc}>{path.description}</p>
-                            <div className={styles.pathMetaRow}>
-                                <span><Layers size={14} /> {path.topicsCount} Topics</span>
-                                <span><Clock size={14} /> {path.duration}</span>
-                            </div>
+                            {/* The public catalog sends no topics, so a visitor would see "0 Topics" for
+                                every path. Show the count only when it is actually known. */}
+                            {topicCount > 0 && (
+                                <div className={styles.pathMetaRow}>
+                                    <span><Layers size={14} /> {topicCount} {topicCount === 1 ? 'Topic' : 'Topics'}</span>
+                                </div>
+                            )}
 
-                            <button
+                            {syllabus.length > 0 && <button
                                 type="button"
                                 className={styles.syllabusToggle}
                                 aria-expanded={isOpen}
@@ -155,11 +124,11 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
                                     className={`${styles.syllabusChevron} ${isOpen ? styles.syllabusChevronOpen : ''}`}
                                 />
                                 {isOpen ? 'Hide what’s inside' : 'See what’s inside'}
-                            </button>
+                            </button>}
 
-                            {isOpen && (
+                            {isOpen && syllabus.length > 0 && (
                                 <ul className={styles.syllabusList}>
-                                    {path.topics.map((topic, index) => (
+                                    {syllabus.map((topic, index) => (
                                         <li
                                             key={topic}
                                             className={styles.syllabusItem}
@@ -174,7 +143,6 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
                             )}
 
                             <div className={styles.pathCardFooter}>
-                                <span className={styles.pathLevelText}>{path.level}</span>
                                 <button
                                     type="button"
                                     className={styles.startPathBtnText}

@@ -534,15 +534,6 @@
     color: var(--tech-blue);
 }
 
-.pathBadgeTag {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-}
 
 .pathCardTitle {
     font-size: 1.15rem;
@@ -588,11 +579,6 @@
     margin-top: auto;
 }
 
-.pathLevelText {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-tertiary);
-}
 
 .startPathBtnText {
     display: flex;

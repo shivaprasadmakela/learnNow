@@ -30,11 +30,12 @@ interface HomeProps {
 }
 
 export const Home: React.FC<HomeProps> = ({
+    courses,
     onSelectCourse,
     isLoggedIn,
     changeView
 }) => {
-    const [activeTab, setActiveTab] = useState<string>('Featured');
+    const [activeTab, setActiveTab] = useState<string>('All');
 
     return (
         <div className={styles.homeWrapper}>
@@ -46,6 +47,7 @@ export const Home: React.FC<HomeProps> = ({
                 <Hero isLoggedIn={isLoggedIn} changeView={changeView} />
                 <Reveal>
                     <CatalogBlock
+                        courses={courses}
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
                         onSelectCourse={onSelectCourse}
