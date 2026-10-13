@@ -193,11 +193,30 @@ public class PathDao {
     }
 
     /**
-     * Delete a path using native SQL. PostgreSQL ON DELETE CASCADE handles all child entities
-     * (topics, subtopics, blocks, questions, snippets) in a single database round-trip, avoiding
-     * Hibernate's N+1 cascade loading storm that loads every child entity before deleting.
+     * Deletes a path and the topics that belonged to it alone, in native SQL so the database
+     * cascades do the work rather than Hibernate loading every child entity first.
+     *
+     * <p>Deleting the path row on its own was not enough: path_topics cascades from paths, but
+     * topics do not, so every topic of a deleted path was left behind with no path. A local
+     * database had accumulated 171 of them from re-importing courses.
+     *
+     * <p>Two kinds of topic are kept. A topic another path also uses stays with that path. A topic
+     * with no path at all is not touched either - unlinking a topic is how an admin parks it for
+     * reuse, and that never comes through here.
+     *
+     * <p>Everything below a topic cascades in the schema, so the first statement also removes its
+     * subtopics, content, questions, snippets, and learners' progress, notes and bookmarks on it.
      */
-    public void deletePathNative(UUID id) {
+    public void deletePathAndItsOwnTopics(UUID id) {
+        entityManager
+                .createNativeQuery(
+                        "DELETE FROM topics WHERE id IN ("
+                                + " SELECT pt.topic_id FROM path_topics pt"
+                                + " WHERE pt.path_id = :id"
+                                + " AND NOT EXISTS (SELECT 1 FROM path_topics other"
+                                + " WHERE other.topic_id = pt.topic_id AND other.path_id <> :id))")
+                .setParameter("id", id)
+                .executeUpdate();
         entityManager
                 .createNativeQuery("DELETE FROM paths WHERE id = :id")
                 .setParameter("id", id)

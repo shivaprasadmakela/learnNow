@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -16,6 +17,8 @@ public class ContentAuthoringServiceTest extends com.learnnow.AbstractIntegratio
     @Autowired private ContentAuthoringService authoringService;
 
     @Autowired private CatalogService catalogService;
+
+    @Autowired private JdbcTemplate jdbc;
 
     @Test
     @Transactional
@@ -183,5 +186,97 @@ public class ContentAuthoringServiceTest extends com.learnnow.AbstractIntegratio
         assertEquals(
                 "What is 2+2?",
                 fetchedAgain.topics().get(0).subtopics().get(0).questions().get(0).prompt());
+    }
+
+    /**
+     * Deleting a path used to leave every one of its topics behind with no path, because
+     * path_topics cascades from paths but topics do not. The fix must not overreach: a topic
+     * another path uses has to survive, and so does a topic an admin unlinked to reuse later.
+     */
+    @Test
+    @Transactional
+    public void deletingAPathTakesOnlyItsOwnTopics() {
+        AdminPathDto.AdminSubtopicDto lesson =
+                new AdminPathDto.AdminSubtopicDto(
+                        null,
+                        "Owned lesson",
+                        "### Body",
+                        1,
+                        "DRAFT",
+                        "beginner",
+                        "concept",
+                        List.of(),
+                        null,
+                        5,
+                        List.of(),
+                        List.of());
+
+        AdminPathDto doomed =
+                authoringService.saveOrUpdatePath(
+                        new AdminPathDto(
+                                null,
+                                "Path being deleted",
+                                "d",
+                                "Backend",
+                                "learnNow",
+                                "DRAFT",
+                                List.of(
+                                        topic("Owned topic", 1, List.of(lesson)),
+                                        topic("Shared topic", 2, List.of()))));
+        AdminPathDto keeper =
+                authoringService.saveOrUpdatePath(
+                        new AdminPathDto(
+                                null,
+                                "Path that stays",
+                                "d",
+                                "Backend",
+                                "learnNow",
+                                "DRAFT",
+                                List.of()));
+        AdminPathDto parking =
+                authoringService.saveOrUpdatePath(
+                        new AdminPathDto(
+                                null,
+                                "Path a topic is unlinked from",
+                                "d",
+                                "Backend",
+                                "learnNow",
+                                "DRAFT",
+                                List.of(topic("Parked topic", 1, List.of()))));
+
+        var owned = doomed.topics().get(0).id();
+        var shared = doomed.topics().get(1).id();
+        var parked = parking.topics().get(0).id();
+
+        authoringService.attachTopicToPath(keeper.id(), shared, null);
+        authoringService.unlinkTopicFromPath(parking.id(), parked);
+
+        authoringService.deletePath(doomed.id());
+
+        assertEquals(0, count("SELECT count(*) FROM paths WHERE id = ?", doomed.id()));
+        assertEquals(0, count("SELECT count(*) FROM topics WHERE id = ?", owned));
+        assertEquals(
+                0,
+                count("SELECT count(*) FROM subtopics WHERE topic_id = ?", owned),
+                "the owned topic's lessons go with it");
+        assertEquals(1, count("SELECT count(*) FROM topics WHERE id = ?", shared));
+        assertEquals(
+                1,
+                count("SELECT count(*) FROM path_topics WHERE topic_id = ?", shared),
+                "the shared topic stays attached to the other path");
+        assertEquals(
+                1,
+                count("SELECT count(*) FROM topics WHERE id = ?", parked),
+                "a deliberately unlinked topic is not swept up");
+    }
+
+    private static AdminPathDto.AdminTopicDto topic(
+            String title, int order, List<AdminPathDto.AdminSubtopicDto> subtopics) {
+        return new AdminPathDto.AdminTopicDto(
+                null, title, "t", "course", "1 hour", order, "DRAFT", subtopics);
+    }
+
+    private int count(String sql, Object id) {
+        return jdbc.queryForObject(sql, Integer.class, id);
     }
 }

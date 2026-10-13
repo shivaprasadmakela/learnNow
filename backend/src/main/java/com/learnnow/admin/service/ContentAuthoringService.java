@@ -417,10 +417,8 @@ public class ContentAuthoringService {
         if (!pathRepository.existsById(pathId)) {
             throw new com.learnnow.common.exception.NotFoundException("path_not_found");
         }
-        // Native SQL DELETE lets PostgreSQL ON DELETE CASCADE handle the entire
-        // entity tree in a single round-trip, avoiding Hibernate's N+1 cascade
-        // loading storm (which loads every child entity before deleting).
-        pathDao.deletePathNative(pathId);
+        // Takes the path's own topics with it; topics shared with another path survive.
+        pathDao.deletePathAndItsOwnTopics(pathId);
     }
 
     @Transactional(readOnly = true)
