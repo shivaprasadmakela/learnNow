@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -64,12 +65,8 @@ public class CatalogService {
         Page<Path> page = pathRepository.findByStatus(ContentStatus.PUBLISHED, byTitle(pageable));
         List<UUID> pathIds = page.getContent().stream().map(Path::getId).toList();
         Map<UUID, Long> topicCounts =
-                pathIds.isEmpty()
-                        ? Map.of()
-                        : topicRepository.countPublishedTopicsByPathIds(pathIds).stream()
-                                .collect(
-                                        Collectors.toMap(
-                                                row -> (UUID) row[0], row -> (Long) row[1]));
+                perPath(pathIds, topicRepository::countPublishedTopicsByPathIds);
+        Map<UUID, Long> minutes = perPath(pathIds, topicRepository::sumPublishedMinutesByPathIds);
         return PageResponse.of(
                 page.map(
                         path ->
@@ -79,7 +76,18 @@ public class CatalogService {
                                         path.getDescription(),
                                         path.getCategory(),
                                         path.getManagedBy(),
-                                        topicCounts.getOrDefault(path.getId(), 0L))));
+                                        topicCounts.getOrDefault(path.getId(), 0L),
+                                        minutes.getOrDefault(path.getId(), 0L))));
+    }
+
+    /** Runs a grouped [pathId, number] query for a page of paths; a path with no row is absent. */
+    private static Map<UUID, Long> perPath(
+            List<UUID> pathIds, Function<List<UUID>, List<Object[]>> query) {
+        if (pathIds.isEmpty()) return Map.of();
+        return query.apply(pathIds).stream()
+                .collect(
+                        Collectors.toMap(
+                                row -> (UUID) row[0], row -> ((Number) row[1]).longValue()));
     }
 
     @Transactional(readOnly = true)
@@ -119,6 +127,8 @@ public class CatalogService {
                 path.getManagedBy(),
                 pathPct,
                 topics.size(),
+                perPath(List.of(path.getId()), topicRepository::sumPublishedMinutesByPathIds)
+                        .getOrDefault(path.getId(), 0L),
                 List.copyOf(firstPage));
     }
 

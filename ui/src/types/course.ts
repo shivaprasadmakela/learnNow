@@ -5,9 +5,6 @@ export interface Course {
     title: string;
     description: string;
     category: string;
-    duration: string;
-    level: string;
-    imageUrl: string;
     managedBy?: string;
     progressPercentage?: number;
     /**
@@ -15,5 +12,7 @@ export interface Course {
      * so far, so this is what tells the UI whether scrolling should fetch more.
      */
     topicCount?: number;
+    /** Sum of the authored minutes of the path's published lessons; see formatStudyTime. */
+    estimatedMinutes?: number;
     topics?: Topic[];
 }

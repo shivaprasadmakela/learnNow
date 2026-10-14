@@ -9,7 +9,8 @@ import java.util.UUID;
  * <p>{@code topics} carries only the first page of the path's topics - the rest arrive from {@code
  * GET /api/paths/{pathId}/topics} as the user scrolls. {@code topicCount} is the full count, so the
  * UI can still show "N topics" and know whether more remain, and {@code progressPercentage} is
- * always computed across every topic rather than the embedded slice.
+ * always computed across every topic rather than the embedded slice. {@code estimatedMinutes} sums
+ * the authored estimates of the path's published lessons.
  */
 public record PathSummaryDto(
         UUID id,
@@ -19,6 +20,7 @@ public record PathSummaryDto(
         String managedBy,
         int progressPercentage,
         int topicCount,
+        long estimatedMinutes,
         List<TopicSummaryDto> topics) {
 
     public PathSummaryDto(
@@ -37,6 +39,7 @@ public record PathSummaryDto(
                 managedBy,
                 progressPercentage,
                 topics == null ? 0 : topics.size(),
+                0,
                 topics);
     }
 

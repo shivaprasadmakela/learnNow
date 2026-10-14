@@ -1,10 +1,12 @@
 package com.learnnow.paths.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.learnnow.admin.dto.response.AdminPathDto;
 import com.learnnow.admin.service.ContentAuthoringService;
 import com.learnnow.paths.dto.response.CatalogPathDto;
+import com.learnnow.paths.dto.response.PathSummaryDto;
 import com.learnnow.paths.dto.response.TopicSummaryDto;
 import java.util.List;
 import java.util.UUID;
@@ -65,18 +67,33 @@ class ContentVisibilityTest extends com.learnnow.AbstractIntegrationTest {
 
     @Test
     @Transactional
-    void thePublicCatalogCountsOnlyPublishedTopics() {
+    void pathTotalsCountOnlyPublishedTopicsAndLessons() {
         AdminPathDto path =
                 authoring.saveOrUpdatePath(
                         livePath(
-                                topic("Ready", "PUBLISHED", List.of()),
-                                topic("Also ready", "PUBLISHED", List.of()),
-                                topic("Still being written", "DRAFT", List.of())));
+                                topic(
+                                        "Ready",
+                                        "PUBLISHED",
+                                        List.of(
+                                                lesson("Live", "PUBLISHED"),
+                                                lesson("Draft", "DRAFT"))),
+                                topic(
+                                        "Also ready",
+                                        "PUBLISHED",
+                                        List.of(lesson("Live", "PUBLISHED"))),
+                                topic(
+                                        "Still being written",
+                                        "DRAFT",
+                                        List.of(lesson("Live", "PUBLISHED")))));
 
         assertThat(catalog.getPublicCatalogPaths(PageRequest.of(0, 100)).content())
                 .filteredOn(listed -> listed.id().equals(path.id()))
-                .extracting(CatalogPathDto::topicCount)
-                .containsExactly(2L);
+                .extracting(CatalogPathDto::topicCount, CatalogPathDto::estimatedMinutes)
+                .containsExactly(tuple(2L, 10L));
+        assertThat(catalog.getAllPaths(PageRequest.of(0, 100)).content())
+                .filteredOn(listed -> listed.id().equals(path.id()))
+                .extracting(PathSummaryDto::topicCount, PathSummaryDto::estimatedMinutes)
+                .containsExactly(tuple(2, 10L));
     }
 
     private static AdminPathDto livePath(AdminPathDto.AdminTopicDto... topics) {

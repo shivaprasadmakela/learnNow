@@ -39,14 +39,12 @@ const toCourse = (p: PathData, isLoggedIn: boolean): Course => {
         title: p.title,
         description: p.description,
         category: p.category,
-        duration: '10 hours',
-        level: 'Intermediate',
-        imageUrl: 'https://placeholder.co/ml',
         managedBy: p.managedBy,
         progressPercentage: isLoggedIn
             ? (p.progressPercentage || averageProgress(topics, 0))
             : 0,
         topicCount: typeof p.topicCount === 'number' ? p.topicCount : topics.length,
+        estimatedMinutes: p.estimatedMinutes,
         topics
     };
 };

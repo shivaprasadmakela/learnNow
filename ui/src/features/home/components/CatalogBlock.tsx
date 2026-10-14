@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { BookOpen, Layers, ArrowUpRight, ChevronDown, Check } from 'lucide-react';
+import { BookOpen, Layers, Clock, ArrowUpRight, ChevronDown, Check } from 'lucide-react';
 import { Tabs } from '../../../shared/components';
 import type { TabItem } from '../../../shared/components/ui/Tabs';
 import type { Course } from '../../../types';
 import { categoriesForFilter } from '../../../shared/utils/pathCategories';
+import { formatStudyTime } from '../../../shared/utils/studyTime';
 import styles from '../styles/Home.module.css';
 
 interface CatalogBlockProps {
@@ -20,8 +21,8 @@ const SYLLABUS_LENGTH = 5;
 /*
  * The real published paths. This block used to show three invented courses - "Fullstack React 19
  * & TypeScript Architecture" among them - with made-up durations, levels and syllabuses, under
- * categories no real path used. The duration and level on a Course are placeholders filled in for
- * every path, so they are not shown here either.
+ * categories no real path used. The study time is the sum of the path's authored lesson minutes;
+ * there is no level, since every path runs from beginner lessons to advanced ones.
  */
 export const CatalogBlock: React.FC<CatalogBlockProps> = ({
     courses,
@@ -86,6 +87,7 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
                     const isOpen = openPathId === path.id;
                     const syllabus = (path.topics ?? []).slice(0, SYLLABUS_LENGTH).map(t => t.title);
                     const topicCount = path.topicCount ?? path.topics?.length ?? 0;
+                    const studyTime = formatStudyTime(path.estimatedMinutes);
                     return (
                         <div
                             key={path.id}
@@ -105,11 +107,14 @@ export const CatalogBlock: React.FC<CatalogBlockProps> = ({
                             </div>
                             <h3 className={styles.pathCardTitle}>{path.title}</h3>
                             <p className={styles.pathCardDesc}>{path.description}</p>
-                            {/* The public catalog sends no topics, so a visitor would see "0 Topics" for
-                                every path. Show the count only when it is actually known. */}
-                            {topicCount > 0 && (
+                            {/* Either figure can be missing - an older backend sends neither to a
+                                visitor - so each shows only when it is actually known. */}
+                            {(topicCount > 0 || studyTime) && (
                                 <div className={styles.pathMetaRow}>
-                                    <span><Layers size={14} /> {topicCount} {topicCount === 1 ? 'Topic' : 'Topics'}</span>
+                                    {topicCount > 0 && (
+                                        <span><Layers size={14} /> {topicCount} {topicCount === 1 ? 'Topic' : 'Topics'}</span>
+                                    )}
+                                    {studyTime && <span><Clock size={14} /> {studyTime}</span>}
                                 </div>
                             )}
 

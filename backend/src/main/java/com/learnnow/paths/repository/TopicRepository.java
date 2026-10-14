@@ -63,4 +63,15 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
             "SELECT pt.path.id, COUNT(pt) FROM PathTopic pt WHERE pt.path.id IN :pathIds AND"
                     + " pt.topic.status = 'PUBLISHED' GROUP BY pt.path.id")
     List<Object[]> countPublishedTopicsByPathIds(@Param("pathIds") Collection<UUID> pathIds);
+
+    /**
+     * Estimated minutes to finish each path, as [pathId, minutes]: the authored estimates of its
+     * published lessons in published topics. A path with no such lesson has no row.
+     */
+    @Query(
+            "SELECT pt.path.id, SUM(st.estimatedMinutes) FROM PathTopic pt, Subtopic st WHERE"
+                + " st.topic = pt.topic AND pt.path.id IN :pathIds AND pt.topic.status ="
+                + " 'PUBLISHED' AND st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                + " GROUP BY pt.path.id")
+    List<Object[]> sumPublishedMinutesByPathIds(@Param("pathIds") Collection<UUID> pathIds);
 }

@@ -3,6 +3,7 @@ import { Compass } from 'lucide-react';
 import styles from '../../styles/PathsPage.module.css';
 import { LearningCard } from '../../../../shared/components/cards';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
+import { formatStudyTime } from '../../../../shared/utils/studyTime';
 import type { PathsGridProps } from './PathsGrid.types';
 
 export const PathsGrid: React.FC<PathsGridProps> = ({ paths, onSelectPath, isLoggedIn = false }) => {
@@ -25,6 +26,7 @@ export const PathsGrid: React.FC<PathsGridProps> = ({ paths, onSelectPath, isLog
                     title={path.title}
                     description={path.description}
                     footerText={path.managedBy || 'learnNow'}
+                    duration={formatStudyTime(path.estimatedMinutes)}
                     progressPercentage={isLoggedIn && typeof path.progressPercentage === 'number' ? path.progressPercentage : undefined}
                     showProgress={isLoggedIn && typeof path.progressPercentage === 'number' && path.progressPercentage > 0}
                     onClick={() => onSelectPath(path.id)}
