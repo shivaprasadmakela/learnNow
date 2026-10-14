@@ -793,6 +793,13 @@
     outline-offset: 2px;
 }
 
+.categoryChipCount {
+    margin-left: 2px;
+    font-size: 0.78em;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.75;
+}
+
 .categoryChipActive,
 .categoryChipActive:hover {
     border-color: var(--tech-blue);

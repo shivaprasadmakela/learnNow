@@ -35,6 +35,17 @@ export const PathsPage: React.FC<PathsPageProps> = ({
         [courses]
     );
 
+    // Counted from the paths loaded so far, so they are shown only once that is all of them: while
+    // another page waits on the server, "Backend 2" could really be Backend 7.
+    const counts = useMemo(() => {
+        if (hasMorePaths) return undefined;
+        const byCategory: Record<string, number> = { All: courses.length };
+        for (const course of courses) {
+            byCategory[course.category] = (byCategory[course.category] ?? 0) + 1;
+        }
+        return byCategory;
+    }, [courses, hasMorePaths]);
+
     const filteredPaths = courses.filter(path => {
         if (selectedCategory === 'All') return true;
         return path.category === selectedCategory;
@@ -61,6 +72,7 @@ export const PathsPage: React.FC<PathsPageProps> = ({
 
             <CategoryFilterPills
                 categories={categories}
+                counts={counts}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
             />

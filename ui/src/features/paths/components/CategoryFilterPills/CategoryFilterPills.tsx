@@ -8,6 +8,7 @@ import type { CategoryFilterPillsProps } from './CategoryFilterPills.types';
  */
 export const CategoryFilterPills: React.FC<CategoryFilterPillsProps> = ({
     categories,
+    counts,
     selectedCategory,
     onSelectCategory
 }) => (
@@ -23,6 +24,13 @@ export const CategoryFilterPills: React.FC<CategoryFilterPillsProps> = ({
                     onClick={() => onSelectCategory(cat)}
                 >
                     {cat}
+                    {/* A real space, not just margin, or the chip is announced as "Backend3". */}
+                    {counts && typeof counts[cat] === 'number' && (
+                        <>
+                            {' '}
+                            <span className={styles.categoryChipCount}>{counts[cat]}</span>
+                        </>
+                    )}
                 </button>
             );
         })}
