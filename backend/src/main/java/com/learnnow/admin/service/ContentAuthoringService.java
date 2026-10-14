@@ -802,7 +802,6 @@ public class ContentAuthoringService {
                                 ? stReq.estimatedMinutes()
                                 : DEFAULT_ESTIMATED_MINUTES);
                 subtopic.getBlocks().clear();
-                subtopic.getCodeSnippets().clear();
             } else {
                 counts.subtopics++;
                 subtopic =
@@ -862,30 +861,47 @@ public class ContentAuthoringService {
         return serializeStringList(prerequisites, "prerequisites");
     }
 
+    /**
+     * Brings a subtopic's snippets in line with the request.
+     *
+     * <p>An OVERWRITE import sends the snippets a subtopic already has, under the ids they already
+     * have. Building fresh entities for them put a second object with the same key into the
+     * session, and Hibernate refused the whole import - for every lesson with a snippet. A snippet
+     * whose id is already there is now updated in place; only new ids are created, and ids the
+     * request no longer sends are removed. The collection is changed in place too: replacing it on
+     * a managed entity is not allowed for an orphan-removing association.
+     */
     private void processCodeSnippets(
             List<ImportCourseRequest.ImportCodeSnippetRequest> codeSnippets, Subtopic subtopic) {
-        if (codeSnippets == null || codeSnippets.isEmpty()) return;
+        if (subtopic.getCodeSnippets() == null) subtopic.setCodeSnippets(new ArrayList<>());
+        Map<String, SubtopicCodeSnippet> existing = new HashMap<>();
+        for (SubtopicCodeSnippet snippet : subtopic.getCodeSnippets()) {
+            existing.put(snippet.getId(), snippet);
+        }
+
         List<SubtopicCodeSnippet> snippets = new ArrayList<>();
         int snIdx = 1;
-        for (ImportCourseRequest.ImportCodeSnippetRequest snReq : codeSnippets) {
-            SubtopicCodeSnippet snippet =
-                    SubtopicCodeSnippet.builder()
-                            .subtopic(subtopic)
-                            .id(snReq.id() != null ? snReq.id() : "snippet-" + snIdx)
-                            .language(
-                                    snReq.language() != null
-                                            ? snReq.language()
-                                            : DEFAULT_SNIPPET_LANGUAGE)
-                            .label(snReq.label())
-                            .code(snReq.code() != null ? snReq.code() : "")
-                            .expectedOutput(snReq.expectedOutput())
-                            .runnable(snReq.runnable() == null || snReq.runnable())
-                            .editable(snReq.editable() == null || snReq.editable())
-                            .orderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++)
-                            .build();
+        for (ImportCourseRequest.ImportCodeSnippetRequest snReq :
+                codeSnippets == null
+                        ? List.<ImportCourseRequest.ImportCodeSnippetRequest>of()
+                        : codeSnippets) {
+            String id = snReq.id() != null ? snReq.id() : "snippet-" + snIdx;
+            SubtopicCodeSnippet snippet = existing.remove(id);
+            if (snippet == null) {
+                snippet = SubtopicCodeSnippet.builder().subtopic(subtopic).id(id).build();
+            }
+            snippet.setLanguage(
+                    snReq.language() != null ? snReq.language() : DEFAULT_SNIPPET_LANGUAGE);
+            snippet.setLabel(snReq.label());
+            snippet.setCode(snReq.code() != null ? snReq.code() : "");
+            snippet.setExpectedOutput(snReq.expectedOutput());
+            snippet.setRunnable(snReq.runnable() == null || snReq.runnable());
+            snippet.setEditable(snReq.editable() == null || snReq.editable());
+            snippet.setOrderIndex(snReq.orderIndex() != null ? snReq.orderIndex() : snIdx++);
             snippets.add(snippet);
         }
-        subtopic.setCodeSnippets(snippets);
+        subtopic.getCodeSnippets().clear();
+        subtopic.getCodeSnippets().addAll(snippets);
     }
 
     private void processQuestions(

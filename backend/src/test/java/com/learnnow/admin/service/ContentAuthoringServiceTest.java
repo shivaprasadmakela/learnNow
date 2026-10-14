@@ -2,8 +2,11 @@ package com.learnnow.admin.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.learnnow.admin.dto.request.ImportCourseRequest;
 import com.learnnow.admin.dto.response.AdminPathDto;
 import com.learnnow.paths.service.CatalogService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,8 @@ public class ContentAuthoringServiceTest extends com.learnnow.AbstractIntegratio
     @Autowired private CatalogService catalogService;
 
     @Autowired private JdbcTemplate jdbc;
+
+    @PersistenceContext private EntityManager entityManager;
 
     @Test
     @Transactional
@@ -186,6 +191,65 @@ public class ContentAuthoringServiceTest extends com.learnnow.AbstractIntegratio
         assertEquals(
                 "What is 2+2?",
                 fetchedAgain.topics().get(0).subtopics().get(0).questions().get(0).prompt());
+    }
+
+    /**
+     * Re-importing a course with OVERWRITE sends each lesson's snippets again under the ids they
+     * already have. The import built new entities for them alongside the managed ones, so Hibernate
+     * held two objects with one key and refused the whole import - for any lesson with a snippet.
+     */
+    @Test
+    @Transactional
+    public void overwritingACourseUpdatesItsSnippetsInPlace() {
+        authoringService.importCourse(courseWithSnippet("System.out.println(1);", "1\n"));
+        entityManager.flush();
+
+        authoringService.importCourse(courseWithSnippet("System.out.println(2);", "2\n"));
+        entityManager.flush();
+
+        assertEquals(
+                List.of("System.out.println(2);"),
+                jdbc.queryForList(
+                        "SELECT s.code FROM subtopic_code_snippets s JOIN subtopics st ON"
+                                + " st.id = s.subtopic_id WHERE st.title = 'Lesson with a snippet'",
+                        String.class));
+    }
+
+    private static ImportCourseRequest courseWithSnippet(String code, String output) {
+        var snippet =
+                new ImportCourseRequest.ImportCodeSnippetRequest(
+                        "lesson-with-a-snippet-snippet-1",
+                        "java",
+                        "Demo",
+                        code,
+                        output,
+                        true,
+                        true,
+                        1);
+        var question =
+                new ImportCourseRequest.ImportQuestionRequest(
+                        "mcq", "Pick one", List.of("a", "b"), "a", "Because.", 1);
+        var lesson =
+                new ImportCourseRequest.ImportSubtopicRequest(
+                        "Lesson with a snippet",
+                        "### Body",
+                        "beginner",
+                        "hands-on",
+                        List.of(),
+                        null,
+                        5,
+                        List.of(snippet),
+                        List.of(question));
+        return new ImportCourseRequest(
+                null,
+                "Course imported twice",
+                "d",
+                "Backend",
+                "learnNow",
+                "OVERWRITE",
+                List.of(
+                        new ImportCourseRequest.ImportTopicRequest(
+                                "Only topic", "t", "Backend", "1 hour", List.of(lesson))));
     }
 
     /**
