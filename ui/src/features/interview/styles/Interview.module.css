@@ -1,0 +1,556 @@
+/* Interview questions - the path's question bank and the block under each lesson.
+   Theme tokens only. Text on a --tech-blue fill uses --bg-primary rather than white: dark theme's
+   blue is light (#38bdf8), and white on it is unreadable. */
+
+/* ── How it works ──────────────────────────────────────────── */
+.howItWorks {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 16px;
+    list-style: none;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+}
+
+.howStep {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.howNumber {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--tech-blue);
+    color: var(--bg-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.howText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+.howText strong {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.howItWorksCompact {
+    padding: 10px 14px;
+}
+
+/* ── Bank: topics on the left, one topic's questions on the right ── */
+.bank {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 8px 0 40px;
+}
+
+.bankStatus {
+    margin: 0;
+    padding: 32px 0;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+}
+
+.bankLayout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.topicNav {
+    position: sticky;
+    top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.topicNavTitle {
+    padding: 0 10px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.topicList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.topicBtn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: none;
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.topicBtn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.topicBtnActive,
+.topicBtnActive:hover {
+    border-color: color-mix(in srgb, var(--tech-blue) 45%, transparent);
+    background: color-mix(in srgb, var(--tech-blue) 12%, transparent);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.topicBtn:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 1px;
+}
+
+.topicName {
+    min-width: 0;
+}
+
+.topicCount {
+    flex: 0 0 auto;
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-tertiary);
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-tertiary);
+}
+
+.topicBtnActive .topicCount {
+    background: var(--tech-blue);
+    color: var(--bg-primary);
+}
+
+.topicPanel {
+    min-width: 0;
+}
+
+.topicPanelHead {
+    margin-bottom: 14px;
+}
+
+.topicPanelTitle {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.topicPanelMeta {
+    margin: 4px 0 0;
+    font-size: 0.86rem;
+    color: var(--text-tertiary);
+}
+
+.cardList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── One question card ─────────────────────────────────────── */
+.card {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-card);
+    overflow: hidden;
+}
+
+.cardHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px 0;
+}
+
+.qNumber {
+    padding: 2px 9px;
+    border-radius: 6px;
+    background: var(--tech-blue);
+    color: var(--bg-primary);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.chainChip {
+    padding: 2px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.reportedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border: 1px solid color-mix(in srgb, var(--tech-blue) 40%, transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--tech-blue) 12%, transparent);
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--tech-blue);
+}
+
+.cardFoot {
+    padding: 0 18px 14px 62px;
+}
+
+.reviseLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 500;
+    text-align: left;
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+
+.reviseLink:hover {
+    color: var(--tech-blue);
+}
+
+.reviseLink:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+}
+
+/* ── The conversation: interviewer turn, answer turn, follow-ups ── */
+.exchange {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px 18px 16px;
+}
+
+.followUps .exchange {
+    padding: 0;
+}
+
+.turn {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.avatarInterviewer {
+    background: color-mix(in srgb, var(--tech-blue) 16%, transparent);
+    color: var(--tech-blue);
+}
+
+.avatarYou {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.turnBody {
+    min-width: 0;
+}
+
+.speaker {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.prompt {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.revealRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-top: 12px;
+}
+
+.revealBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border: 1px solid var(--tech-blue);
+    border-radius: 8px;
+    background: var(--tech-blue);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--bg-primary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.revealBtn:hover {
+    border-color: var(--tech-blue-hover);
+    background: var(--tech-blue-hover);
+}
+
+.revealHint {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+}
+
+.answerBubble {
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px 12px 12px 12px;
+    background: var(--bg-secondary);
+}
+
+.answerText p {
+    margin: 0 0 8px;
+    font-size: 0.94rem;
+    line-height: 1.65;
+    color: var(--text-primary);
+}
+
+.answerText p:last-child {
+    margin-bottom: 0;
+}
+
+.deepText {
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.deepToggle,
+.hideBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.deepToggle {
+    margin-top: 10px;
+    color: var(--tech-blue);
+}
+
+.hideBtn {
+    display: block;
+    margin-top: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+}
+
+.hideBtn:hover {
+    color: var(--text-secondary);
+}
+
+.revealBtn:focus-visible,
+.deepToggle:focus-visible,
+.hideBtn:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+}
+
+.chevron {
+    transition: transform var(--transition-fast);
+}
+
+.chevronOpen {
+    transition: transform var(--transition-fast);
+    transform: rotate(180deg);
+}
+
+.why {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--tech-blue) 8%, transparent);
+}
+
+.whyIcon {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: var(--tech-blue);
+}
+
+.whyLabel {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--tech-blue);
+}
+
+/* Follow-ups hang off a line beneath the answer that earned them. */
+.followUps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-left: 15px;
+    padding-left: 29px;
+    border-left: 2px dashed var(--border-color);
+}
+
+.digDeeper {
+    margin-left: -29px;
+    padding-left: 10px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tech-blue);
+}
+
+/* ── Block under a lesson ──────────────────────────────────── */
+.lessonBlock {
+    margin-top: 32px;
+    padding: 18px;
+    border: 1px solid var(--border-color);
+    border-top: 3px solid var(--tech-blue);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+}
+
+.lessonBlockHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.lessonBlockIntro {
+    margin: 4px 0 14px;
+    font-size: 0.86rem;
+    color: var(--text-tertiary);
+}
+
+/* ── Narrow screens: topics become a scrolling row above the questions ── */
+@media (max-width: 860px) {
+    .howItWorks {
+        grid-template-columns: 1fr;
+    }
+
+    .bankLayout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .topicNav {
+        position: static;
+    }
+
+    .topicList {
+        flex-direction: row;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .topicBtn {
+        width: auto;
+        white-space: nowrap;
+        border-color: var(--border-color);
+    }
+}
+
+@media (max-width: 600px) {
+    .exchange {
+        padding: 12px 14px 14px;
+    }
+
+    /* Every pixel goes to the answer text on a phone; the bubble alone says whose turn it is. */
+    .avatarYou {
+        display: none;
+    }
+
+    .answerBubble {
+        grid-column: 1 / -1;
+        padding: 12px 13px;
+    }
+
+    .cardHead {
+        padding: 12px 14px 0;
+    }
+
+    .cardFoot {
+        padding: 0 14px 14px;
+    }
+
+    .followUps {
+        margin-left: 6px;
+        padding-left: 14px;
+    }
+
+    .digDeeper {
+        margin-left: -14px;
+    }
+}

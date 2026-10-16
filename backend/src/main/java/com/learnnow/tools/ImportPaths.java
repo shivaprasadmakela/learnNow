@@ -8,6 +8,9 @@ import com.learnnow.admin.service.ContentAuthoringService;
 import com.learnnow.dsa.dto.request.DsaImportRequest;
 import com.learnnow.dsa.dto.response.DsaImportResultDto;
 import com.learnnow.dsa.service.DsaImportService;
+import com.learnnow.interview.dto.request.ImportInterviewBankRequest;
+import com.learnnow.interview.dto.response.InterviewImportResultDto;
+import com.learnnow.interview.service.InterviewService;
 import com.learnnow.tracks.dto.request.ImportTrackRequest;
 import com.learnnow.tracks.dto.response.TrackImportResultDto;
 import com.learnnow.tracks.service.TrackService;
@@ -18,9 +21,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Imports course, DSA step and career track JSON by calling the services directly, for the local
- * database. A file with a {@code sheetSlug} is a DSA step, one with a {@code slug} and {@code
- * steps} is a track, and anything else is a course. Import tracks after the paths they name.
+ * Imports course, DSA step, career track and interview bank JSON by calling the services directly,
+ * for the local database. A file with a {@code sheetSlug} is a DSA step, one with a {@code slug}
+ * and {@code steps} is a track, one with a {@code bank} and {@code questions} is an interview bank,
+ * and anything else is a course. Import tracks and interview banks after the paths they name.
  *
  * <p>Only active under the "import" profile, so it cannot run in a normal boot. The HTTP route in
  * paths/tools/import_paths.py is the one to use against dev and prod, where an admin token is
@@ -36,16 +40,19 @@ public class ImportPaths implements ApplicationRunner {
     private final ContentAuthoringService authoring;
     private final DsaImportService dsaImport;
     private final TrackService tracks;
+    private final InterviewService interview;
     private final ObjectMapper mapper;
 
     public ImportPaths(
             ContentAuthoringService authoring,
             DsaImportService dsaImport,
             TrackService tracks,
+            InterviewService interview,
             ObjectMapper mapper) {
         this.authoring = authoring;
         this.dsaImport = dsaImport;
         this.tracks = tracks;
+        this.interview = interview;
         this.mapper = mapper;
     }
 
@@ -58,6 +65,15 @@ public class ImportPaths implements ApplicationRunner {
             JsonNode json = mapper.readTree(new File(file));
             if (json.has("sheetSlug")) {
                 importDsaStep(file, mapper.treeToValue(json, DsaImportRequest.class));
+                continue;
+            }
+            if (json.has("bank") && json.has("questions")) {
+                InterviewImportResultDto bank =
+                        interview.importBank(
+                                mapper.treeToValue(json, ImportInterviewBankRequest.class));
+                System.out.printf(
+                        "IMPORTED %s -> bank=%s created=%d updated=%d total=%d%n",
+                        file, bank.bank(), bank.created(), bank.updated(), bank.total());
                 continue;
             }
             if (json.has("slug") && json.has("steps")) {

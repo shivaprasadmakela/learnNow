@@ -1,0 +1,71 @@
+package com.learnnow.interview.entity;
+
+import com.learnnow.paths.entity.ContentStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * A question asked in a real interview, anchored to the subtopic that teaches its answer.
+ *
+ * <p>The subtopic and parent are plain ids rather than mapped associations. An import builds a
+ * whole tree of follow-ups at once, and what it needs is each parent's id before its children are
+ * written - not a graph Hibernate would load, cascade and reorder.
+ */
+@Entity
+@Table(name = "interview_questions")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class InterviewQuestion {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    /** Mapped as "key"; named otherwise in Java because KEY is a JPQL keyword. */
+    @Column(name = "key", nullable = false, length = 160)
+    private String questionKey;
+
+    @Column(name = "subtopic_id", nullable = false)
+    private UUID subtopicId;
+
+    @Column(name = "parent_id")
+    private UUID parentId;
+
+    @Column(nullable = false)
+    private int depth;
+
+    @Column(name = "order_index", nullable = false)
+    private int orderIndex;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String prompt;
+
+    @Column(name = "answer_short", nullable = false, columnDefinition = "TEXT")
+    private String answerShort;
+
+    @Column(name = "answer_deep", nullable = false, columnDefinition = "TEXT")
+    private String answerDeep;
+
+    @Column(name = "answer_signal", nullable = false, columnDefinition = "TEXT")
+    private String answerSignal;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private ContentStatus status = ContentStatus.DRAFT;
+}

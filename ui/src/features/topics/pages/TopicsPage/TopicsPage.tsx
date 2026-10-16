@@ -10,6 +10,10 @@ import { CreateTopicModal } from '../../../iam-admin/components/ConfigurationEdi
 import { CreateSubtopicModal } from '../../components/CreateSubtopicModal/CreateSubtopicModal';
 import { PathTrackLinks } from '../../../tracks/components/PathTrackLinks/PathTrackLinks';
 import { useTracksContainingPath } from '../../../tracks/hooks/useTracksContainingPath';
+import { Tabs } from '../../../../shared/components/ui/Tabs';
+import { InterviewBank, usePathInterviewQuestions, type InterviewQuestion } from '../../../interview';
+
+type PathSection = 'lessons' | 'interview';
 
 export const TopicsPage: React.FC<TopicsPageProps> = ({
     pathId,
@@ -32,6 +36,13 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
     const { showToast } = useToast();
     const tracks = useTracksContainingPath(onSelectTrack ? pathId : undefined);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+    const [section, setSection] = useState<PathSection>('lessons');
+    const interview = usePathInterviewQuestions(pathId);
+    // Opening questions only: a follow-up is part of the question it follows, not one more to do.
+    const interviewCount = interview.topics.reduce((n, t) => n + t.questions.length, 0);
+    // The tab exists only once there is something behind it, so most paths look exactly as before.
+    const hasInterview = interviewCount > 0;
+    const showInterview = hasInterview && section === 'interview';
     const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
     const [isCreateSubtopicOpen, setIsCreateSubtopicOpen] = useState(false);
 
@@ -48,6 +59,12 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
             onSelectTopic(id, subtopicId, subtopicTitle);
         } else {
             showToast(`"${title}" workspace lessons are launching soon!`, 'info');
+        }
+    };
+
+    const handleRevise = (question: InterviewQuestion) => {
+        if (question.topicId && question.subtopicId) {
+            handleTopicClick(question.topicId, question.subtopicTitle ?? '', question.subtopicId, question.subtopicTitle ?? undefined);
         }
     };
 
@@ -161,21 +178,44 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
                     </div>
                 )}
 
-                <ViewModeToggle
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                />
+                {hasInterview && (
+                    <Tabs<PathSection>
+                        items={[
+                            { id: 'lessons', label: 'Lessons' },
+                            { id: 'interview', label: 'Interview questions', count: interviewCount }
+                        ]}
+                        activeId={section}
+                        onChange={setSection}
+                        label="Path sections"
+                        className={styles.sectionTabs}
+                    />
+                )}
+
+                {!showInterview && (
+                    <ViewModeToggle
+                        viewMode={viewMode}
+                        onViewModeChange={setViewMode}
+                    />
+                )}
             </div>
 
             <div className={styles.listScrollArea}>
-                <TopicCardList
-                    topics={topics}
-                    viewMode={viewMode}
-                    onTopicClick={handleTopicClick}
-                    hasMore={hasMoreTopics}
-                    isLoadingMore={isLoadingMoreTopics}
-                    onLoadMore={onLoadMoreTopics}
-                />
+                {showInterview ? (
+                    <InterviewBank
+                        topics={interview.topics}
+                        loading={interview.loading}
+                        onRevise={handleRevise}
+                    />
+                ) : (
+                    <TopicCardList
+                        topics={topics}
+                        viewMode={viewMode}
+                        onTopicClick={handleTopicClick}
+                        hasMore={hasMoreTopics}
+                        isLoadingMore={isLoadingMoreTopics}
+                        onLoadMore={onLoadMoreTopics}
+                    />
+                )}
             </div>
 
             {/* Admin Topic Creation Modal (Form vs Raw JSON) */}

@@ -326,3 +326,7 @@
         width: 100%;
     }
 }
+/* Lessons / Interview questions switch, shown only on paths that have interview questions. */
+.sectionTabs {
+    margin-top: var(--space-4);
+}

@@ -10,6 +10,7 @@ import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCode
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { LevelBadge, TrackBadge, DurationBadge } from '../../../../shared/components/ui/Badge';
 import { useNote, useBookmarks, BookmarkButton, NotesPanel } from '../../../notes';
+import { SubtopicInterviewQuestions } from '../../../interview';
 import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
 import { TopicCelebrationModal } from '../TopicCelebrationModal/TopicCelebrationModal';
 import styles from './StudyConsole.module.css';
@@ -595,6 +596,7 @@ export function StudyConsole({
                                                         </div>
                                                     </div>
                                                 )}
+                                                <SubtopicInterviewQuestions subtopicId={st.id} />
                                             </div>
 
                                             {/* Progressive Read More / Completion Container */}
