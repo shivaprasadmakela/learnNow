@@ -126,8 +126,13 @@ export const Tabs = <T extends string = string>({
                     >
                         {item.icon}
                         {item.label}
+                        {/* A real space, not just the flex gap, or the tab is announced as "Backend3".
+                            Inside the inline-flex button the space takes no room of its own. */}
                         {typeof item.count === 'number' && (
-                            <span className={styles.count}>{item.count}</span>
+                            <>
+                                {' '}
+                                <span className={styles.count}>{item.count}</span>
+                            </>
                         )}
                     </button>
                 );
