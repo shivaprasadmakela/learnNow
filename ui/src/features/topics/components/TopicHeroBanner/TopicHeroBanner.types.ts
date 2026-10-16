@@ -1,3 +1,5 @@
+import type React from 'react';
+
 export interface TopicHeroBannerProps {
     pathTitle: string;
     description?: string;
@@ -5,4 +7,6 @@ export interface TopicHeroBannerProps {
     activitiesCount: number;
     progressPercent: number;
     onContinueClick: () => void;
+    /** Under the banner's divider: the career tracks this path is part of. */
+    footer?: React.ReactNode;
 }

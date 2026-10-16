@@ -6,6 +6,7 @@ export type ViewState =
     | 'LOGIN'
     | 'PATHS'
     | 'TOPICS'
+    | 'TRACK'
     | 'STUDY'
     | 'VERIFY_EMAIL'
     | 'RESET_PASSWORD'
@@ -24,6 +25,8 @@ export interface ParsedRoute {
     /** Set for DSA_PROBLEM. */
     dsaStepSlug?: string;
     dsaProblemSlug?: string;
+    /** Set for TRACK. */
+    trackSlug?: string;
 }
 
 /**
@@ -57,6 +60,12 @@ export const parseRoute = (pathname: string): ParsedRoute => {
             return { view: 'DSA_PROBLEM', dsaStepSlug: second, dsaProblemSlug: third };
         }
         return { view: 'DSA' };
+    }
+
+    if (first === 'tracks') {
+        // Tracks are listed on the Paths page; /tracks alone has nothing of its own to show.
+        if (parts.length === 2) return { view: 'TRACK', trackSlug: second };
+        return { view: 'PATHS' };
     }
 
     if (first === 'paths') {
@@ -103,6 +112,8 @@ export const routeToPath = (
             return `/paths/${slug || 'java-backend-path'}`;
         case 'STUDY':
             return `/paths/${slug || 'java-backend-path'}/${subSlug || ''}`;
+        case 'TRACK':
+            return slug ? `/tracks/${slug}` : '/paths';
         case 'DSA':
             return '/dsa';
         case 'DSA_PROBLEM':

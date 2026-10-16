@@ -8,6 +8,9 @@ import com.learnnow.admin.service.ContentAuthoringService;
 import com.learnnow.dsa.dto.request.DsaImportRequest;
 import com.learnnow.dsa.dto.response.DsaImportResultDto;
 import com.learnnow.dsa.service.DsaImportService;
+import com.learnnow.tracks.dto.request.ImportTrackRequest;
+import com.learnnow.tracks.dto.response.TrackImportResultDto;
+import com.learnnow.tracks.service.TrackService;
 import java.io.File;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -15,8 +18,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Imports course JSON and DSA step JSON by calling the services directly, for the local database. A
- * file with a {@code sheetSlug} is a DSA step; anything else is a course.
+ * Imports course, DSA step and career track JSON by calling the services directly, for the local
+ * database. A file with a {@code sheetSlug} is a DSA step, one with a {@code slug} and {@code
+ * steps} is a track, and anything else is a course. Import tracks after the paths they name.
  *
  * <p>Only active under the "import" profile, so it cannot run in a normal boot. The HTTP route in
  * paths/tools/import_paths.py is the one to use against dev and prod, where an admin token is
@@ -31,12 +35,17 @@ public class ImportPaths implements ApplicationRunner {
 
     private final ContentAuthoringService authoring;
     private final DsaImportService dsaImport;
+    private final TrackService tracks;
     private final ObjectMapper mapper;
 
     public ImportPaths(
-            ContentAuthoringService authoring, DsaImportService dsaImport, ObjectMapper mapper) {
+            ContentAuthoringService authoring,
+            DsaImportService dsaImport,
+            TrackService tracks,
+            ObjectMapper mapper) {
         this.authoring = authoring;
         this.dsaImport = dsaImport;
+        this.tracks = tracks;
         this.mapper = mapper;
     }
 
@@ -49,6 +58,14 @@ public class ImportPaths implements ApplicationRunner {
             JsonNode json = mapper.readTree(new File(file));
             if (json.has("sheetSlug")) {
                 importDsaStep(file, mapper.treeToValue(json, DsaImportRequest.class));
+                continue;
+            }
+            if (json.has("slug") && json.has("steps")) {
+                TrackImportResultDto track =
+                        tracks.importTrack(mapper.treeToValue(json, ImportTrackRequest.class));
+                System.out.printf(
+                        "IMPORTED %s -> track=%s id=%s mode=%s steps=%d%n",
+                        file, track.slug(), track.trackId(), track.mode(), track.steps());
                 continue;
             }
             ImportCourseRequest request = mapper.treeToValue(json, ImportCourseRequest.class);

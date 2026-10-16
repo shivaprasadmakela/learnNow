@@ -20,6 +20,9 @@ public interface PathRepository extends JpaRepository<Path, UUID> {
 
     java.util.Optional<Path> findByTitleIgnoreCase(String title);
 
+    /** Every path with a title, so a caller can tell "none" from "more than one". */
+    List<Path> findAllByTitleIgnoreCase(String title);
+
     @Query(
             "SELECT DISTINCT p FROM Path p LEFT JOIN FETCH p.pathTopics pt LEFT JOIN FETCH pt.topic"
                     + " WHERE p.status = :status")

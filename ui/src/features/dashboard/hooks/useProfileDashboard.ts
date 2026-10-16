@@ -21,6 +21,12 @@ export const useProfileDashboard = () => {
         return { stepSlug: parsed.dsaStepSlug, problemSlug: parsed.dsaProblemSlug };
     });
 
+    /** Which career track the URL points at. */
+    const [trackSlug, setTrackSlug] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        return parseRoute(window.location.pathname).trackSlug ?? null;
+    });
+
     const [activeView, setActiveView] = useState<ViewState>(() => {
         if (typeof window === 'undefined') return 'HOME';
         return parseRoute(window.location.pathname).view;
@@ -72,6 +78,7 @@ export const useProfileDashboard = () => {
         setError(null);
         if (parsed.editingPathId) setEditingPathId(parsed.editingPathId);
         setDsaRoute({ stepSlug: parsed.dsaStepSlug, problemSlug: parsed.dsaProblemSlug });
+        setTrackSlug(parsed.trackSlug ?? null);
         setActiveView(parsed.view);
         setIsLoading(false);
     }, []);
@@ -79,6 +86,7 @@ export const useProfileDashboard = () => {
     const changeView = useCallback((view: ViewState, slug?: string, subSlug?: string) => {
         if (view === 'ADMIN_EDIT_PATH' && slug) setEditingPathId(slug);
         if (view === 'DSA_PROBLEM') setDsaRoute({ stepSlug: slug, problemSlug: subSlug });
+        if (view === 'TRACK') setTrackSlug(slug ?? null);
         window.history.pushState(null, '', routeToPath(view, slug, subSlug));
         setActiveView(view);
     }, []);
@@ -284,6 +292,7 @@ export const useProfileDashboard = () => {
         editingPathId,
         setEditingPathId,
         dsaRoute,
+        trackSlug,
         profile,
         isLoading,
         error,

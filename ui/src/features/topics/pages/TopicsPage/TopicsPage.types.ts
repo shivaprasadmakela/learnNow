@@ -28,6 +28,8 @@ export interface TopicsPageProps {
     onSelectTopic?: (id: number | string, subtopicId?: number | string, subtopicTitle?: string) => void;
     onAddTopicToPath?: (topicData: any) => Promise<boolean>;
     onAddSubtopicToTopic?: (topicId: string | number, subtopicData: any) => Promise<boolean>;
+    /** Opens a career track; given, the banner links to the tracks this path is part of. */
+    onSelectTrack?: (slug: string) => void;
 }
 
 export type PathRoadmapPageProps = TopicsPageProps;

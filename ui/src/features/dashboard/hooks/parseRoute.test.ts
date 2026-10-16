@@ -18,6 +18,8 @@ describe('parseRoute', () => {
         ['/paths', 'PATHS'],
         ['/paths/java-backend', 'TOPICS'],
         ['/paths/java-backend/collections', 'STUDY'],
+        ['/tracks/java-full-stack-developer', 'TRACK'],
+        ['/tracks', 'PATHS'],
         ['/dsa', 'DSA'],
         ['/dsa/binary-search/bs-lower-bound', 'DSA_PROBLEM'],
         ['/iamAdmin', 'ADMIN'],
@@ -68,6 +70,12 @@ describe('routeToPath', () => {
         expect(parsed.view).toBe('DSA_PROBLEM');
         expect(parsed.dsaStepSlug).toBe('binary-search');
         expect(parsed.dsaProblemSlug).toBe('bs-lower-bound');
+    });
+
+    it('round-trips a career track', () => {
+        const parsed = parseRoute(routeToPath('TRACK', 'java-full-stack-developer'));
+        expect(parsed.view).toBe('TRACK');
+        expect(parsed.trackSlug).toBe('java-full-stack-developer');
     });
 
     it('round-trips an admin path edit', () => {

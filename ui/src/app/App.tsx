@@ -7,6 +7,7 @@ import styles from './App.module.css';
 import { useUserData } from './hooks/useUserData';
 import { useTopicSession } from './hooks/useTopicSession';
 import { AppViewRenderer } from './components/AppViewRenderer';
+import type { NextLesson } from '../features/tracks/api/tracks.api';
 
 const StudyConsole = React.lazy(() => import('../features/topics/components/StudyConsole/StudyConsole').then(m => ({ default: m.StudyConsole })));
 const PathCelebrationModal = React.lazy(() => import('./components/PathCelebrationModal').then(m => ({ default: m.PathCelebrationModal })));
@@ -19,6 +20,7 @@ export default function App() {
         changeView,
         editingPathId,
         dsaRoute,
+        trackSlug,
         profile,
         isLoading,
         theme,
@@ -79,12 +81,16 @@ export default function App() {
     const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths' | 'bookmarks'>('activities');
     const [isPathsActive, setIsPathsActive] = useState(() => {
         if (typeof window !== 'undefined') {
-            return window.location.pathname.split('/').filter(Boolean)[0] === 'paths';
+            const first = window.location.pathname.split('/').filter(Boolean)[0];
+            return first === 'paths' || first === 'tracks';
         }
         return false;
     });
 
     const [celebratingPath] = useState(null);
+
+    /** The open track's title, for the breadcrumb; the page reports it once loaded. */
+    const [trackTitle, setTrackTitle] = useState<string | null>(null);
 
     // Resolve selectedPathId dynamically from URL whenever courses load or route changes
     useEffect(() => {
@@ -153,7 +159,7 @@ export default function App() {
         } else {
             changeView(view);
         }
-        setIsPathsActive(view === 'PATHS' || view === 'TOPICS');
+        setIsPathsActive(view === 'PATHS' || view === 'TOPICS' || view === 'TRACK');
         if (view !== 'TOPICS') setSelectedPathId(null);
         if (view === 'DASHBOARD') setDashboardTab('activities');
     };
@@ -208,6 +214,41 @@ export default function App() {
         const slug = path ? slugify(path.title) : 'path';
         changeView('TOPICS', slug);
         setIsPathsActive(true);
+    };
+
+    const handleSelectTrack = (slug: string) => {
+        setTrackTitle(null);
+        setIsPathsActive(true);
+        changeView('TRACK', slug);
+    };
+
+    /** A step on a track's roadmap opens its path, which may not be the one selected before. */
+    const handleOpenPathFromTrack = (pathId: string, pathTitle: string) => {
+        if (!isLoggedIn) {
+            changeView('LOGIN');
+            return;
+        }
+        const course = courses.find(c => String(c.id) === pathId);
+        if (course) {
+            setSelectedPathId(course.id);
+            loadTopicsForPath(course.id);
+        }
+        setIsPathsActive(true);
+        changeView('TOPICS', slugify(pathTitle));
+    };
+
+    /**
+     * Opens the lesson a track says comes next. The study console picks its lesson from the URL,
+     * so the full path/topic/lesson URL is written first and the topic loaded without rewriting
+     * it - otherwise a topic from a path whose topics are not loaded yet would get a generic URL.
+     */
+    const handleContinueTrack = (lesson: NextLesson) => {
+        changeView(
+            'STUDY',
+            slugify(lesson.pathTitle),
+            `${slugify(lesson.topicTitle)}/${slugify(lesson.subtopicTitle)}`
+        );
+        handleSelectTopic(lesson.topicId, lesson.subtopicId, lesson.subtopicTitle, true);
     };
 
     const handleSelectRecentTopic = (topicId: number, pathId?: number) => {
@@ -351,7 +392,7 @@ export default function App() {
                     )
                 ) : (
                     <main className={styles.mainContent}>
-                        {(activeView === 'PATHS' || activeView === 'TOPICS') && (
+                        {(activeView === 'PATHS' || activeView === 'TOPICS' || activeView === 'TRACK') && (
                             <Breadcrumb
                                 crumbs={[
                                     { onClick: () => handleViewChange(isLoggedIn ? 'DASHBOARD' : 'HOME') },
@@ -360,7 +401,12 @@ export default function App() {
                                             { label: 'Paths', onClick: handleSelectPaths },
                                             { label: selectedPath?.title || 'Java Backend Developer Path' },
                                         ]
-                                        : [{ label: 'Paths' }]
+                                        : activeView === 'TRACK'
+                                            ? [
+                                                { label: 'Paths', onClick: handleSelectPaths },
+                                                { label: trackTitle || 'Career track' },
+                                            ]
+                                            : [{ label: 'Paths' }]
                                     ),
                                 ]}
                             />
@@ -386,6 +432,12 @@ export default function App() {
                             signUp={signUp}
                             signInWithGoogle={signInWithGoogle}
                             handleSelectPath={handleSelectPath}
+                            trackSlug={trackSlug}
+                            onSelectTrack={handleSelectTrack}
+                            onOpenPathFromTrack={handleOpenPathFromTrack}
+                            onContinueTrack={handleContinueTrack}
+                            onTrackTitleLoaded={setTrackTitle}
+                            onSelectPaths={handleSelectPaths}
                             onOpenDsaProblem={handleOpenDsaProblem}
                             handleSelectTopic={handleSelectTopic}
                             onSelectRecentTopic={handleSelectRecentTopic}

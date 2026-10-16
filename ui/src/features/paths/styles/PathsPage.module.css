@@ -879,3 +879,11 @@
     color: var(--text-secondary);
     text-align: center;
 }
+/* Heads the path grid when career tracks sit above it. */
+.allPathsTitle {
+    margin: 0 0 16px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}

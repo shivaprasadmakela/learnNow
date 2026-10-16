@@ -17,9 +17,11 @@ const CourseImporter = React.lazy(() => import('../../features/iam-admin').then(
 const CompilerPage = React.lazy(() => import('../../features/compiler').then(m => ({ default: m.CompilerPage })));
 const DsaSheetPage = React.lazy(() => import('../../features/dsa').then(m => ({ default: m.DsaSheetPage })));
 const ProfilePage = React.lazy(() => import('../../features/profile').then(m => ({ default: m.ProfilePage })));
+const TrackPage = React.lazy(() => import('../../features/tracks/pages/TrackPage').then(m => ({ default: m.TrackPage })));
 const PrivacyPolicyPage = React.lazy(() => import('../../features/privacy').then(m => ({ default: m.PrivacyPolicyPage })));
 const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
 import { fetchAdminPathById, saveAdminPath, type AdminSubtopicData } from '../../features/iam-admin/api/admin.api';
+import type { NextLesson } from '../../features/tracks/api/tracks.api';
 
 
 
@@ -43,6 +45,13 @@ interface AppViewRendererProps {
     signUp: (firstName: string, lastName: string, email: string, pass: string) => Promise<unknown>;
     signInWithGoogle?: (idToken: string) => Promise<unknown>;
     handleSelectPath: (pathId: number) => void;
+    /** The career track the URL names, for the TRACK view. */
+    trackSlug?: string | null;
+    onSelectTrack: (slug: string) => void;
+    onOpenPathFromTrack: (pathId: string, pathTitle: string) => void;
+    onContinueTrack: (lesson: NextLesson) => void;
+    onTrackTitleLoaded: (title: string) => void;
+    onSelectPaths: () => void;
     onOpenDsaProblem: (stepSlug: string, problemSlug: string) => void;
     handleSelectTopic: (topicId: number | string, subtopicId?: number | string, subtopicTitle?: string) => void;
     onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
@@ -78,6 +87,12 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     signUp,
     signInWithGoogle,
     handleSelectPath,
+    trackSlug,
+    onSelectTrack,
+    onOpenPathFromTrack,
+    onContinueTrack,
+    onTrackTitleLoaded,
+    onSelectPaths,
     onOpenDsaProblem,
     handleSelectTopic,
     onSelectRecentTopic,
@@ -199,6 +214,20 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         hasMorePaths={hasMorePaths}
                         isLoadingMorePaths={isLoadingMorePaths}
                         onLoadMorePaths={onLoadMorePaths}
+                        onSelectTrack={onSelectTrack}
+                    />
+                )}
+
+                {activeView === 'TRACK' && trackSlug && (
+                    <TrackPage
+                        key={trackSlug}
+                        slug={trackSlug}
+                        isLoggedIn={isLoggedIn}
+                        onOpenPath={onOpenPathFromTrack}
+                        onContinue={onContinueTrack}
+                        onRequireLogin={() => changeView('LOGIN')}
+                        onBackToPaths={onSelectPaths}
+                        onTitleLoaded={onTrackTitleLoaded}
                     />
                 )}
 
@@ -217,6 +246,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         progressPercent={selectedPath?.progressPercentage || 0}
                         isAdmin={isAdmin}
                         onSelectTopic={handleSelectTopic}
+                        onSelectTrack={onSelectTrack}
                         onAddTopicToPath={async (topicData) => {
                             if (!selectedPath || !selectedPath.id) return false;
                             try {

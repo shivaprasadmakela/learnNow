@@ -74,4 +74,28 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
                 + " 'PUBLISHED' AND st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
                 + " GROUP BY pt.path.id")
     List<Object[]> sumPublishedMinutesByPathIds(@Param("pathIds") Collection<UUID> pathIds);
+
+    /**
+     * Published lessons in each published topic of some paths, as [pathId, topicId, lessons]. A
+     * published topic with no published lesson still has a row, with a count of zero, because it
+     * still counts towards its path's average.
+     */
+    @Query(
+            "SELECT pt.path.id, pt.topic.id, COUNT(st) FROM PathTopic pt LEFT JOIN Subtopic st ON"
+                + " st.topic = pt.topic AND st.status ="
+                + " com.learnnow.paths.entity.ContentStatus.PUBLISHED WHERE pt.path.id IN :pathIds"
+                + " AND pt.topic.status = 'PUBLISHED' GROUP BY pt.path.id, pt.topic.id")
+    List<Object[]> countPublishedLessonsByTopicForPathIds(
+            @Param("pathIds") Collection<UUID> pathIds);
+
+    /**
+     * A path's published lessons in the order a learner meets them - topic order within the path,
+     * then lesson order within the topic - as [topicId, topicTitle, subtopicId, subtopicTitle].
+     */
+    @Query(
+            "SELECT pt.topic.id, pt.topic.title, st.id, st.title FROM PathTopic pt JOIN Subtopic st"
+                + " ON st.topic = pt.topic WHERE pt.path.id = :pathId AND pt.topic.status ="
+                + " 'PUBLISHED' AND st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                + " ORDER BY pt.orderIndex ASC, st.orderIndex ASC")
+    List<Object[]> findPublishedLessonsInOrder(@Param("pathId") UUID pathId);
 }

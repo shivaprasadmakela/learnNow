@@ -1,6 +1,7 @@
 package com.learnnow.learningprogress.repository;
 
 import com.learnnow.learningprogress.entity.UserTopicProgress;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,4 +22,11 @@ public interface UserTopicProgressRepository extends JpaRepository<UserTopicProg
                     + " = :pathId AND utp.status = 'COMPLETED'")
     long countCompletedByUserIdAndPathId(
             @Param("userId") String userId, @Param("pathId") UUID pathId);
+
+    /** Which of the given topics a learner has marked complete as a whole. */
+    @Query(
+            "SELECT utp.topicId FROM UserTopicProgress utp WHERE utp.userId = :userId AND"
+                    + " utp.status = 'COMPLETED' AND utp.topicId IN :topicIds")
+    List<UUID> findCompletedTopicIds(
+            @Param("userId") String userId, @Param("topicIds") Collection<UUID> topicIds);
 }

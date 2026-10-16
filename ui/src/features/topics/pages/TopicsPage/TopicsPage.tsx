@@ -8,8 +8,11 @@ import { ViewModeToggle } from '../../components/ViewModeToggle';
 import { TopicCardList } from '../../components/TopicCardList';
 import { CreateTopicModal } from '../../../iam-admin/components/ConfigurationEditor/components/CreateTopicModal';
 import { CreateSubtopicModal } from '../../components/CreateSubtopicModal/CreateSubtopicModal';
+import { PathTrackLinks } from '../../../tracks/components/PathTrackLinks/PathTrackLinks';
+import { useTracksContainingPath } from '../../../tracks/hooks/useTracksContainingPath';
 
 export const TopicsPage: React.FC<TopicsPageProps> = ({
+    pathId,
     pathTitle,
     description,
     managedBy = 'learnNow',
@@ -23,9 +26,11 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
     isAdmin = false,
     onSelectTopic,
     onAddTopicToPath,
-    onAddSubtopicToTopic
+    onAddSubtopicToTopic,
+    onSelectTrack
 }) => {
     const { showToast } = useToast();
+    const tracks = useTracksContainingPath(onSelectTrack ? pathId : undefined);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
     const [isCreateSubtopicOpen, setIsCreateSubtopicOpen] = useState(false);
@@ -87,6 +92,11 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
                     activitiesCount={dynamicCount}
                     progressPercent={progressPercent}
                     onContinueClick={handleContinueClick}
+                    footer={
+                        onSelectTrack && tracks.length > 0 ? (
+                            <PathTrackLinks tracks={tracks} onSelectTrack={onSelectTrack} />
+                        ) : undefined
+                    }
                 />
 
                 {/* Admin Management Toolbar on Main Path View */}

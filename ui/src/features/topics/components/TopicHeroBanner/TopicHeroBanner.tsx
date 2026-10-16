@@ -15,7 +15,8 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
     managedBy,
     activitiesCount,
     progressPercent,
-    onContinueClick
+    onContinueClick,
+    footer
 }) => {
     const meta: string[] = [];
     if (managedBy) meta.push(`Managed by ${managedBy}`);
@@ -39,6 +40,7 @@ export const TopicHeroBanner: React.FC<TopicHeroBannerProps> = ({
             progressPercent={progressPercent}
             actionLabel={progressPercent > 0 ? 'Continue' : 'Start Path'}
             onAction={onContinueClick}
+            footer={footer}
         />
     );
 };

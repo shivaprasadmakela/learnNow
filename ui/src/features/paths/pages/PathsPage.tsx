@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { Course } from '../../../types';
 import styles from '../styles/PathsPage.module.css';
 import { CategoryFilterPills } from '../components/CategoryFilterPills';
 import { PathsGrid } from '../components/PathsGrid';
 import { categoriesForFilter } from '../../../shared/utils/pathCategories';
+import { TrackCards } from '../../tracks/components/TrackCards/TrackCards';
+import { fetchTracks, type TrackSummary } from '../../tracks/api/tracks.api';
 
 import { Loader } from '../../../shared/components/ui/Loader';
 import { InfiniteScrollSentinel } from '../../../shared/components/ui/InfiniteScrollSentinel';
@@ -17,6 +19,8 @@ export interface PathsPageProps {
     hasMorePaths?: boolean;
     isLoadingMorePaths?: boolean;
     onLoadMorePaths?: () => void;
+    /** Opens a career track's roadmap. Without it the tracks section is not shown. */
+    onSelectTrack?: (slug: string) => void;
 }
 
 export const PathsPage: React.FC<PathsPageProps> = ({
@@ -26,9 +30,27 @@ export const PathsPage: React.FC<PathsPageProps> = ({
     isLoading = false,
     hasMorePaths = false,
     isLoadingMorePaths = false,
-    onLoadMorePaths
+    onLoadMorePaths,
+    onSelectTrack
 }) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
+    const [tracks, setTracks] = useState<TrackSummary[]>([]);
+
+    // Refetched on sign-in and sign-out, which change the progress on each card. A failure
+    // leaves the section out rather than breaking the path list below it.
+    const showTracks = Boolean(onSelectTrack);
+    useEffect(() => {
+        if (!showTracks) return;
+        let cancelled = false;
+        fetchTracks()
+            .then(list => {
+                if (!cancelled) setTracks(list);
+            })
+            .catch(err => console.error('Failed to load career tracks', err));
+        return () => {
+            cancelled = true;
+        };
+    }, [isLoggedIn, showTracks]);
 
     const categories = useMemo(
         () => ['All', ...categoriesForFilter(courses.map((course) => course.category))],
@@ -69,6 +91,12 @@ export const PathsPage: React.FC<PathsPageProps> = ({
                     Discover top-tier learning content and easy-to-follow courses to build your skills. Complete your path and showcase your achievements directly to hiring platforms.
                 </p>
             </div>
+
+            {onSelectTrack && <TrackCards tracks={tracks} onSelectTrack={onSelectTrack} />}
+
+            {onSelectTrack && tracks.length > 0 && (
+                <h2 className={styles.allPathsTitle}>All paths</h2>
+            )}
 
             <CategoryFilterPills
                 categories={categories}

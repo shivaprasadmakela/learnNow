@@ -188,8 +188,13 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         // STUDY is deliberately absent. The study console renders one topic, fetched by
         // its own endpoint; it never shows the path list, so pulling every path and all
         // their topics there was a large request for data nothing displayed.
+        // TRACK too: a roadmap step opens its path, and Continue opens a lesson in it, and both
+        // need the path in the list to build its URL.
         const shouldFetchPaths =
-            activeView === 'HOME' || activeView === 'PATHS' || activeView === 'TOPICS';
+            activeView === 'HOME' ||
+            activeView === 'PATHS' ||
+            activeView === 'TOPICS' ||
+            activeView === 'TRACK';
         if (!shouldFetchPaths && !force) {
             return;
         }
