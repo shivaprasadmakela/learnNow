@@ -1,58 +1,122 @@
+/* A diagram sits in the lesson as a raised card in the page's own colours, with no label of its
+   own - the surrounding text already says what it shows. */
+
 .mermaidWrapper {
-    margin: 1.5rem 0;
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-    border-radius: 12px;
-    background: var(--bg-card, #111827);
+    position: relative;
+    margin: 1.75rem 0;
+    /* Diagrams arrive as fenced code blocks, and would otherwise inherit the code font. */
+    font-family: var(--font-family-sans, Inter, system-ui, sans-serif);
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    background:
+        radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--tech-blue) 9%, transparent) 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+    box-shadow:
+        0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent) inset,
+        0 10px 28px -12px rgba(0, 0, 0, 0.45);
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.mermaidHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background: var(--bg-secondary, #1f2937);
-    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-}
-
-.mermaidBadge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: var(--tech-blue, #3b82f6);
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
 }
 
 .mermaidSvgContainer {
-    padding: 24px;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    /* Centred when it fits; when wider than the column it scrolls rather than shrinks, and `safe`
+       stops the centring from clipping its left edge out of reach. */
+    justify-content: safe center;
+    padding: 28px 24px;
     overflow-x: auto;
-    background: #0d1117;
+    scrollbar-width: thin;
 }
 
-.mermaidSvgContainer svg {
-    max-width: 100% !important;
-    height: auto !important;
+.mermaidSvgContainer :global(svg) {
+    flex: 0 0 auto;
+    max-width: none !important;
+    height: auto;
 }
 
+/* ── When the diagram is wider than the column: fade the edge that has more beyond it ── */
+.moreRight .mermaidSvgContainer {
+    mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent);
+}
+
+.moreLeft .mermaidSvgContainer {
+    mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent);
+}
+
+.moreLeft.moreRight .mermaidSvgContainer {
+    mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+}
+
+.mermaidSvgContainer:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: -2px;
+}
+
+.scrollHint {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    padding: 3px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    background: var(--bg-card);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+/* ── Depth: soft shadows and rounded corners on the shapes Mermaid draws ── */
+.mermaidSvgContainer :global(.node rect),
+.mermaidSvgContainer :global(.node polygon),
+.mermaidSvgContainer :global(.node circle),
+.mermaidSvgContainer :global(.node path),
+.mermaidSvgContainer :global(rect.actor),
+.mermaidSvgContainer :global(.stateGroup rect),
+.mermaidSvgContainer :global(.er.entityBox) {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18));
+}
+
+.mermaidSvgContainer :global(.node rect),
+.mermaidSvgContainer :global(rect.actor) {
+    rx: 10px;
+    ry: 10px;
+    stroke-width: 1.5px;
+}
+
+/* Mermaid measures every label's text and sizes its box before this stylesheet applies, so nothing
+   here may change how text lays out - no font-size, font-weight, padding or line-height. Colour,
+   fill, stroke and shadow are safe; anything that alters a label's size gets clipped by its box. */
+.mermaidSvgContainer :global(.edgeLabel) {
+    color: var(--text-secondary);
+}
+
+.mermaidSvgContainer :global(.flowchart-link),
+.mermaidSvgContainer :global(.messageLine0),
+.mermaidSvgContainer :global(.messageLine1) {
+    stroke-width: 1.6px;
+}
+
+/* ── If the source does not parse, show it as text rather than nothing ── */
 .mermaidFallback {
     margin: 1.5rem 0;
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    background: #0d1117;
+    background: var(--bg-secondary);
     overflow: hidden;
 }
 
 .mermaidPre {
-    padding: 16px;
     margin: 0;
-    font-family: monospace;
+    padding: 16px;
+    font-family: var(--font-family-mono, monospace);
     font-size: 0.85rem;
-    color: #e5e7eb;
+    color: var(--text-secondary);
     overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+    .mermaidSvgContainer {
+        padding: 20px 14px;
+    }
 }
