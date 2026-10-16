@@ -24,6 +24,14 @@ for required in JWT_SECRET GOOGLE_CLIENT_ID SPRING_DATASOURCE_USERNAME SPRING_DA
     fi
 done
 
+# Set Java 21 if available and not already configured
+if [ -z "$JAVA_HOME" ] || [[ "$("$JAVA_HOME/bin/java" -version 2>&1)" != *"21."* ]]; then
+    if command -v /usr/libexec/java_home >/dev/null 2>&1 && /usr/libexec/java_home -v 21 >/dev/null 2>&1; then
+        export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+        export PATH="$JAVA_HOME/bin:$PATH"
+    fi
+fi
+
 # Function to clean up background processes on exit
 cleanup() {
     echo ""
@@ -32,14 +40,14 @@ cleanup() {
     # Kill processes listening on the ports to avoid orphaned processes (common with maven spring-boot:run)
     BACKEND_PORT_PID=$(lsof -t -i :8080)
     if [ -n "$BACKEND_PORT_PID" ]; then
-        echo "Stopping backend process on port 8080 (PID $BACKEND_PORT_PID)..."
-        kill -TERM $BACKEND_PORT_PID 2>/dev/null
+        echo "Stopping backend process on port 8080..."
+        echo "$BACKEND_PORT_PID" | xargs kill -TERM 2>/dev/null
     fi
     
     UI_PORT_PID=$(lsof -t -i :5173)
     if [ -n "$UI_PORT_PID" ]; then
-        echo "Stopping UI process on port 5173 (PID $UI_PORT_PID)..."
-        kill -TERM $UI_PORT_PID 2>/dev/null
+        echo "Stopping UI process on port 5173..."
+        echo "$UI_PORT_PID" | xargs kill -TERM 2>/dev/null
     fi
 
     # Also kill original spawned shell PIDs just in case
@@ -64,12 +72,12 @@ trap cleanup SIGINT SIGTERM
 for port in 8080 5173; do
     PID=$(lsof -t -i :$port)
     if [ -n "$PID" ]; then
-        echo "Warning: Port $port is already in use by PID $PID."
+        echo "Warning: Port $port is already in use by PID(s): $(echo $PID | tr '\n' ' ')"
         read -p "Would you like to stop the process on port $port? (y/N) " yn
         case $yn in
             [Yy]* ) 
-                echo "Stopping process $PID..."
-                kill -9 "$PID"
+                echo "Stopping process on port $port..."
+                echo "$PID" | xargs kill -9 2>/dev/null
                 ;;
             * ) 
                 echo "Please free port $port manually or change configuration before running."
@@ -88,6 +96,11 @@ cd ..
 # Wait for backend to start listening on port 8080
 echo "Waiting for backend to start on port 8080..."
 while ! nc -z localhost 8080 >/dev/null 2>&1; do
+    if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+        echo "Error: Backend process ($BACKEND_PID) exited before port 8080 became ready."
+        echo "Please check the Maven logs above."
+        exit 1
+    fi
     sleep 0.5
 done
 echo "Backend is ready!"
