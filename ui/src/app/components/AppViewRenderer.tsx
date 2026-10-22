@@ -21,7 +21,7 @@ const TrackPage = React.lazy(() => import('../../features/tracks/pages/TrackPage
 const PrivacyPolicyPage = React.lazy(() => import('../../features/privacy').then(m => ({ default: m.PrivacyPolicyPage })));
 const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
 import { fetchAdminPathById, saveAdminPath, type AdminSubtopicData } from '../../features/iam-admin/api/admin.api';
-import type { NextLesson } from '../../features/tracks/api/tracks.api';
+import type { NextLesson, TopicRef } from '../../types';
 
 
 
@@ -49,12 +49,13 @@ interface AppViewRendererProps {
     trackSlug?: string | null;
     onSelectTrack: (slug: string) => void;
     onOpenPathFromTrack: (pathId: string, pathTitle: string) => void;
-    onContinueTrack: (lesson: NextLesson) => void;
+    /** Opens one lesson: Continue on a track, the dashboard's next-step card. */
+    onOpenLesson: (lesson: NextLesson) => void;
     onTrackTitleLoaded: (title: string) => void;
     onSelectPaths: () => void;
     onOpenDsaProblem: (stepSlug: string, problemSlug: string) => void;
     handleSelectTopic: (topicId: number | string, subtopicId?: number | string, subtopicTitle?: string) => void;
-    onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
+    onSelectRecentTopic?: (topic: TopicRef) => void;
     handleViewChange: (view: ViewState) => void;
     changeView: (view: ViewState, slug?: string) => void;
     handleLoginSuccess: (token: string, profile: UserProfile) => void;
@@ -90,7 +91,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     trackSlug,
     onSelectTrack,
     onOpenPathFromTrack,
-    onContinueTrack,
+    onOpenLesson,
     onTrackTitleLoaded,
     onSelectPaths,
     onOpenDsaProblem,
@@ -141,12 +142,11 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         profile={profile}
                         courses={courses}
                         isCoursesLoading={isCoursesLoading}
-                        hasMorePaths={hasMorePaths}
-                        isLoadingMorePaths={isLoadingMorePaths}
-                        onLoadMorePaths={onLoadMorePaths}
                         refreshUserData={refreshUserData}
                         onSelectPath={handleSelectPath}
+                        onOpenLesson={onOpenLesson}
                         onSelectRecentTopic={onSelectRecentTopic}
+                        onViewAllPaths={() => handleViewChange('PATHS')}
                         onOpenDsaSheet={() => changeView('DSA')}
                         onOpenDsaProblem={onOpenDsaProblem}
                         activeTab={dashboardTab}
@@ -224,7 +224,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         slug={trackSlug}
                         isLoggedIn={isLoggedIn}
                         onOpenPath={onOpenPathFromTrack}
-                        onContinue={onContinueTrack}
+                        onContinue={onOpenLesson}
                         onRequireLogin={() => changeView('LOGIN')}
                         onBackToPaths={onSelectPaths}
                         onTitleLoaded={onTrackTitleLoaded}

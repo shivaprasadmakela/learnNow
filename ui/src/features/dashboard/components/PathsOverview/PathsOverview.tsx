@@ -1,31 +1,39 @@
 import React from 'react';
-import { BookOpen } from 'lucide-react';
+import { ArrowRight, BookOpen } from 'lucide-react';
 import { LearningCard } from '../../../../shared/components/cards';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import type { Course } from '../../../../types';
-import type { PathProgressSummary } from '../../types';
 import { Loader } from '../../../../shared/components/ui/Loader';
-import { InfiniteScrollSentinel } from '../../../../shared/components/ui/InfiniteScrollSentinel';
+import { formatStudyTime } from '../../../../shared/utils/studyTime';
+import styles from '../../styles/Dashboard.module.css';
+
+/** The dashboard previews the catalog; the Paths page is where all of it is. */
+const PREVIEW_COUNT = 5;
+
+/** In progress, then not started, then finished. */
+const previewRank = (course: Course) => {
+    const progress = course.progressPercentage || 0;
+    return progress >= 100 ? 2 : progress > 0 ? 0 : 1;
+};
 
 interface PathsOverviewProps {
-    paths?: PathProgressSummary[];
     courses?: Course[];
     isLoading?: boolean;
     onSelectPath: (pathId: number) => void;
-    /** Another page of paths exists on the server. */
-    hasMore?: boolean;
-    isLoadingMore?: boolean;
-    onLoadMore?: () => void;
+    /** Opens the Paths page with every path. */
+    onViewAll?: () => void;
 }
 
+/**
+ * The first few learning paths, with a link to the rest. Paths in progress come first, most
+ * progress first, then paths not started, then finished ones - so the preview is the paths the
+ * learner is actually working through, not the ones they are done with.
+ */
 export const PathsOverview: React.FC<PathsOverviewProps> = ({
-    paths = [],
     courses = [],
     isLoading = false,
     onSelectPath,
-    hasMore = false,
-    isLoadingMore = false,
-    onLoadMore
+    onViewAll
 }) => {
     if (isLoading) {
         return (
@@ -35,34 +43,7 @@ export const PathsOverview: React.FC<PathsOverviewProps> = ({
         );
     }
 
-    const itemsToRender = courses.length > 0
-        ? courses.map(c => ({
-            id: typeof c.id === 'number' ? c.id : 1,
-            title: c.title,
-            description: c.description,
-            // topicCount, not topics.length: only the first page of topics ships with a path.
-            footerText: `${c.topicCount ?? c.topics?.length ?? 0} Topics`,
-            progressPercentage: c.progressPercentage || 0
-        }))
-        : paths.map(p => ({
-            id: p.id,
-            title: p.title,
-            description: p.description,
-            footerText: `${p.completedTopicsCount} / ${p.totalTopicsCount} Topics`,
-            progressPercentage: p.progressPercentage
-        }));
-
-    const morePaths = onLoadMore ? (
-        <InfiniteScrollSentinel
-            hasMore={hasMore}
-            isLoading={isLoadingMore}
-            onLoadMore={onLoadMore}
-            loadingText="Loading more paths..."
-            loadMoreLabel="Load more paths"
-        />
-    ) : null;
-
-    if (itemsToRender.length === 0) {
+    if (courses.length === 0) {
         return (
             <EmptyState
                 icon={BookOpen}
@@ -72,21 +53,33 @@ export const PathsOverview: React.FC<PathsOverviewProps> = ({
         );
     }
 
+    const preview = [...courses]
+        .sort((a, b) => previewRank(a) - previewRank(b) || (b.progressPercentage || 0) - (a.progressPercentage || 0))
+        .slice(0, PREVIEW_COUNT);
+
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
-            {itemsToRender.map((path) => (
-                <LearningCard
-                    key={path.id}
-                    badgeLabel="Path"
-                    title={path.title}
-                    description={path.description}
-                    footerText={path.footerText}
-                    progressPercentage={path.progressPercentage}
-                    showProgress={typeof path.progressPercentage === 'number' && path.progressPercentage > 0}
-                    onClick={() => onSelectPath(path.id)}
-                />
-            ))}
-            {morePaths}
-        </div>
+        <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+                {preview.map(path => (
+                    <LearningCard
+                        key={path.id}
+                        badgeLabel="Path"
+                        title={path.title}
+                        description={path.description}
+                        footerText={`${path.topicCount ?? path.topics?.length ?? 0} Topics`}
+                        duration={formatStudyTime(path.estimatedMinutes)}
+                        progressPercentage={path.progressPercentage || 0}
+                        showProgress={(path.progressPercentage || 0) > 0}
+                        onClick={() => onSelectPath(path.id)}
+                    />
+                ))}
+            </div>
+            {onViewAll && (
+                <button type="button" className={styles.viewAllPaths} onClick={onViewAll}>
+                    View all paths
+                    <ArrowRight size={16} aria-hidden="true" />
+                </button>
+            )}
+        </>
     );
 };

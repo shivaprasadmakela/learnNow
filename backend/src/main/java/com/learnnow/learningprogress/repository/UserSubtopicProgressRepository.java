@@ -19,6 +19,11 @@ public interface UserSubtopicProgressRepository extends JpaRepository<UserSubtop
 
     long countByUserIdAndTopicIdAndCompletedTrue(String userId, UUID topicId);
 
+    /** The lesson a learner completed most recently - where they were last working. */
+    Optional<UserSubtopicProgress>
+            findFirstByUserIdAndCompletedTrueAndCompletedAtNotNullOrderByCompletedAtDesc(
+                    String userId);
+
     /**
      * How many published lessons of each topic a learner has completed, as [topicId, count]. A
      * completed lesson since moved back to draft no longer counts, matching what the learner can

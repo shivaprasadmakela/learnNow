@@ -238,6 +238,26 @@
     margin: 0 0 16px 0;
 }
 
+/* The lesson the button opens, so the learner knows where it goes before clicking. */
+.courseCardNext {
+    margin: -6px 0 16px;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+}
+
+.courseCardNextLabel {
+    margin-right: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.courseCardNextTopic {
+    color: var(--text-secondary);
+}
+
 .startButton {
     display: inline-flex;
     align-items: center;
@@ -1137,4 +1157,29 @@
 .pointsLabel {
     font-weight: 400;
     color: #94a3b8;
+}
+/* Under the dashboard's five-path preview. */
+.viewAllPaths {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    background: none;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--tech-blue);
+    cursor: pointer;
+}
+
+.viewAllPaths:hover {
+    border-color: var(--tech-blue);
+}
+
+.viewAllPaths:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
 }

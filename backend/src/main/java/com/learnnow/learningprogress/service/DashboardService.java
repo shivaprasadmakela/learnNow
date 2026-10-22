@@ -37,6 +37,7 @@ public class DashboardService {
     private final UserTopicProgressRepository topicProgressRepository;
     private final UserSubtopicProgressRepository subtopicProgressRepository;
     private final UserRepository userRepository;
+    private final NextStepService nextStepService;
 
     @Transactional(readOnly = true)
     public DashboardResponse buildDashboard(String userId) {
@@ -70,7 +71,7 @@ public class DashboardService {
 
         List<RecentTopicActivity> recentTopics =
                 buildRecentTopics(userTopicProgressList, allPaths, subtopicProgressByTopic);
-        DashboardBanner banner = selectBanner(allPaths, userTopicProgressList);
+        DashboardBanner banner = nextStepService.forUser(userId);
 
         return new DashboardResponse(
                 prefs.getCurrentStreakForDate(today),
@@ -323,56 +324,5 @@ public class DashboardService {
                                     tp.getCompletedAt());
                         })
                 .toList();
-    }
-
-    private DashboardBanner selectBanner(
-            List<Path> allPaths, List<UserTopicProgress> progressList) {
-        if (allPaths.isEmpty()) {
-            return new DashboardBanner(
-                    "FEATURED", null, "No Paths Available", "Add paths to get started.", "General");
-        }
-
-        if (progressList.isEmpty()) {
-            Path featured = allPaths.get(0);
-            return new DashboardBanner(
-                    "FEATURED",
-                    featured.getId(),
-                    featured.getTitle(),
-                    featured.getDescription(),
-                    featured.getCategory());
-        }
-
-        UserTopicProgress completedProgress =
-                progressList.stream()
-                        .filter(p -> p.getStatus() == ProgressStatus.COMPLETED)
-                        .max(
-                                Comparator.comparing(
-                                        UserTopicProgress::getCompletedAt,
-                                        Comparator.nullsFirst(Comparator.naturalOrder())))
-                        .orElse(null);
-
-        if (completedProgress != null) {
-            Optional<Path> pathOpt =
-                    allPaths.stream()
-                            .filter(p -> p.getId().equals(completedProgress.getPathId()))
-                            .findFirst();
-            if (pathOpt.isPresent()) {
-                Path path = pathOpt.get();
-                return new DashboardBanner(
-                        "REVIEW",
-                        path.getId(),
-                        path.getTitle(),
-                        path.getDescription(),
-                        path.getCategory());
-            }
-        }
-
-        Path featured = allPaths.get(0);
-        return new DashboardBanner(
-                "FEATURED",
-                featured.getId(),
-                featured.getTitle(),
-                featured.getDescription(),
-                featured.getCategory());
     }
 }

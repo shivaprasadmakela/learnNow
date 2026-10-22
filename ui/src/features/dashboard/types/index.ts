@@ -1,3 +1,4 @@
+import type { NextLesson } from '../../../types';
 export interface WeeklyCalendarDay {
     name: string;
     date: string;
@@ -37,12 +38,20 @@ export interface PathProgressSummary {
     topics: TopicProgressSummary[];
 }
 
+/**
+ * The dashboard's next-step card, decided by the server. CONTINUE: an unfinished path you were
+ * working on. NEXT: you finished a path, and this one follows it. START: nothing begun yet.
+ * DONE: every path finished. `nextLesson` is what the button opens; null only for DONE.
+ */
 export interface DashboardBanner {
-    type: 'FEATURED' | 'REVIEW';
-    pathId?: number;
+    type: 'CONTINUE' | 'NEXT' | 'START' | 'DONE';
+    pathId?: string | null;
     pathTitle: string;
     pathDescription: string;
-    pathCategory: string;
+    pathCategory?: string | null;
+    /** Why this card; null for CONTINUE, whose label already says it. */
+    reason: string | null;
+    nextLesson: NextLesson | null;
 }
 
 export interface WeeklyLeaderboardEntry {

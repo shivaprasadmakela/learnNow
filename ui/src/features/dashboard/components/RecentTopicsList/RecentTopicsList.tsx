@@ -3,10 +3,11 @@ import { Activity } from 'lucide-react';
 import { LearningCard } from '../../../../shared/components/cards';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import type { RecentTopicActivity } from '../../types';
+import type { TopicRef } from '../../../../types';
 
 interface RecentTopicsListProps {
     topics: RecentTopicActivity[];
-    onSelectTopic: (topicId: number, pathId?: number) => void;
+    onSelectTopic: (topic: TopicRef) => void;
 }
 
 export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, onSelectTopic }) => {
@@ -31,7 +32,7 @@ export const RecentTopicsList: React.FC<RecentTopicsListProps> = ({ topics, onSe
                     progressPercentage={item.progressPercentage}
                     showProgress={true}
                     isCompleted={item.completed}
-                    onClick={() => onSelectTopic(item.topicId, item.pathId)}
+                    onClick={() => onSelectTopic(item)}
                 />
             ))}
         </div>

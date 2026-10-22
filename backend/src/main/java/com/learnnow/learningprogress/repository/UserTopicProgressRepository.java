@@ -17,6 +17,10 @@ public interface UserTopicProgressRepository extends JpaRepository<UserTopicProg
 
     List<UserTopicProgress> findByUserId(String userId);
 
+    /** The topic a learner marked complete most recently. */
+    Optional<UserTopicProgress> findFirstByUserIdAndCompletedAtNotNullOrderByCompletedAtDesc(
+            String userId);
+
     @Query(
             "SELECT COUNT(utp) FROM UserTopicProgress utp WHERE utp.userId = :userId AND utp.pathId"
                     + " = :pathId AND utp.status = 'COMPLETED'")

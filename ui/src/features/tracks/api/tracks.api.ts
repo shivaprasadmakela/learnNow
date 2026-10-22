@@ -1,4 +1,7 @@
 import { apiFetchJson } from '../../../shared/api/client';
+import type { NextLesson } from '../../../types';
+
+export type { NextLesson };
 
 /**
  * Career tracks: ordered routes through existing paths.
@@ -39,15 +42,6 @@ export interface TrackStep {
     topicCount: number;
     estimatedMinutes: number;
     progressPercentage: number | null;
-}
-
-export interface NextLesson {
-    pathId: string;
-    pathTitle: string;
-    topicId: string;
-    topicTitle: string;
-    subtopicId: string;
-    subtopicTitle: string;
 }
 
 export interface TrackDetail {

@@ -7,7 +7,7 @@ import styles from './App.module.css';
 import { useUserData } from './hooks/useUserData';
 import { useTopicSession } from './hooks/useTopicSession';
 import { AppViewRenderer } from './components/AppViewRenderer';
-import type { NextLesson } from '../features/tracks/api/tracks.api';
+import type { NextLesson, TopicRef } from '../types';
 
 const StudyConsole = React.lazy(() => import('../features/topics/components/StudyConsole/StudyConsole').then(m => ({ default: m.StudyConsole })));
 const PathCelebrationModal = React.lazy(() => import('./components/PathCelebrationModal').then(m => ({ default: m.PathCelebrationModal })));
@@ -238,37 +238,31 @@ export default function App() {
     };
 
     /**
-     * Opens the lesson a track says comes next. The study console picks its lesson from the URL,
-     * so the full path/topic/lesson URL is written first and the topic loaded without rewriting
-     * it - otherwise a topic from a path whose topics are not loaded yet would get a generic URL.
+     * Opens a topic in the study console, at one lesson when given. Built from titles the caller
+     * already has, because the path list is not always loaded - the dashboard never loads it, and
+     * looking the path up there made its cards do nothing when clicked. The study console picks its
+     * lesson from the URL, so the full path/topic/lesson URL is written first and the topic loaded
+     * without rewriting it.
      */
-    const handleContinueTrack = (lesson: NextLesson) => {
-        changeView(
-            'STUDY',
-            slugify(lesson.pathTitle),
-            `${slugify(lesson.topicTitle)}/${slugify(lesson.subtopicTitle)}`
-        );
-        handleSelectTopic(lesson.topicId, lesson.subtopicId, lesson.subtopicTitle, true);
-    };
-
-    const handleSelectRecentTopic = (topicId: number, pathId?: number) => {
+    const openStudy = (topic: TopicRef, lesson?: { id: string | number; title: string }) => {
         if (!isLoggedIn) {
             changeView('LOGIN');
             return;
         }
-        let targetPath = pathId ? courses.find(c => c.id === pathId) : null;
-        if (!targetPath) {
-            targetPath = courses.find(c => c.topics?.some((t: any) => t.id === topicId)) || courses[0];
-        }
-
-        if (targetPath) {
-            setSelectedPathId(targetPath.id);
-            const slug = slugify(targetPath.title);
-            changeView('TOPICS', slug);
-            setIsPathsActive(true);
-            handleSelectTopic(topicId);
-        }
+        const topicSlug = slugify(topic.topicTitle);
+        changeView(
+            'STUDY',
+            topic.pathTitle ? slugify(topic.pathTitle) : 'path',
+            lesson ? `${topicSlug}/${slugify(lesson.title)}` : topicSlug
+        );
+        handleSelectTopic(topic.topicId, lesson?.id, lesson?.title, true);
     };
+
+    const handleOpenLesson = (lesson: NextLesson) =>
+        openStudy(
+            { topicId: lesson.topicId, topicTitle: lesson.topicTitle, pathTitle: lesson.pathTitle },
+            { id: lesson.subtopicId, title: lesson.subtopicTitle }
+        );
 
     if (isLoading) {
         return <Loader variant="fullScreen" showColdStartFunnyMessages={true} />;
@@ -435,12 +429,12 @@ export default function App() {
                             trackSlug={trackSlug}
                             onSelectTrack={handleSelectTrack}
                             onOpenPathFromTrack={handleOpenPathFromTrack}
-                            onContinueTrack={handleContinueTrack}
+                            onOpenLesson={handleOpenLesson}
                             onTrackTitleLoaded={setTrackTitle}
                             onSelectPaths={handleSelectPaths}
                             onOpenDsaProblem={handleOpenDsaProblem}
                             handleSelectTopic={handleSelectTopic}
-                            onSelectRecentTopic={handleSelectRecentTopic}
+                            onSelectRecentTopic={openStudy}
                             handleViewChange={handleViewChange}
                             changeView={changeView}
                             handleLoginSuccess={handleLoginSuccess}

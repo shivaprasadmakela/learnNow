@@ -24,7 +24,8 @@ describe('Dashboard paths tab', () => {
 
     const baseProps = {
         profile: { id: 'u-1', email: 'a@b.co', fullName: 'A', avatar: 'x', role: 'USER' } as never,
-        onSelectPath: vi.fn()
+        onSelectPath: vi.fn(),
+        onOpenLesson: vi.fn()
     };
 
     it('fetches once when the tab opens with no paths loaded', () => {

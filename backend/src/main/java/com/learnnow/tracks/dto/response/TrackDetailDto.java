@@ -1,12 +1,14 @@
 package com.learnnow.tracks.dto.response;
 
+import com.learnnow.paths.dto.response.NextLessonDto;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * A track's roadmap: its steps in order, each with the signed-in learner's progress, and the lesson
- * to continue from. Progress fields and {@code nextLesson} are null for a visitor not signed in;
- * {@code nextLesson} is also null once every step is finished.
+ * to continue from - the first lesson not yet completed, in the first step not yet finished.
+ * Progress fields and {@code nextLesson} are null for a visitor not signed in; {@code nextLesson}
+ * is also null once every step is finished.
  */
 public record TrackDetailDto(
         String slug,
@@ -16,7 +18,7 @@ public record TrackDetailDto(
         long optionalMinutes,
         Integer progressPercentage,
         List<Step> steps,
-        NextLesson nextLesson) {
+        NextLessonDto nextLesson) {
 
     public record Step(
             int stepNumber,
@@ -29,13 +31,4 @@ public record TrackDetailDto(
             long topicCount,
             long estimatedMinutes,
             Integer progressPercentage) {}
-
-    /** The first lesson not yet completed, in the first step not yet finished. */
-    public record NextLesson(
-            UUID pathId,
-            String pathTitle,
-            UUID topicId,
-            String topicTitle,
-            UUID subtopicId,
-            String subtopicTitle) {}
 }

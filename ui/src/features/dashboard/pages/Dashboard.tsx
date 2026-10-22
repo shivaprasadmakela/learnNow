@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import type { UserProfile } from '../../../types';
+import type { NextLesson, TopicRef, UserProfile } from '../../../types';
 import { useDashboard } from '../hooks/useDashboard';
 import { Loader } from '../../../shared/components/ui/Loader';
 import styles from '../styles/Dashboard.module.css';
@@ -20,14 +20,15 @@ export interface DashboardProps {
     profile: UserProfile | null;
     courses?: Course[];
     isCoursesLoading?: boolean;
-    hasMorePaths?: boolean;
-    isLoadingMorePaths?: boolean;
-    onLoadMorePaths?: () => void;
     refreshUserData?: (force?: boolean) => void;
     activeTab?: 'activities' | 'paths' | 'bookmarks';
     setActiveTab?: (tab: 'activities' | 'paths' | 'bookmarks') => void;
     onSelectPath: (pathId: number) => void;
-    onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
+    /** Opens a lesson directly - the next-step card's button. */
+    onOpenLesson: (lesson: NextLesson) => void;
+    onSelectRecentTopic?: (topic: TopicRef) => void;
+    /** Opens the full Paths page from the five-path preview. */
+    onViewAllPaths?: () => void;
     onOpenDsaSheet?: () => void;
     onOpenDsaProblem?: (stepSlug: string, problemSlug: string) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
@@ -37,14 +38,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
     profile,
     courses = [],
     isCoursesLoading = false,
-    hasMorePaths,
-    isLoadingMorePaths,
-    onLoadMorePaths,
     refreshUserData,
     activeTab = 'activities',
     setActiveTab,
     onSelectPath,
+    onOpenLesson,
     onSelectRecentTopic,
+    onViewAllPaths,
     onOpenDsaSheet,
     onOpenDsaProblem,
     onMetricsLoaded
@@ -118,12 +118,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className={styles.dashboardGrid}>
                 {/* Left Column: Course Banner Card, Tabs & Content */}
                 <div className={styles.leftCol}>
-                    <DashboardHeader
-                        profile={profile}
-                        banner={banner}
-                        courses={courses}
-                        onSelectPath={onSelectPath}
-                    />
+                    <DashboardHeader banner={banner} onOpenLesson={onOpenLesson} />
 
                     <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -131,13 +126,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         {activeTab === 'activities' && (
                             <RecentTopicsList
                                 topics={recentTopics}
-                                onSelectTopic={(topicId, pathId) => {
-                                    if (onSelectRecentTopic) {
-                                        onSelectRecentTopic(topicId, pathId);
-                                    } else if (pathId) {
-                                        onSelectPath(pathId);
-                                    }
-                                }}
+                                onSelectTopic={topic => onSelectRecentTopic?.(topic)}
                             />
                         )}
                         {activeTab === 'paths' && (
@@ -145,9 +134,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 courses={courses}
                                 isLoading={isCoursesLoading}
                                 onSelectPath={onSelectPath}
-                                hasMore={hasMorePaths}
-                                isLoadingMore={isLoadingMorePaths}
-                                onLoadMore={onLoadMorePaths}
+                                onViewAll={onViewAllPaths}
                             />
                         )}
                         {activeTab === 'bookmarks' && (

@@ -3,6 +3,7 @@ import type { UserProfile } from '../../../../types';
 import styles from '../../styles/Dashboard.module.css';
 import owlPointer from '../../../../assets/owl-pointer.png';
 import type { DashboardHeaderProps } from './DashboardHeader.types';
+import type { DashboardBanner } from '../../types';
 
 export const WelcomeGreeting: React.FC<{ profile: UserProfile | null }> = ({ profile }) => {
     if (!profile) return null;
@@ -18,37 +19,46 @@ export const WelcomeGreeting: React.FC<{ profile: UserProfile | null }> = ({ pro
     );
 };
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-    banner,
-    paths = [],
-    onSelectPath
-}) => {
-    const bannerPath = paths?.find(p => p.id === banner.pathId);
-    const isPathStarted = bannerPath ? (bannerPath.progressPercentage > 0 || bannerPath.completedTopicsCount > 0) : false;
-    const buttonLabel = isPathStarted || banner.type === 'REVIEW' ? 'Continue' : 'Start';
+/** What the card is for, in the learner's terms, and what its button says. */
+const COPY: Record<DashboardBanner['type'], { label: string; action?: string }> = {
+    CONTINUE: { label: 'Continue where you left off', action: 'Continue' },
+    NEXT: { label: 'Recommended next', action: 'Start path' },
+    START: { label: 'Start here', action: 'Start learning' },
+    DONE: { label: 'All caught up' }
+};
+
+/**
+ * The dashboard's next-step card. The server decides what it shows (see NextStepService); the
+ * button opens the exact lesson it names, so it cannot land on the wrong path.
+ */
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ banner, onOpenLesson }) => {
+    const copy = COPY[banner.type] ?? COPY.START;
+    const lesson = banner.nextLesson;
 
     return (
         <div className={styles.currentCourseCard}>
             <div className={styles.courseCardLeft}>
                 <div className={styles.courseCardIllustration}>
-                    <img src={owlPointer} className={styles.owlPointerImg} alt="Learning Path" />
+                    <img src={owlPointer} className={styles.owlPointerImg} alt="" />
                 </div>
             </div>
             <div className={styles.courseCardRight}>
-                <span className={styles.courseCardPreTitle}>
-                    {banner.type === 'FEATURED' ? 'Recommended Path' : 'Review Path'} &gt;
-                </span>
+                <span className={styles.courseCardPreTitle}>{copy.label}</span>
                 <h2 className={styles.courseCardTitle}>{banner.pathTitle}</h2>
-                <p className={styles.courseCardDesc}>{banner.pathDescription}</p>
-                <button
-                    type="button"
-                    className={styles.startButton}
-                    onClick={() => banner.pathId && onSelectPath(banner.pathId)}
-                    disabled={!banner.pathId}
-                >
-                    <i className="fa-solid fa-play" style={{ fontSize: '0.85rem' }} aria-hidden="true" />
-                    <span>{buttonLabel}</span>
-                </button>
+                {banner.reason && <p className={styles.courseCardDesc}>{banner.reason}</p>}
+                {lesson && (
+                    <p className={styles.courseCardNext}>
+                        <span className={styles.courseCardNextLabel}>Next lesson</span>{' '}
+                        {lesson.subtopicTitle}
+                        <span className={styles.courseCardNextTopic}> · {lesson.topicTitle}</span>
+                    </p>
+                )}
+                {lesson && copy.action && (
+                    <button type="button" className={styles.startButton} onClick={() => onOpenLesson(lesson)}>
+                        <i className="fa-solid fa-play" style={{ fontSize: '0.85rem' }} aria-hidden="true" />
+                        <span>{copy.action}</span>
+                    </button>
+                )}
             </div>
         </div>
     );

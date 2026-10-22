@@ -1,10 +1,8 @@
-import type { UserProfile, Course } from '../../../../types';
-import type { DashboardBanner, PathProgressSummary } from '../../types';
+import type { NextLesson } from '../../../../types';
+import type { DashboardBanner } from '../../types';
 
 export interface DashboardHeaderProps {
-    profile: UserProfile | null;
     banner: DashboardBanner;
-    paths?: PathProgressSummary[];
-    courses?: Course[];
-    onSelectPath: (pathId: number) => void;
+    /** Opens the lesson the card names - the card's main action. */
+    onOpenLesson: (lesson: NextLesson) => void;
 }

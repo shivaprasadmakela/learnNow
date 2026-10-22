@@ -3,10 +3,12 @@ package com.learnnow.tracks.service;
 import com.learnnow.common.exception.ValidationException;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
+import com.learnnow.paths.dto.response.NextLessonDto;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
 import com.learnnow.paths.repository.PathRepository;
 import com.learnnow.paths.repository.TopicRepository;
+import com.learnnow.paths.service.NextLessonService;
 import com.learnnow.tracks.dto.request.ImportTrackRequest;
 import com.learnnow.tracks.dto.response.TrackDetailDto;
 import com.learnnow.tracks.dto.response.TrackImportResultDto;
@@ -50,6 +52,7 @@ public class TrackService {
     private final TopicRepository topicRepository;
     private final UserSubtopicProgressRepository subtopicProgressRepository;
     private final UserTopicProgressRepository topicProgressRepository;
+    private final NextLessonService nextLessonService;
 
     /**
      * Published tracks in catalog order. A track left with no published required step is hidden.
@@ -209,44 +212,18 @@ public class TrackService {
      * The first lesson the learner has not completed, in the first step they have not finished -
      * required steps before optional ones, each in roadmap order. Null once there is nothing left.
      */
-    private TrackDetailDto.NextLesson nextLesson(
-            List<TrackStep> steps, PathStats stats, String userId) {
+    private NextLessonDto nextLesson(List<TrackStep> steps, PathStats stats, String userId) {
         List<TrackStep> order =
                 Stream.concat(
                                 steps.stream().filter(s -> !s.isOptional()),
                                 steps.stream().filter(TrackStep::isOptional))
                         .toList();
         for (TrackStep step : order) {
-            Path path = step.getPath();
-            Integer progress = stats.progressOf(path.getId());
+            Integer progress = stats.progressOf(step.getPath().getId());
             if (progress != null && progress >= 100) continue;
-
-            List<Object[]> lessons = topicRepository.findPublishedLessonsInOrder(path.getId());
-            if (lessons.isEmpty()) continue;
-            Set<UUID> doneLessons =
-                    new HashSet<>(
-                            subtopicProgressRepository.findCompletedSubtopicIds(
-                                    userId, lessons.stream().map(row -> (UUID) row[2]).toList()));
-            Set<UUID> doneTopics =
-                    new HashSet<>(
-                            topicProgressRepository.findCompletedTopicIds(
-                                    userId,
-                                    lessons.stream()
-                                            .map(row -> (UUID) row[0])
-                                            .distinct()
-                                            .toList()));
-            for (Object[] row : lessons) {
-                UUID topicId = (UUID) row[0];
-                UUID subtopicId = (UUID) row[2];
-                if (doneTopics.contains(topicId) || doneLessons.contains(subtopicId)) continue;
-                return new TrackDetailDto.NextLesson(
-                        path.getId(),
-                        path.getTitle(),
-                        topicId,
-                        (String) row[1],
-                        subtopicId,
-                        (String) row[3]);
-            }
+            Optional<NextLessonDto> next =
+                    nextLessonService.firstUnfinished(step.getPath(), userId);
+            if (next.isPresent()) return next.get();
         }
         return null;
     }

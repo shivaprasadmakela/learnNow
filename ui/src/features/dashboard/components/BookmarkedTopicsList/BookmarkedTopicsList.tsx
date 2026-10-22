@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bookmark } from 'lucide-react';
+import type { TopicRef } from '../../../../types';
 import { LearningCard } from '../../../../shared/components/cards';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { Tabs } from '../../../../shared/components/ui/Tabs';
@@ -14,7 +15,7 @@ import styles from './BookmarkedTopicsList.module.css';
 interface BookmarkedTopicsListProps {
     paths?: PathProgressSummary[];
     courses?: Course[];
-    onSelectRecentTopic?: (topicId: number, pathId?: number) => void;
+    onSelectRecentTopic?: (topic: TopicRef) => void;
     onSelectPath: (pathId: number) => void;
     /** Opens a bookmarked DSA problem in the workspace. */
     onSelectDsaProblem?: (stepSlug: string, problemSlug: string) => void;
@@ -257,7 +258,11 @@ export const BookmarkedTopicsList: React.FC<BookmarkedTopicsListProps> = ({
                                         onSelectDsaProblem(entry.stepSlug, entry.problemSlug);
                                     }
                                 } else if (onSelectRecentTopic) {
-                                    onSelectRecentTopic(entry.targetId as unknown as number, entry.pathId);
+                                    onSelectRecentTopic({
+                                        topicId: entry.targetId,
+                                        topicTitle: entry.topic.title,
+                                        pathTitle: entry.pathTitle
+                                    });
                                 } else if (entry.pathId) {
                                     onSelectPath(entry.pathId);
                                 }
