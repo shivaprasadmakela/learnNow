@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { ArrowRight, Building2, ChevronDown, Eye, Lightbulb, MessageCircleQuestion, UserRound } from 'lucide-react';
 import { countQuestions, type InterviewQuestion, type InterviewSighting } from '../../api/interview.api';
+import { BeginnerAnswer } from './BeginnerAnswer';
 import styles from '../../styles/Interview.module.css';
 
 const paragraphs = (text: string) =>
@@ -90,35 +91,41 @@ const Exchange: React.FC<{ question: InterviewQuestion }> = ({ question }) => {
                     </span>
                     <div className={`${styles.turnBody} ${styles.answerBubble}`}>
                         <span className={styles.speaker}>A strong answer</span>
-                        <div className={styles.answerText}>{paragraphs(question.answerShort)}</div>
+                        {question.answer ? (
+                            <BeginnerAnswer answer={question.answer} />
+                        ) : (
+                            <>
+                                <div className={styles.answerText}>{paragraphs(question.answerShort ?? '')}</div>
 
-                        <button
-                            type="button"
-                            className={styles.deepToggle}
-                            aria-expanded={deepOpen}
-                            aria-controls={deepId}
-                            onClick={() => setDeepOpen(o => !o)}
-                        >
-                            <ChevronDown
-                                size={15}
-                                aria-hidden="true"
-                                className={deepOpen ? styles.chevronOpen : styles.chevron}
-                            />
-                            {deepOpen ? 'Show less' : 'Go deeper'}
-                        </button>
-                        {deepOpen && (
-                            <div id={deepId} className={`${styles.answerText} ${styles.deepText}`}>
-                                {paragraphs(question.answerDeep)}
-                            </div>
+                                <button
+                                    type="button"
+                                    className={styles.deepToggle}
+                                    aria-expanded={deepOpen}
+                                    aria-controls={deepId}
+                                    onClick={() => setDeepOpen(o => !o)}
+                                >
+                                    <ChevronDown
+                                        size={15}
+                                        aria-hidden="true"
+                                        className={deepOpen ? styles.chevronOpen : styles.chevron}
+                                    />
+                                    {deepOpen ? 'Show less' : 'Go deeper'}
+                                </button>
+                                {deepOpen && (
+                                    <div id={deepId} className={`${styles.answerText} ${styles.deepText}`}>
+                                        {paragraphs(question.answerDeep ?? '')}
+                                    </div>
+                                )}
+
+                                <div className={styles.why}>
+                                    <Lightbulb size={15} aria-hidden="true" className={styles.whyIcon} />
+                                    <div>
+                                        <span className={styles.whyLabel}>Why they ask this</span>
+                                        <div className={styles.answerText}>{paragraphs(question.answerSignal ?? '')}</div>
+                                    </div>
+                                </div>
+                            </>
                         )}
-
-                        <div className={styles.why}>
-                            <Lightbulb size={15} aria-hidden="true" className={styles.whyIcon} />
-                            <div>
-                                <span className={styles.whyLabel}>Why they ask this</span>
-                                <div className={styles.answerText}>{paragraphs(question.answerSignal)}</div>
-                            </div>
-                        </div>
 
                         <button
                             type="button"

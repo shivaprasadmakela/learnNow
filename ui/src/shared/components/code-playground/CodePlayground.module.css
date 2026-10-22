@@ -77,3 +77,25 @@
     }
 }
 
+
+/* Fills its container - a side panel - with the editor above the output. */
+.fill {
+    height: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--bg-primary);
+}
+
+.fill .splitBody {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(220px, 1fr) 220px;
+}
+
+.fill .editorBox {
+    border-bottom: 1px solid var(--border-color);
+}

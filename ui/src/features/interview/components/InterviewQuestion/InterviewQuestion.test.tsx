@@ -106,4 +106,40 @@ describe('InterviewQuestionCard', () => {
         fireEvent.click(screen.getByRole('button', { name: /Revise the lesson: Maps, and the methods/ }));
         expect(onRevise).toHaveBeenCalledWith(q);
     });
+
+    it('shows a beginner answer as numbered steps, then the words to say', () => {
+        render(
+            <InterviewQuestionCard
+                question={question({
+                    answer: {
+                        simple: 'Spring **profiles** pick a set of settings per environment.',
+                        how: 'Put each environment in its own file:\n\n```properties\nserver.port=8080\n```',
+                        usage: null,
+                        example: '- Development uses your local database.',
+                        script: 'I use Spring Profiles, one file per environment.',
+                        remember: 'Same code, different configuration.',
+                        caution: 'Keep passwords out of these files.'
+                    },
+                    answerShort: null,
+                    answerDeep: null,
+                    answerSignal: null
+                })}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /Reveal answer/ }));
+
+        // "How to use it" is left out when the question has no usage section.
+        expect(screen.getAllByRole('heading', { level: 4 }).map(h => h.textContent)).toEqual([
+            '1In simple words',
+            '2How it works',
+            '3A real-world example',
+            'Say it like this'
+        ]);
+        expect(screen.getByText('profiles').tagName).toBe('STRONG');
+        expect(screen.getByText('server.port=8080')).toBeInTheDocument();
+        expect(screen.getByText('Same code, different configuration.')).toBeInTheDocument();
+        expect(screen.getByText('Keep passwords out of these files.')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Go deeper/ })).not.toBeInTheDocument();
+    });
 });

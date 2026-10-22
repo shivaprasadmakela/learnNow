@@ -99,21 +99,18 @@ class InterviewServiceTest extends AbstractIntegrationTest {
                                                                         follow(
                                                                                 p + "d",
                                                                                 "Fourth level?")))),
-                                                new Question(
+                                                legacy(
                                                         "Not A Key",
                                                         "First lesson",
-                                                        null,
                                                         "Q?",
                                                         " ",
-                                                        "deep",
-                                                        "signal",
                                                         null))))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("no subtopic titled \"No such lesson\"")
                 .hasMessageContaining("appears more than once")
                 .hasMessageContaining("follow-ups stop at 3")
                 .hasMessageContaining("is not lower-case-hyphenated")
-                .hasMessageContaining("all three answers are required");
+                .hasMessageContaining("needs a complete answer");
 
         assertThat(questions.findByQuestionKeyIn(List.of(p + "a", p + "b", p + "c"))).isEmpty();
     }
@@ -148,20 +145,119 @@ class InterviewServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void aLessonListsOnlyItsOwnOpeners() {
-        AdminPathDto path = path("PUBLISHED");
+    void aTopicListsItsQuestionsInLessonOrderNotImportOrder() {
+        AdminPathDto path =
+                authoring.saveOrUpdatePath(
+                        new AdminPathDto(
+                                null,
+                                "Interview " + UUID.randomUUID(),
+                                "d",
+                                "Backend",
+                                "learnNow",
+                                "PUBLISHED",
+                                List.of(
+                                        new AdminPathDto.AdminTopicDto(
+                                                null,
+                                                "Maps",
+                                                "t",
+                                                "course",
+                                                "1 hour",
+                                                1,
+                                                "PUBLISHED",
+                                                List.of(
+                                                        lesson("First lesson", 1),
+                                                        lesson("Second lesson", 2))))));
         String p = prefix();
         interview.importBank(
                 bank(
                         path,
-                        root(p + "one", "First lesson", "One?"),
-                        root(p + "two", "Second lesson", "Two?")));
-        UUID firstLesson = path.topics().get(0).subtopics().get(0).id();
+                        root(p + "two", "Second lesson", "Two?"),
+                        root(p + "one", "First lesson", "One?")));
 
-        assertThat(interview.forSubtopic(firstLesson))
+        List<InterviewQuestionDto> questions = interview.forTopic(path.topics().get(0).id());
+
+        assertThat(questions)
                 .extracting(InterviewQuestionDto::prompt)
-                .containsExactly("One?");
-        assertThat(interview.forSubtopic(UUID.randomUUID())).isEmpty();
+                .containsExactly("One?", "Two?");
+        assertThat(questions)
+                .extracting(InterviewQuestionDto::subtopicTitle)
+                .containsExactly("First lesson", "Second lesson");
+        assertThat(interview.forTopic(UUID.randomUUID())).isEmpty();
+    }
+
+    @Test
+    void aBeginnerAnswerImportsAndReadsBackInItsSections() {
+        AdminPathDto path = path("PUBLISHED");
+        String key = prefix() + "profiles";
+        interview.importBank(
+                bank(
+                        path,
+                        new Question(
+                                key,
+                                "First lesson",
+                                null,
+                                "How do you run one app with different settings per environment?",
+                                "Spring **profiles** pick a set of settings per environment.",
+                                "Put shared settings in `application.properties` and the rest in"
+                                        + " `application-dev.properties`:\n\n"
+                                        + "```properties\n"
+                                        + "server.port=8080\n"
+                                        + "```",
+                                "```bash\njava -jar app.jar --spring.profiles.active=dev\n```",
+                                "- Development uses your local database.",
+                                "I use Spring Profiles, one properties file per environment.",
+                                "Same code, different configuration.",
+                                "Keep passwords out of the files.",
+                                null,
+                                null,
+                                null,
+                                List.of())));
+
+        InterviewQuestionDto q =
+                interview.forTopic(path.topics().get(0).id()).stream()
+                        .filter(x -> x.prompt().startsWith("How do you run one app"))
+                        .findFirst()
+                        .orElseThrow();
+
+        assertThat(q.answer().simple()).contains("**profiles**");
+        assertThat(q.answer().how()).contains("```properties");
+        assertThat(q.answer().usage()).contains("--spring.profiles.active=dev");
+        assertThat(q.answer().script()).startsWith("I use");
+        assertThat(q.answer().remember()).isEqualTo("Same code, different configuration.");
+        assertThat(q.answerShort()).isNull();
+    }
+
+    @Test
+    void aHalfRewrittenQuestionKeepsShowingItsCompleteEarlierAnswer() {
+        AdminPathDto path = path("PUBLISHED");
+        interview.importBank(
+                bank(
+                        path,
+                        new Question(
+                                prefix() + "half",
+                                "First lesson",
+                                null,
+                                "Half rewritten?",
+                                "Only the first section is written so far.",
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                "short",
+                                "deep",
+                                "signal",
+                                List.of())));
+
+        InterviewQuestionDto q =
+                interview.forTopic(path.topics().get(0).id()).stream()
+                        .filter(x -> x.prompt().equals("Half rewritten?"))
+                        .findFirst()
+                        .orElseThrow();
+
+        assertThat(q.answer()).isNull();
+        assertThat(q.answerShort()).isEqualTo("short");
     }
 
     @Test
@@ -181,12 +277,48 @@ class InterviewServiceTest extends AbstractIntegrationTest {
     }
 
     private static Question root(String key, String subtopic, String prompt, Question... follow) {
-        return new Question(
-                key, subtopic, null, prompt, "short", "deep", "signal", List.of(follow));
+        return legacy(key, subtopic, prompt, "short", List.of(follow));
     }
 
     private static Question follow(String key, String prompt, Question... follow) {
-        return new Question(key, null, null, prompt, "short", "deep", "signal", List.of(follow));
+        return legacy(key, null, prompt, "short", List.of(follow));
+    }
+
+    /** A question with the earlier three-part answer. */
+    static Question legacy(
+            String key, String subtopic, String prompt, String shortAnswer, List<Question> follow) {
+        return new Question(
+                key,
+                subtopic,
+                null,
+                prompt,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                shortAnswer,
+                "deep",
+                "signal",
+                follow);
+    }
+
+    private static AdminPathDto.AdminSubtopicDto lesson(String title, int order) {
+        return new AdminPathDto.AdminSubtopicDto(
+                null,
+                title,
+                "### Body",
+                order,
+                "PUBLISHED",
+                "beginner",
+                "concept",
+                List.of(),
+                null,
+                5,
+                List.of(),
+                List.of());
     }
 
     /** Two topics, "Maps" then "Sets", one lesson each. */

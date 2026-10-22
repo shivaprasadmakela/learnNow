@@ -1,0 +1,95 @@
+/* Written content: lessons' supporting text, problem statements, interview answers. */
+
+.markdown {
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.markdown > :first-child {
+    margin-top: 0;
+}
+
+.markdown > :last-child {
+    margin-bottom: 0;
+}
+
+.markdown p {
+    margin: 0 0 0.85rem;
+}
+
+.markdown ul,
+.markdown ol {
+    margin: 0 0 0.85rem;
+    padding-left: 1.4rem;
+}
+
+.markdown li + li {
+    margin-top: 0.3rem;
+}
+
+.markdown strong {
+    font-weight: 700;
+}
+
+.h2 {
+    margin: 1.5rem 0 0.75rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.h3 {
+    margin: 1.25rem 0 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.h4 {
+    margin: 1rem 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.tableWrap {
+    margin: 0 0 1rem;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.table th,
+.table td {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    text-align: left;
+    vertical-align: top;
+}
+
+.table th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+}
+
+.figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1.5rem 0;
+}
+
+.image {
+    max-width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.caption {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--text-tertiary);
+}

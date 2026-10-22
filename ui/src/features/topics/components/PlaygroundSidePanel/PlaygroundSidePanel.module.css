@@ -38,24 +38,7 @@
     color: var(--text-primary);
 }
 
-.langBadge {
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: var(--accent-blue-light, rgba(59, 130, 246, 0.12));
-    border: 1px solid var(--border-color);
-    color: var(--accent-blue-text, var(--tech-blue));
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-}
-
-.headerActions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.iconBtn, .closeBtn {
+.closeBtn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,13 +49,17 @@
     background: var(--bg-primary);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.iconBtn:hover, .closeBtn:hover {
-    background: var(--bg-tertiary);
+.closeBtn:hover {
     color: var(--text-primary);
     border-color: var(--tech-blue);
+}
+
+.closeBtn:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
 }
 
 .body {
@@ -80,93 +67,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-}
-
-.toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.toolBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    font-size: 0.78rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.toolBtn:hover {
-    border-color: var(--tech-blue);
-    color: var(--tech-blue);
-}
-
-.toolBtnFull {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: var(--accent-blue-light, rgba(59, 130, 246, 0.12));
-    color: var(--accent-blue-text, var(--tech-blue));
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.toolBtnFull:hover {
-    background: var(--tech-blue);
-    color: #ffffff;
-    border-color: var(--tech-blue);
-}
-
-.runBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 16px;
-    border-radius: 6px;
-    border: none;
-    background: var(--tech-blue);
-    color: #ffffff;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.runBtn:hover:not(:disabled) {
-    background: var(--tech-blue-hover, #2563eb);
-}
-
-.runBtn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.editorContainer {
-    flex: 1;
-    min-height: 250px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.outputContainer {
-    height: 220px;
-    min-height: 180px;
-    background: var(--bg-primary);
 }
 
 @media (max-width: 768px) {

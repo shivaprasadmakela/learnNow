@@ -1,0 +1,109 @@
+/* A fenced block of code in written content - lessons, problem statements, editorials. */
+
+.wrapper {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-primary);
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.wrapper:hover {
+    border-color: var(--tech-blue);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--accent-blue-text, var(--tech-blue));
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.copyBtn,
+.tryBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.copyBtn {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+}
+
+.copyBtn:hover {
+    border-color: var(--tech-blue);
+    color: var(--tech-blue);
+}
+
+.tryBtn {
+    background: var(--accent-blue-light, rgba(59, 130, 246, 0.12));
+    color: var(--accent-blue-text, var(--tech-blue));
+}
+
+.tryBtn:hover,
+.tryBtnActive {
+    background: var(--tech-blue);
+    border-color: var(--tech-blue);
+    color: #ffffff;
+}
+
+.copyBtn:focus-visible,
+.tryBtn:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+}
+
+.pre {
+    margin: 0;
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+.pre code {
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    color: inherit;
+}
+
+.loading {
+    margin: 1.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}

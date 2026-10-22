@@ -1,4 +1,4 @@
-/* Interview questions - the path's question bank and the block under each lesson.
+/* Interview questions - the path page's Interview tab and the study console's.
    Theme tokens only. Text on a --tech-blue fill uses --bg-primary rather than white: dark theme's
    blue is light (#38bdf8), and white on it is unreadable. */
 
@@ -177,6 +177,92 @@
     margin: 4px 0 0;
     font-size: 0.86rem;
     color: var(--text-tertiary);
+}
+
+/* ── The Interview tab: the topic's questions, grouped by the lesson that teaches them ── */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 40px;
+}
+
+.sectionHead {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.sectionTitle {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.sectionMeta {
+    margin: 4px 0 0;
+    font-size: 0.88rem;
+    color: var(--text-tertiary);
+}
+
+.lessonGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lessonGroupTitle {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+/* Each question is a scroll target for the table of contents. */
+.anchor {
+    scroll-margin-top: 16px;
+}
+
+/* ── The Interview list in the table of contents ── */
+.tocGroup {
+    margin: 0 0 14px;
+    padding: 0;
+    list-style: none;
+}
+
+.tocQuestion {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    font: inherit;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    text-align: left;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.tocQuestion:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.tocQuestion:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 1px;
+}
+
+.tocNumber {
+    flex: 0 0 auto;
+    font-weight: 700;
+    color: var(--tech-blue);
 }
 
 .cardList {
@@ -448,6 +534,109 @@
     color: var(--tech-blue);
 }
 
+/* ── The beginner answer: numbered steps, then the words to say ── */
+.beginnerAnswer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.answerStep {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.answerStepTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.answerStepNumber {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--tech-blue);
+    color: var(--bg-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.answerStepBody {
+    padding-left: 30px;
+    font-size: 0.93rem;
+}
+
+.script {
+    padding: 14px 16px;
+    border-left: 3px solid var(--tech-blue);
+    border-radius: 0 10px 10px 0;
+    background: color-mix(in srgb, var(--tech-blue) 8%, transparent);
+}
+
+.scriptTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--tech-blue);
+}
+
+.scriptBody {
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+.remember {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    padding: 10px 14px;
+    border: 1px dashed var(--border-color);
+    border-radius: 10px;
+    font-size: 0.93rem;
+    color: var(--text-primary);
+}
+
+.remember svg {
+    flex: 0 0 auto;
+    margin-top: 3px;
+    color: var(--tech-blue);
+}
+
+.caution {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: color-mix(in srgb, #f59e0b 10%, transparent);
+    font-size: 0.92rem;
+}
+
+.cautionIcon {
+    flex: 0 0 auto;
+    margin-top: 3px;
+    color: #f59e0b;
+}
+
+.cautionTitle {
+    display: block;
+    margin-bottom: 2px;
+}
+
 /* Follow-ups hang off a line beneath the answer that earned them. */
 .followUps {
     display: flex;
@@ -466,31 +655,6 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--tech-blue);
-}
-
-/* ── Block under a lesson ──────────────────────────────────── */
-.lessonBlock {
-    margin-top: 32px;
-    padding: 18px;
-    border: 1px solid var(--border-color);
-    border-top: 3px solid var(--tech-blue);
-    border-radius: 12px;
-    background: var(--bg-secondary);
-}
-
-.lessonBlockHead {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.lessonBlockIntro {
-    margin: 4px 0 14px;
-    font-size: 0.86rem;
-    color: var(--text-tertiary);
 }
 
 /* ── Narrow screens: topics become a scrolling row above the questions ── */

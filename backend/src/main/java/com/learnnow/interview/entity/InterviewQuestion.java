@@ -55,13 +55,36 @@ public class InterviewQuestion {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String prompt;
 
-    @Column(name = "answer_short", nullable = false, columnDefinition = "TEXT")
+    // The beginner answer. Markdown, so a step can carry code.
+    @Column(name = "answer_simple", columnDefinition = "TEXT")
+    private String answerSimple;
+
+    @Column(name = "answer_how", columnDefinition = "TEXT")
+    private String answerHow;
+
+    @Column(name = "answer_usage", columnDefinition = "TEXT")
+    private String answerUsage;
+
+    @Column(name = "answer_example", columnDefinition = "TEXT")
+    private String answerExample;
+
+    @Column(name = "answer_script", columnDefinition = "TEXT")
+    private String answerScript;
+
+    @Column(name = "answer_remember", length = 300)
+    private String answerRemember;
+
+    @Column(name = "answer_caution", columnDefinition = "TEXT")
+    private String answerCaution;
+
+    // The earlier three-part answer, kept for banks not yet rewritten.
+    @Column(name = "answer_short", columnDefinition = "TEXT")
     private String answerShort;
 
-    @Column(name = "answer_deep", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "answer_deep", columnDefinition = "TEXT")
     private String answerDeep;
 
-    @Column(name = "answer_signal", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "answer_signal", columnDefinition = "TEXT")
     private String answerSignal;
 
     @Enumerated(EnumType.STRING)

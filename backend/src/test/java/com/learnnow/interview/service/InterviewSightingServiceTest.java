@@ -48,14 +48,14 @@ class InterviewSightingServiceTest extends AbstractIntegrationTest {
 
     private InterviewSightingService sightings;
     private String p;
-    private UUID lesson;
+    private UUID topic;
 
     @BeforeEach
     void bank() {
         sightings = new InterviewSightingService(reports, questions, OCTOBER_2026);
         p = "s" + UUID.randomUUID().toString().substring(0, 8) + "-";
         AdminPathDto path = path();
-        lesson = path.topics().get(0).subtopics().get(0).id();
+        topic = path.topics().get(0).id();
         interview.importBank(
                 new ImportInterviewBankRequest(
                         "test",
@@ -145,7 +145,7 @@ class InterviewSightingServiceTest extends AbstractIntegrationTest {
 
     private InterviewQuestionDto opener(String key) {
         String prompt = "Prompt " + key + "?";
-        return interview.forSubtopic(lesson).stream()
+        return interview.forTopic(topic).stream()
                 .filter(q -> q.prompt().equals(prompt))
                 .findFirst()
                 .orElseThrow();
@@ -159,7 +159,7 @@ class InterviewSightingServiceTest extends AbstractIntegrationTest {
 
     private Question q(String key, String subtopic, List<Question> follow) {
         String bare = key.substring(p.length());
-        return new Question(key, subtopic, null, "Prompt " + bare + "?", "s", "d", "g", follow);
+        return InterviewServiceTest.legacy(key, subtopic, "Prompt " + bare + "?", "s", follow);
     }
 
     private AdminPathDto path() {

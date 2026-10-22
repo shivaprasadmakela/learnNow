@@ -17,6 +17,27 @@ export interface InterviewSighting {
     seenMonth?: string | null;
 }
 
+/**
+ * An answer built the way a beginner learns it and then says it. Sections are Markdown, so a step
+ * can carry a code block. `usage` and `caution` are optional.
+ */
+export interface InterviewAnswer {
+    /** What it is, in two or three plain sentences. */
+    simple: string;
+    /** How it works or how to do it. */
+    how: string;
+    /** How to run or use it. */
+    usage?: string | null;
+    /** A real-world example. */
+    example: string;
+    /** The answer to give, first person, ready to say out loud. */
+    script: string;
+    /** One line to remember it by. */
+    remember: string;
+    /** The one important point people get wrong. */
+    caution?: string | null;
+}
+
 export interface InterviewQuestion {
     id: string;
     /** Set on opening questions only: where to revise if you cannot answer it. */
@@ -24,12 +45,14 @@ export interface InterviewQuestion {
     subtopicId?: string | null;
     subtopicTitle?: string | null;
     prompt: string;
-    /** What to say in about thirty seconds. */
-    answerShort: string;
-    /** The fuller answer, for when they dig. */
-    answerDeep: string;
-    /** What the interviewer is checking by asking it. */
-    answerSignal: string;
+    /** The beginner answer; null on a question not yet rewritten, which has the three below. */
+    answer?: InterviewAnswer | null;
+    /** Earlier format: what to say in about thirty seconds. */
+    answerShort?: string | null;
+    /** Earlier format: the fuller answer, for when they dig. */
+    answerDeep?: string | null;
+    /** Earlier format: what the interviewer is checking by asking it. */
+    answerSignal?: string | null;
     depth: number;
     practice: boolean;
     sightings: InterviewSighting[];
@@ -43,13 +66,13 @@ export interface InterviewTopic {
     questions: InterviewQuestion[];
 }
 
+/** A path's questions, grouped by topic - the Interview tab on the path page. */
 export const fetchPathInterviewQuestions = (pathId: string): Promise<InterviewTopic[]> =>
     apiFetchJson<InterviewTopic[]>(`/api/catalog/interview/paths/${encodeURIComponent(pathId)}`);
 
-export const fetchSubtopicInterviewQuestions = (subtopicId: string): Promise<InterviewQuestion[]> =>
-    apiFetchJson<InterviewQuestion[]>(
-        `/api/catalog/interview/subtopics/${encodeURIComponent(subtopicId)}`
-    );
+/** A topic's opening questions, each with its follow-ups, in the order its lessons are taught. */
+export const fetchTopicInterviewQuestions = (topicId: string): Promise<InterviewQuestion[]> =>
+    apiFetchJson<InterviewQuestion[]>(`/api/catalog/interview/topics/${encodeURIComponent(topicId)}`);
 
 /** Every question in a tree, follow-ups included. */
 export const countQuestions = (questions: InterviewQuestion[]): number =>

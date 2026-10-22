@@ -55,8 +55,11 @@ CREATE INDEX idx_track_steps_path ON track_steps (path_id);
 -- is the point - "What is a HashMap?" earns "What happens on a collision?", which earns "Why did
 -- Java 8 switch to a tree?" - so questions reference a parent rather than sitting in a flat list.
 --
--- Answers are stored in three registers because an interview needs all three: what you say in
--- thirty seconds, what you say when they dig, and what the interviewer is actually checking for.
+-- An answer is built the way a beginner learns it and then says it: what it is in plain words, how
+-- it works (with code where code helps), how to use it, a real-world example, the answer to give
+-- in the first person, one line to remember, and the point people get wrong. Banks written before
+-- that shape carry the earlier three-part answer (short, deep, what the interviewer checks) until
+-- they are rewritten.
 --
 -- Expand only: three new tables, nothing existing changes.
 
@@ -68,9 +71,18 @@ CREATE TABLE interview_questions (
     depth         INTEGER NOT NULL DEFAULT 1,
     order_index   INTEGER NOT NULL DEFAULT 1,
     prompt        TEXT NOT NULL,
-    answer_short  TEXT NOT NULL,
-    answer_deep   TEXT NOT NULL,
-    answer_signal TEXT NOT NULL,
+    -- The beginner answer, in the order a learner reads it. Markdown, so a step can carry code.
+    answer_simple   TEXT,
+    answer_how      TEXT,
+    answer_usage    TEXT,
+    answer_example  TEXT,
+    answer_script   TEXT,
+    answer_remember VARCHAR(300),
+    answer_caution  TEXT,
+    -- The earlier three-part answer, kept until every bank is rewritten.
+    answer_short  TEXT,
+    answer_deep   TEXT,
+    answer_signal TEXT,
     status        VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
                   CONSTRAINT ck_interview_questions_status CHECK (status IN ('DRAFT', 'PUBLISHED')),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -79,13 +91,26 @@ CREATE TABLE interview_questions (
     CONSTRAINT ck_interview_questions_depth CHECK (depth BETWEEN 1 AND 3),
     -- A question is either a root (no parent, depth 1) or a follow-up (a parent, deeper than 1).
     -- Without this an orphan could claim depth 3, or a child could claim to be a root.
-    CONSTRAINT ck_interview_questions_root CHECK ((parent_id IS NULL) = (depth = 1))
+    CONSTRAINT ck_interview_questions_root CHECK ((parent_id IS NULL) = (depth = 1)),
+    -- Every question carries one complete answer, in one shape or the other.
+    CONSTRAINT ck_interview_questions_answer CHECK (
+        (answer_simple IS NOT NULL AND answer_how IS NOT NULL AND answer_example IS NOT NULL
+             AND answer_script IS NOT NULL AND answer_remember IS NOT NULL)
+        OR (answer_short IS NOT NULL AND answer_deep IS NOT NULL AND answer_signal IS NOT NULL)
+    )
 );
 
 COMMENT ON TABLE  interview_questions IS 'A question asked in a real interview, with its follow-ups.';
 COMMENT ON COLUMN interview_questions.key IS 'Stable authoring key; an import upserts by it, so re-importing edits in place.';
 COMMENT ON COLUMN interview_questions.parent_id IS 'The question this follows up on. NULL for the opening question.';
-COMMENT ON COLUMN interview_questions.answer_short IS 'The thirty-second answer: what you say first.';
+COMMENT ON COLUMN interview_questions.answer_simple IS 'What it is, in two or three plain sentences a beginner can follow.';
+COMMENT ON COLUMN interview_questions.answer_how IS 'How it works or how to do it, Markdown with code blocks where they help.';
+COMMENT ON COLUMN interview_questions.answer_usage IS 'How to run or use it. Optional.';
+COMMENT ON COLUMN interview_questions.answer_example IS 'A real-world example.';
+COMMENT ON COLUMN interview_questions.answer_script IS 'The answer to give, first person, ready to say out loud.';
+COMMENT ON COLUMN interview_questions.answer_remember IS 'One line to remember it by.';
+COMMENT ON COLUMN interview_questions.answer_caution IS 'The one important point people get wrong. Optional.';
+COMMENT ON COLUMN interview_questions.answer_short IS 'Earlier format: the thirty-second answer.';
 COMMENT ON COLUMN interview_questions.answer_deep IS 'The fuller answer, for when they dig.';
 COMMENT ON COLUMN interview_questions.answer_signal IS 'What the interviewer is checking for by asking it.';
 

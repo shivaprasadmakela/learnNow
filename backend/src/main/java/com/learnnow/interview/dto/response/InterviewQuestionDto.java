@@ -20,6 +20,7 @@ public record InterviewQuestionDto(
         UUID subtopicId,
         String subtopicTitle,
         String prompt,
+        Answer answer,
         String answerShort,
         String answerDeep,
         String answerSignal,
@@ -27,6 +28,19 @@ public record InterviewQuestionDto(
         boolean practice,
         List<Sighting> sightings,
         List<InterviewQuestionDto> followUps) {
+
+    /**
+     * The beginner answer, in the order a learner reads it; null for a question not yet rewritten,
+     * which carries the earlier three-part answer instead. Sections are Markdown.
+     */
+    public record Answer(
+            String simple,
+            String how,
+            String usage,
+            String example,
+            String script,
+            String remember,
+            String caution) {}
 
     /**
      * Where and when it was reported as asked. There is no field for the source link, and there

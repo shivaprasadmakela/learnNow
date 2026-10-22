@@ -11,6 +11,11 @@ export interface CodePlaygroundProps {
     title?: string;
     onCodeChange?: (code: string) => void;
     onOpenFullEditor?: (code: string, language: string) => void;
+    /**
+     * "inline" sits in a page as a card, editor beside output. "fill" takes the whole of its
+     * container, editor above output - for a side panel.
+     */
+    layout?: 'inline' | 'fill';
 }
 
 export const CodePlayground: React.FC<CodePlaygroundProps> = ({
@@ -18,7 +23,8 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
     language = 'javascript',
     title = 'VS Code Monaco Compiler',
     onCodeChange,
-    onOpenFullEditor
+    onOpenFullEditor,
+    layout = 'inline'
 }) => {
     const [code, setCode] = useState<string>(initialCode);
     const [stdin, setStdin] = useState<string>('');
@@ -53,7 +59,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
     };
 
     return (
-        <div className={styles.playgroundCard}>
+        <div className={`${styles.playgroundCard} ${layout === 'fill' ? styles.fill : ''}`.trim()}>
             <div className={styles.playgroundHeader}>
                 <span className={styles.playgroundTitle}>⚡ {title} ({language})</span>
                 <div style={{ display: 'flex', gap: '8px' }}>

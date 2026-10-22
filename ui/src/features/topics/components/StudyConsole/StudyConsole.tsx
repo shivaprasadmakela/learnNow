@@ -1,16 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List, Copy, Code as CodeIcon, Terminal } from 'lucide-react';
+import { X, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
-import { MermaidDiagram } from '../../../../shared/components/mermaid';
-import { isExecutableLanguage, formatExecutableCode } from '../../../../shared/utils/codeWrapper';
+import { CodeBlock } from '../../../../shared/components/ui/CodeBlock';
+import { Tabs } from '../../../../shared/components/ui/Tabs';
+import { slugify } from '../../../../shared/utils/slug';
 import { RunnableCodeBlock } from '../../../../shared/components/ui/RunnableCodeBlock';
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
 import { LevelBadge, TrackBadge, DurationBadge } from '../../../../shared/components/ui/Badge';
 import { useNote, useBookmarks, BookmarkButton, NotesPanel } from '../../../notes';
-import { SubtopicInterviewQuestions } from '../../../interview';
+import {
+    TopicInterviewNav,
+    TopicInterviewSection,
+    interviewAnchorId,
+    useTopicInterviewQuestions,
+    type InterviewQuestion
+} from '../../../interview';
 import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
 import { TopicCelebrationModal } from '../TopicCelebrationModal/TopicCelebrationModal';
 import styles from './StudyConsole.module.css';
@@ -26,65 +33,8 @@ interface StudyConsoleProps {
     isUpdating: boolean;
 }
 
-const slugify = (text: string) => {
-    return text
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-};
-
-const StudyCodeBlock: React.FC<{
-    codeString: string;
-    preparedCode: string;
-    lang: string;
-    executable: boolean;
-    onOpenPlayground: (code: string, language: string) => void;
-}> = ({ codeString, preparedCode, lang, executable, onOpenPlayground }) => {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = async () => {
-        await navigator.clipboard.writeText(codeString);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    return (
-        <div className={styles.codeBlockWrapper}>
-            <div className={styles.codeBlockHeader}>
-                <span className={styles.codeBlockLangBadge}>
-                    <CodeIcon size={13} style={{ marginRight: '6px' }} />
-                    {lang ? lang.toUpperCase() : 'CODE'}
-                </span>
-                <div className={styles.codeBlockActions}>
-                    <button
-                        type="button"
-                        className={styles.copyBtn}
-                        onClick={handleCopy}
-                        title="Copy code"
-                    >
-                        {copied ? <Check size={13} style={{ color: '#22c55e' }} /> : <Copy size={13} />}
-                        <span>{copied ? 'Copied' : 'Copy'}</span>
-                    </button>
-                    {executable && (
-                        <button
-                            type="button"
-                            className={styles.playgroundActionBtn}
-                            onClick={() => onOpenPlayground(preparedCode, lang)}
-                            title="Try in Playground Side Panel"
-                        >
-                            <Terminal size={13} />
-                            <span>⚡ Try in Playground</span>
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            <pre className={styles.codePreBlock}>
-                <code>{codeString}</code>
-            </pre>
-        </div>
-    );
-};
+/** What the content pane shows: the lessons, or the topic's interview questions. */
+type ConsolePane = 'lessons' | 'interview';
 
 export function StudyConsole({ 
     topic, 
@@ -132,6 +82,18 @@ export function StudyConsole({
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(false);
     const [isTopicCelebrationOpen, setIsTopicCelebrationOpen] = useState(false);
+
+    // Interview questions sit in their own pane, reached from the table of contents: they test a
+    // whole topic, so they belong beside the lessons rather than inside any one of them.
+    const interviewQuestions = useTopicInterviewQuestions(topic.id);
+    // Kept with the topic it was chosen for, so moving to another topic opens on its lessons.
+    const [paneChoice, setPaneChoice] = useState<{ topicId: string; pane: ConsolePane }>({
+        topicId: String(topic.id),
+        pane: 'lessons'
+    });
+    const pane = paneChoice.topicId === String(topic.id) ? paneChoice.pane : 'lessons';
+    const setPane = (next: ConsolePane) => setPaneChoice({ topicId: String(topic.id), pane: next });
+    const showInterview = pane === 'interview' && interviewQuestions.length > 0;
 
     const [playgroundDrawer, setPlaygroundDrawer] = useState<{
         isOpen: boolean;
@@ -238,7 +200,8 @@ export function StudyConsole({
         });
 
         return () => observer.disconnect();
-    }, [visibleCount, subtopics]);
+        // showInterview: returning to the lessons renders fresh elements that need observing again.
+    }, [visibleCount, subtopics, showInterview]);
 
     const handleSubtopicChange = (index: number) => {
         if (index >= 0 && index < subtopics.length) {
@@ -259,6 +222,28 @@ export function StudyConsole({
                 }, 600);
             }, 100);
         }
+    };
+
+    const handleSelectPane = (next: ConsolePane) => {
+        setPane(next);
+        contentPaneRef.current?.scrollTo({ top: 0 });
+    };
+
+    const handleSelectInterviewQuestion = (question: InterviewQuestion) => {
+        setPane('interview');
+        setIsTocOpen(false);
+        setTimeout(() => {
+            document
+                .getElementById(interviewAnchorId(question.id))
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    };
+
+    /** "Not sure? Revise the lesson" on a question: back to the lessons, at the one it names. */
+    const handleRevise = (question: InterviewQuestion) => {
+        const index = subtopics.findIndex(s => String(s.id) === String(question.subtopicId));
+        setPane('lessons');
+        if (index >= 0) setTimeout(() => handleSubtopicChange(index), 0);
     };
 
     const handleReadMore = async (subtopic: SubtopicData, index: number) => {
@@ -362,23 +347,7 @@ export function StudyConsole({
                             return <code className="inline-code" {...rest}>{children}</code>;
                         }
 
-                        const cleanLang = (lang || '').trim().toLowerCase();
-                        if (cleanLang === 'mermaid') {
-                            return <MermaidDiagram chart={codeString} />;
-                        }
-
-                        const executable = isExecutableLanguage(cleanLang);
-                        const preparedCode = executable ? formatExecutableCode(codeString, cleanLang) : codeString;
-
-                        return (
-                            <StudyCodeBlock
-                                codeString={codeString}
-                                preparedCode={preparedCode}
-                                lang={cleanLang}
-                                executable={executable}
-                                onOpenPlayground={handleOpenPlaygroundDrawer}
-                            />
-                        );
+                        return <CodeBlock code={codeString} lang={lang} onTryInPlayground={handleOpenPlaygroundDrawer} />;
                     }
                 }}
             >
@@ -468,8 +437,29 @@ export function StudyConsole({
                 )}
 
                 {/* Left Sidebar Table of Contents */}
-                <aside className={`${styles.tocSidebar} ${isTocOpen ? styles.tocSidebarOpen : ''}`}>
-                    <h3 className={styles.sidebarTitle}>Table of Contents</h3>
+                <aside
+                    className={`${styles.tocSidebar} ${isTocOpen ? styles.tocSidebarOpen : ''}`}
+                    aria-label="Topic contents"
+                >
+                    {interviewQuestions.length > 0 && (
+                        <Tabs<ConsolePane>
+                            variant="compact"
+                            label="Topic sections"
+                            className={styles.tocTabs}
+                            items={[
+                                { id: 'lessons', label: 'Lessons', count: subtopics.length },
+                                { id: 'interview', label: 'Interview', count: interviewQuestions.length }
+                            ]}
+                            activeId={showInterview ? 'interview' : 'lessons'}
+                            onChange={handleSelectPane}
+                        />
+                    )}
+                    {showInterview ? (
+                        <TopicInterviewNav
+                            questions={interviewQuestions}
+                            onSelect={handleSelectInterviewQuestion}
+                        />
+                    ) : (
                     <ul className={styles.tocList}>
                         {subtopics.map((sec: SubtopicData, idx: number) => (
                             <li key={sec.id}>
@@ -497,12 +487,22 @@ export function StudyConsole({
                             </li>
                         ))}
                     </ul>
+                    )}
                 </aside>
 
                 {/* Main continuous reading content pane */}
                 <main className={styles.contentPane} ref={contentPaneRef}>
                     {subtopics.length > 0 ? (
                         <div className={isNotesDrawerOpen ? styles.contentFlexLayout : ''}>
+                            {showInterview ? (
+                                <div className={styles.article}>
+                                    <TopicInterviewSection
+                                        topicTitle={topic.title}
+                                        questions={interviewQuestions}
+                                        onRevise={handleRevise}
+                                    />
+                                </div>
+                            ) : (
                             <div className={styles.article}>
                                 {renderedSubtopics.map((st: SubtopicData, index: number) => {
                                     const hasQuizzes = Boolean(st.questions && st.questions.length > 0);
@@ -596,7 +596,6 @@ export function StudyConsole({
                                                         </div>
                                                     </div>
                                                 )}
-                                                <SubtopicInterviewQuestions subtopicId={st.id} />
                                             </div>
 
                                             {/* Progressive Read More / Completion Container */}
@@ -637,6 +636,7 @@ export function StudyConsole({
                                     );
                                 })}
                             </div>
+                            )}
 
                             {/* In-pane corner slider Topic Notes Panel */}
                             <NotesPanel

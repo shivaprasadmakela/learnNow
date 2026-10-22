@@ -12,7 +12,6 @@ import com.learnnow.interview.repository.InterviewQuestionRepository.SubtopicRow
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
 import com.learnnow.paths.repository.PathRepository;
-import com.learnnow.paths.repository.SubtopicRepository;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,7 +41,6 @@ public class InterviewService {
 
     private final InterviewQuestionRepository questionRepository;
     private final PathRepository pathRepository;
-    private final SubtopicRepository subtopicRepository;
 
     /**
      * Creates or updates every question in the bank, keyed by {@code key}, and links each follow-up
@@ -133,9 +131,17 @@ public class InterviewService {
             q.setDepth(f.depth);
             q.setOrderIndex(f.order);
             q.setPrompt(f.source.prompt().trim());
-            q.setAnswerShort(f.source.answerShort().trim());
-            q.setAnswerDeep(f.source.answerDeep().trim());
-            q.setAnswerSignal(f.source.answerSignal().trim());
+            ImportInterviewBankRequest.Question a = f.source;
+            q.setAnswerSimple(trimToNull(a.simple()));
+            q.setAnswerHow(trimToNull(a.how()));
+            q.setAnswerUsage(trimToNull(a.usage()));
+            q.setAnswerExample(trimToNull(a.example()));
+            q.setAnswerScript(trimToNull(a.script()));
+            q.setAnswerRemember(trimToNull(a.remember()));
+            q.setAnswerCaution(trimToNull(a.caution()));
+            q.setAnswerShort(trimToNull(a.answerShort()));
+            q.setAnswerDeep(trimToNull(a.answerDeep()));
+            q.setAnswerSignal(trimToNull(a.answerSignal()));
             q.setStatus(ContentStatus.PUBLISHED);
             q = questionRepository.save(q);
             idByKey.put(f.source.key(), q.getId());
@@ -177,22 +183,23 @@ public class InterviewService {
         return Optional.of(new ArrayList<>(topics.values()));
     }
 
-    /** The opening questions anchored to one subtopic, each with its follow-ups. */
+    /**
+     * A topic's opening questions, each with its follow-ups, in the order the topic teaches the
+     * lessons they come from - what the study console shows beside the lessons themselves.
+     */
     @Transactional(readOnly = true)
-    public List<InterviewQuestionDto> forSubtopic(UUID subtopicId) {
-        return subtopicRepository
-                .findByIdWithTopic(subtopicId)
-                .map(
-                        st ->
-                                treesBySubtopic(
-                                                Map.of(
-                                                        subtopicId,
-                                                        new Anchor(
-                                                                st.getTopic().getId(),
-                                                                st.getTopic().getTitle(),
-                                                                st.getTitle())))
-                                        .getOrDefault(subtopicId, List.of()))
-                .orElse(List.of());
+    public List<InterviewQuestionDto> forTopic(UUID topicId) {
+        Map<UUID, Anchor> anchors = new LinkedHashMap<>();
+        for (SubtopicRow row : questionRepository.findPublishedSubtopicsInTopic(topicId)) {
+            anchors.put(
+                    row.getId(), new Anchor(row.getTopicId(), row.getTopicTitle(), row.getTitle()));
+        }
+        Map<UUID, List<InterviewQuestionDto>> trees = treesBySubtopic(anchors);
+        List<InterviewQuestionDto> out = new ArrayList<>();
+        for (UUID subtopicId : anchors.keySet()) {
+            out.addAll(trees.getOrDefault(subtopicId, List.of()));
+        }
+        return out;
     }
 
     private Map<UUID, List<InterviewQuestionDto>> treesBySubtopic(Map<UUID, Anchor> anchors) {
@@ -259,6 +266,16 @@ public class InterviewService {
                 anchor == null ? null : q.getSubtopicId(),
                 anchor == null ? null : anchor.subtopicTitle(),
                 q.getPrompt(),
+                !hasBeginnerAnswer(q)
+                        ? null
+                        : new InterviewQuestionDto.Answer(
+                                q.getAnswerSimple(),
+                                q.getAnswerHow(),
+                                q.getAnswerUsage(),
+                                q.getAnswerExample(),
+                                q.getAnswerScript(),
+                                q.getAnswerRemember(),
+                                q.getAnswerCaution()),
                 q.getAnswerShort(),
                 q.getAnswerDeep(),
                 q.getAnswerSignal(),
@@ -290,11 +307,14 @@ public class InterviewService {
         if (q.depth() != null && q.depth() != depth) {
             problems.add(key + ": says depth " + q.depth() + " but sits at depth " + depth);
         }
-        if (isBlank(q.prompt())
-                || isBlank(q.answerShort())
-                || isBlank(q.answerDeep())
-                || isBlank(q.answerSignal())) {
-            problems.add(key + ": the prompt and all three answers are required");
+        if (isBlank(q.prompt())) {
+            problems.add(key + ": the prompt is required");
+        }
+        if (!q.hasBeginnerAnswer() && !q.hasLegacyAnswer()) {
+            problems.add(
+                    key
+                            + ": needs a complete answer - simple, how, example, script and"
+                            + " remember (or the older answerShort, answerDeep and answerSignal)");
         }
         flat.add(new Flat(q, parentKey, depth, order, subtopicId));
         List<ImportInterviewBankRequest.Question> follow =
@@ -302,6 +322,23 @@ public class InterviewService {
         for (int i = 0; i < follow.size(); i++) {
             flatten(follow.get(i), key, depth + 1, i + 1, subtopicId, flat, keys, problems);
         }
+    }
+
+    /**
+     * Whether the beginner sections are all there. A question can carry a half-written beginner
+     * answer beside a complete earlier one while its bank is being rewritten; it keeps showing the
+     * complete one until the new one is finished.
+     */
+    private static boolean hasBeginnerAnswer(InterviewQuestion q) {
+        return q.getAnswerSimple() != null
+                && q.getAnswerHow() != null
+                && q.getAnswerExample() != null
+                && q.getAnswerScript() != null
+                && q.getAnswerRemember() != null;
+    }
+
+    private static String trimToNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
     }
 
     private static boolean isBlank(String s) {

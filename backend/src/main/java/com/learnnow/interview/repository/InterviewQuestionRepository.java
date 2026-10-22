@@ -40,6 +40,15 @@ public interface InterviewQuestionRepository extends JpaRepository<InterviewQues
                     + " ORDER BY pt.orderIndex, st.orderIndex")
     List<SubtopicRow> findSubtopicsInPath(@Param("pathId") UUID pathId);
 
+    /** A published topic's published lessons with the topic they sit in, in teaching order. */
+    @Query(
+            "SELECT st.id AS id, st.title AS title, t.id AS topicId, t.title AS topicTitle"
+                    + " FROM Subtopic st JOIN st.topic t WHERE t.id = :topicId"
+                    + " AND t.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " AND st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " ORDER BY st.orderIndex")
+    List<SubtopicRow> findPublishedSubtopicsInTopic(@Param("topicId") UUID topicId);
+
     interface SubtopicRow {
         UUID getId();
 

@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, CheckCircle2, XCircle, RotateCcw, ChevronLeft, ChevronRight, Code, Copy, Check } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { HelpCircle, CheckCircle2, XCircle, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { submitQuizAnswer } from '../../api/profile.api';
-/**
- * Lazy: mermaid is ~3 MB minified, and most content blocks contain no diagram at all.
- * Loading it eagerly put that weight on every learner's first paint.
- */
-const MermaidDiagram = React.lazy(() =>
-    import('../mermaid').then((m) => ({ default: m.MermaidDiagram }))
-);
-import { CodePlayground } from '../code-playground';
-import { isExecutableLanguage, formatExecutableCode } from '../../utils/codeWrapper';
+import { Markdown } from '../ui/Markdown';
 import styles from './ContentRenderer.module.css';
 
 export interface QuizQuestionItem {
@@ -49,78 +39,6 @@ interface ContentRendererProps {
      */
     runnableCode?: boolean;
 }
-
-const CodeBlockRenderer: React.FC<{
-    codeString: string;
-    lang: string;
-    onOpenFullCompiler?: (code: string, language: string) => void;
-    runnable: boolean;
-}> = ({ codeString, lang, onOpenFullCompiler, runnable }) => {
-    const [copied, setCopied] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
-
-    const handleCopy = async () => {
-        await navigator.clipboard.writeText(codeString);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    const cleanLang = (lang || '').trim().toLowerCase();
-    if (cleanLang === 'mermaid') {
-        return (
-            <React.Suspense fallback={<div className={styles.codeSection}>Loading diagram…</div>}>
-                <MermaidDiagram chart={codeString} />
-            </React.Suspense>
-        );
-    }
-
-    const executable = runnable && isExecutableLanguage(cleanLang);
-    const preparedCode = executable ? formatExecutableCode(codeString, cleanLang) : codeString;
-
-    return (
-        <div className={styles.codeSection}>
-            <div className={styles.codeSectionHeader}>
-                <span className={styles.codeSectionLabel}>
-                    <Code size={14} style={{ marginRight: '6px' }} />
-                    {cleanLang ? cleanLang.toUpperCase() : 'CODE'}
-                </span>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button
-                        type="button"
-                        className={styles.copyBtn}
-                        onClick={handleCopy}
-                        title="Copy code"
-                    >
-                        {copied ? <Check size={13} /> : <Copy size={13} />}
-                        {copied ? 'Copied' : 'Copy'}
-                    </button>
-                    {executable && (
-                        <button
-                            type="button"
-                            className={`${styles.playgroundToggleBtn} ${isOpen ? styles.playgroundToggleBtnActive : ''}`}
-                            onClick={() => setIsOpen(!isOpen)}
-                        >
-                            {isOpen ? '✕ Hide Playground' : '⚡ Try in Playground'}
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {isOpen && executable ? (
-                <CodePlayground
-                    initialCode={preparedCode}
-                    language={cleanLang === 'javascript' || cleanLang === 'js' ? 'javascript' : cleanLang}
-                    onOpenFullEditor={onOpenFullCompiler}
-                />
-            ) : (
-                <pre className={styles.codeBlock}>
-                    {cleanLang && <span className={styles.codeLang}>{cleanLang}</span>}
-                    <code>{codeString}</code>
-                </pre>
-            )}
-        </div>
-    );
-};
 
 export const ContentRenderer: React.FC<ContentRendererProps> = ({
     blocks,
@@ -229,57 +147,9 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
         setActiveQuestionIndex(prev => ({ ...prev, [blockId]: 0 }));
     };
 
-    const renderMarkdown = (content: string) => {
-        if (!content) return null;
-
-        return (
-            <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                    h1: ({ children }) => <h2 className={styles.heading2}>{children}</h2>,
-                    h2: ({ children }) => <h2 className={styles.heading2}>{children}</h2>,
-                    h3: ({ children }) => <h3 className={styles.heading3}>{children}</h3>,
-                    h4: ({ children }) => <h4 className={styles.heading4}>{children}</h4>,
-                    p: ({ children }) => <p className={styles.paragraph}>{children}</p>,
-                    ul: ({ children }) => <ul className={styles.list}>{children}</ul>,
-                    ol: ({ children }) => <ol className={styles.list}>{children}</ol>,
-                    img: ({ src, alt }) => (
-                        <div className={styles.imageWrapper}>
-                            <img src={src} alt={alt || 'Content visual'} className={styles.contentImage} loading="lazy" />
-                            {alt && <span className={styles.imageCaption}>{alt}</span>}
-                        </div>
-                    ),
-                    table: ({ children }) => (
-                        <div className={styles.tableWrapper}>
-                            <table className={styles.table}>{children}</table>
-                        </div>
-                    ),
-                    code(props: React.ComponentPropsWithoutRef<'code'> & { node?: unknown }) {
-                        const { className, children, ...rest } = props;
-                        const match = /language-(\S+)/.exec(className || '');
-                        const lang = match ? match[1] : '';
-                        const isInline = !className;
-                        const codeString = String(children || '').replace(/\n$/, '');
-
-                        if (isInline) {
-                            return <code className="inline-code" {...rest}>{children}</code>;
-                        }
-
-                        return (
-                            <CodeBlockRenderer
-                                codeString={codeString}
-                                lang={lang}
-                                onOpenFullCompiler={onOpenFullCompiler}
-                                runnable={runnableCode}
-                            />
-                        );
-                    }
-                }}
-            >
-                {content}
-            </ReactMarkdown>
-        );
-    };
+    const renderMarkdown = (content: string) => (
+        <Markdown content={content} runnableCode={runnableCode} onOpenFullCompiler={onOpenFullCompiler} />
+    );
 
     return (
         <div className={styles.contentRenderer}>

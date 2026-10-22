@@ -1,41 +1,52 @@
-export const EXECUTABLE_LANGUAGES = new Set([
-    'java', 'javascript', 'js', 'typescript', 'ts', 'python', 'py',
-    'cpp', 'c++', 'c', 'csharp', 'c#', 'cs', 'sql', 'go', 'rust', 'ruby', 'php'
-]);
+/**
+ * Whether a block of code from a lesson can run on its own, and as what.
+ *
+ * Lesson text is full of illustrations - a method body, an expression, a query against tables that
+ * do not exist, `{ ... }` standing in for the rest. Offering "Try in Playground" on those only
+ * produced compile errors, so the offer is made for whole programs alone. Code worth running in a
+ * lesson is a snippet, whose output the content build has already verified.
+ *
+ * Preparing Java for the executor - fitting a snippet's own class names to Main.java - happens on
+ * the server, in one place, for every caller.
+ */
 
-export function isExecutableLanguage(lang: string): boolean {
-    if (!lang) return false;
-    const clean = lang.trim().toLowerCase().replace(/^language-/, '');
-    return EXECUTABLE_LANGUAGES.has(clean);
-}
+/** Something standing in for omitted code, which no compiler will accept. */
+const PLACEHOLDER = /\.\.\.|…/;
 
-export function prepareJavaSourceCode(code: string): string {
-    if (!code || !code.trim()) return code;
-    const trimmed = code.trim();
+export type PlaygroundLanguage = 'java' | 'javascript' | 'typescript' | 'python';
 
-    const hasClassOrInterface = /\b(class|interface|enum|record)\b/.test(trimmed);
-    const hasMain = /\b(void\s+main|static\s+void\s+main)\b/.test(trimmed);
+const ALIASES: Record<string, PlaygroundLanguage> = {
+    java: 'java',
+    javascript: 'javascript',
+    js: 'javascript',
+    typescript: 'typescript',
+    ts: 'typescript',
+    python: 'python',
+    py: 'python'
+};
 
-    if (!hasClassOrInterface && !hasMain) {
-        const indented = trimmed
-            .split('\n')
-            .map(line => '        ' + line)
-            .join('\n');
-        return `public class Main {\n    public static void main(String[] args) {\n${indented}\n    }\n}`;
+/**
+ * The language to run `code` as, or null when it is a fragment rather than a program. SQL is never
+ * runnable here: lessons are written for PostgreSQL, and there is no database behind the
+ * playground for a query to read.
+ */
+export function playgroundLanguage(code: string, lang: string): PlaygroundLanguage | null {
+    const language = ALIASES[(lang || '').trim().toLowerCase().replace(/^language-/, '')];
+    if (!language || !code?.trim()) return null;
+
+    switch (language) {
+        case 'java':
+            return /static\s+void\s+main\s*\(/.test(code) ? language : null;
+        case 'javascript':
+        case 'typescript':
+            // Modules and JSX need a bundler; output is what makes a run worth doing.
+            if (PLACEHOLDER.test(code) || /^\s*(import|export)\s/m.test(code) || /<[A-Z][\w.]*[\s/>]/.test(code)) {
+                return null;
+            }
+            return /console\.(log|error|warn|table)\s*\(/.test(code) ? language : null;
+        case 'python':
+            return !/^\s*\.\.\.\s*$/m.test(code) && /\bprint\s*\(/.test(code) ? language : null;
+        default:
+            return null;
     }
-
-    if (trimmed.includes('public class ') && !trimmed.includes('public class Main')) {
-        return trimmed.replace(/public\s+class\s+([A-Za-z0-9_]+)/g, 'public class Main');
-    }
-
-    return trimmed;
-}
-
-export function formatExecutableCode(code: string, lang: string): string {
-    if (!code) return code;
-    const cleanLang = (lang || '').trim().toLowerCase().replace(/^language-/, '');
-    if (cleanLang === 'java') {
-        return prepareJavaSourceCode(code);
-    }
-    return code.trim();
 }

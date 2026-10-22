@@ -29,8 +29,9 @@ public class InterviewController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/subtopics/{subtopicId}")
-    public ResponseEntity<List<InterviewQuestionDto>> forSubtopic(@PathVariable UUID subtopicId) {
-        return ResponseEntity.ok(interviewService.forSubtopic(subtopicId));
+    /** A topic's questions in lesson order, for the study console. Empty when it has none. */
+    @GetMapping("/topics/{topicId}")
+    public ResponseEntity<List<InterviewQuestionDto>> forTopic(@PathVariable UUID topicId) {
+        return ResponseEntity.ok(interviewService.forTopic(topicId));
     }
 }

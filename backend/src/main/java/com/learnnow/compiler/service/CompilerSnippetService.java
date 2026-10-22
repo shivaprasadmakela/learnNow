@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -249,28 +251,63 @@ public class CompilerSnippetService {
                 .build();
     }
 
-    private String prepareJavaSourceCode(String code) {
+    /** A type declared at the start of a line - a top-level type in a snippet. */
+    private static final Pattern TOP_LEVEL_TYPE =
+            Pattern.compile(
+                    "^public\\s+((?:(?:final|abstract|sealed|non-sealed|strictfp)\\s+)*"
+                            + "(?:class|record|enum|interface)\\s+[A-Za-z_$][A-Za-z0-9_$]*)",
+                    Pattern.MULTILINE);
+
+    private static final Pattern TYPE_NAME =
+            Pattern.compile(
+                    "^(?:public\\s+)?(?:(?:final|abstract|sealed|non-sealed|strictfp)\\s+)*"
+                            + "(?:class|record|enum|interface)\\s+([A-Za-z_$][A-Za-z0-9_$]*)",
+                    Pattern.MULTILINE);
+
+    private static final Pattern MAIN_METHOD = Pattern.compile("static\\s+void\\s+main\\s*\\(");
+
+    /**
+     * Makes a Java snippet run where Judge0 runs it: compiled as Main.java and started as {@code
+     * java Main}.
+     *
+     * <p>Statements on their own are wrapped in a Main class. A snippet with its own classes keeps
+     * every name: {@code public} comes off its top-level types, since only a class called Main may
+     * be public in Main.java, and when {@code main} lives in another class a three-line Main that
+     * calls it is appended. Renaming the class to Main instead - what this used to do - broke every
+     * snippet that refers to its own class, {@code new Account()}, and would change any output that
+     * prints the name.
+     */
+    static String prepareJavaSourceCode(String code) {
         if (code == null || code.isBlank()) return code;
         String trimmed = code.trim();
-        boolean hasClassOrInterface =
-                trimmed.contains("class ")
-                        || trimmed.contains("interface ")
-                        || trimmed.contains("enum ")
-                        || trimmed.contains("record ");
-        boolean hasMain = trimmed.contains("main(");
+        Matcher main = MAIN_METHOD.matcher(trimmed);
+        boolean hasMain = main.find();
+        boolean hasType = TYPE_NAME.matcher(trimmed).find();
 
-        if (!hasClassOrInterface && !hasMain) {
+        if (!hasType && !hasMain) {
             String indented = "        " + trimmed.replace("\n", "\n        ");
             return "public class Main {\n    public static void main(String[] args) {\n"
                     + indented
                     + "\n    }\n}";
         }
+        if (!hasMain) return trimmed;
 
-        if (trimmed.contains("public class ") && !trimmed.contains("public class Main")) {
-            return trimmed.replaceAll("public\\s+class\\s+[A-Za-z0-9_]+", "public class Main");
+        // The class that declares main is the last top-level type declared before it.
+        String holder = null;
+        Matcher type = TYPE_NAME.matcher(trimmed);
+        while (type.find() && type.start() < main.start()) {
+            holder = type.group(1);
         }
-
-        return trimmed;
+        String demoted = TOP_LEVEL_TYPE.matcher(trimmed).replaceAll("$1");
+        if (holder == null || holder.equals("Main")) return demoted;
+        return demoted
+                + "\n\npublic class Main {\n"
+                + "    public static void main(String[] args) throws Exception {\n"
+                + "        "
+                + holder
+                + ".main(args);\n"
+                + "    }\n"
+                + "}\n";
     }
 
     private static String encode(String value) {
