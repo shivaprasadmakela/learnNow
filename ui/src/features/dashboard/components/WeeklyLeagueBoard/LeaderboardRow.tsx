@@ -16,7 +16,8 @@ const getInitials = (name: string): string => {
     return name.slice(0, 2).toUpperCase();
 };
 
-const getAvatarColorClass = (userId: string): string => {
+/** Keyed on the name, the one stable thing the board knows about another learner. */
+const getAvatarColorClass = (name: string): string => {
     const bgClasses = [
         styles.avatarBgRose,
         styles.avatarBgAmber,
@@ -25,8 +26,8 @@ const getAvatarColorClass = (userId: string): string => {
         styles.avatarBgViolet
     ];
     let hash = 0;
-    for (let i = 0; i < userId.length; i++) {
-        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     const index = Math.abs(hash) % bgClasses.length;
     return bgClasses[index];
@@ -34,7 +35,7 @@ const getAvatarColorClass = (userId: string): string => {
 
 export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ entry }) => {
     const initials = getInitials(entry.fullName);
-    const avatarBgClass = getAvatarColorClass(entry.userId);
+    const avatarBgClass = getAvatarColorClass(entry.fullName || '');
 
     return (
         <div
@@ -60,7 +61,7 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({ entry }) => {
 
             {entry.avatar ? (
                 <div className={styles.userAvatarWrapper}>
-                    <Avatar avatar={entry.avatar} seed={entry.fullName || entry.userId} size={36} />
+                    <Avatar avatar={entry.avatar} seed={entry.fullName || 'Learner'} size={36} />
                 </div>
             ) : (
                 <div className={`${styles.userAvatarInitials} ${avatarBgClass}`}>

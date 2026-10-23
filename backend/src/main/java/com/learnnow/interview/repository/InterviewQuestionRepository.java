@@ -17,6 +17,48 @@ public interface InterviewQuestionRepository extends JpaRepository<InterviewQues
     List<InterviewQuestion> findBySubtopicIdInAndStatus(
             Collection<UUID> subtopicIds, ContentStatus status);
 
+    List<InterviewQuestion> findByParentIdAndStatusOrderByOrderIndex(
+            UUID parentId, ContentStatus status);
+
+    /**
+     * How many opening questions and follow-ups each subtopic has - counts, never the questions.
+     */
+    @Query(
+            "SELECT q.subtopicId AS subtopicId,"
+                    + " SUM(CASE WHEN q.parentId IS NULL THEN 1 ELSE 0 END) AS openers,"
+                    + " SUM(CASE WHEN q.parentId IS NULL THEN 0 ELSE 1 END) AS followUps"
+                    + " FROM InterviewQuestion q"
+                    + " WHERE q.subtopicId IN :ids AND q.status = :status"
+                    + " GROUP BY q.subtopicId")
+    List<CountRow> countBySubtopic(
+            @Param("ids") Collection<UUID> subtopicIds, @Param("status") ContentStatus status);
+
+    /**
+     * Opening questions on the published lessons of each of some paths' published topics, as
+     * [pathId, count] - what a path's Interview tab is labelled with before anything is fetched.
+     */
+    @Query(
+            "SELECT pt.path.id, COUNT(q) FROM InterviewQuestion q, Subtopic st, PathTopic pt WHERE"
+                    + " q.subtopicId = st.id AND st.topic = pt.topic AND pt.path.id IN :pathIds AND"
+                    + " q.parentId IS NULL AND q.status ="
+                    + " com.learnnow.paths.entity.ContentStatus.PUBLISHED AND st.status ="
+                    + " com.learnnow.paths.entity.ContentStatus.PUBLISHED AND pt.topic.status ="
+                    + " com.learnnow.paths.entity.ContentStatus.PUBLISHED GROUP BY pt.path.id")
+    List<Object[]> countOpenersByPathIds(@Param("pathIds") Collection<UUID> pathIds);
+
+    /** Opening questions on some lessons, in total - a topic's Interview tab label. */
+    @Query(
+            "SELECT COUNT(q) FROM InterviewQuestion q WHERE q.subtopicId IN :ids AND q.parentId IS"
+                    + " NULL AND q.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED")
+    long countOpeners(@Param("ids") Collection<UUID> subtopicIds);
+
+    /** Whether a subtopic and its topic are both published - what a learner may read. */
+    @Query(
+            "SELECT COUNT(st) > 0 FROM Subtopic st JOIN st.topic t WHERE st.id = :id"
+                    + " AND t.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " AND st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED")
+    boolean isPublishedSubtopic(@Param("id") UUID subtopicId);
+
     /**
      * Where each question was reported as asked. Deliberately leaves out source_url: the projection
      * has no getter for it, so no caller of this method can leak it.
@@ -40,6 +82,16 @@ public interface InterviewQuestionRepository extends JpaRepository<InterviewQues
                     + " ORDER BY pt.orderIndex, st.orderIndex")
     List<SubtopicRow> findSubtopicsInPath(@Param("pathId") UUID pathId);
 
+    /** The published lessons of a path's published topics, in the order the path teaches them. */
+    @Query(
+            "SELECT st.id AS id, st.title AS title, t.id AS topicId, t.title AS topicTitle"
+                    + " FROM Subtopic st JOIN st.topic t, PathTopic pt"
+                    + " WHERE pt.topic = t AND pt.path.id = :pathId"
+                    + " AND t.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " AND st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " ORDER BY pt.orderIndex, st.orderIndex")
+    List<SubtopicRow> findPublishedSubtopicsInPath(@Param("pathId") UUID pathId);
+
     /** A published topic's published lessons with the topic they sit in, in teaching order. */
     @Query(
             "SELECT st.id AS id, st.title AS title, t.id AS topicId, t.title AS topicTitle"
@@ -57,6 +109,14 @@ public interface InterviewQuestionRepository extends JpaRepository<InterviewQues
         UUID getTopicId();
 
         String getTopicTitle();
+    }
+
+    interface CountRow {
+        UUID getSubtopicId();
+
+        Long getOpeners();
+
+        Long getFollowUps();
     }
 
     interface SightingRow {

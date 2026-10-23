@@ -5,14 +5,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * One question and the follow-ups it leads to.
+ * One question as the interviewer asks it - the prompt and where it was reported as asked, never
+ * the answer. The answer and the follow-ups it leads to are fetched only when the learner reveals
+ * it ({@link InterviewAnswerDto}), so nothing a learner has not asked to see leaves the server.
  *
  * <p>An opening question carries the subtopic that teaches its answer, so a learner who cannot
  * answer it can go and revise; follow-ups leave those null, as they share their opener's.
  *
  * <p>{@code practice} is true when no sighting has been recorded: the question is good preparation
  * but nobody has yet reported being asked it, and the learner is told so rather than shown a
- * provenance it does not have.
+ * provenance it does not have. {@code followUpCount} says how many questions revealing the answer
+ * unlocks.
  */
 public record InterviewQuestionDto(
         UUID id,
@@ -20,27 +23,10 @@ public record InterviewQuestionDto(
         UUID subtopicId,
         String subtopicTitle,
         String prompt,
-        Answer answer,
-        String answerShort,
-        String answerDeep,
-        String answerSignal,
         int depth,
         boolean practice,
         List<Sighting> sightings,
-        List<InterviewQuestionDto> followUps) {
-
-    /**
-     * The beginner answer, in the order a learner reads it; null for a question not yet rewritten,
-     * which carries the earlier three-part answer instead. Sections are Markdown.
-     */
-    public record Answer(
-            String simple,
-            String how,
-            String usage,
-            String example,
-            String script,
-            String remember,
-            String caution) {}
+        int followUpCount) {
 
     /**
      * Where and when it was reported as asked. There is no field for the source link, and there

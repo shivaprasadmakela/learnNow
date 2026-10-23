@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import type { InterviewQuestion, InterviewTopic } from '../../api/interview.api';
-import { countQuestions } from '../../api/interview.api';
+import type { InterviewQuestion } from '../../api/interview.api';
+import { usePathInterviewTopics, useTopicInterviewQuestions } from '../../hooks/useInterviewQuestions';
 import { HowItWorks } from '../HowItWorks/HowItWorks';
 import { InterviewQuestionCard } from '../InterviewQuestion/InterviewQuestion';
 import styles from '../../styles/Interview.module.css';
 
 export interface InterviewBankProps {
-    topics: InterviewTopic[];
-    loading?: boolean;
+    /** The path whose bank this is. Its topics load when the bank is shown. */
+    pathId: string | number;
     /** Opens the lesson behind a question, for a learner who cannot answer it yet. */
     onRevise?: (question: InterviewQuestion) => void;
 }
@@ -15,20 +15,25 @@ export interface InterviewBankProps {
 /**
  * A path's interview questions, browsed one topic at a time. Topics are what a learner thinks in
  * ("Methods", "Collections"); the list on the left is the bank, the panel on the right is one
- * section of it.
+ * section of it. Only what is on screen is fetched: the list of topics with their counts, then the
+ * questions of the topic that is open.
  */
-export const InterviewBank: React.FC<InterviewBankProps> = ({ topics, loading, onRevise }) => {
+export const InterviewBank: React.FC<InterviewBankProps> = ({ pathId, onRevise }) => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const topicList = usePathInterviewTopics(pathId);
+    const topics = topicList.data ?? [];
+    const selected = topics.find(t => t.topicId === selectedId) ?? topics[0];
+    const questions = useTopicInterviewQuestions(selected?.topicId);
 
-    if (loading) {
+    if (topicList.loading) {
         return <p className={styles.bankStatus}>Loading interview questions…</p>;
     }
-    if (topics.length === 0) {
+    if (topicList.failed) {
+        return <p className={styles.bankStatus}>The interview questions could not be loaded.</p>;
+    }
+    if (!selected) {
         return <p className={styles.bankStatus}>No interview questions for this path yet.</p>;
     }
-
-    const selected = topics.find(t => t.topicId === selectedId) ?? topics[0];
-    const followUps = selected.questions.reduce((n, q) => n + countQuestions(q.followUps), 0);
 
     return (
         <div className={styles.bank}>
@@ -49,7 +54,7 @@ export const InterviewBank: React.FC<InterviewBankProps> = ({ topics, loading, o
                                         onClick={() => setSelectedId(topic.topicId)}
                                     >
                                         <span className={styles.topicName}>{topic.topicTitle}</span>
-                                        <span className={styles.topicCount}>{topic.questions.length}</span>
+                                        <span className={styles.topicCount}>{topic.questionCount}</span>
                                     </button>
                                 </li>
                             );
@@ -57,21 +62,29 @@ export const InterviewBank: React.FC<InterviewBankProps> = ({ topics, loading, o
                     </ul>
                 </nav>
 
-                <section className={styles.topicPanel} aria-labelledby="interview-topic-title">
+                <section className={styles.topicPanel} aria-labelledby="interview-topic-title" aria-busy={questions.loading}>
                     <div className={styles.topicPanelHead}>
                         <h2 id="interview-topic-title" className={styles.topicPanelTitle}>
                             {selected.topicTitle}
                         </h2>
                         <p className={styles.topicPanelMeta}>
-                            {selected.questions.length} question{selected.questions.length === 1 ? '' : 's'}
-                            {followUps > 0 ? ` · ${followUps} follow-up${followUps === 1 ? '' : 's'}` : ''}
+                            {selected.questionCount} question{selected.questionCount === 1 ? '' : 's'}
+                            {selected.followUpCount > 0
+                                ? ` · ${selected.followUpCount} follow-up${selected.followUpCount === 1 ? '' : 's'}`
+                                : ''}
                         </p>
                     </div>
-                    <div className={styles.cardList}>
-                        {selected.questions.map((q, i) => (
-                            <InterviewQuestionCard key={q.id} question={q} number={i + 1} onRevise={onRevise} />
-                        ))}
-                    </div>
+                    {questions.loading ? (
+                        <p className={styles.bankStatus}>Loading questions…</p>
+                    ) : questions.failed ? (
+                        <p className={styles.bankStatus}>These questions could not be loaded.</p>
+                    ) : (
+                        <div className={styles.cardList}>
+                            {(questions.data ?? []).map((q, i) => (
+                                <InterviewQuestionCard key={q.id} question={q} number={i + 1} onRevise={onRevise} />
+                            ))}
+                        </div>
+                    )}
                 </section>
             </div>
         </div>

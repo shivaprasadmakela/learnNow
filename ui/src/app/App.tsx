@@ -50,6 +50,7 @@ export default function App() {
         updateMetrics,
         refreshUserData,
         loadTopicsForPath,
+        resolvePathBySlug,
         loadMoreTopicsForPath,
         getTopicPaging,
         markPathsStale,
@@ -92,33 +93,31 @@ export default function App() {
     /** The open track's title, for the breadcrumb; the page reports it once loaded. */
     const [trackTitle, setTrackTitle] = useState<string | null>(null);
 
-    // Resolve selectedPathId dynamically from URL whenever courses load or route changes
+    /**
+     * Selects the path a /paths/:pathSlug URL names. The slug must match a title exactly (as
+     * slugified) or be the id: a looser "contains" match used to open whichever path happened to
+     * mention the slug first. A path past the loaded pages is fetched rather than left unmatched.
+     */
     useEffect(() => {
-        if (typeof window === 'undefined' || courses.length === 0) return;
+        // The Topics view only: the study console resolves its own URL, topic included.
+        if (typeof window === 'undefined' || courses.length === 0 || activeView !== 'TOPICS') return;
         const parts = window.location.pathname.split('/').filter(Boolean);
-        if (parts.length >= 2 && parts[0] === 'paths') {
-            const pathSlug = parts[1];
-            const matchedPath = courses.find(c => {
-                const s = slugify(c.title);
-                const normC = c.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const normS = pathSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-                return s === pathSlug || String(c.id) === pathSlug || normC === normS || normC.includes(normS);
-            });
-            if (matchedPath) {
-                setSelectedPathId(matchedPath.id);
-            }
-        }
-    }, [courses]);
+        if (parts.length !== 2 || parts[0] !== 'paths') return;
+        let cancelled = false;
+        resolvePathBySlug(parts[1])
+            .then(path => {
+                if (!cancelled && path) setSelectedPathId(path.id as number);
+            })
+            .catch(err => console.error('Failed to resolve the path in the URL', err));
+        return () => {
+            cancelled = true;
+        };
+    }, [courses.length, activeView, resolvePathBySlug]);
 
-    // On-demand topic fetching when a path is selected
+    // A path's topics are fetched when it is opened; loadTopicsForPath does so once per path.
     useEffect(() => {
-        if (selectedPathId) {
-            const target = courses.find(c => String(c.id) === String(selectedPathId));
-            if (target && (!target.topics || target.topics.length === 0)) {
-                loadTopicsForPath(selectedPathId);
-            }
-        }
-    }, [selectedPathId, courses, loadTopicsForPath]);
+        if (selectedPathId) loadTopicsForPath(selectedPathId);
+    }, [selectedPathId, loadTopicsForPath]);
 
     // Auth redirection effect
     useEffect(() => {
@@ -268,16 +267,10 @@ export default function App() {
         return <Loader variant="fullScreen" showColdStartFunnyMessages={true} />;
     }
 
+    // The server's percentage covers every topic; one worked out here could only see the page
+    // of topics loaded so far.
     const rawSelectedPath = (selectedPathId ? courses.find(c => c.id === selectedPathId) : null) || courses[0];
-    const selectedPathTopics = rawSelectedPath?.topics || [];
-    const computedPathProgress = selectedPathTopics.length > 0
-        ? Math.round(selectedPathTopics.reduce((acc: number, t: any) => acc + (t.isCompleted ? 100 : (t.progressPercentage || 0)), 0) / selectedPathTopics.length)
-        : (rawSelectedPath?.progressPercentage || 0);
-
-    const selectedPath = rawSelectedPath ? {
-        ...rawSelectedPath,
-        progressPercentage: computedPathProgress
-    } : courses[0];
+    const selectedPath = rawSelectedPath;
 
     // Topic paging follows whichever path the Topics view is showing, which is not always the one
     // explicitly selected - on a cold load from a bookmarked URL it falls back to the first path.

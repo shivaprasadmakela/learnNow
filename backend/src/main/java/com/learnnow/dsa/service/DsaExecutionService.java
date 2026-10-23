@@ -46,6 +46,12 @@ public class DsaExecutionService {
     /** Enough to judge a solution; far short of enough to use us as a compute service. */
     private static final int MAX_CASES_PER_REQUEST = 20;
 
+    /**
+     * What a learner reads instead of the engine's stderr when the crash happened on a hidden case.
+     */
+    public static final String HIDDEN_CASE_STDERR =
+            "Your code failed on a hidden test case. Output from hidden cases is not shown.";
+
     private final DsaHarnessRepository harnessRepository;
     private final CompilerSnippetService compilerSnippetService;
 
@@ -87,6 +93,13 @@ public class DsaExecutionService {
      * accepted stops the run: the cases after the failure are reported as unrun rather than
      * silently dropped. That mirrors how every online judge behaves - it reports the first failing
      * case - so it reads as intentional instead of broken.
+     *
+     * <p>A batch holding a hidden case gives up nothing it printed. The learner's code can read the
+     * whole of stdin and write it to stderr before throwing, so passing a crashed hidden batch's
+     * stderr through handed over the hidden inputs one Submit at a time. Its stderr is replaced
+     * with {@link #HIDDEN_CASE_STDERR} and its stdout is left out of the combined output. The same
+     * trick works through a sample case's actual output when samples and hidden cases share a
+     * stdin, which is why {@link #batch} never mixes them.
      */
     public ExecutionOutcome execute(
             UUID problemId, String language, String userCode, List<DsaTestCase> cases) {
@@ -132,6 +145,7 @@ public class DsaExecutionService {
 
         int index = 0;
         for (List<DsaTestCase> batch : batch(selected)) {
+            boolean hidesOutput = batch.stream().anyMatch(testCase -> !testCase.isSample());
             ExecuteCodeResponse response =
                     compilerSnippetService.executeCode(
                             ExecuteCodeRequest.builder()
@@ -146,7 +160,7 @@ public class DsaExecutionService {
             if (response.getMemoryBytes() != null && memoryKb == null) {
                 memoryKb = response.getMemoryBytes() / 1024L;
             }
-            if (response.getStdout() != null) {
+            if (response.getStdout() != null && !hidesOutput) {
                 allStdout.append(response.getStdout());
             }
 
@@ -165,9 +179,13 @@ public class DsaExecutionService {
                 compileOutput =
                         DsaCompileErrorRewriter.rewrite(
                                 response.getCompileOutput(), linesBefore, userLines);
+                // A compile error is the same whatever the input, so it stays readable. Anything
+                // that ran against a hidden case does not.
                 stderr =
-                        DsaCompileErrorRewriter.rewrite(
-                                response.getStderr(), linesBefore, userLines);
+                        hidesOutput && engineVerdict != DsaVerdict.COMPILE_ERROR
+                                ? HIDDEN_CASE_STDERR
+                                : DsaCompileErrorRewriter.rewrite(
+                                        response.getStderr(), linesBefore, userLines);
                 overall = engineVerdict;
                 firstFailed = index + 1;
                 for (DsaTestCase unrun : batch) {
@@ -281,7 +299,14 @@ public class DsaExecutionService {
         return stdin.toString();
     }
 
-    /** Groups cases so each submission's stdin stays inside the engine's limit. */
+    /**
+     * Groups cases so each submission's stdin stays inside the engine's limit.
+     *
+     * <p>A batch is also never a mix of sample and hidden cases. Everything in one batch shares a
+     * stdin the learner's code can read in full, and a sample case's output comes back to the
+     * browser - so a sample batched with hidden cases could print their inputs as its own answer.
+     * Samples come first in a Submit, so this costs at most one extra submission.
+     */
     List<List<DsaTestCase>> batch(List<DsaTestCase> cases) {
         List<List<DsaTestCase>> batches = new ArrayList<>();
         List<DsaTestCase> current = new ArrayList<>();
@@ -289,7 +314,9 @@ public class DsaExecutionService {
 
         for (DsaTestCase testCase : cases) {
             int caseSize = (testCase.getInput() == null ? 0 : testCase.getInput().length()) + 1;
-            if (!current.isEmpty() && size + caseSize > MAX_STDIN_CHARS) {
+            boolean switchesVisibility =
+                    !current.isEmpty() && current.get(0).isSample() != testCase.isSample();
+            if (!current.isEmpty() && (switchesVisibility || size + caseSize > MAX_STDIN_CHARS)) {
                 batches.add(current);
                 current = new ArrayList<>();
                 size = 0;

@@ -106,6 +106,19 @@ public class AdminDsaController {
         return ResponseEntity.ok(catalogService.previewById(problemId, userId));
     }
 
+    /** One hint of a problem that may still be a draft, for the preview's "show a hint". */
+    @GetMapping("/problems/{problemId}/preview/hints/{n}")
+    public ResponseEntity<DsaHintDto> previewHint(
+            @PathVariable UUID problemId, @PathVariable int n) {
+        return ResponseEntity.ok(catalogService.previewHint(problemId, n));
+    }
+
+    /** The editorial of a problem that may still be a draft, for the preview's Editorial tab. */
+    @GetMapping("/problems/{problemId}/preview/editorial")
+    public ResponseEntity<DsaEditorialDto> previewEditorial(@PathVariable UUID problemId) {
+        return ResponseEntity.ok(catalogService.previewEditorial(problemId));
+    }
+
     @PutMapping("/problems/{problemId}/harness/{language}")
     public ResponseEntity<AdminDsaHarnessDto> upsertHarness(
             @PathVariable UUID problemId,

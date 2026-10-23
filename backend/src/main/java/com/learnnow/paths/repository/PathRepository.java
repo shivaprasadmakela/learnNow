@@ -2,6 +2,7 @@ package com.learnnow.paths.repository;
 
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,15 @@ import org.springframework.data.repository.query.Param;
 public interface PathRepository extends JpaRepository<Path, UUID> {
 
     List<Path> findByStatus(ContentStatus status);
+
+    /** A path's id and title, for naming it in a list without loading its topics. */
+    interface PathTitle {
+        UUID getId();
+
+        String getTitle();
+    }
+
+    List<PathTitle> findTitlesByIdInAndStatus(Collection<UUID> ids, ContentStatus status);
 
     Page<Path> findByStatus(ContentStatus status, Pageable pageable);
 

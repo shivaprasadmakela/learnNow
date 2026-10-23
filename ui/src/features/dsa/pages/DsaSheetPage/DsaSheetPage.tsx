@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { BookOpen, Lightbulb, Search, Sparkles, Target } from 'lucide-react';
 import styles from './DsaSheetPage.module.css';
 import { SheetProgressHeader } from '../../components/SheetProgressHeader';
@@ -8,6 +8,7 @@ import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { ProgressRing } from '../../../../shared/components/ui/ProgressRing';
 import { SidebarWidget } from '../../../../shared/components/ui/SidebarWidget';
 import { Select } from '../../../../shared/components';
+import { useDsaSheetSearch } from '../../hooks/useDsaSheetSearch';
 import { useDsaSheet } from '../../hooks/useDsaSheet';
 import {
     setDsaProblemStatus,
@@ -119,17 +120,10 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
     const [status, setStatus] = useState<StatusFilter>('ALL');
     const [difficulty, setDifficulty] = useState<DifficultyFilter>('ALL');
 
-    const isFilterActive = difficulty !== 'ALL' || status !== 'ALL' || query.trim().length > 0;
-
-    // Whenever any filter or search is active, automatically load problems for all steps
-    useEffect(() => {
-        if (!sheet) return;
-        if (isFilterActive) {
-            sheet.steps.forEach(step => {
-                ensureProblemsLoaded(step.id);
-            });
-        }
-    }, [sheet, isFilterActive, ensureProblemsLoaded]);
+    // Any search or filter is answered by one request across the sheet, not by opening every step.
+    const search = useDsaSheetSearch({ q: query, difficulty, status });
+    const isFilterActive = search.active;
+    const applySearchRow = search.applyRowChange;
 
     // Select tip for the 24-hour day across a 14-day (2-week) rotation
     const [currentTip] = useState(() => {
@@ -164,39 +158,6 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
         [onOpenProblem, stepSlugById]
     );
 
-    const visible = useCallback(
-        (rows: DsaProblemRow[]): DsaProblemRow[] => {
-            const q = query.trim().toLowerCase();
-            return rows.filter(row => {
-                // 1. Difficulty filter (Case-insensitive)
-                if (difficulty !== 'ALL') {
-                    const rowDiff = (row.difficulty || '').toUpperCase();
-                    const targetDiff = difficulty.toUpperCase();
-                    if (rowDiff !== targetDiff) return false;
-                }
-
-                // 2. Status filter
-                if (status === 'SOLVED') {
-                    if (row.status !== 'SOLVED') return false;
-                } else if (status === 'TODO') {
-                    if (row.status === 'SOLVED') return false;
-                } else if (status === 'BOOKMARKED') {
-                    if (!row.bookmarked) return false;
-                }
-
-                // 3. Search text query against title or tags
-                if (q) {
-                    const titleMatch = (row.title || '').toLowerCase().includes(q);
-                    const tagMatch = Array.isArray(row.tags) && row.tags.some(tag => tag.toLowerCase().includes(q));
-                    if (!titleMatch && !tagMatch) return false;
-                }
-
-                return true;
-            });
-        },
-        [query, status, difficulty]
-    );
-
     const [openSectionIds, setOpenSectionIds] = useState<Record<string, boolean>>({});
     const toggleSection = useCallback((sectionId: string) => {
         setOpenSectionIds(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
@@ -209,15 +170,17 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
                 return;
             }
             const next = problem.status === 'SOLVED' ? 'NOT_STARTED' : 'SOLVED';
-            applyRowChange(problem.id, { status: next });
+            applyRowChange(problem.id, { status: next }, problem);
+            applySearchRow(problem.id, { status: next });
             try {
                 await setDsaProblemStatus(problem.id, next);
             } catch (err) {
                 console.error('Could not save that', err);
-                applyRowChange(problem.id, { status: problem.status });
+                applyRowChange(problem.id, { status: problem.status }, { ...problem, status: next });
+                applySearchRow(problem.id, { status: problem.status });
             }
         },
-        [isLoggedIn, onRequireLogin, applyRowChange]
+        [isLoggedIn, onRequireLogin, applyRowChange, applySearchRow]
     );
 
     const handleToggleBookmark = useCallback(
@@ -228,14 +191,16 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
             }
             const next = !problem.bookmarked;
             applyRowChange(problem.id, { bookmarked: next });
+            applySearchRow(problem.id, { bookmarked: next });
             try {
                 await toggleBookmarkApi(problem.id, 'DSA_PROBLEM');
             } catch (err) {
                 console.error('Could not save that', err);
                 applyRowChange(problem.id, { bookmarked: problem.bookmarked });
+                applySearchRow(problem.id, { bookmarked: problem.bookmarked });
             }
         },
-        [isLoggedIn, onRequireLogin, applyRowChange]
+        [isLoggedIn, onRequireLogin, applyRowChange, applySearchRow]
     );
 
     if (isLoading) {
@@ -332,8 +297,12 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
                     <div className={styles.steps}>
                         {sheet.steps.map(step => {
                             const state = problemsFor(step.id);
-                            const filteredProblems = visible(state.rows);
-                            const isStepOpen = isFilterActive ? (filteredProblems.length > 0 || state.isLoading) : Boolean(openSteps[step.id]);
+                            const filteredProblems = isFilterActive
+                                ? search.rows.filter(row => row.stepId === step.id)
+                                : state.rows;
+                            const isStepOpen = isFilterActive
+                                ? filteredProblems.length > 0
+                                : Boolean(openSteps[step.id]);
 
                             return (
                                 <StepAccordion
@@ -342,8 +311,8 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
                                     isOpen={isStepOpen}
                                     onToggle={() => toggleStep(step.id)}
                                     problems={filteredProblems}
-                                    hasMore={state.hasMore}
-                                    isLoading={state.isLoading}
+                                    hasMore={isFilterActive ? false : state.hasMore}
+                                    isLoading={isFilterActive ? search.isLoading : state.isLoading}
                                     onLoadMore={() => loadMoreProblems(step.id)}
                                     onOpenProblem={slug => openProblem(step.id, slug)}
                                     onToggleSolved={handleToggleSolved}
@@ -356,6 +325,27 @@ export const DsaSheetPage: React.FC<DsaSheetPageProps> = ({
                             );
                         })}
                     </div>
+
+                    {isFilterActive && (
+                        <div className={styles.searchFooter} role="status">
+                            {search.isLoading ? (
+                                'Searching the sheet...'
+                            ) : search.failed ? (
+                                'The search could not be completed.'
+                            ) : search.rows.length === 0 ? (
+                                'No problems match.'
+                            ) : search.hasMore ? (
+                                <button
+                                    type="button"
+                                    className={styles.searchMoreBtn}
+                                    disabled={search.isLoadingMore}
+                                    onClick={search.loadMore}
+                                >
+                                    {search.isLoadingMore ? 'Loading...' : 'Show more results'}
+                                </button>
+                            ) : null}
+                        </div>
+                    )}
 
                     {/* Motivational Footer Banner with learnNow Logo Theme Gradient */}
                     <div className={styles.motivationalBanner}>

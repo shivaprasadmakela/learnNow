@@ -1,5 +1,6 @@
 package com.learnnow.privacy.dto.response;
 
+import com.learnnow.dsa.entity.UserDsaCheckAttempt;
 import com.learnnow.dsa.entity.UserDsaProblemProgress;
 import com.learnnow.dsa.entity.UserDsaSubmission;
 import com.learnnow.learningprogress.entity.UserLearningDailyActivity;
@@ -184,7 +185,10 @@ public record DataExportResponse(
         }
     }
 
-    public record Dsa(List<DsaProgress> progress, List<DsaSubmission> submissions) {}
+    public record Dsa(
+            List<DsaProgress> progress,
+            List<DsaSubmission> submissions,
+            List<DsaCheckAttempt> checkAttempts) {}
 
     public record DsaProgress(
             UUID problemId,
@@ -200,6 +204,18 @@ public record DataExportResponse(
                     progress.getAttemptCount(),
                     progress.getLastLanguage(),
                     progress.getSolvedAt());
+        }
+    }
+
+    public record DsaCheckAttempt(
+            UUID checkId, boolean correct, int pointsAwarded, Instant attemptedAt) {
+
+        public static DsaCheckAttempt from(UserDsaCheckAttempt attempt) {
+            return new DsaCheckAttempt(
+                    attempt.getCheckId(),
+                    attempt.isCorrect(),
+                    attempt.getPointsAwarded(),
+                    attempt.getAttemptedAt());
         }
     }
 

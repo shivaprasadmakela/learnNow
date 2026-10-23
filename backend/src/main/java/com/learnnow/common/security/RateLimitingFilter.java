@@ -73,7 +73,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                             20,
                             List.of("/api/donations/create-order", "/api/donations/verify")),
                     // Quiz submission is metered so points cannot be farmed at machine speed.
-                    new Tier("quiz", 60, List.of("/api/quizzes/")));
+                    new Tier("quiz", 60, List.of("/api/quizzes/")),
+                    // The DSA inline check is the same kind of question by another door. Scoring
+                    // is first-attempt-only now, so this only bounds how fast a script can walk
+                    // the check ids.
+                    new Tier("dsa-check", 60, List.of("/api/dsa/checks/")));
 
     private final Map<String, RequestTracker> trackers = new ConcurrentHashMap<>();
 

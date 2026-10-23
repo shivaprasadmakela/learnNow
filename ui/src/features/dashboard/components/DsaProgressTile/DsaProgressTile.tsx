@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Layers } from 'lucide-react';
 import styles from './DsaProgressTile.module.css';
-import { fetchDsaSummary, type DsaSummary } from '../../../dsa/api/dsa.api';
+import { fetchDsaSummary, peekDsaSummary, type DsaSummary } from '../../../dsa/api/dsa.api';
 
 const ORDER: Array<'EASY' | 'MEDIUM' | 'HARD'> = ['EASY', 'MEDIUM', 'HARD'];
 const LABELS = { EASY: 'Easy', MEDIUM: 'Medium', HARD: 'Hard' } as const;
@@ -21,7 +21,7 @@ export const DsaProgressTile: React.FC<DsaProgressTileProps> = ({
     onOpenSheet,
     onOpenProblem
 }) => {
-    const [summary, setSummary] = useState<DsaSummary | null>(null);
+    const [summary, setSummary] = useState<DsaSummary | null>(() => peekDsaSummary() ?? null);
 
     useEffect(() => {
         let cancelled = false;

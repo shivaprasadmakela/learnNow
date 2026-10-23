@@ -139,9 +139,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         )}
                         {activeTab === 'bookmarks' && (
                             <BookmarkedTopicsList
-                                courses={courses}
                                 onSelectRecentTopic={onSelectRecentTopic}
-                                onSelectPath={onSelectPath}
+                                onSelectDsaProblem={onOpenDsaProblem}
                             />
                         )}
                     </div>
@@ -161,9 +160,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         />
                     )}
                     <OverallProgress
-                        courses={courses}
                         streak={currentStreak}
                         points={dashboardData.totalPoints}
+                        publishedPaths={dashboardData.publishedPathsCount}
+                        completedPaths={dashboardData.completedPathsCount}
                     />
                 </div>
             </div>

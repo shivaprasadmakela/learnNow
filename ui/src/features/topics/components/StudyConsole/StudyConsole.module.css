@@ -579,3 +579,9 @@
 .tocTabs {
     margin: 0 0 12px;
 }
+
+/* A lesson not yet fetched holds roughly its place, so the next one is not already "near the
+   screen" and fetched with it, and the feed does not jump much when the text arrives. */
+.lessonPending {
+    min-height: 60vh;
+}

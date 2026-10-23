@@ -1,4 +1,5 @@
 import { apiFetch } from './client';
+import { progressChanged } from './cache';
 import { DEFAULT_PAGE_SIZE, toPageResponse, withPageParams, type PageResponse } from './pagination';
 import type { UserProfile, PathData } from '../../types';
 import type { Topic } from '../../features/topics';
@@ -133,10 +134,23 @@ export interface CodeSnippetItem {
     language: string;
     label?: string;
     code: string;
+    /**
+     * Whether the snippet has an expected output to compare a run against. The output itself is
+     * not sent with the lesson - it is fetched once the learner has run the snippet, so a "predict
+     * the output" snippet does not give its answer away. Preview data may carry it inline instead.
+     */
+    hasExpectedOutput?: boolean;
     expectedOutput?: string;
     runnable?: boolean;
     editable?: boolean;
     orderIndex?: number;
+}
+
+/** A learner's first answer to a question; the answer and explanation are set once it was right. */
+export interface QuizAttempt {
+    isCorrect: boolean;
+    correctAnswer?: string | null;
+    explanation?: string | null;
 }
 
 export interface QuizQuestionDto {
@@ -145,12 +159,16 @@ export interface QuizQuestionDto {
     prompt?: string;
     question?: string;
     options?: string[];
+    /** Never sent to learners; present only in admin preview data. */
     correctAnswer?: string;
     answer?: string;
     explanation?: string;
     points?: number;
+    /** Set when the learner has already answered it. */
+    attempt?: QuizAttempt | null;
 }
 
+/** One lesson in full - text, code and concept check - fetched when the learner reaches it. */
 export interface SubtopicData {
     id: number | string;
     title: string;
@@ -166,6 +184,20 @@ export interface SubtopicData {
     questions?: QuizQuestionDto[];
 }
 
+/** A lesson in a topic's outline: what the contents and the topic list show, without its text. */
+export interface LessonOutline {
+    id: number | string;
+    title: string;
+    orderIndex: number;
+    isCompleted?: boolean;
+    level?: 'beginner' | 'intermediate' | 'advanced';
+    track?: 'concept' | 'hands-on' | 'interview-prep';
+    estimatedMinutes?: number;
+    /** How many concept-check questions the lesson ends with. */
+    quizCount?: number;
+}
+
+/** A topic as the study console opens it: an outline of its lessons, no lesson text. */
 export interface TopicDetails {
     id: number | string;
     title: string;
@@ -174,7 +206,9 @@ export interface TopicDetails {
     duration: string;
     isCompleted: boolean;
     progressPercentage: number;
-    subtopics: SubtopicData[];
+    /** Opening interview questions on the topic - labels its Interview tab before any load. */
+    interviewQuestionCount?: number;
+    subtopics: LessonOutline[];
 }
 
 export interface QuizSubmitResponse {
@@ -192,11 +226,68 @@ export const submitQuizAnswer = async (questionId: string, selectedOption: strin
         body: JSON.stringify({ questionId, selectedOption })
     });
     if (!response.ok) throw new Error('Failed to validate quiz answer');
+    // A cached lesson would still say the question is unanswered.
+    lessonCache.clear();
+    // A correct answer earns points, which the dashboard shows.
+    progressChanged();
     return response.json();
 };
 
-export const fetchTopicDetails = async (id: string | number): Promise<TopicDetails> => {
-    const response = await apiFetch(`/api/topics/${id}`);
-    if (!response.ok) throw new Error('Failed to fetch topic details');
-    return response.json();
+/**
+ * Topic outlines by id. Expanding a topic in the list and then opening it asks for the same
+ * outline, so it is fetched once; progress changes clear the entry (invalidateTopicDetails).
+ */
+const topicCache = new Map<string, Promise<TopicDetails>>();
+
+export const invalidateTopicDetails = (id?: string | number) => {
+    if (id === undefined) topicCache.clear();
+    else topicCache.delete(String(id));
+};
+
+export const fetchTopicDetails = (id: string | number): Promise<TopicDetails> => {
+    const key = String(id);
+    let entry = topicCache.get(key);
+    if (!entry) {
+        entry = (async () => {
+            const response = await apiFetch(`/api/topics/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch topic details');
+            return response.json() as Promise<TopicDetails>;
+        })().catch(err => {
+            topicCache.delete(key);
+            throw err;
+        });
+        topicCache.set(key, entry);
+    }
+    return entry;
+};
+
+/** Lessons by id, so scrolling back to one already read does not fetch it again. */
+const lessonCache = new Map<string, Promise<SubtopicData>>();
+
+/** One lesson in full, when the learner reaches it. */
+export const fetchLesson = (id: string | number): Promise<SubtopicData> => {
+    const key = String(id);
+    let entry = lessonCache.get(key);
+    if (!entry) {
+        entry = (async () => {
+            const response = await apiFetch(`/api/subtopics/${encodeURIComponent(key)}`);
+            if (!response.ok) throw new Error('Failed to fetch lesson');
+            return response.json() as Promise<SubtopicData>;
+        })().catch(err => {
+            lessonCache.delete(key);
+            throw err;
+        });
+        lessonCache.set(key, entry);
+    }
+    return entry;
+};
+
+/** What a lesson's runnable snippet should print - asked for once the learner has run it. */
+export const fetchExpectedOutput = async (subtopicId: string | number, snippetId: string): Promise<string | null> => {
+    const response = await apiFetch(
+        `/api/subtopics/${encodeURIComponent(String(subtopicId))}/snippets/${encodeURIComponent(snippetId)}/expected-output`
+    );
+    if (!response.ok) return null;
+    const data = (await response.json()) as { expectedOutput?: string };
+    return data.expectedOutput ?? null;
 };

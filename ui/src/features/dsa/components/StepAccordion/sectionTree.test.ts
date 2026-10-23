@@ -5,6 +5,7 @@ import type { DsaProblemRow, DsaSectionRef } from '../../api/dsa.api';
 let seq = 0;
 const problem = (path: DsaSectionRef[]): DsaProblemRow => ({
     id: `p-${seq++}`,
+    stepId: 'step-1',
     slug: `p-${seq}`,
     title: `Problem ${seq}`,
     difficulty: 'EASY',

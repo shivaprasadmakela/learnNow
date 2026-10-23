@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, ChevronRight, Check, BookOpen, Clock, CheckCircle2, FileText, List } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { TopicDetails, SubtopicData } from '../../../../shared/api/profile.api';
+import { fetchLesson, type LessonOutline, type SubtopicData, type TopicDetails } from '../../../../shared/api/profile.api';
 import { ContentRenderer } from '../../../../shared/components/content-renderer/ContentRenderer';
 import { CodeBlock } from '../../../../shared/components/ui/CodeBlock';
 import { Tabs } from '../../../../shared/components/ui/Tabs';
@@ -20,6 +20,7 @@ import {
 } from '../../../interview';
 import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
 import { TopicCelebrationModal } from '../TopicCelebrationModal/TopicCelebrationModal';
+import { useLessons } from './useLessons';
 import styles from './StudyConsole.module.css';
 
 interface StudyConsoleProps {
@@ -31,6 +32,11 @@ interface StudyConsoleProps {
     nextTopicTitle?: string;
     onOpenFullCompiler?: (code: string, language: string) => void;
     isUpdating: boolean;
+    /**
+     * Loads one lesson in full when it is shown. Defaults to the API; the admin preview passes
+     * its own, over content that is not published yet.
+     */
+    loadLesson?: (id: string | number) => Promise<SubtopicData>;
 }
 
 /** What the content pane shows: the lessons, or the topic's interview questions. */
@@ -44,7 +50,8 @@ export function StudyConsole({
     onSelectNextTopic,
     nextTopicTitle,
     onOpenFullCompiler,
-    isUpdating
+    isUpdating,
+    loadLesson = fetchLesson
 }: StudyConsoleProps) {
     const subtopics = topic.subtopics || [];
 
@@ -85,7 +92,8 @@ export function StudyConsole({
 
     // Interview questions sit in their own pane, reached from the table of contents: they test a
     // whole topic, so they belong beside the lessons rather than inside any one of them.
-    const interviewQuestions = useTopicInterviewQuestions(topic.id);
+    // The count arrives with the topic; the questions load only when the pane is opened.
+    const interviewCount = topic.interviewQuestionCount ?? 0;
     // Kept with the topic it was chosen for, so moving to another topic opens on its lessons.
     const [paneChoice, setPaneChoice] = useState<{ topicId: string; pane: ConsolePane }>({
         topicId: String(topic.id),
@@ -93,7 +101,8 @@ export function StudyConsole({
     });
     const pane = paneChoice.topicId === String(topic.id) ? paneChoice.pane : 'lessons';
     const setPane = (next: ConsolePane) => setPaneChoice({ topicId: String(topic.id), pane: next });
-    const showInterview = pane === 'interview' && interviewQuestions.length > 0;
+    const showInterview = pane === 'interview' && interviewCount > 0;
+    const interviewQuestions = useTopicInterviewQuestions(showInterview ? topic.id : undefined).data ?? [];
 
     const [playgroundDrawer, setPlaygroundDrawer] = useState<{
         isOpen: boolean;
@@ -115,7 +124,7 @@ export function StudyConsole({
     };
 
     const contentPaneRef = useRef<HTMLElement>(null);
-    const activeSubtopic: SubtopicData | undefined = subtopics[activeSubtopicIndex];
+    const activeSubtopic: LessonOutline | undefined = subtopics[activeSubtopicIndex];
 
     // Sync URL slug
     useEffect(() => {
@@ -160,7 +169,7 @@ export function StudyConsole({
         saveNow: saveTopicNoteNow
     } = useNote('TOPIC', topic.id, isNotesDrawerOpen);
 
-    const completedSubtopicsCount = subtopics.filter((s: SubtopicData) => s.isCompleted).length;
+    const completedSubtopicsCount = subtopics.filter((s: LessonOutline) => s.isCompleted).length;
 
     const computedPercentage = topic.isCompleted ? 100 : (
         subtopics.length > 0 ? Math.round((completedSubtopicsCount / subtopics.length) * 100) : (topic.progressPercentage || 0)
@@ -246,7 +255,7 @@ export function StudyConsole({
         if (index >= 0) setTimeout(() => handleSubtopicChange(index), 0);
     };
 
-    const handleReadMore = async (subtopic: SubtopicData, index: number) => {
+    const handleReadMore = async (subtopic: LessonOutline, index: number) => {
         // Check if completing this subtopic leaves 0 uncompleted subtopics in the topic
         const remainingUncompleted = subtopics.filter(s => !s.isCompleted && String(s.id) !== String(subtopic.id));
         const isTopicNowFullyCompleted = remainingUncompleted.length === 0;
@@ -339,7 +348,7 @@ export function StudyConsole({
                             const snippetId = lang.replace('__snippet__:', '');
                             const snippet = snippetMap.get(snippetId);
                             if (snippet) {
-                                return <RunnableCodeBlock snippet={snippet} />;
+                                return <RunnableCodeBlock snippet={snippet} subtopicId={currentSubtopic.id} />;
                             }
                         }
 
@@ -357,6 +366,14 @@ export function StudyConsole({
     };
 
     const renderedSubtopics = subtopics.slice(0, Math.max(1, visibleCount));
+    // The feed is unmounted behind the Interview pane, so it is handed over again on return and its
+    // fresh elements are watched.
+    const lessons = useLessons(
+        showInterview ? [] : renderedSubtopics,
+        subtopics[activeSubtopicIndex]?.id,
+        loadLesson,
+        contentPaneRef
+    );
 
     return (
         <div className={styles.studyOverlay}>
@@ -441,14 +458,14 @@ export function StudyConsole({
                     className={`${styles.tocSidebar} ${isTocOpen ? styles.tocSidebarOpen : ''}`}
                     aria-label="Topic contents"
                 >
-                    {interviewQuestions.length > 0 && (
+                    {interviewCount > 0 && (
                         <Tabs<ConsolePane>
                             variant="compact"
                             label="Topic sections"
                             className={styles.tocTabs}
                             items={[
                                 { id: 'lessons', label: 'Lessons', count: subtopics.length },
-                                { id: 'interview', label: 'Interview', count: interviewQuestions.length }
+                                { id: 'interview', label: 'Interview', count: interviewCount }
                             ]}
                             activeId={showInterview ? 'interview' : 'lessons'}
                             onChange={handleSelectPane}
@@ -461,7 +478,7 @@ export function StudyConsole({
                         />
                     ) : (
                     <ul className={styles.tocList}>
-                        {subtopics.map((sec: SubtopicData, idx: number) => (
+                        {subtopics.map((sec: LessonOutline, idx: number) => (
                             <li key={sec.id}>
                                 <button
                                     className={`${styles.tocItem} ${idx === activeSubtopicIndex ? styles.tocItemActive : ''}`}
@@ -504,8 +521,10 @@ export function StudyConsole({
                                 </div>
                             ) : (
                             <div className={styles.article}>
-                                {renderedSubtopics.map((st: SubtopicData, index: number) => {
-                                    const hasQuizzes = Boolean(st.questions && st.questions.length > 0);
+                                {renderedSubtopics.map((st: LessonOutline, index: number) => {
+                                    // The outline is here at once; the lesson itself arrives as it is shown.
+                                    const lesson = lessons[String(st.id)];
+                                    const hasQuizzes = (st.quizCount ?? lesson?.questions?.length ?? 0) > 0;
                                     const isQuizPassed = Boolean(answeredQuizzesMap[st.id]);
                                     const canReadMore = !hasQuizzes || isQuizPassed;
 
@@ -527,7 +546,7 @@ export function StudyConsole({
                                             </div>
 
                                             {(() => {
-                                                const uncompletedPrereqs = (st.prerequisites || [])
+                                                const uncompletedPrereqs = (lesson?.prerequisites || [])
                                                     .map(reqId => {
                                                         const match = subtopics.find(s => {
                                                             const sId = String(s.id).toLowerCase();
@@ -558,18 +577,21 @@ export function StudyConsole({
                                                 );
                                             })()}
 
-                                            {st.videoUrl && (
-                                                <YouTubeEmbed url={st.videoUrl} />
+                                            {lesson?.videoUrl && (
+                                                <YouTubeEmbed url={lesson.videoUrl} />
                                             )}
 
                                             <div className={styles.articleBody}>
-                                                {renderContent(st.content, st)}
-                                                {st.questions && st.questions.length > 0 && (
+                                                {!lesson && (
+                                                    <p className={`${styles.paragraph} ${styles.lessonPending}`} aria-busy="true">Loading this section…</p>
+                                                )}
+                                                {lesson && renderContent(lesson.content, lesson)}
+                                                {lesson?.questions && lesson.questions.length > 0 && (
                                                     <div className={styles.mcqSection}>
                                                         <div className={styles.mcqSectionHeader}>
                                                             <i className="fa-solid fa-circle-question" aria-hidden="true" />
                                                             <span>Concept Check</span>
-                                                            <span className={styles.mcqCount}>{st.questions.length} Question{st.questions.length > 1 ? 's' : ''}</span>
+                                                            <span className={styles.mcqCount}>{lesson.questions.length} Question{lesson.questions.length > 1 ? 's' : ''}</span>
                                                         </div>
                                                         <div style={{ padding: '24px' }}>
                                                             <ContentRenderer
@@ -579,7 +601,7 @@ export function StudyConsole({
                                                                     id: `quiz-${st.id || index}`,
                                                                     orderIndex: 1,
                                                                     type: 'quiz',
-                                                                    questions: st.questions.map((q, qIdx) => ({
+                                                                    questions: lesson.questions.map((q, qIdx) => ({
                                                                         id: q.id || `q-${st.id || index}-${qIdx}`,
                                                                         kind: q.kind || 'mcq',
                                                                         prompt: q.prompt,
@@ -587,6 +609,7 @@ export function StudyConsole({
                                                                         correctAnswer: q.correctAnswer,
                                                                         explanation: q.explanation,
                                                                         points: q.points,
+                                                                        attempt: q.attempt,
                                                                     })),
                                                                 }]}
                                                                 onAllQuizzesAnsweredChange={(allAnswered) => {

@@ -41,19 +41,7 @@ export function extractMethodNameFromProblem(problem: Partial<DsaProblemDetail>)
         }
     }
 
-    // 2. Check editorial approaches in the problem JSON
-    if (problem.approaches && problem.approaches.length > 0) {
-        for (const app of problem.approaches) {
-            for (const solution of app.solutions ?? []) {
-                const match = solution.code.match(METHOD_REGEX);
-                if (match && match[1] && match[1] !== 'main' && match[1] !== 'constructor') {
-                    return match[1];
-                }
-            }
-        }
-    }
-
-    // 3. Check problem slug
+    // 2. Check problem slug
     if (problem.slug && problem.slug.trim()) {
         const clean = problem.slug.replace(/^(td-|step-\d+-)/, '').trim();
         const parts = clean.split('-').filter(Boolean);

@@ -5,7 +5,8 @@ import { ContentRenderer } from '../../../../shared/components/content-renderer'
 import { CodeViewer } from '../../../../shared/components/editor/CodeViewer';
 import { Tabs } from '../../../../shared/components/ui/Tabs';
 import { YouTubeEmbed } from '../../../../shared/components/ui/YouTubeEmbed';
-import type { DsaApproach, DsaApproachKind } from '../../api/dsa.api';
+import type { DsaApproachKind, DsaApproachSummary } from '../../api/dsa.api';
+import { useDsaEditorial } from '../../hooks/useDsaEditorial';
 import { languageLabel, monacoLanguageFor } from '../../utils/dsaExecutionHelper';
 
 const KIND_LABELS: Record<DsaApproachKind, string> = {
@@ -16,12 +17,18 @@ const KIND_LABELS: Record<DsaApproachKind, string> = {
 
 export interface EditorialPanelProps {
     problemId: string;
-    approaches: DsaApproach[];
+    /**
+     * The outline that came with the problem: enough to say what the editorial holds, and to ask
+     * before showing it. The reasoning and the code are fetched only once the learner says yes.
+     */
+    approaches: DsaApproachSummary[];
     /** The workspace's language. The code opens in it when the approach is written in it. */
     preferredLanguage: string;
     /** A learner who has solved the problem is not asked to confirm the spoiler. */
     solved: boolean;
     youtubeUrl?: string;
+    /** Reads a draft's editorial through the authoring endpoint, for the admin preview. */
+    preview?: boolean;
 }
 
 const revealKey = (problemId: string) => `dsa_editorial_revealed:${problemId}`;
@@ -40,20 +47,33 @@ const readRevealed = (problemId: string): boolean => {
  *
  * The editorial is a spoiler, so an unsolved problem asks once before showing it - opening the tab
  * by accident should not cost someone the problem. The answer is remembered per problem.
+ *
+ * The question is also what fetches it: until the learner says yes, the page holds only the
+ * outline, so the solution never reaches a browser whose owner did not ask for it.
  */
 export const EditorialPanel: React.FC<EditorialPanelProps> = ({
     problemId,
-    approaches,
+    approaches: outline,
     preferredLanguage,
     solved,
-    youtubeUrl
+    youtubeUrl,
+    preview = false
 }) => {
-    const sorted = useMemo(
-        () => [...approaches].sort((a, b) => a.orderIndex - b.orderIndex),
-        [approaches]
+    const sortedOutline = useMemo(
+        () => [...outline].sort((a, b) => a.orderIndex - b.orderIndex),
+        [outline]
     );
 
     const [revealed, setRevealed] = useState(() => solved || readRevealed(problemId));
+    const editorial = useDsaEditorial(
+        problemId,
+        sortedOutline.length > 0 && (revealed || solved),
+        preview
+    );
+    const sorted = useMemo(
+        () => [...(editorial.approaches ?? [])].sort((a, b) => a.orderIndex - b.orderIndex),
+        [editorial.approaches]
+    );
     const [activeIndex, setActiveIndex] = useState(0);
     /** The language the learner picked in the editorial, which then sticks across approaches. */
     const [chosenLanguage, setChosenLanguage] = useState<string | null>(null);
@@ -67,7 +87,7 @@ export const EditorialPanel: React.FC<EditorialPanelProps> = ({
         }
     };
 
-    if (sorted.length === 0) {
+    if (sortedOutline.length === 0) {
         return (
             <div className={styles.panel}>
                 <div className={styles.empty}>
@@ -80,6 +100,8 @@ export const EditorialPanel: React.FC<EditorialPanelProps> = ({
     }
 
     if (!revealed && !solved) {
+        const first = sortedOutline[0];
+        const last = sortedOutline[sortedOutline.length - 1];
         return (
             <div className={styles.panel}>
                 <div className={styles.gate}>
@@ -88,12 +110,12 @@ export const EditorialPanel: React.FC<EditorialPanelProps> = ({
                     </span>
                     <h2 className={styles.gateTitle}>The editorial gives the solution away</h2>
                     <p className={styles.gateText}>
-                        {sorted.length === 1
+                        {sortedOutline.length === 1
                             ? 'It walks through the approach and its code.'
-                            : `It walks through ${sorted.length} approaches, from ${KIND_LABELS[
-                                  sorted[0].kind
+                            : `It walks through ${sortedOutline.length} approaches, from ${KIND_LABELS[
+                                  first.kind
                               ].toLowerCase()} to ${KIND_LABELS[
-                                  sorted[sorted.length - 1].kind
+                                  last.kind
                               ].toLowerCase()}, with code for each.`}{' '}
                         Even a rough attempt first makes it land far better - and the hints on the
                         Description tab are a smaller nudge.
@@ -101,6 +123,25 @@ export const EditorialPanel: React.FC<EditorialPanelProps> = ({
                     <button type="button" className={styles.gateBtn} onClick={reveal}>
                         <Eye size={15} aria-hidden="true" /> Show the editorial
                     </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (sorted.length === 0) {
+        return (
+            <div className={styles.panel}>
+                <div className={styles.empty} role="status">
+                    {editorial.error ? (
+                        <>
+                            <p>{editorial.error}</p>
+                            <button type="button" className={styles.gateBtn} onClick={editorial.retry}>
+                                Try again
+                            </button>
+                        </>
+                    ) : (
+                        <p>Loading the editorial...</p>
+                    )}
                 </div>
             </div>
         );
@@ -241,7 +282,7 @@ export const EditorialPanel: React.FC<EditorialPanelProps> = ({
 };
 
 /** "Brute force", or "Brute force 2" when an editorial has two approaches of the same kind. */
-const approachTitle = (approaches: DsaApproach[], index: number): string => {
+const approachTitle = (approaches: { kind: DsaApproachKind }[], index: number): string => {
     const kind = approaches[index].kind;
     const label = KIND_LABELS[kind] ?? kind;
     const sameKind = approaches.filter(item => item.kind === kind);

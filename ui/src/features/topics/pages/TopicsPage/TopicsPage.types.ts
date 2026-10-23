@@ -1,4 +1,5 @@
-import type { SubtopicData } from '../../../../shared/api/profile.api';
+import type { PathTrackRef } from '../../../../types';
+import type { LessonOutline } from '../../../../shared/api/profile.api';
 
 export interface Topic {
     id: number | string;
@@ -8,7 +9,7 @@ export interface Topic {
     duration: string;
     isCompleted?: boolean;
     progressPercentage?: number;
-    subtopics?: SubtopicData[];
+    subtopics?: LessonOutline[];
 }
 
 export interface TopicsPageProps {
@@ -30,6 +31,10 @@ export interface TopicsPageProps {
     onAddSubtopicToTopic?: (topicId: string | number, subtopicData: any) => Promise<boolean>;
     /** Opens a career track; given, the banner links to the tracks this path is part of. */
     onSelectTrack?: (slug: string) => void;
+    /** Opening interview questions on the path, from the path itself - labels the Interview tab. */
+    interviewQuestionCount?: number;
+    /** The career tracks this path is a step of, from the path itself. */
+    tracks?: PathTrackRef[];
 }
 
 export type PathRoadmapPageProps = TopicsPageProps;

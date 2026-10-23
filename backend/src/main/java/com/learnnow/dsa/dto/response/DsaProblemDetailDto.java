@@ -11,6 +11,13 @@ import java.util.UUID;
  * Leaking any of those would require adding a field here, which is a decision somebody has to make
  * on purpose.
  *
+ * <p>Hints and the editorial are not here either, only their outline: {@code hintCount} and one
+ * {@link DsaApproachSummaryDto} per approach. Each hint and the editorial itself come from their
+ * own endpoints when the learner asks for them, so a learner who wants to solve the problem unaided
+ * is never sent the solution along with the statement.
+ *
+ * <p>{@code bookmarked} is false for an anonymous caller, as it is on {@link DsaProblemRowDto}.
+ *
  * <p>{@code judgeable} tells the UI whether to offer Run and Submit at all. A problem with no
  * harness for any language, or with no test cases, falls back to the manual solved toggle - which
  * is the normal state of a problem whose notes are written but whose harness is not.
@@ -32,12 +39,13 @@ public record DsaProblemDetailDto(
         String stepTitle,
         String sectionTitle,
         List<DsaTestCaseDto> samples,
-        List<DsaHintDto> hints,
-        List<DsaApproachDto> approaches,
+        int hintCount,
+        List<DsaApproachSummaryDto> approaches,
         List<DsaCheckDto> checks,
         List<DsaHarnessStubDto> harnesses,
         boolean judgeable,
         int totalTestCases,
         DsaProblemProgressDto progress,
+        boolean bookmarked,
         String previousSlug,
         String nextSlug) {}

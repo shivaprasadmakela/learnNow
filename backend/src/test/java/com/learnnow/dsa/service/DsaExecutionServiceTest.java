@@ -93,10 +93,100 @@ class DsaExecutionServiceTest {
                         List.of(
                                 testCase(1, "a\n", "1", true),
                                 testCase(2, "b\n", "2", true),
-                                testCase(3, "c\n", "3", false)));
+                                testCase(3, "c\n", "3", true)));
 
         assertThat(outcome.verdict()).isEqualTo(DsaVerdict.ACCEPTED);
         assertThat(outcome.passedCount()).isEqualTo(3);
+        verify(compilerService, times(1)).executeCode(any());
+    }
+
+    /**
+     * Cases in one batch share a stdin the learner's code can read in full, and a sample's output
+     * comes back to the browser - so a sample sharing a batch with a hidden case could print the
+     * hidden input as its own answer.
+     */
+    @Test
+    void samplesAndHiddenCasesNeverShareASubmission() {
+        when(compilerService.executeCode(any()))
+                .thenReturn(ok(delimited("1", "2")))
+                .thenReturn(ok(delimited("3")));
+
+        var outcome =
+                service.execute(
+                        PROBLEM_ID,
+                        "cpp",
+                        "class Solution {};",
+                        List.of(
+                                testCase(1, "a\n", "1", true),
+                                testCase(2, "b\n", "2", true),
+                                testCase(3, "secret\n", "3", false)));
+
+        assertThat(outcome.verdict()).isEqualTo(DsaVerdict.ACCEPTED);
+        assertThat(outcome.passedCount()).isEqualTo(3);
+
+        ArgumentCaptor<ExecuteCodeRequest> captor =
+                ArgumentCaptor.forClass(ExecuteCodeRequest.class);
+        verify(compilerService, times(2)).executeCode(captor.capture());
+        assertThat(captor.getAllValues().get(0).getStdin()).doesNotContain("secret");
+        assertThat(captor.getAllValues().get(1).getStdin()).startsWith("1\n").contains("secret");
+    }
+
+    @Test
+    void aCrashOnAHiddenCaseReportsNoneOfItsOutput() {
+        when(compilerService.executeCode(any()))
+                .thenReturn(ok(delimited("1")))
+                .thenReturn(
+                        ExecuteCodeResponse.builder()
+                                .statusCode(11)
+                                .stderr("Exception: secret")
+                                .stdout("secret")
+                                .build());
+
+        var outcome =
+                service.execute(
+                        PROBLEM_ID,
+                        "cpp",
+                        "class Solution {};",
+                        List.of(
+                                testCase(1, "a\n", "1", true),
+                                testCase(2, "secret\n", "2", false)));
+
+        assertThat(outcome.verdict()).isEqualTo(DsaVerdict.RUNTIME_ERROR);
+        assertThat(outcome.stderr()).isEqualTo(DsaExecutionService.HIDDEN_CASE_STDERR);
+        assertThat(outcome.stdout()).doesNotContain("secret");
+    }
+
+    @Test
+    void aTimeoutOnAHiddenCaseIsRedactedToo() {
+        when(compilerService.executeCode(any()))
+                .thenReturn(ExecuteCodeResponse.builder().statusCode(5).stderr("secret").build());
+
+        var outcome =
+                service.execute(
+                        PROBLEM_ID,
+                        "cpp",
+                        "class Solution {};",
+                        List.of(testCase(1, "secret\n", "1", false)));
+
+        assertThat(outcome.verdict()).isEqualTo(DsaVerdict.TIME_LIMIT);
+        assertThat(outcome.stderr()).isEqualTo(DsaExecutionService.HIDDEN_CASE_STDERR);
+    }
+
+    @Test
+    void aCrashOnASampleKeepsItsStderr() {
+        when(compilerService.executeCode(any()))
+                .thenReturn(ExecuteCodeResponse.builder().statusCode(11).stderr("boom").build());
+
+        var outcome =
+                service.execute(
+                        PROBLEM_ID,
+                        "cpp",
+                        "class Solution {};",
+                        List.of(
+                                testCase(1, "a\n", "1", true),
+                                testCase(2, "secret\n", "2", false)));
+
+        assertThat(outcome.stderr()).contains("boom");
         verify(compilerService, times(1)).executeCode(any());
     }
 

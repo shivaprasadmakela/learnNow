@@ -28,6 +28,7 @@ public class DsaSubmissionService {
     private final DsaProblemRepository problemRepository;
     private final DsaTestCaseRepository testCaseRepository;
     private final DsaCheckRepository checkRepository;
+    private final UserDsaCheckAttemptRepository checkAttemptRepository;
     private final UserDsaSubmissionRepository submissionRepository;
     private final DsaExecutionService executionService;
     private final DsaProgressService progressService;
@@ -165,6 +166,8 @@ public class DsaSubmissionService {
                 outcome.firstFailedCase(),
                 executionService.toClientCases(outcome.cases()),
                 outcome.compileOutput(),
+                // Already redacted when the failure was on a hidden case: the execution service
+                // knows which cases were hidden, and the learner's code may have printed them.
                 outcome.stderr(),
                 outcome.runtimeMs(),
                 outcome.memoryKb(),
@@ -200,6 +203,12 @@ public class DsaSubmissionService {
      *
      * <p>The comparison happens here, never in the browser: the check DTO the learner receives has
      * no field for the answer, and this is the only place it is revealed.
+     *
+     * <p>Scoring is first-attempt-only, as the subtopic quiz's is. Points used to be awarded on
+     * every correct submission while the response named the correct option even for a wrong one, so
+     * a single wrong guess handed over the answer and replaying it farmed points without limit. The
+     * attempt row is now what decides: only the request that records it can score, and only if it
+     * was right. A check on an unpublished problem is not answerable, the same as the problem.
      */
     @Transactional
     public DsaCheckAnswerDto answerCheck(
@@ -208,6 +217,7 @@ public class DsaSubmissionService {
         DsaCheck check =
                 checkRepository
                         .findById(checkId)
+                        .filter(c -> c.getProblem().getStatus() == DsaProblemStatus.PUBLISHED)
                         .orElseThrow(() -> new NotFoundException("dsa_check_not_found"));
 
         boolean correct =
@@ -216,14 +226,17 @@ public class DsaSubmissionService {
                                 .trim()
                                 .equalsIgnoreCase(request.selectedOption().trim());
 
-        int awarded = 0;
-        if (correct) {
-            awarded = check.getPoints();
+        int points = correct ? Math.max(0, check.getPoints()) : 0;
+        boolean firstAttempt =
+                checkAttemptRepository.insertIfAbsent(userId, checkId, correct, points) == 1;
+
+        int awarded = firstAttempt ? points : 0;
+        if (awarded > 0) {
             progressService.awardCheckPoints(userId, awarded);
         }
 
         return new DsaCheckAnswerDto(
-                correct, check.getCorrectAnswer(), check.getExplanation(), awarded);
+                correct, check.getCorrectAnswer(), check.getExplanation(), awarded, !firstAttempt);
     }
 
     private void requirePublished(UUID problemId) {

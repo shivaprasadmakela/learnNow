@@ -4,6 +4,7 @@ import styles from './StatementPanel.module.css';
 import { DifficultyBadge } from '../../../../shared/components/ui/Badge';
 import { ContentRenderer } from '../../../../shared/components/content-renderer';
 import { answerDsaCheck, type DsaCheck, type DsaProblemDetail } from '../../api/dsa.api';
+import { useDsaHints } from '../../hooks/useDsaHints';
 
 interface CheckState {
     selected: string;
@@ -12,32 +13,33 @@ interface CheckState {
     explanation?: string;
 }
 
-/** Progressive hints: the next one unlocks only once the previous has been read. */
-const HintStack: React.FC<{ hints: DsaProblemDetail['hints'] }> = ({ hints }) => {
-    const [revealed, setRevealed] = useState(0);
+/** Progressive hints, each fetched when revealed: the next unlocks once the previous is read. */
+const HintStack: React.FC<{ problemId: string; count: number }> = ({ problemId, count }) => {
+    const { hints, revealNext, isLoading, hasMore } = useDsaHints(problemId, count);
 
-    if (hints.length === 0) return null;
+    if (count === 0) return null;
 
     return (
         <div>
             <p className={styles.sectionLabel}>Hints</p>
             <div className={styles.hints}>
-                {hints.slice(0, revealed).map((hint, index) => (
+                {hints.map((hint, index) => (
                     <div key={hint.id} className={styles.hint}>
                         <span className={styles.hintIndex}>Hint {index + 1}</span>
                         {hint.body}
                     </div>
                 ))}
-                {revealed < hints.length && (
+                {hasMore && (
                     <button
                         type="button"
                         className={styles.revealBtn}
-                        onClick={() => setRevealed(n => n + 1)}
+                        disabled={isLoading}
+                        onClick={revealNext}
                     >
                         <Lightbulb size={14} />
-                        {revealed === 0
-                            ? `Show a hint (${hints.length} available)`
-                            : `Show hint ${revealed + 1} of ${hints.length}`}
+                        {hints.length === 0
+                            ? `Show a hint (${count} available)`
+                            : `Show hint ${hints.length + 1} of ${count}`}
                     </button>
                 )}
             </div>
@@ -202,7 +204,7 @@ export const StatementPanel: React.FC<StatementPanelProps> = ({ problem, isLogge
                 <InlineCheck key={check.id} check={check} canAnswer={isLoggedIn} />
             ))}
 
-            <HintStack hints={problem.hints} />
+            <HintStack problemId={problem.id} count={problem.hintCount} />
         </div>
     );
 };

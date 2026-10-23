@@ -1,10 +1,10 @@
 import React from 'react';
 import { Route } from 'lucide-react';
 import styles from '../../styles/Tracks.module.css';
-import type { TrackSummary } from '../../api/tracks.api';
+import type { PathTrackRef } from '../../../../types';
 
 export interface PathTrackLinksProps {
-    tracks: TrackSummary[];
+    tracks: PathTrackRef[];
     onSelectTrack: (slug: string) => void;
 }
 

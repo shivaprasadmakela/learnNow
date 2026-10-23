@@ -5,7 +5,7 @@ import {
     withPageParams,
     type PageResponse
 } from '../../../shared/api/pagination';
-import type { DsaProblemDetail } from './dsa.api';
+import type { DsaEditorial, DsaHint, DsaProblemDetail } from './dsa.api';
 
 /**
  * Admin-side DSA calls.
@@ -317,3 +317,15 @@ export const deleteDsaStep = async (stepId: string): Promise<void> => {
  */
 export const fetchDsaProblemPreview = (problemId: string): Promise<DsaProblemDetail> =>
     apiFetchJson<DsaProblemDetail>(`/api/admin/dsa/problems/${problemId}/preview`);
+
+/**
+ * The preview's hints and editorial, drafts included.
+ *
+ * Not cached, unlike the learner versions: an author edits hints and approaches between looks, and
+ * the preview has to show what is saved now rather than what was saved when it first opened.
+ */
+export const fetchDsaHintPreview = (problemId: string, n: number): Promise<DsaHint> =>
+    apiFetchJson<DsaHint>(`/api/admin/dsa/problems/${problemId}/preview/hints/${n}`);
+
+export const fetchDsaEditorialPreview = (problemId: string): Promise<DsaEditorial> =>
+    apiFetchJson<DsaEditorial>(`/api/admin/dsa/problems/${problemId}/preview/editorial`);

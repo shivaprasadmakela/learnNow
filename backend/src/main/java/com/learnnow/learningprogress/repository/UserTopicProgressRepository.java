@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,18 @@ public interface UserTopicProgressRepository extends JpaRepository<UserTopicProg
     List<UserTopicProgress> findByUserIdAndPathId(String userId, UUID pathId);
 
     List<UserTopicProgress> findByUserId(String userId);
+
+    /** The learner's progress on some topics - the ones a list is about to show. */
+    List<UserTopicProgress> findByUserIdAndTopicIdIn(String userId, Collection<UUID> topicIds);
+
+    /**
+     * The topics a learner touched most recently, most recently completed first and never-completed
+     * ones last - the dashboard's recent-activity list, without loading the rest.
+     */
+    @Query(
+            "SELECT utp FROM UserTopicProgress utp WHERE utp.userId = :userId"
+                    + " ORDER BY utp.completedAt DESC NULLS LAST, utp.id ASC")
+    List<UserTopicProgress> findRecentByUserId(@Param("userId") String userId, Limit limit);
 
     /** The topic a learner marked complete most recently. */
     Optional<UserTopicProgress> findFirstByUserIdAndCompletedAtNotNullOrderByCompletedAtDesc(

@@ -104,9 +104,14 @@ export const useDsaSheet = (sheetSlug: string = DEFAULT_SHEET_SLUG) => {
      * call so the header does not lag behind the row the learner just clicked.
      */
     const applyRowChange = useCallback(
-        (problemId: string, patch: Partial<DsaProblemRow>) => {
+        /**
+         * `known` is the row as the caller saw it, for one shown from a search and perhaps in no
+         * opened step: its status and step still keep the solved counts right.
+         */
+        (problemId: string, patch: Partial<DsaProblemRow>, known?: DsaProblemRow) => {
             let becameSolved = false;
             let becameUnsolved = false;
+            let seen = false;
 
             stepsRef.current = Object.fromEntries(
                 Object.entries(stepsRef.current).map(([stepId, step]) => [
@@ -115,6 +120,7 @@ export const useDsaSheet = (sheetSlug: string = DEFAULT_SHEET_SLUG) => {
                         ...step,
                         rows: step.rows.map(row => {
                             if (row.id !== problemId) return row;
+                            seen = true;
                             if (patch.status === 'SOLVED' && row.status !== 'SOLVED') {
                                 becameSolved = true;
                             }
@@ -132,14 +138,19 @@ export const useDsaSheet = (sheetSlug: string = DEFAULT_SHEET_SLUG) => {
             );
             setProblemsByStep(stepsRef.current);
 
+            if (!seen && known && patch.status) {
+                becameSolved = patch.status === 'SOLVED' && known.status !== 'SOLVED';
+                becameUnsolved = patch.status !== 'SOLVED' && known.status === 'SOLVED';
+            }
             if (!becameSolved && !becameUnsolved) return;
             const delta = becameSolved ? 1 : -1;
 
             setSheet(prev => {
                 if (!prev) return prev;
-                const stepId = Object.entries(stepsRef.current).find(([, step]) =>
-                    step.rows.some(r => r.id === problemId)
-                )?.[0];
+                const stepId =
+                    Object.entries(stepsRef.current).find(([, step]) =>
+                        step.rows.some(r => r.id === problemId)
+                    )?.[0] ?? known?.stepId;
 
                 return {
                     ...prev,

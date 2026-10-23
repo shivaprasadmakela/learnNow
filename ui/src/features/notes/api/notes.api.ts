@@ -31,6 +31,33 @@ export interface BookmarkDto {
     dsaProblemId?: string | null;
 }
 
+/**
+ * A bookmark with what the bookmarks list shows of its target. Exactly one of `topic` and
+ * `problem` is set, matching `target`; a target since unpublished is simply absent from the list.
+ */
+export interface BookmarkSummaryDto {
+    id: string;
+    target: NoteTarget;
+    targetId: string;
+    createdAt: string;
+    topic: {
+        title: string;
+        description: string | null;
+        pathId: string | null;
+        pathTitle: string | null;
+        progressPercentage: number;
+        completed: boolean;
+    } | null;
+    problem: {
+        slug: string;
+        title: string;
+        difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+        stepSlug: string;
+        stepTitle: string;
+        status: 'NOT_STARTED' | 'ATTEMPTED' | 'SOLVED';
+    } | null;
+}
+
 /** Alias retained so the study console's imports keep resolving. */
 export type TopicNoteDto = NoteDto;
 
@@ -92,6 +119,14 @@ export const toggleBookmarkApi = async (
     if (!res.ok) throw new Error('Could not update that bookmark');
     return res.json();
 };
+
+/**
+ * Every bookmark, resolved, in one request - for the screen that lists them. Not cached: it is
+ * asked for only when that list opens, and it carries progress that changes as the learner studies.
+ * The bookmark icons elsewhere keep using the small ids-only list below.
+ */
+export const fetchBookmarkSummaries = (): Promise<BookmarkSummaryDto[]> =>
+    apiFetchJson<BookmarkSummaryDto[]>('/api/me/bookmarks/summary');
 
 export const fetchBookmarksApi = async (force: boolean = false): Promise<BookmarkDto[]> => {
     if (!force && bookmarksCache) return bookmarksCache;

@@ -3,7 +3,6 @@ package com.learnnow.learningprogress.service;
 import com.learnnow.learningprogress.dto.response.*;
 import com.learnnow.learningprogress.entity.UserLearningDailyActivity;
 import com.learnnow.learningprogress.entity.UserLearningPreferences;
-import com.learnnow.learningprogress.entity.UserSubtopicProgress;
 import com.learnnow.learningprogress.entity.UserTopicProgress;
 import com.learnnow.learningprogress.enums.ProgressStatus;
 import com.learnnow.learningprogress.repository.UserLearningDailyActivityRepository;
@@ -11,10 +10,13 @@ import com.learnnow.learningprogress.repository.UserLearningDailyActivityReposit
 import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
+import com.learnnow.learningprogress.service.PathProgressService.PathProgress;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
-import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
+import com.learnnow.paths.repository.PathRepository.PathTitle;
+import com.learnnow.paths.repository.TopicRepository;
+import com.learnnow.paths.repository.TopicRepository.TopicHeader;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
 import java.time.DayOfWeek;
@@ -24,6 +26,7 @@ import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +34,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DashboardService {
 
+    /** How many topics the recent-activity tab lists. */
+    private static final int RECENT_TOPICS = 5;
+
     private final PathRepository pathRepository;
+    private final TopicRepository topicRepository;
+    private final PathProgressService pathProgressService;
     private final UserLearningDailyActivityRepository dailyActivityRepository;
     private final UserLearningPreferencesRepository preferencesRepository;
     private final UserTopicProgressRepository topicProgressRepository;
@@ -59,19 +67,15 @@ public class DashboardService {
         List<WeeklyCalendarDay> weeklyCalendar = buildWeeklyCalendar(userId, today);
         LeaderboardResult leaderboardResult = buildLeaderboard(userId, monday, sunday);
 
-        List<UserSubtopicProgress> allSubtopicProgress =
-                subtopicProgressRepository.findByUserId(userId);
-        Map<UUID, List<UserSubtopicProgress>> subtopicProgressByTopic =
-                allSubtopicProgress.stream()
-                        .collect(Collectors.groupingBy(UserSubtopicProgress::getTopicId));
+        // Path rows only - no topics, no lessons. The counts below and the next-step card both
+        // work from ids and grouped counts.
+        List<Path> publishedPaths = pathRepository.findByStatus(ContentStatus.PUBLISHED);
+        PathProgress pathProgress =
+                pathProgressService.forPaths(
+                        publishedPaths.stream().map(Path::getId).toList(), userId);
 
-        List<Path> allPaths = pathRepository.findAllWithTopicsByStatus(ContentStatus.PUBLISHED);
-        List<UserTopicProgress> userTopicProgressList =
-                topicProgressRepository.findByUserId(userId);
-
-        List<RecentTopicActivity> recentTopics =
-                buildRecentTopics(userTopicProgressList, allPaths, subtopicProgressByTopic);
-        DashboardBanner banner = nextStepService.forUser(userId);
+        List<RecentTopicActivity> recentTopics = buildRecentTopics(userId);
+        DashboardBanner banner = nextStepService.forUser(userId, publishedPaths, pathProgress);
 
         return new DashboardResponse(
                 prefs.getCurrentStreakForDate(today),
@@ -83,7 +87,9 @@ public class DashboardService {
                 banner,
                 leaderboardResult.leaderboard(),
                 leaderboardResult.currentUserRank(),
-                leaderboardResult.currentUserWeeklyPoints());
+                leaderboardResult.currentUserWeeklyPoints(),
+                publishedPaths.size(),
+                pathProgress.completedCount());
     }
 
     private List<WeeklyCalendarDay> buildWeeklyCalendar(String userId, LocalDate today) {
@@ -248,14 +254,7 @@ public class DashboardService {
 
             fullLeaderboard.add(
                     new WeeklyLeaderboardEntry(
-                            user.getId(),
-                            name,
-                            user.getAvatar(),
-                            points,
-                            streak,
-                            rank,
-                            badge,
-                            isCurrent));
+                            name, user.getAvatar(), points, streak, rank, badge, isCurrent));
         }
 
         List<WeeklyLeaderboardEntry> topLeaderboard =
@@ -267,62 +266,66 @@ public class DashboardService {
         return new LeaderboardResult(topLeaderboard, currentUserRank, currentUserWeeklyPoints);
     }
 
-    private int calculateTopicPercentage(
-            Topic topic,
-            Map<UUID, List<UserSubtopicProgress>> subtopicProgressByTopic,
-            boolean isTopicCompleted) {
-        if (isTopicCompleted) return 100;
+    /**
+     * The learner's five most recent topics, named and with their progress.
+     *
+     * <p>Asks only about those five: their titles, their paths' titles, and how many of their
+     * published lessons exist and are done. A lesson still in draft is not counted, since the
+     * learner cannot open it.
+     */
+    private List<RecentTopicActivity> buildRecentTopics(String userId) {
+        List<UserTopicProgress> recent =
+                topicProgressRepository.findRecentByUserId(userId, Limit.of(RECENT_TOPICS));
+        if (recent.isEmpty()) return List.of();
 
-        int totalSubtopics = topic.getSubtopics() != null ? topic.getSubtopics().size() : 0;
-        if (totalSubtopics == 0) return 0;
+        Set<UUID> topicIds =
+                recent.stream().map(UserTopicProgress::getTopicId).collect(Collectors.toSet());
+        Set<UUID> pathIds =
+                recent.stream().map(UserTopicProgress::getPathId).collect(Collectors.toSet());
 
-        List<UserSubtopicProgress> subProgress =
-                subtopicProgressByTopic.getOrDefault(topic.getId(), List.of());
-        long completedSubtopics =
-                subProgress.stream().filter(UserSubtopicProgress::isCompleted).count();
+        Map<UUID, String> topicTitles =
+                topicRepository.findHeadersByIdIn(topicIds).stream()
+                        .collect(Collectors.toMap(TopicHeader::getId, TopicHeader::getTitle));
+        Map<UUID, String> pathTitles =
+                pathRepository.findTitlesByIdInAndStatus(pathIds, ContentStatus.PUBLISHED).stream()
+                        .collect(Collectors.toMap(PathTitle::getId, PathTitle::getTitle));
+        Map<UUID, Long> lessons = counts(topicRepository.countPublishedLessonsByTopicIds(topicIds));
+        Map<UUID, Long> completed =
+                counts(
+                        subtopicProgressRepository.countCompletedPublishedLessonsByTopic(
+                                userId, topicIds));
 
-        return (int) ((completedSubtopics * 100) / totalSubtopics);
-    }
-
-    private List<RecentTopicActivity> buildRecentTopics(
-            List<UserTopicProgress> progressList,
-            List<Path> allPaths,
-            Map<UUID, List<UserSubtopicProgress>> subtopicProgressByTopic) {
-
-        Map<UUID, Path> pathMap = allPaths.stream().collect(Collectors.toMap(Path::getId, p -> p));
-        Map<UUID, Topic> topicMap =
-                allPaths.stream()
-                        .flatMap(p -> p.getTopics().stream())
-                        .collect(Collectors.toMap(Topic::getId, t -> t, (a, b) -> a));
-
-        return progressList.stream()
-                .sorted(
-                        Comparator.comparing(
-                                UserTopicProgress::getCompletedAt,
-                                Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(5)
+        return recent.stream()
                 .map(
                         tp -> {
-                            Topic topic = topicMap.get(tp.getTopicId());
-                            Path path = pathMap.get(tp.getPathId());
                             boolean isCompleted = tp.getStatus() == ProgressStatus.COMPLETED;
-
-                            int progressPercentage = 0;
-                            if (topic != null) {
-                                progressPercentage =
-                                        calculateTopicPercentage(
-                                                topic, subtopicProgressByTopic, isCompleted);
-                            }
-
                             return new RecentTopicActivity(
                                     tp.getTopicId(),
-                                    topic != null ? topic.getTitle() : "Unknown Topic",
+                                    topicTitles.getOrDefault(tp.getTopicId(), "Unknown Topic"),
                                     tp.getPathId(),
-                                    path != null ? path.getTitle() : "Unknown Path",
-                                    progressPercentage,
+                                    pathTitles.getOrDefault(tp.getPathId(), "Unknown Path"),
+                                    topicPercentage(
+                                            isCompleted,
+                                            lessons.getOrDefault(tp.getTopicId(), 0L),
+                                            completed.getOrDefault(tp.getTopicId(), 0L)),
                                     isCompleted,
                                     tp.getCompletedAt());
                         })
                 .toList();
+    }
+
+    /** The same rounding the Paths page uses, so a topic shows one figure everywhere. */
+    private static int topicPercentage(boolean topicCompleted, long lessons, long completed) {
+        if (topicCompleted) return 100;
+        if (lessons == 0) return 0;
+        return (int) Math.round((double) completed * 100 / lessons);
+    }
+
+    /** A grouped [id, count] result as a map. */
+    private static Map<UUID, Long> counts(List<Object[]> rows) {
+        return rows.stream()
+                .collect(
+                        Collectors.toMap(
+                                row -> (UUID) row[0], row -> ((Number) row[1]).longValue()));
     }
 }

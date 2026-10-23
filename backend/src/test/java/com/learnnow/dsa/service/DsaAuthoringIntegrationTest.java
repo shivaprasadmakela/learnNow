@@ -240,7 +240,8 @@ class DsaAuthoringIntegrationTest extends com.learnnow.AbstractIntegrationTest {
 
         DsaProblemDetailDto preview = catalogService.previewById(problemId, null);
         assertEquals("alpha", preview.slug());
-        assertEquals(2, preview.hints().size());
+        assertEquals(2, preview.hintCount());
+        assertEquals("first hint", catalogService.previewHint(problemId, 1).body());
         // The learner DTO has no field for a driver or a reference solution, only the stub.
         assertEquals(1, preview.harnesses().size());
         assertEquals("cpp", preview.harnesses().get(0).language());
@@ -342,7 +343,7 @@ class DsaAuthoringIntegrationTest extends com.learnnow.AbstractIntegrationTest {
         assertEquals(1, preview.approaches().size());
         assertEquals(
                 List.of("java", "cpp"),
-                preview.approaches().get(0).solutions().stream()
+                catalogService.previewEditorial(problemId).approaches().get(0).solutions().stream()
                         .map(com.learnnow.dsa.dto.response.DsaSolutionDto::language)
                         .toList());
     }
@@ -420,10 +421,9 @@ class DsaAuthoringIntegrationTest extends com.learnnow.AbstractIntegrationTest {
                                                         List.of(legacy),
                                                         null))))));
 
-        DsaProblemDetailDto preview = catalogService.previewById(problemId, null);
         assertEquals(
                 List.of("python", "java"),
-                preview.approaches().get(0).solutions().stream()
+                catalogService.previewEditorial(problemId).approaches().get(0).solutions().stream()
                         .map(com.learnnow.dsa.dto.response.DsaSolutionDto::language)
                         .toList());
     }

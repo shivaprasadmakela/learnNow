@@ -16,6 +16,20 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
 
     List<Topic> findByStatus(ContentStatus status);
 
+    /** What a list row shows of a topic, without its lessons. */
+    interface TopicHeader {
+        UUID getId();
+
+        String getTitle();
+
+        String getDescription();
+
+        ContentStatus getStatus();
+    }
+
+    /** Headers of some topics, whatever their status; the caller decides what a draft means. */
+    List<TopicHeader> findHeadersByIdIn(Collection<UUID> ids);
+
     @Query(
             "SELECT pt.topic FROM PathTopic pt WHERE pt.path.id = :pathId AND pt.topic.status ="
                     + " :status AND pt.path.status = :status ORDER BY pt.orderIndex ASC")
@@ -52,6 +66,16 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
             "SELECT COUNT(st) FROM Subtopic st WHERE st.topic.id = :topicId AND st.status ="
                     + " com.learnnow.paths.entity.ContentStatus.PUBLISHED")
     long countPublishedSubtopicsByTopicId(@Param("topicId") UUID topicId);
+
+    /**
+     * {@link #countPublishedSubtopicsByTopicId} for several topics at once, as [topicId, lessons].
+     * A topic with no published lesson has no row.
+     */
+    @Query(
+            "SELECT st.topic.id, COUNT(st) FROM Subtopic st WHERE st.topic.id IN :topicIds AND"
+                    + " st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " GROUP BY st.topic.id")
+    List<Object[]> countPublishedLessonsByTopicIds(@Param("topicIds") Collection<UUID> topicIds);
 
     @Query(
             "SELECT COUNT(pt) FROM PathTopic pt WHERE pt.path.id = :pathId AND pt.topic.status ="

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Eye, X } from 'lucide-react';
 import styles from './CoursePreviewModal.module.css';
 import type { AdminTopicData } from '../../api/admin.api';
-import type { TopicDetails } from '../../../../shared/api/profile.api';
+import type { SubtopicData, TopicDetails } from '../../../../shared/api/profile.api';
 import { StudyConsole } from '../../../topics/components/StudyConsole/StudyConsole';
 
 interface CoursePreviewModalProps {
@@ -11,39 +11,69 @@ interface CoursePreviewModalProps {
     topics: AdminTopicData[];
 }
 
-const adaptAdminTopicToDetails = (topic: AdminTopicData, topicIdx: number): TopicDetails => {
-    return {
-        id: topic.id || `preview-topic-${topicIdx}`,
-        title: topic.title || 'Untitled Topic',
-        description: topic.description || 'Topic overview and learning goals.',
-        category: topic.category || 'Backend',
-        duration: topic.duration || '30 mins',
+/**
+ * An admin topic as the study console reads it: the outline it opens with, and each lesson in full
+ * for the console to "load" - the content is right here, unpublished, so nothing is fetched.
+ */
+const adaptAdminTopic = (
+    topic: AdminTopicData,
+    topicIdx: number
+): { topic: TopicDetails; lessons: Record<string, SubtopicData> } => {
+    const lessons: SubtopicData[] = (topic.subtopics || []).map((sub, sIdx) => ({
+        id: sub.id || `preview-sub-${topicIdx}-${sIdx}`,
+        title: sub.title || `Section ${sIdx + 1}`,
+        content: sub.content || '',
+        orderIndex: sub.orderIndex || sIdx + 1,
         isCompleted: false,
-        progressPercentage: 0,
-        subtopics: (topic.subtopics || []).map((sub, sIdx) => ({
-            id: sub.id || `preview-sub-${topicIdx}-${sIdx}`,
-            title: sub.title || `Section ${sIdx + 1}`,
-            content: sub.content || '',
-            orderIndex: sub.orderIndex || sIdx + 1,
+        questions: sub.questions ? sub.questions.map((q, qIdx) => ({
+            id: q.id || `q-${sIdx}-${qIdx}`,
+            kind: q.kind,
+            prompt: q.prompt,
+            question: q.prompt,
+            options: q.options || [],
+            correctAnswer: q.correctAnswer || '',
+            answer: q.correctAnswer || '',
+            explanation: q.explanation,
+            points: q.points || 10,
+        })) : [],
+    }));
+    return {
+        topic: {
+            id: topic.id || `preview-topic-${topicIdx}`,
+            title: topic.title || 'Untitled Topic',
+            description: topic.description || 'Topic overview and learning goals.',
+            category: topic.category || 'Backend',
+            duration: topic.duration || '30 mins',
             isCompleted: false,
-            questions: sub.questions ? sub.questions.map((q, qIdx) => ({
-                id: q.id || `q-${sIdx}-${qIdx}`,
-                kind: q.kind,
-                prompt: q.prompt,
-                question: q.prompt,
-                options: q.options || [],
-                correctAnswer: q.correctAnswer || '',
-                answer: q.correctAnswer || '',
-                explanation: q.explanation,
-                points: q.points || 10,
-            })) : [],
-        })),
+            progressPercentage: 0,
+            subtopics: lessons.map(l => ({
+                id: l.id,
+                title: l.title,
+                orderIndex: l.orderIndex,
+                isCompleted: false,
+                quizCount: l.questions?.length ?? 0,
+            })),
+        },
+        lessons: Object.fromEntries(lessons.map(l => [String(l.id), l])),
     };
 };
 
 export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ topics }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTopicIdx, setActiveTopicIdx] = useState(0);
+    // Built once per topic shown: the console fetches lessons by id, and a new object each render
+    // would make it load them again on every one.
+    const preview = useMemo(
+        () => (topics && topics.length > 0 ? adaptAdminTopic(topics[activeTopicIdx] || topics[0], activeTopicIdx) : null),
+        [topics, activeTopicIdx]
+    );
+    const loadPreviewLesson = useCallback(
+        (id: string | number): Promise<SubtopicData> => {
+            const lesson = preview?.lessons[String(id)];
+            return lesson ? Promise.resolve(lesson) : Promise.reject(new Error(`No preview lesson ${id}`));
+        },
+        [preview]
+    );
 
     if (!isOpen) {
         return (
@@ -78,8 +108,7 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ topics }
         );
     }
 
-    const currentTopicData = topics[activeTopicIdx] || topics[0];
-    const previewTopic = adaptAdminTopicToDetails(currentTopicData, activeTopicIdx);
+    const previewTopic = preview!.topic;
     const nextTopic = topics[activeTopicIdx + 1];
 
     return (
@@ -135,6 +164,7 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ topics }
                             onSelectNextTopic={nextTopic ? () => setActiveTopicIdx(prev => prev + 1) : undefined}
                             nextTopicTitle={nextTopic?.title}
                             isUpdating={false}
+                            loadLesson={loadPreviewLesson}
                         />
                     </div>
                 </div>

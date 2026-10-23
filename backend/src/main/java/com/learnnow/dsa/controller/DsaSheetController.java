@@ -42,6 +42,28 @@ public class DsaSheetController {
         return ResponseEntity.ok(catalogService.sheetBySlug(slug, subject(jwt)));
     }
 
+    /**
+     * One page of the sheet's problems matching a search and filters, across every step.
+     *
+     * <p>The sheet page's search box and filters call this instead of opening every step: it used
+     * to fetch the first page of all eighteen steps on the first keystroke and then search only
+     * those first ten rows of each. {@code status} is {@code ALL}, {@code TODO}, {@code SOLVED} or
+     * {@code BOOKMARKED}; an anonymous caller gets nothing for the last two.
+     */
+    @GetMapping("/sheets/{slug}/problems")
+    public ResponseEntity<PageResponse<DsaProblemRowDto>> searchSheet(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String slug,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return ResponseEntity.ok(
+                catalogService.searchSheet(
+                        slug, subject(jwt), q, difficulty, status, PageRequests.of(page, size)));
+    }
+
     /** One page of a step's problems. Default 10, and the accordion scrolls for the rest. */
     @GetMapping("/steps/{stepId}/problems")
     public ResponseEntity<PageResponse<DsaProblemRowDto>> problemsForStep(

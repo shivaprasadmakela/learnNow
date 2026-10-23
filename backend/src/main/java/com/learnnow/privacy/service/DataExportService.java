@@ -1,6 +1,7 @@
 package com.learnnow.privacy.service;
 
 import com.learnnow.common.exception.NotFoundException;
+import com.learnnow.dsa.repository.UserDsaCheckAttemptRepository;
 import com.learnnow.dsa.repository.UserDsaProblemProgressRepository;
 import com.learnnow.dsa.repository.UserDsaSubmissionRepository;
 import com.learnnow.learningprogress.repository.UserLearningDailyActivityRepository;
@@ -48,6 +49,7 @@ public class DataExportService {
     private final UserLearningDailyActivityRepository dailyActivityRepository;
     private final UserDsaProblemProgressRepository dsaProgressRepository;
     private final UserDsaSubmissionRepository dsaSubmissionRepository;
+    private final UserDsaCheckAttemptRepository dsaCheckAttemptRepository;
     private final NoteRepository noteRepository;
     private final BookmarkRepository bookmarkRepository;
 
@@ -84,6 +86,9 @@ public class DataExportService {
                                 .toList(),
                         dsaSubmissionRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                                 .map(DataExportResponse.DsaSubmission::from)
+                                .toList(),
+                        dsaCheckAttemptRepository.findByUserId(userId).stream()
+                                .map(DataExportResponse.DsaCheckAttempt::from)
                                 .toList());
 
         return new DataExportResponse(

@@ -1,4 +1,5 @@
 import { apiFetch, apiFetchJson } from '../../../shared/api/client';
+import { cachedResource, progressChanged } from '../../../shared/api/cache';
 import {
     DEFAULT_PAGE_SIZE,
     toPageResponse,
@@ -57,6 +58,8 @@ export interface DsaSectionRef {
 
 export interface DsaProblemRow {
     id: string;
+    /** Lets a page of the sheet-wide search, which spans steps, be filed under each step. */
+    stepId: string;
     slug: string;
     title: string;
     difficulty: DsaDifficulty;
@@ -94,6 +97,18 @@ export interface DsaSolution {
     code: string;
 }
 
+/**
+ * What the problem page knows about an approach before the editorial is opened: its kind and its
+ * cost. The reasoning and the code arrive with `fetchDsaEditorial`, when the learner asks.
+ */
+export interface DsaApproachSummary {
+    id: string;
+    kind: DsaApproachKind;
+    orderIndex: number;
+    timeComplexity?: string;
+    spaceComplexity?: string;
+}
+
 export interface DsaApproach {
     id: string;
     kind: DsaApproachKind;
@@ -103,6 +118,11 @@ export interface DsaApproach {
     spaceComplexity?: string;
     /** One entry per language the approach is written in. Empty for a prose-only approach. */
     solutions: DsaSolution[];
+}
+
+export interface DsaEditorial {
+    problemId: string;
+    approaches: DsaApproach[];
 }
 
 export interface DsaCheck {
@@ -141,14 +161,18 @@ export interface DsaProblemDetail {
     stepTitle: string;
     sectionTitle?: string;
     samples: DsaSample[];
-    hints: DsaHint[];
-    approaches: DsaApproach[];
+    /** How many hints there are. Each one is fetched with `fetchDsaHint` when it is revealed. */
+    hintCount: number;
+    /** The editorial's outline only; `fetchDsaEditorial` has the reasoning and the code. */
+    approaches: DsaApproachSummary[];
     checks: DsaCheck[];
     harnesses: DsaHarnessStub[];
     /** False when the problem has no harness or no test cases — Run and Submit stay hidden. */
     judgeable: boolean;
     totalTestCases: number;
     progress: DsaProblemProgress;
+    /** False for an anonymous reader. */
+    bookmarked: boolean;
     previousSlug?: string;
     nextSlug?: string;
 }
@@ -200,6 +224,8 @@ export interface DsaCheckAnswer {
     correctAnswer: string;
     explanation?: string;
     pointsAwarded: number;
+    /** Only the first answer can score; this one was graded for feedback and earned nothing. */
+    alreadyAttempted: boolean;
 }
 
 export interface DsaSummary {
@@ -233,12 +259,82 @@ export const fetchDsaStepProblems = async (
     return toPageResponse<DsaProblemRow>(body, size);
 };
 
+/** The sheet page's search box and filters. `ALL`, or leaving a field out, matches everything. */
+export interface DsaSheetSearch {
+    q?: string;
+    difficulty?: 'ALL' | DsaDifficulty;
+    status?: 'ALL' | 'TODO' | 'SOLVED' | 'BOOKMARKED';
+}
+
+/**
+ * One page of the whole sheet's problems matching a search, in sheet order.
+ *
+ * One request covers every step. The page used to open all eighteen steps to search them, and
+ * then searched only the first page of each.
+ */
+export const searchDsaSheetProblems = async (
+    search: DsaSheetSearch,
+    page: number = 0,
+    size: number = DEFAULT_PAGE_SIZE,
+    slug: string = DEFAULT_SHEET_SLUG
+): Promise<PageResponse<DsaProblemRow>> => {
+    const params = new URLSearchParams();
+    if (search.q?.trim()) params.set('q', search.q.trim());
+    if (search.difficulty && search.difficulty !== 'ALL') params.set('difficulty', search.difficulty);
+    if (search.status && search.status !== 'ALL') params.set('status', search.status);
+    const query = params.toString();
+    const body = await apiFetchJson<PageResponse<DsaProblemRow> | DsaProblemRow[]>(
+        withPageParams(
+            `/api/dsa/sheets/${encodeURIComponent(slug)}/problems${query ? `?${query}` : ''}`,
+            page,
+            size
+        )
+    );
+    return toPageResponse<DsaProblemRow>(body, size);
+};
+
 /** By id rather than slug, for the bookmark list which only stores the id. */
 export const fetchDsaProblemById = (problemId: string): Promise<DsaProblemDetail> =>
     apiFetchJson<DsaProblemDetail>(`/api/dsa/problems/by-id/${problemId}`);
 
 export const fetchDsaProblem = (slug: string): Promise<DsaProblemDetail> =>
     apiFetchJson<DsaProblemDetail>(`/api/dsa/problems/${encodeURIComponent(slug)}`);
+
+/*
+ * Hints and the editorial are fetched when the learner asks for them, then kept for the session:
+ * they are content rather than per-learner state, so coming back to a problem - or reloading it
+ * after a submit - shows them again without another request. The promise is what is kept, so two
+ * quick clicks share one request, and a failure is dropped so the next click retries.
+ */
+const hintCache = new Map<string, Promise<DsaHint>>();
+const editorialCache = new Map<string, Promise<DsaEditorial>>();
+
+const remember = <T,>(
+    cache: Map<string, Promise<T>>,
+    key: string,
+    load: () => Promise<T>
+): Promise<T> => {
+    const existing = cache.get(key);
+    if (existing) return existing;
+    const pending = load().catch((err: unknown) => {
+        cache.delete(key);
+        throw err;
+    });
+    cache.set(key, pending);
+    return pending;
+};
+
+/** The `n`th hint, counting from one. */
+export const fetchDsaHint = (problemId: string, n: number): Promise<DsaHint> =>
+    remember(hintCache, `${problemId}:${n}`, () =>
+        apiFetchJson<DsaHint>(`/api/dsa/problems/${problemId}/hints/${n}`)
+    );
+
+/** Every approach with its reasoning and code. The page asks before showing it. */
+export const fetchDsaEditorial = (problemId: string): Promise<DsaEditorial> =>
+    remember(editorialCache, problemId, () =>
+        apiFetchJson<DsaEditorial>(`/api/dsa/problems/${problemId}/editorial`)
+    );
 
 export const runDsaProblem = (
     problemId: string,
@@ -252,33 +348,46 @@ export const runDsaProblem = (
         body: JSON.stringify({ language, code, extraCases })
     });
 
+/** Resolves to the same result, after telling cached progress (the dashboard, the tile) it is stale. */
+const changesProgress = <T>(request: Promise<T>): Promise<T> =>
+    request.then(result => {
+        progressChanged();
+        return result;
+    });
+
 export const submitDsaProblem = (
     problemId: string,
     language: string,
     code: string
 ): Promise<DsaSubmitResult> =>
-    apiFetchJson<DsaSubmitResult>(`/api/dsa/problems/${problemId}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, code })
-    });
+    changesProgress(
+        apiFetchJson<DsaSubmitResult>(`/api/dsa/problems/${problemId}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language, code })
+        })
+    );
 
 export const answerDsaCheck = (checkId: string, selectedOption: string): Promise<DsaCheckAnswer> =>
-    apiFetchJson<DsaCheckAnswer>(`/api/dsa/checks/${checkId}/answer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selectedOption })
-    });
+    changesProgress(
+        apiFetchJson<DsaCheckAnswer>(`/api/dsa/checks/${checkId}/answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selectedOption })
+        })
+    );
 
 export const setDsaProblemStatus = (
     problemId: string,
     status: DsaProgressStatus
 ): Promise<DsaProblemProgress> =>
-    apiFetchJson<DsaProblemProgress>(`/api/me/dsa/problems/${problemId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-    });
+    changesProgress(
+        apiFetchJson<DsaProblemProgress>(`/api/me/dsa/problems/${problemId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        })
+    );
 
 
 
@@ -297,10 +406,22 @@ export const fetchDsaSubmissions = async (
 /**
  * The dashboard tile's data. Resolves to null when no sheet is published yet — the endpoint
  * answers 204 rather than inventing an empty sheet.
+ *
+ * Held for half a minute so every return to the dashboard does not refetch it; solving or marking
+ * a problem drops it at once (see `changesProgress`).
  */
-export const fetchDsaSummary = async (): Promise<DsaSummary | null> => {
-    const response = await apiFetch('/api/me/dsa/summary');
-    if (response.status === 204) return null;
-    if (!response.ok) throw new Error('Failed to fetch DSA summary');
-    return response.json() as Promise<DsaSummary>;
-};
+const dsaSummary = cachedResource(
+    async (): Promise<DsaSummary | null> => {
+        const response = await apiFetch('/api/me/dsa/summary');
+        if (response.status === 204) return null;
+        if (!response.ok) throw new Error('Failed to fetch DSA summary');
+        return response.json() as Promise<DsaSummary>;
+    },
+    { maxAgeMs: 30_000, resetOnProgress: true }
+);
+
+export const fetchDsaSummary = (force: boolean = false): Promise<DsaSummary | null> =>
+    dsaSummary.get(force);
+
+/** The cached summary if still fresh: a value, null for "no sheet", undefined for "not known". */
+export const peekDsaSummary = (): DsaSummary | null | undefined => dsaSummary.peek();

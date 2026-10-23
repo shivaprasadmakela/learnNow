@@ -14,6 +14,8 @@ export interface QuizQuestionItem {
     answer?: string;
     explanation?: string;
     points?: number;
+    /** The learner's earlier answer, from the server; the answer is set only when it was right. */
+    attempt?: { isCorrect: boolean; correctAnswer?: string | null; explanation?: string | null } | null;
 }
 
 export interface ContentBlockItem {
@@ -61,13 +63,32 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
 
     const blockKey = blocks.map(b => b.id).join(':');
 
+    /** What the learner already answered, as the server recorded it - shown instead of asking again. */
+    const answeredBefore = () => {
+        const submitted: Record<string, boolean> = {};
+        const answers: Record<string, string> = {};
+        const results: Record<string, { isCorrect: boolean; correctAnswer?: string; explanation?: string }> = {};
+        allQuestions.forEach(q => {
+            if (!q.attempt) return;
+            submitted[q.id] = true;
+            results[q.id] = {
+                isCorrect: q.attempt.isCorrect,
+                correctAnswer: q.attempt.correctAnswer ?? undefined,
+                explanation: q.attempt.explanation ?? undefined
+            };
+            if (q.attempt.correctAnswer) answers[q.id] = q.attempt.correctAnswer;
+        });
+        return { submitted, answers, results };
+    };
+
     useEffect(() => {
         if (!isSubtopicCompleted) {
-            setSelectedAnswers({});
-            setSubmittedStates({});
+            const before = answeredBefore();
+            setSelectedAnswers(before.answers);
+            setSubmittedStates(before.submitted);
             setAttemptCounts({});
             setActiveQuestionIndex({});
-            setValidatedResults({});
+            setValidatedResults(before.results);
         }
     }, [blockKey, isSubtopicCompleted]);
 
@@ -77,10 +98,12 @@ export const ContentRenderer: React.FC<ContentRendererProps> = ({
             const preFilledAnswers: Record<string, string> = {};
             allQuestions.forEach(q => {
                 preFilledSubmitted[q.id] = true;
-                if (q.correctAnswer) preFilledAnswers[q.id] = q.correctAnswer;
+                const known = q.correctAnswer ?? q.attempt?.correctAnswer;
+                if (known) preFilledAnswers[q.id] = known;
             });
             setSubmittedStates(prev => ({ ...preFilledSubmitted, ...prev }));
             setSelectedAnswers(prev => ({ ...preFilledAnswers, ...prev }));
+            setValidatedResults(prev => ({ ...answeredBefore().results, ...prev }));
         }
     }, [isSubtopicCompleted, allQuestions.length]);
 

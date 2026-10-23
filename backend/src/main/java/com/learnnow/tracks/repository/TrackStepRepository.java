@@ -22,6 +22,16 @@ public interface TrackStepRepository extends JpaRepository<TrackStep, UUID> {
     List<TrackStep> findPublishedSteps(@Param("trackIds") Collection<UUID> trackIds);
 
     /**
+     * The published tracks each of some paths is a step of, as [pathId, slug, title], in track
+     * order - what a path shows as links back to its routes, without loading the tracks.
+     */
+    @Query(
+            "SELECT s.path.id, t.slug, t.title FROM TrackStep s JOIN s.track t WHERE s.path.id IN"
+                    + " :pathIds AND t.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " ORDER BY t.orderIndex ASC, t.title ASC")
+    List<Object[]> findTrackRefsForPaths(@Param("pathIds") Collection<UUID> pathIds);
+
+    /**
      * Removes every step of a track in one statement, flushed before the replacements go in. An
      * import renumbers steps, and position is unique within a track.
      */

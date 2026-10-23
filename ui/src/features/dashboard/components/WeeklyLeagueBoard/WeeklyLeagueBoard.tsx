@@ -20,7 +20,7 @@ export const WeeklyLeagueBoard: React.FC<WeeklyLeagueBoardProps> = ({ entries })
 
             <div className={styles.leaderboardList}>
                 {entries.map((entry) => (
-                    <LeaderboardRow key={entry.userId} entry={entry} />
+                    <LeaderboardRow key={entry.rank} entry={entry} />
                 ))}
             </div>
         </div>

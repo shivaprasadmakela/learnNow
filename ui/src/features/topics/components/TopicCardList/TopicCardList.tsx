@@ -9,7 +9,7 @@ import { CardCompletedBadge } from '../../../../shared/components/cards/Learning
 import { InfiniteScrollSentinel } from '../../../../shared/components/ui/InfiniteScrollSentinel';
 import { Collapsible } from '../../../../shared/components/ui/Collapsible';
 import { useBookmarks } from '../../../notes';
-import { fetchTopicDetails, type SubtopicData } from '../../../../shared/api/profile.api';
+import { fetchTopicDetails, type LessonOutline } from '../../../../shared/api/profile.api';
 import type { TopicCardListProps } from './TopicCardList.types';
 
 export const TopicCardList: React.FC<TopicCardListProps> = ({
@@ -22,7 +22,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({
 }) => {
     const { isBookmarked, toggleBookmark } = useBookmarks();
     const [expandedTopics, setExpandedTopics] = useState<Record<string | number, boolean>>({});
-    const [topicSubtopics, setTopicSubtopics] = useState<Record<string | number, SubtopicData[]>>({});
+    const [topicSubtopics, setTopicSubtopics] = useState<Record<string | number, LessonOutline[]>>({});
     const [loadingTopics, setLoadingTopics] = useState<Record<string | number, boolean>>({});
 
     const moreTopics = onLoadMore ? (
@@ -164,7 +164,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({
                                 ) : subtopics.length > 0 ? (
                                     (() => {
                                         const lastCompletedIdx = subtopics.reduce(
-                                            (acc: number, st: SubtopicData, idx: number) => (st.isCompleted ? idx : acc),
+                                            (acc: number, st: LessonOutline, idx: number) => (st.isCompleted ? idx : acc),
                                             -1
                                         );
                                         const progressPct =
@@ -185,7 +185,7 @@ export const TopicCardList: React.FC<TopicCardListProps> = ({
                                                     />
                                                 )}
 
-                                                {subtopics.map((st: SubtopicData, stIdx: number) => {
+                                                {subtopics.map((st: LessonOutline, stIdx: number) => {
                                                     const stCompleted = Boolean(st.isCompleted);
                                                     return (
                                                         <div

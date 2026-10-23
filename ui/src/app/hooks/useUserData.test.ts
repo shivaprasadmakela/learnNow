@@ -22,15 +22,14 @@ const page = <T,>(content: T[], hasNext = false) => ({
     hasNext
 });
 
-const path = (id: number, topicCount = 0, topics: unknown[] = []) => ({
+const path = (id: number, topicCount = 0) => ({
     id,
     title: `Path ${id}`,
     description: '',
     category: 'Backend',
     managedBy: 'learnNow',
     progressPercentage: 0,
-    topicCount,
-    topics
+    topicCount
 });
 
 /**
@@ -124,32 +123,38 @@ describe('useUserData pagination', () => {
         expect(fetchPathsPage).toHaveBeenCalledTimes(1);
     });
 
-    it('knows more topics remain when a path embeds fewer than its total', async () => {
-        fetchPathsPage.mockResolvedValue(
-            page([path(1, 25, [{ id: 't1', title: 'One' }])], false)
-        );
+    it('lists paths without their topics, and asks for none until a path is opened', async () => {
+        fetchPathsPage.mockResolvedValue(page([path(1, 25)], false));
 
         const { result } = renderHook(() => useUserData(true, 'PATHS', false));
         await waitFor(() => expect(result.current.courses).toHaveLength(1));
 
-        expect(result.current.getTopicPaging(1).hasNext).toBe(true);
+        expect(result.current.courses[0].topics).toEqual([]);
+        expect(result.current.courses[0].topicCount).toBe(25);
+        expect(fetchTopicsByPathPage).not.toHaveBeenCalled();
     });
 
-    it('appends a further page of topics onto the path it belongs to', async () => {
-        fetchPathsPage.mockResolvedValue(
-            page([path(1, 2, [{ id: 't1', title: 'One' }])], false)
-        );
-        fetchTopicsByPathPage.mockResolvedValue(page([{ id: 't2', title: 'Two' }], false));
+    it('loads a path\'s first page of topics when opened, then appends the next', async () => {
+        fetchPathsPage.mockResolvedValue(page([path(1, 2)], false));
+        fetchTopicsByPathPage
+            .mockResolvedValueOnce(page([{ id: 't1', title: 'One' }], true))
+            .mockResolvedValueOnce(page([{ id: 't2', title: 'Two' }], false));
 
         const { result } = renderHook(() => useUserData(true, 'PATHS', false));
         await waitFor(() => expect(result.current.courses).toHaveLength(1));
+
+        await act(async () => {
+            await result.current.loadTopicsForPath(1);
+        });
+        expect(fetchTopicsByPathPage).toHaveBeenCalledWith(1, 0, 10);
+        expect(result.current.getTopicPaging(1).hasNext).toBe(true);
 
         await act(async () => {
             await result.current.loadMoreTopicsForPath(1);
         });
 
         expect(result.current.courses[0].topics?.map(t => t.id)).toEqual(['t1', 't2']);
-        expect(fetchTopicsByPathPage).toHaveBeenCalledWith(1, 1, 10);
+        expect(fetchTopicsByPathPage).toHaveBeenLastCalledWith(1, 1, 10);
         expect(result.current.getTopicPaging(1).hasNext).toBe(false);
     });
 });
@@ -174,11 +179,9 @@ describe('useUserData slug resolution', () => {
     const studyConsole = () => renderHook(() => useUserData(true, 'STUDY', false));
 
     it('resolves a topic slug from the study console, where nothing is loaded', async () => {
-        const spring = {
-            ...path(1, 57, [topic(11, 'Introduction to the Java platform')]),
-            title: 'Java Backend Developer (Spring Boot)'
-        };
+        const spring = { ...path(1, 57), title: 'Java Backend Developer (Spring Boot)' };
         fetchPathsPage.mockResolvedValue(page([spring], false));
+        fetchTopicsByPathPage.mockResolvedValue(page([topic(11, 'Introduction to the Java platform')], true));
 
         const { result } = studyConsole();
         // The view alone still fetches nothing.
@@ -196,7 +199,7 @@ describe('useUserData slug resolution', () => {
     });
 
     it('pages through topics to reach one past the first page', async () => {
-        fetchPathsPage.mockResolvedValue(page([path(1, 25, [topic(1, 'Topic 1')])], false));
+        fetchPathsPage.mockResolvedValue(page([path(1, 25)], false));
         fetchTopicsByPathPage
             .mockResolvedValueOnce(page([topic(1, 'Topic 1')], true))
             .mockResolvedValueOnce(page([topic(2, 'Records & sealed types')], true))
@@ -215,7 +218,7 @@ describe('useUserData slug resolution', () => {
     });
 
     it('returns null for a topic that is nowhere, rather than paging forever', async () => {
-        fetchPathsPage.mockResolvedValue(page([path(1, 1, [topic(1, 'Topic 1')])], false));
+        fetchPathsPage.mockResolvedValue(page([path(1, 1)], false));
         fetchTopicsByPathPage.mockResolvedValue(page([topic(1, 'Topic 1')], false));
 
         const { result } = studyConsole();
@@ -243,7 +246,7 @@ describe('useUserData slug resolution', () => {
     });
 
     it('keeps the topics it loaded, so next-topic navigation still works', async () => {
-        fetchPathsPage.mockResolvedValue(page([path(1, 20, [topic(1, 'Topic 1')])], false));
+        fetchPathsPage.mockResolvedValue(page([path(1, 20)], false));
         fetchTopicsByPathPage
             .mockResolvedValueOnce(page([topic(1, 'Topic 1')], true))
             .mockResolvedValueOnce(page([topic(2, 'Second topic')], false));

@@ -12,6 +12,8 @@ public interface DsaTestCaseRepository extends JpaRepository<DsaTestCase, UUID> 
 
     List<DsaTestCase> findByProblemIdOrderByOrderIndexAsc(UUID problemId);
 
+    long countByProblemId(UUID problemId);
+
     /**
      * Every test case belonging to any of the given problems, in one query.
      *

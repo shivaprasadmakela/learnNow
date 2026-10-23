@@ -247,6 +247,8 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         isAdmin={isAdmin}
                         onSelectTopic={handleSelectTopic}
                         onSelectTrack={onSelectTrack}
+                        interviewQuestionCount={selectedPath?.interviewQuestionCount}
+                        tracks={selectedPath?.tracks}
                         onAddTopicToPath={async (topicData) => {
                             if (!selectedPath || !selectedPath.id) return false;
                             try {

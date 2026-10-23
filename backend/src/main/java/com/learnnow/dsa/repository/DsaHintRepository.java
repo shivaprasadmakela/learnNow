@@ -4,11 +4,17 @@ import com.learnnow.dsa.entity.DsaHint;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DsaHintRepository extends JpaRepository<DsaHint, UUID> {
 
     List<DsaHint> findByProblemIdOrderByOrderIndexAsc(UUID problemId);
+
+    /** One page of a problem's hints in order. With a page size of one, that is the nth hint. */
+    List<DsaHint> findByProblemIdOrderByOrderIndexAsc(UUID problemId, Pageable pageable);
+
+    long countByProblemId(UUID problemId);
 
     /**
      * Every hint belonging to any of the given problems, in one query.

@@ -4,13 +4,15 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A path in a list response.
+ * A path in a list response: what a path card and the path page's header show, and nothing more.
+ * Its topics are not in it - they arrive from {@code GET /api/paths/{pathId}/topics} when the path
+ * is opened - so a list of paths stays a list of paths.
  *
- * <p>{@code topics} carries only the first page of the path's topics - the rest arrive from {@code
- * GET /api/paths/{pathId}/topics} as the user scrolls. {@code topicCount} is the full count, so the
- * UI can still show "N topics" and know whether more remain, and {@code progressPercentage} is
- * always computed across every topic rather than the embedded slice. {@code estimatedMinutes} sums
- * the authored estimates of the path's published lessons.
+ * <p>{@code topicCount} counts published topics and {@code progressPercentage} is the mean of their
+ * progress, counting published lessons only. {@code estimatedMinutes} sums the authored estimates
+ * of the path's published lessons. {@code interviewQuestionCount} labels the path's Interview tab,
+ * so the tab can say how many questions it holds without loading any of them. {@code tracks} are
+ * the career tracks the path is a step of, for the links back to them.
  */
 public record PathSummaryDto(
         UUID id,
@@ -21,35 +23,9 @@ public record PathSummaryDto(
         int progressPercentage,
         int topicCount,
         long estimatedMinutes,
-        List<TopicSummaryDto> topics) {
+        int interviewQuestionCount,
+        List<TrackRef> tracks) {
 
-    public PathSummaryDto(
-            UUID id,
-            String title,
-            String description,
-            String category,
-            String managedBy,
-            int progressPercentage,
-            List<TopicSummaryDto> topics) {
-        this(
-                id,
-                title,
-                description,
-                category,
-                managedBy,
-                progressPercentage,
-                topics == null ? 0 : topics.size(),
-                0,
-                topics);
-    }
-
-    public PathSummaryDto(
-            UUID id,
-            String title,
-            String description,
-            String category,
-            String managedBy,
-            List<TopicSummaryDto> topics) {
-        this(id, title, description, category, managedBy, 0, topics);
-    }
+    /** A track the path belongs to - enough to link to it. */
+    public record TrackRef(String slug, String title) {}
 }

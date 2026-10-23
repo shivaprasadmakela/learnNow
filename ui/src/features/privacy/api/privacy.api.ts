@@ -1,4 +1,5 @@
 import { apiFetch, apiFetchJson } from '../../../shared/api/client';
+import { cachedResource } from '../../../shared/api/cache';
 
 /**
  * The learner's rights under the Digital Personal Data Protection Act, 2023.
@@ -101,9 +102,17 @@ export const GRIEVANCE_CATEGORY_LABELS: Record<GrievanceCategory, string> = {
     OTHER: 'Something else'
 };
 
-/** s.8(9). Public — a person who cannot sign in is the one most likely to need it. */
-export const fetchPrivacyContact = (): Promise<PrivacyContactDto> =>
-    apiFetchJson<PrivacyContactDto>('/api/privacy/contact');
+/**
+ * s.8(9). Public — a person who cannot sign in is the one most likely to need it.
+ *
+ * Fetched once per page load: the footer on every screen, the privacy notice and the grievance
+ * form all show it, and it changes only when the server is redeployed.
+ */
+const privacyContact = cachedResource(() =>
+    apiFetchJson<PrivacyContactDto>('/api/privacy/contact')
+);
+
+export const fetchPrivacyContact = (): Promise<PrivacyContactDto> => privacyContact.get();
 
 /** s.6. */
 export const fetchConsents = (): Promise<ConsentCentreDto> =>

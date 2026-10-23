@@ -2,9 +2,11 @@ package com.learnnow.notes.controller;
 
 import com.learnnow.notes.dto.request.NoteRequest;
 import com.learnnow.notes.dto.response.BookmarkResponse;
+import com.learnnow.notes.dto.response.BookmarkSummaryResponse;
 import com.learnnow.notes.dto.response.BookmarkToggleResponse;
 import com.learnnow.notes.dto.response.NoteResponse;
 import com.learnnow.notes.entity.NoteTarget;
+import com.learnnow.notes.service.BookmarkSummaryService;
 import com.learnnow.notes.service.NotesService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class NotesController {
 
     private final NotesService notesService;
+    private final BookmarkSummaryService bookmarkSummaryService;
 
     // ---------------------------------------------------------------- notes
 
@@ -114,6 +117,18 @@ public class NotesController {
                 target == null
                         ? notesService.getAllBookmarks(userId)
                         : notesService.getBookmarks(userId, target));
+    }
+
+    /**
+     * Every bookmark with what the bookmarks list shows of it: title, where it lives, progress.
+     *
+     * <p>Separate from the ids-only list above, which every bookmark icon on a screen shares and
+     * which must stay small. This one is for the screen that lists bookmarks, and only that.
+     */
+    @GetMapping("/bookmarks/summary")
+    public ResponseEntity<List<BookmarkSummaryResponse>> getBookmarkSummaries(
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(bookmarkSummaryService.summarise(jwt.getSubject()));
     }
 
     @PostMapping("/bookmarks/topics/{topicId}")

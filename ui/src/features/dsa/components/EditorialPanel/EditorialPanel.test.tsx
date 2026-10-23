@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { EditorialPanel } from './EditorialPanel';
 import type { DsaApproach } from '../../api/dsa.api';
+import { fetchDsaEditorial } from '../../api/dsa.api';
+
+/** The editorial is fetched only once the learner asks for it; the outline comes with the page. */
+vi.mock('../../api/dsa.api', () => ({ fetchDsaEditorial: vi.fn() }));
+vi.mock('../../api/adminDsa.api', () => ({ fetchDsaEditorialPreview: vi.fn() }));
 
 /** Monaco does not load under jsdom; the viewer falls back to plain text, which is what is read. */
 vi.mock('../../../../shared/components/editor/highlightCode', () => ({
@@ -70,16 +75,29 @@ Object.defineProperty(window, 'localStorage', {
 describe('EditorialPanel', () => {
     beforeEach(() => {
         store.clear();
+        vi.mocked(fetchDsaEditorial)
+            .mockReset()
+            .mockResolvedValue({ problemId: 'p1', approaches: APPROACHES });
     });
 
-    it('asks before showing the solution to someone who has not solved it', () => {
+    it('asks before showing the solution, and fetches it only on yes', async () => {
         renderPanel();
 
         expect(screen.getByText(/gives the solution away/)).toBeInTheDocument();
         expect(screen.queryByText(/java brute/)).not.toBeInTheDocument();
+        expect(fetchDsaEditorial).not.toHaveBeenCalled();
 
         fireEvent.click(screen.getByRole('button', { name: /Show the editorial/ }));
-        expect(screen.getByText(/java brute/)).toBeInTheDocument();
+        expect(await screen.findByText(/java brute/)).toBeInTheDocument();
+        expect(fetchDsaEditorial).toHaveBeenCalledWith('p1');
+    });
+
+    it('offers a retry when the editorial cannot be loaded', async () => {
+        vi.mocked(fetchDsaEditorial).mockRejectedValueOnce(new Error('offline'));
+        renderPanel({ solved: true });
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+        expect(await screen.findByText(/java brute/)).toBeInTheDocument();
     });
 
     it('remembers the reveal for that problem', () => {
@@ -96,18 +114,19 @@ describe('EditorialPanel', () => {
         expect(screen.queryByText(/gives the solution away/)).not.toBeInTheDocument();
     });
 
-    it('orders approaches brute force first, with complexity', () => {
+    it('orders approaches brute force first, with complexity', async () => {
         renderPanel({ solved: true });
 
+        await screen.findByText('Sort and take the last element.');
         const tabs = screen.getAllByRole('tab').slice(0, 2);
         expect(tabs.map(tab => tab.textContent)).toEqual(['Brute force', 'Optimal']);
         expect(screen.getByText('O(n log n)')).toBeInTheDocument();
         expect(screen.getByText('Sort and take the last element.')).toBeInTheDocument();
     });
 
-    it('opens the code in the workspace language and lets the learner switch', () => {
+    it('opens the code in the workspace language and lets the learner switch', async () => {
         renderPanel({ solved: true });
-        fireEvent.click(screen.getByRole('button', { name: /Next: Optimal/ }));
+        fireEvent.click(await screen.findByRole('button', { name: /Next: Optimal/ }));
 
         expect(screen.getByText(/py optimal/)).toBeInTheDocument();
 
@@ -115,16 +134,16 @@ describe('EditorialPanel', () => {
         expect(screen.getByText(/java optimal/)).toBeInTheDocument();
     });
 
-    it('falls back to a language the approach has when the workspace one is missing', () => {
+    it('falls back to a language the approach has when the workspace one is missing', async () => {
         renderPanel({ solved: true, preferredLanguage: 'cpp' });
         // Brute force is Java only: one label, no switcher.
-        expect(screen.getByText(/java brute/)).toBeInTheDocument();
+        expect(await screen.findByText(/java brute/)).toBeInTheDocument();
         expect(screen.queryByRole('tablist', { name: 'Solution language' })).not.toBeInTheDocument();
     });
 
-    it('shows code to read and copy, never a playground to run', () => {
+    it('shows code to read and copy, never a playground to run', async () => {
         renderPanel({ solved: true });
-        expect(screen.getByRole('button', { name: 'Copy code' })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Copy code' })).toBeInTheDocument();
         expect(screen.queryByText(/Playground/)).not.toBeInTheDocument();
     });
 

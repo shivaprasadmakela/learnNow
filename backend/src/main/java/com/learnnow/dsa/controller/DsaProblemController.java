@@ -2,6 +2,8 @@ package com.learnnow.dsa.controller;
 
 import com.learnnow.dsa.dto.request.DsaRunRequest;
 import com.learnnow.dsa.dto.request.DsaSubmitRequest;
+import com.learnnow.dsa.dto.response.DsaEditorialDto;
+import com.learnnow.dsa.dto.response.DsaHintDto;
 import com.learnnow.dsa.dto.response.DsaProblemDetailDto;
 import com.learnnow.dsa.dto.response.DsaRunResultDto;
 import com.learnnow.dsa.dto.response.DsaSubmitResultDto;
@@ -38,7 +40,6 @@ public class DsaProblemController {
         return ResponseEntity.ok(catalogService.problemBySlug(slug, userId));
     }
 
-    /** Runs the sample cases, plus anything the learner typed into the panel. */
     /**
      * The same detail payload, looked up by id.
      *
@@ -52,6 +53,31 @@ public class DsaProblemController {
         return ResponseEntity.ok(catalogService.problemById(problemId, userId));
     }
 
+    /**
+     * One hint, counting from one, fetched when the learner asks for it.
+     *
+     * <p>Public like the problem itself, since the hints are part of reading it. They used to ship
+     * inside the detail payload, so all of them reached the browser whether or not the learner ever
+     * pressed "show a hint".
+     */
+    @GetMapping("/{problemId}/hints/{n}")
+    public ResponseEntity<DsaHintDto> hint(@PathVariable UUID problemId, @PathVariable int n) {
+        return ResponseEntity.ok(catalogService.hint(problemId, n));
+    }
+
+    /**
+     * The editorial, with every approach's code, fetched when the learner opens it.
+     *
+     * <p>Public for the same reason the hints are: it is content, and gating it behind a sign-in
+     * would change what an anonymous reader can see rather than when it is sent. The page asks
+     * before revealing it on an unsolved problem; this is what that question protects.
+     */
+    @GetMapping("/{problemId}/editorial")
+    public ResponseEntity<DsaEditorialDto> editorial(@PathVariable UUID problemId) {
+        return ResponseEntity.ok(catalogService.editorial(problemId));
+    }
+
+    /** Runs the sample cases, plus anything the learner typed into the panel. */
     @PostMapping("/{problemId}/run")
     public ResponseEntity<DsaRunResultDto> run(
             @AuthenticationPrincipal Jwt jwt,

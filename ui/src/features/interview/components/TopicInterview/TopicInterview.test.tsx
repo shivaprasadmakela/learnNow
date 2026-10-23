@@ -9,13 +9,10 @@ const q = (id: string, prompt: string, subtopicId: string, subtopicTitle: string
     prompt,
     subtopicId,
     subtopicTitle,
-    answerShort: 'short',
-    answerDeep: 'deep',
-    answerSignal: 'signal',
     depth: 1,
     practice: true,
     sightings: [],
-    followUps: []
+    followUpCount: 0
 });
 
 const questions = [

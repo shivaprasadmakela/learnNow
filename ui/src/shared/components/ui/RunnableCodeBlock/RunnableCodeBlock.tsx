@@ -4,11 +4,13 @@ import { CompilerOutputPane } from '../../editor/CompilerOutputPane/CompilerOutp
 import { useCodeExecution } from '../../editor/useCodeExecution';
 import { printedOutput } from '../../editor/consoleOutput';
 import { Play, RotateCcw, Copy, Check, CheckCircle2, AlertTriangle, Maximize2, Minimize2, X } from 'lucide-react';
+import { fetchExpectedOutput } from '../../../api/profile.api';
 import type { RunnableCodeBlockProps } from './RunnableCodeBlock.types';
 import styles from './RunnableCodeBlock.module.css';
 
 export const RunnableCodeBlock: React.FC<RunnableCodeBlockProps> = ({
     snippet,
+    subtopicId,
     onCodeChange
 }) => {
     const [code, setCode] = useState<string>(snippet.code);
@@ -16,11 +18,19 @@ export const RunnableCodeBlock: React.FC<RunnableCodeBlockProps> = ({
     const [isCopied, setIsCopied] = useState<boolean>(false);
     const [hasExecuted, setHasExecuted] = useState<boolean>(false);
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
+    // What the snippet should print. Not sent with the lesson, so the answer to "what does this
+    // print?" is not in the page before the learner has tried; asked for after the first run.
+    const [fetchedExpected, setFetchedExpected] = useState<string | null>(null);
 
     const { logs, htmlPreview, isRunning, executionTimeMs, runCode, clearConsole } = useCodeExecution();
 
     const handleRun = async () => {
         setHasExecuted(true);
+        if (!snippet.expectedOutput && snippet.hasExpectedOutput && subtopicId !== undefined && fetchedExpected === null) {
+            fetchExpectedOutput(subtopicId, snippet.id)
+                .then(out => setFetchedExpected(out ?? ''))
+                .catch(() => setFetchedExpected(''));
+        }
         await runCode(code, snippet.language || 'javascript', stdin);
     };
 
@@ -39,7 +49,7 @@ export const RunnableCodeBlock: React.FC<RunnableCodeBlockProps> = ({
 
     // Calculate diff against expected output if provided
     const actualOutput = printedOutput(logs);
-    const expected = (snippet.expectedOutput || '').trim();
+    const expected = (snippet.expectedOutput || fetchedExpected || '').trim();
 
     const isMatch = expected && hasExecuted && actualOutput === expected;
     const isMismatch = expected && hasExecuted && actualOutput && actualOutput !== expected;

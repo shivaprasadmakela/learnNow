@@ -88,7 +88,9 @@ class InterviewSightingServiceTest extends AbstractIntegrationTest {
 
         InterviewQuestionDto map = opener("map");
         assertThat(map.practice()).isTrue();
-        assertThat(map.followUps().get(0).practice()).isFalse();
+        // The follow-up arrives with the opener's answer, carrying its own sighting.
+        assertThat(interview.answer(map.id()).orElseThrow().followUps().get(0).practice())
+                .isFalse();
     }
 
     @Test

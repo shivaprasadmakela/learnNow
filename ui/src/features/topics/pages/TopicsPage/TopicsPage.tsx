@@ -9,9 +9,8 @@ import { TopicCardList } from '../../components/TopicCardList';
 import { CreateTopicModal } from '../../../iam-admin/components/ConfigurationEditor/components/CreateTopicModal';
 import { CreateSubtopicModal } from '../../components/CreateSubtopicModal/CreateSubtopicModal';
 import { PathTrackLinks } from '../../../tracks/components/PathTrackLinks/PathTrackLinks';
-import { useTracksContainingPath } from '../../../tracks/hooks/useTracksContainingPath';
 import { Tabs } from '../../../../shared/components/ui/Tabs';
-import { InterviewBank, usePathInterviewQuestions, type InterviewQuestion } from '../../../interview';
+import { InterviewBank, type InterviewQuestion } from '../../../interview';
 
 type PathSection = 'lessons' | 'interview';
 
@@ -31,17 +30,18 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
     onSelectTopic,
     onAddTopicToPath,
     onAddSubtopicToTopic,
-    onSelectTrack
+    onSelectTrack,
+    interviewQuestionCount = 0,
+    tracks = []
 }) => {
     const { showToast } = useToast();
-    const tracks = useTracksContainingPath(onSelectTrack ? pathId : undefined);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [section, setSection] = useState<PathSection>('lessons');
-    const interview = usePathInterviewQuestions(pathId);
     // Opening questions only: a follow-up is part of the question it follows, not one more to do.
-    const interviewCount = interview.topics.reduce((n, t) => n + t.questions.length, 0);
+    // The count arrives with the path; the questions themselves load when the tab is opened.
+    const interviewCount = interviewQuestionCount;
     // The tab exists only once there is something behind it, so most paths look exactly as before.
-    const hasInterview = interviewCount > 0;
+    const hasInterview = interviewCount > 0 && pathId !== undefined;
     const showInterview = hasInterview && section === 'interview';
     const [isCreateTopicOpen, setIsCreateTopicOpen] = useState(false);
     const [isCreateSubtopicOpen, setIsCreateSubtopicOpen] = useState(false);
@@ -201,11 +201,7 @@ export const TopicsPage: React.FC<TopicsPageProps> = ({
 
             <div className={styles.listScrollArea}>
                 {showInterview ? (
-                    <InterviewBank
-                        topics={interview.topics}
-                        loading={interview.loading}
-                        onRevise={handleRevise}
-                    />
+                    <InterviewBank pathId={pathId!} onRevise={handleRevise} />
                 ) : (
                     <TopicCardList
                         topics={topics}

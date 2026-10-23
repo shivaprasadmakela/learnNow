@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { ArrowRight, Building2, ChevronDown, Eye, Lightbulb, MessageCircleQuestion, UserRound } from 'lucide-react';
-import { countQuestions, type InterviewQuestion, type InterviewSighting } from '../../api/interview.api';
+import type { InterviewQuestion, InterviewReveal, InterviewSighting } from '../../api/interview.api';
+import { useInterviewAnswer } from '../../hooks/useInterviewQuestions';
 import { BeginnerAnswer } from './BeginnerAnswer';
 import styles from '../../styles/Interview.module.css';
 
@@ -41,17 +42,58 @@ const ReportedBadge: React.FC<{ sightings: InterviewSighting[] }> = ({ sightings
     );
 };
 
+/** The answer once it has arrived: the beginner sections, or the earlier three-part answer. */
+const RevealedAnswer: React.FC<{ reveal: InterviewReveal }> = ({ reveal }) => {
+    const [deepOpen, setDeepOpen] = useState(false);
+    const deepId = useId();
+
+    if (reveal.answer) return <BeginnerAnswer answer={reveal.answer} />;
+    return (
+        <>
+            <div className={styles.answerText}>{paragraphs(reveal.answerShort ?? '')}</div>
+
+            <button
+                type="button"
+                className={styles.deepToggle}
+                aria-expanded={deepOpen}
+                aria-controls={deepId}
+                onClick={() => setDeepOpen(o => !o)}
+            >
+                <ChevronDown
+                    size={15}
+                    aria-hidden="true"
+                    className={deepOpen ? styles.chevronOpen : styles.chevron}
+                />
+                {deepOpen ? 'Show less' : 'Go deeper'}
+            </button>
+            {deepOpen && (
+                <div id={deepId} className={`${styles.answerText} ${styles.deepText}`}>
+                    {paragraphs(reveal.answerDeep ?? '')}
+                </div>
+            )}
+
+            <div className={styles.why}>
+                <Lightbulb size={15} aria-hidden="true" className={styles.whyIcon} />
+                <div>
+                    <span className={styles.whyLabel}>Why they ask this</span>
+                    <div className={styles.answerText}>{paragraphs(reveal.answerSignal ?? '')}</div>
+                </div>
+            </div>
+        </>
+    );
+};
+
 /**
- * One exchange: the interviewer asks, you try it, then reveal a strong answer. Once the answer is
- * out, the interviewer's next question appears beneath it - in a real round the follow-up is earned
- * by the answer before it, so it stays hidden until then.
+ * One exchange: the interviewer asks, you try it, then reveal a strong answer. The answer is
+ * fetched only when revealed, and with it the interviewer's next questions - in a real round the
+ * follow-up is earned by the answer before it, so nothing behind it loads before then.
  */
 const Exchange: React.FC<{ question: InterviewQuestion }> = ({ question }) => {
     const [revealed, setRevealed] = useState(false);
-    const [deepOpen, setDeepOpen] = useState(false);
+    const answer = useInterviewAnswer(revealed ? question.id : undefined);
     const answerId = useId();
-    const deepId = useId();
     const isFollowUp = question.depth > 1;
+    const followUps = answer.data?.followUps ?? [];
 
     return (
         <div className={styles.exchange}>
@@ -89,51 +131,20 @@ const Exchange: React.FC<{ question: InterviewQuestion }> = ({ question }) => {
                     <span className={`${styles.avatar} ${styles.avatarYou}`} aria-hidden="true">
                         <UserRound size={16} />
                     </span>
-                    <div className={`${styles.turnBody} ${styles.answerBubble}`}>
+                    <div className={`${styles.turnBody} ${styles.answerBubble}`} aria-busy={answer.loading}>
                         <span className={styles.speaker}>A strong answer</span>
-                        {question.answer ? (
-                            <BeginnerAnswer answer={question.answer} />
+                        {answer.data ? (
+                            <RevealedAnswer reveal={answer.data} />
+                        ) : answer.failed ? (
+                            <p className={styles.answerText}>The answer could not be loaded. Hide it and try again.</p>
                         ) : (
-                            <>
-                                <div className={styles.answerText}>{paragraphs(question.answerShort ?? '')}</div>
-
-                                <button
-                                    type="button"
-                                    className={styles.deepToggle}
-                                    aria-expanded={deepOpen}
-                                    aria-controls={deepId}
-                                    onClick={() => setDeepOpen(o => !o)}
-                                >
-                                    <ChevronDown
-                                        size={15}
-                                        aria-hidden="true"
-                                        className={deepOpen ? styles.chevronOpen : styles.chevron}
-                                    />
-                                    {deepOpen ? 'Show less' : 'Go deeper'}
-                                </button>
-                                {deepOpen && (
-                                    <div id={deepId} className={`${styles.answerText} ${styles.deepText}`}>
-                                        {paragraphs(question.answerDeep ?? '')}
-                                    </div>
-                                )}
-
-                                <div className={styles.why}>
-                                    <Lightbulb size={15} aria-hidden="true" className={styles.whyIcon} />
-                                    <div>
-                                        <span className={styles.whyLabel}>Why they ask this</span>
-                                        <div className={styles.answerText}>{paragraphs(question.answerSignal ?? '')}</div>
-                                    </div>
-                                </div>
-                            </>
+                            <p className={styles.answerText}>Loading the answer…</p>
                         )}
 
                         <button
                             type="button"
                             className={styles.hideBtn}
-                            onClick={() => {
-                                setRevealed(false);
-                                setDeepOpen(false);
-                            }}
+                            onClick={() => setRevealed(false)}
                         >
                             Hide answer
                         </button>
@@ -141,12 +152,12 @@ const Exchange: React.FC<{ question: InterviewQuestion }> = ({ question }) => {
                 </div>
             )}
 
-            {revealed && question.followUps.length > 0 && (
+            {revealed && followUps.length > 0 && (
                 <div className={styles.followUps}>
                     <div className={styles.digDeeper}>
                         <span>The interviewer digs deeper</span>
                     </div>
-                    {question.followUps.map(f => (
+                    {followUps.map(f => (
                         <Exchange key={f.id} question={f} />
                     ))}
                 </div>
@@ -169,7 +180,7 @@ export const InterviewQuestionCard: React.FC<InterviewQuestionCardProps> = ({
     number,
     onRevise
 }) => {
-    const followUpCount = countQuestions(question.followUps);
+    const followUpCount = question.followUpCount;
     return (
         <article className={styles.card}>
             <header className={styles.cardHead}>

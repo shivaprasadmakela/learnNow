@@ -22,32 +22,20 @@ const normaliseTopics = (rawTopics: Topic[] | undefined): Topic[] =>
         progressPercentage: t.isCompleted ? 100 : (t.progressPercentage || 0)
     }));
 
-const averageProgress = (topics: Topic[], fallback: number) =>
-    topics.length > 0
-        ? Math.round(
-              topics.reduce(
-                  (acc, t) => acc + (t.isCompleted ? 100 : (t.progressPercentage || 0)),
-                  0
-              ) / topics.length
-          )
-        : fallback;
-
-const toCourse = (p: PathData, isLoggedIn: boolean): Course => {
-    const topics = normaliseTopics(p.topics);
-    return {
-        id: p.id,
-        title: p.title,
-        description: p.description,
-        category: p.category,
-        managedBy: p.managedBy,
-        progressPercentage: isLoggedIn
-            ? (p.progressPercentage || averageProgress(topics, 0))
-            : 0,
-        topicCount: typeof p.topicCount === 'number' ? p.topicCount : topics.length,
-        estimatedMinutes: p.estimatedMinutes,
-        topics
-    };
-};
+/** A path from a list response. Its topics are not in it; they load when the path is opened. */
+const toCourse = (p: PathData, isLoggedIn: boolean): Course => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    category: p.category,
+    managedBy: p.managedBy,
+    progressPercentage: isLoggedIn ? (p.progressPercentage || 0) : 0,
+    topicCount: p.topicCount ?? 0,
+    estimatedMinutes: p.estimatedMinutes,
+    interviewQuestionCount: p.interviewQuestionCount ?? 0,
+    tracks: p.tracks ?? [],
+    topics: []
+});
 
 const mergeCourses = (existing: Course[], incoming: Course[]): Course[] => {
     const seen = new Set(existing.map(c => String(c.id)));
@@ -76,6 +64,10 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
      */
     const pathsPageRef = useRef(0);
     const [hasMorePaths, setHasMorePaths] = useState(false);
+    const hasMorePathsRef = useRef(false);
+    useEffect(() => {
+        hasMorePathsRef.current = hasMorePaths;
+    }, [hasMorePaths]);
     const [isLoadingMorePaths, setIsLoadingMorePaths] = useState(false);
     const isLoadingMorePathsRef = useRef(false);
 
@@ -87,28 +79,6 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         setTopicPaging(topicPagingRef.current);
     }, []);
 
-    /**
-     * Records how far into each path's topics the embedded first page already reaches.
-     *
-     * The path payload carries both its first page of topics and the total count, so the topic
-     * list knows to keep scrolling without a probe request. Seeding here rather than on selection
-     * also covers arriving straight at /paths/:slug, where nothing calls loadTopicsForPath.
-     */
-    const seedTopicPaging = useCallback((incoming: Course[]) => {
-        const seeded = { ...topicPagingRef.current };
-        for (const course of incoming) {
-            const key = String(course.id);
-            if (seeded[key]) continue;
-            const loaded = course.topics?.length || 0;
-            seeded[key] = {
-                page: 0,
-                hasNext: (course.topicCount || 0) > loaded,
-                isLoading: false
-            };
-        }
-        topicPagingRef.current = seeded;
-        setTopicPaging(seeded);
-    }, []);
 
     useEffect(() => {
         coursesRef.current = courses;
@@ -134,11 +104,9 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
             const existing = replace ? [] : (c.topics || []);
             const seen = new Set(existing.map(t => String(t.id)));
             const merged = [...existing, ...topics.filter(t => !seen.has(String(t.id)))];
-            return {
-                ...c,
-                topics: merged,
-                progressPercentage: averageProgress(merged, c.progressPercentage || 0)
-            };
+            // The path's own percentage comes from the server, across every topic - not from
+            // however many pages of them happen to be loaded.
+            return { ...c, topics: merged };
         }));
     }, []);
 
@@ -148,9 +116,10 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
      */
     const loadTopicsForPath = useCallback(async (pathId: number | string) => {
         const key = String(pathId);
-        const current = topicPagingRef.current[key];
-        if (current?.isLoading) return;
-        setTopicPagingFor(key, { page: 0, hasNext: current?.hasNext ?? false, isLoading: true });
+        // Once per path: an entry means its first page is loading or loaded. Checking for an empty
+        // topic list instead refetched a path that has no topics on every render.
+        if (topicPagingRef.current[key]) return;
+        setTopicPagingFor(key, { page: 0, hasNext: false, isLoading: true });
         try {
             const result = await fetchTopicsByPathPage(pathId, 0, DEFAULT_PAGE_SIZE);
             applyTopicsPage(pathId, result.content, true);
@@ -222,7 +191,7 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
             setHasMorePaths(result.hasNext);
             // Topic cursors describe the previous page of paths; a reload invalidates them.
             topicPagingRef.current = {};
-            seedTopicPaging(mapped);
+            setTopicPaging({});
             hasFetchedRef.current = true;
         } catch (err) {
             console.error("Failed to refresh user data", err);
@@ -231,7 +200,7 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
             isFetchingRef.current = false;
             setIsCoursesLoading(false);
         }
-    }, [isLoggedIn, activeView, isAuthLoading, seedTopicPaging]);
+    }, [isLoggedIn, activeView, isAuthLoading]);
 
     /** Appends the next page of paths. Driven by the Paths grid scrolling to its end. */
     const loadMorePaths = useCallback(async () => {
@@ -247,7 +216,6 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
 
             const mapped = result.content.map(p => toCourse(p, isLoggedIn));
             setCourses(prev => mergeCourses(prev, mapped));
-            seedTopicPaging(mapped);
             pathsPageRef.current = nextPage;
             setHasMorePaths(result.hasNext);
         } catch (err) {
@@ -257,7 +225,7 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
             isLoadingMorePathsRef.current = false;
             setIsLoadingMorePaths(false);
         }
-    }, [hasMorePaths, isLoggedIn, seedTopicPaging]);
+    }, [hasMorePaths, isLoggedIn]);
 
     useEffect(() => {
         refreshUserData();
@@ -299,31 +267,41 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
      * console's next-topic link keeps working, and returns null rather than leaving the caller
      * waiting on data that is never coming.
      */
-    const resolveTopicIdBySlug = useCallback(
-        async (pathSlug: string, topicSlug: string): Promise<string | number | null> => {
+    /**
+     * Finds the path a /paths/:pathSlug URL names, fetching further pages of paths until it does.
+     * The path list arrives ten at a time, so a link to the twelfth path names nothing loaded.
+     */
+    const resolvePathBySlug = useCallback(
+        async (pathSlug: string): Promise<Course | null> => {
             const findPath = (list: Course[]) =>
-                list.find(
-                    c => matchesSlug(c.title, pathSlug) || String(c.id) === pathSlug
-                );
+                list.find(c => matchesSlug(c.title, pathSlug) || String(c.id) === pathSlug);
 
             let path = findPath(coursesRef.current);
-            let pathPage = pathsPageRef.current;
-            let morePaths = !path;
+            let pathPage = pathsPageRef.current + (coursesRef.current.length > 0 ? 1 : 0);
+            let morePaths = !path && (coursesRef.current.length === 0 || hasMorePathsRef.current);
 
             while (!path && morePaths) {
                 const result = isLoggedIn
                     ? await fetchPathsPage(pathPage, DEFAULT_PAGE_SIZE)
                     : await fetchPublicPathsPage(pathPage, DEFAULT_PAGE_SIZE);
                 const mapped = result.content.map(p => toCourse(p, isLoggedIn));
+                coursesRef.current = mergeCourses(coursesRef.current, mapped);
                 setCourses(prev => mergeCourses(prev, mapped));
-                seedTopicPaging(mapped);
                 pathsPageRef.current = pathPage;
+                hasMorePathsRef.current = result.hasNext;
                 setHasMorePaths(result.hasNext);
                 path = findPath(mapped);
                 morePaths = result.hasNext;
                 pathPage += 1;
             }
+            return path ?? null;
+        },
+        [isLoggedIn]
+    );
 
+    const resolveTopicIdBySlug = useCallback(
+        async (pathSlug: string, topicSlug: string): Promise<string | number | null> => {
+            const path = await resolvePathBySlug(pathSlug);
             if (!path) return null;
 
             const loaded = path.topics || [];
@@ -352,7 +330,7 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
 
             return null;
         },
-        [isLoggedIn, seedTopicPaging, applyTopicsPage, setTopicPagingFor]
+        [resolvePathBySlug, applyTopicsPage, setTopicPagingFor]
     );
 
     return {
@@ -369,6 +347,7 @@ export const useUserData = (isLoggedIn: boolean, activeView?: string, isAuthLoad
         loadTopicsForPath,
         loadMoreTopicsForPath,
         getTopicPaging,
+        resolvePathBySlug,
         resolveTopicIdBySlug
     };
 };

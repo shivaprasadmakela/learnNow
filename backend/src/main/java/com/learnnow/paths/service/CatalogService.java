@@ -1,15 +1,14 @@
 package com.learnnow.paths.service;
 
-import com.learnnow.common.dto.PageRequests;
 import com.learnnow.common.dto.PageResponse;
-import com.learnnow.learningprogress.entity.UserSubtopicProgress;
-import com.learnnow.learningprogress.entity.UserTopicProgress;
+import com.learnnow.interview.repository.InterviewQuestionRepository;
+import com.learnnow.learningprogress.entity.UserQuizAttempt;
 import com.learnnow.learningprogress.enums.ProgressStatus;
+import com.learnnow.learningprogress.repository.UserQuizAttemptRepository;
 import com.learnnow.learningprogress.repository.UserSubtopicProgressRepository;
 import com.learnnow.learningprogress.repository.UserTopicProgressRepository;
-import com.learnnow.paths.dao.PathDao;
-import com.learnnow.paths.dao.TopicDao;
 import com.learnnow.paths.dto.response.CatalogPathDto;
+import com.learnnow.paths.dto.response.LessonOutlineDto;
 import com.learnnow.paths.dto.response.PathSummaryDto;
 import com.learnnow.paths.dto.response.SubtopicDto;
 import com.learnnow.paths.dto.response.TopicDetailDto;
@@ -17,12 +16,17 @@ import com.learnnow.paths.dto.response.TopicSummaryDto;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Path;
 import com.learnnow.paths.entity.Subtopic;
+import com.learnnow.paths.entity.SubtopicCodeSnippet;
 import com.learnnow.paths.entity.Topic;
 import com.learnnow.paths.repository.PathRepository;
+import com.learnnow.paths.repository.SubtopicRepository;
 import com.learnnow.paths.repository.TopicRepository;
+import com.learnnow.tracks.repository.TrackStepRepository;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -39,11 +43,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class CatalogService {
 
     private final PathRepository pathRepository;
-    private final PathDao pathDao;
-    private final TopicDao topicDao;
     private final TopicRepository topicRepository;
     private final UserTopicProgressRepository topicProgressRepository;
     private final UserSubtopicProgressRepository subtopicProgressRepository;
+    private final SubtopicRepository subtopicRepository;
+    private final InterviewQuestionRepository interviewQuestions;
+    private final TrackStepRepository trackSteps;
+    private final UserQuizAttemptRepository quizAttempts;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     /**
@@ -98,38 +104,106 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public PageResponse<PathSummaryDto> getAllPaths(String userId, Pageable pageable) {
         Page<Path> page = pathRepository.findByStatus(ContentStatus.PUBLISHED, byTitle(pageable));
-        return PageResponse.of(page.map(path -> toPathSummary(path, userId)));
+        Map<UUID, PathSummaryDto> summaries = toPathSummaries(page.getContent(), userId);
+        return PageResponse.of(page.map(path -> summaries.get(path.getId())));
     }
 
     /**
-     * Builds a list-view summary of a path.
+     * Summaries for a page of paths, built from grouped queries over the whole page - a handful of
+     * queries however many paths there are, and no lesson text read just to count lessons.
      *
-     * <p>Every topic is loaded because the path's own percentage is the mean across all of them,
-     * but only the first page is embedded in the response - the UI pulls the remainder from the
-     * per-path topics endpoint as it scrolls.
+     * <p>A path's percentage is the mean across its published topics, and a topic's is the share of
+     * its published lessons the learner has completed (100 once the topic is marked complete).
+     * Draft lessons count nowhere, so the figure matches what the learner can see.
      */
-    private PathSummaryDto toPathSummary(Path path, String userId) {
-        List<TopicSummaryDto> topics = getTopicsForPath(path.getId(), userId);
-        int pathPct = 0;
-        if (!topics.isEmpty()) {
-            double sumPct = topics.stream().mapToInt(TopicSummaryDto::progressPercentage).sum();
-            pathPct = (int) Math.round(sumPct / topics.size());
+    private Map<UUID, PathSummaryDto> toPathSummaries(List<Path> paths, String userId) {
+        if (paths.isEmpty()) return Map.of();
+        List<UUID> pathIds = paths.stream().map(Path::getId).toList();
+
+        Map<UUID, Map<UUID, Long>> lessonsByTopic = new java.util.HashMap<>();
+        for (Object[] row : topicRepository.countPublishedLessonsByTopicForPathIds(pathIds)) {
+            lessonsByTopic
+                    .computeIfAbsent((UUID) row[0], id -> new java.util.LinkedHashMap<>())
+                    .put((UUID) row[1], ((Number) row[2]).longValue());
         }
-        List<TopicSummaryDto> firstPage =
-                topics.size() > PageRequests.DEFAULT_PAGE_SIZE
-                        ? topics.subList(0, PageRequests.DEFAULT_PAGE_SIZE)
-                        : topics;
-        return new PathSummaryDto(
-                path.getId(),
-                path.getTitle(),
-                path.getDescription(),
-                path.getCategory(),
-                path.getManagedBy(),
-                pathPct,
-                topics.size(),
-                perPath(List.of(path.getId()), topicRepository::sumPublishedMinutesByPathIds)
-                        .getOrDefault(path.getId(), 0L),
-                List.copyOf(firstPage));
+        List<UUID> topicIds =
+                lessonsByTopic.values().stream().flatMap(m -> m.keySet().stream()).toList();
+        TopicProgress progress = topicProgress(userId, topicIds);
+
+        Map<UUID, Long> minutes = perPath(pathIds, topicRepository::sumPublishedMinutesByPathIds);
+        Map<UUID, Long> interview = perPath(pathIds, interviewQuestions::countOpenersByPathIds);
+        Map<UUID, List<PathSummaryDto.TrackRef>> tracks = new java.util.HashMap<>();
+        for (Object[] row : trackSteps.findTrackRefsForPaths(pathIds)) {
+            List<PathSummaryDto.TrackRef> refs =
+                    tracks.computeIfAbsent((UUID) row[0], id -> new java.util.ArrayList<>());
+            PathSummaryDto.TrackRef ref =
+                    new PathSummaryDto.TrackRef((String) row[1], (String) row[2]);
+            if (!refs.contains(ref)) refs.add(ref);
+        }
+
+        Map<UUID, PathSummaryDto> out = new java.util.HashMap<>();
+        for (Path path : paths) {
+            Map<UUID, Long> topics = lessonsByTopic.getOrDefault(path.getId(), Map.of());
+            int pct =
+                    topics.isEmpty()
+                            ? 0
+                            : (int)
+                                    Math.round(
+                                            topics.entrySet().stream()
+                                                            .mapToInt(
+                                                                    e ->
+                                                                            progress.percent(
+                                                                                    e.getKey(),
+                                                                                    e.getValue()))
+                                                            .sum()
+                                                    / (double) topics.size());
+            out.put(
+                    path.getId(),
+                    new PathSummaryDto(
+                            path.getId(),
+                            path.getTitle(),
+                            path.getDescription(),
+                            path.getCategory(),
+                            path.getManagedBy(),
+                            pct,
+                            topics.size(),
+                            minutes.getOrDefault(path.getId(), 0L),
+                            interview.getOrDefault(path.getId(), 0L).intValue(),
+                            List.copyOf(tracks.getOrDefault(path.getId(), List.of()))));
+        }
+        return out;
+    }
+
+    /** A learner's progress over some topics, from two grouped queries; nothing for a guest. */
+    private TopicProgress topicProgress(String userId, List<UUID> topicIds) {
+        if (userId == null || userId.isBlank() || topicIds.isEmpty()) {
+            return new TopicProgress(Set.of(), Map.of());
+        }
+        Set<UUID> completed =
+                new HashSet<>(topicProgressRepository.findCompletedTopicIds(userId, topicIds));
+        Map<UUID, Long> lessonsDone =
+                subtopicProgressRepository
+                        .countCompletedPublishedLessonsByTopic(userId, topicIds)
+                        .stream()
+                        .collect(
+                                Collectors.toMap(
+                                        row -> (UUID) row[0],
+                                        row -> ((Number) row[1]).longValue()));
+        return new TopicProgress(completed, lessonsDone);
+    }
+
+    /** Which topics are complete as a whole, and how many published lessons of each are done. */
+    private record TopicProgress(Set<UUID> completed, Map<UUID, Long> lessonsDone) {
+        boolean isCompleted(UUID topicId) {
+            return completed.contains(topicId);
+        }
+
+        int percent(UUID topicId, long publishedLessons) {
+            if (completed.contains(topicId)) return 100;
+            if (publishedLessons <= 0) return 0;
+            long done = Math.min(lessonsDone.getOrDefault(topicId, 0L), publishedLessons);
+            return (int) Math.round(done * 100.0 / publishedLessons);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -154,78 +228,27 @@ public class CatalogService {
     }
 
     private List<TopicSummaryDto> toTopicSummaries(List<Topic> topics, String userId) {
-        if (userId == null || userId.isBlank()) {
-            return topics.stream()
-                    .map(
-                            t ->
-                                    new TopicSummaryDto(
-                                            t.getId(),
-                                            t.getTitle(),
-                                            t.getDescription(),
-                                            t.getCategory(),
-                                            t.getDuration(),
-                                            false,
-                                            0))
-                    .toList();
-        }
-
-        List<UserTopicProgress> topicProgresses = topicProgressRepository.findByUserId(userId);
-        Map<UUID, ProgressStatus> topicStatusMap =
-                topicProgresses.stream()
+        if (topics.isEmpty()) return List.of();
+        List<UUID> topicIds = topics.stream().map(Topic::getId).toList();
+        Map<UUID, Long> lessons =
+                topicRepository.countPublishedLessonsByTopicIds(topicIds).stream()
                         .collect(
                                 Collectors.toMap(
-                                        UserTopicProgress::getTopicId,
-                                        UserTopicProgress::getStatus,
-                                        (a, b) -> a));
-
-        List<UserSubtopicProgress> subProgresses = subtopicProgressRepository.findByUserId(userId);
-        Map<UUID, Boolean> subtopicCompletionMap =
-                subProgresses.stream()
-                        .filter(UserSubtopicProgress::isCompleted)
-                        .collect(
-                                Collectors.toMap(
-                                        UserSubtopicProgress::getSubtopicId,
-                                        sp -> true,
-                                        (a, b) -> a));
-
+                                        row -> (UUID) row[0],
+                                        row -> ((Number) row[1]).longValue()));
+        TopicProgress progress = topicProgress(userId, topicIds);
         return topics.stream()
                 .map(
-                        t -> {
-                            boolean isCompleted =
-                                    topicStatusMap.get(t.getId()) == ProgressStatus.COMPLETED;
-                            int pct = 0;
-                            if (isCompleted) {
-                                pct = 100;
-                            } else {
-                                List<Subtopic> subtopics = t.getSubtopics();
-                                if (subtopics != null && !subtopics.isEmpty()) {
-                                    long completedCount =
-                                            subtopics.stream()
-                                                    .filter(
-                                                            st ->
-                                                                    Boolean.TRUE.equals(
-                                                                            subtopicCompletionMap
-                                                                                    .get(
-                                                                                            st
-                                                                                                    .getId())))
-                                                    .count();
-                                    pct =
-                                            (int)
-                                                    Math.round(
-                                                            (double) completedCount
-                                                                    * 100
-                                                                    / subtopics.size());
-                                }
-                            }
-                            return new TopicSummaryDto(
-                                    t.getId(),
-                                    t.getTitle(),
-                                    t.getDescription(),
-                                    t.getCategory(),
-                                    t.getDuration(),
-                                    isCompleted,
-                                    pct);
-                        })
+                        t ->
+                                new TopicSummaryDto(
+                                        t.getId(),
+                                        t.getTitle(),
+                                        t.getDescription(),
+                                        t.getCategory(),
+                                        t.getDuration(),
+                                        progress.isCompleted(t.getId()),
+                                        progress.percent(
+                                                t.getId(), lessons.getOrDefault(t.getId(), 0L))))
                 .toList();
     }
 
@@ -234,230 +257,240 @@ public class CatalogService {
         return getPathDetails(pathId, null);
     }
 
+    /** A published path's summary; a draft path is not found, title and all. */
     @Transactional(readOnly = true)
     public Optional<PathSummaryDto> getPathDetails(UUID pathId, String userId) {
-        return pathRepository.findById(pathId).map(path -> toPathSummary(path, userId));
+        return pathRepository
+                .findById(pathId)
+                .filter(path -> path.getStatus() == ContentStatus.PUBLISHED)
+                .map(path -> toPathSummaries(List.of(path), userId).get(path.getId()));
     }
 
+    /**
+     * A published topic as the study console opens it: its published lessons as an outline, with
+     * the learner's progress. No lesson text, code or quiz - each lesson is fetched with {@link
+     * #getLesson} when the learner reaches it.
+     */
     @Transactional(readOnly = true)
     public Optional<TopicDetailDto> getTopicDetails(UUID id, String userId) {
-        return topicDao.findFullTopicDetailsById(id, ContentStatus.PUBLISHED)
-                .map(
-                        topic -> {
-                            boolean topicCompleted =
-                                    topicProgressRepository
-                                            .findByUserIdAndTopicId(userId, id)
-                                            .map(tp -> tp.getStatus() == ProgressStatus.COMPLETED)
-                                            .orElse(false);
+        Optional<Topic> found =
+                topicRepository.findById(id).filter(t -> t.getStatus() == ContentStatus.PUBLISHED);
+        if (found.isEmpty()) return Optional.empty();
+        Topic topic = found.get();
 
-                            List<UserSubtopicProgress> subProgressList =
-                                    subtopicProgressRepository.findByUserIdAndTopicId(userId, id);
-                            Map<UUID, Boolean> subtopicCompletionMap =
-                                    subProgressList.stream()
-                                            .collect(
-                                                    Collectors.toMap(
-                                                            UserSubtopicProgress::getSubtopicId,
-                                                            UserSubtopicProgress::isCompleted));
+        List<SubtopicRepository.LessonRow> rows = subtopicRepository.findPublishedOutline(id);
+        List<UUID> lessonIds = rows.stream().map(SubtopicRepository.LessonRow::getId).toList();
+        Set<UUID> done =
+                userId == null || lessonIds.isEmpty()
+                        ? Set.of()
+                        : new HashSet<>(
+                                subtopicProgressRepository.findCompletedSubtopicIds(
+                                        userId, lessonIds));
+        Map<UUID, Long> quizzes =
+                lessonIds.isEmpty()
+                        ? Map.of()
+                        : subtopicRepository.countQuizQuestions(lessonIds).stream()
+                                .collect(
+                                        Collectors.toMap(
+                                                row -> (UUID) row[0],
+                                                row -> ((Number) row[1]).longValue()));
+        boolean topicCompleted =
+                userId != null
+                        && topicProgressRepository
+                                .findByUserIdAndTopicId(userId, id)
+                                .map(tp -> tp.getStatus() == ProgressStatus.COMPLETED)
+                                .orElse(false);
 
-                            List<SubtopicDto> subtopics =
-                                    topic.getSubtopics().stream()
-                                            .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
-                                            .sorted(
-                                                    java.util.Comparator.comparingInt(
-                                                            Subtopic::getOrderIndex))
-                                            .map(
-                                                    st -> {
-                                                        List<SubtopicDto.QuizQuestionDto>
-                                                                questions =
-                                                                        st.getBlocks() != null
-                                                                                ? st
-                                                                                        .getBlocks()
-                                                                                        .stream()
-                                                                                        .filter(
-                                                                                                b ->
-                                                                                                        "quiz"
-                                                                                                                        .equalsIgnoreCase(
-                                                                                                                                b
-                                                                                                                                        .getType())
-                                                                                                                && b
-                                                                                                                                .getQuestions()
-                                                                                                                        != null)
-                                                                                        .flatMap(
-                                                                                                b ->
-                                                                                                        b
-                                                                                                                .getQuestions()
-                                                                                                                .stream())
-                                                                                        .map(
-                                                                                                q -> {
-                                                                                                    List<
-                                                                                                                    String>
-                                                                                                            optsList =
-                                                                                                                    List
-                                                                                                                            .of();
-                                                                                                    if (q
-                                                                                                                    .getOptions()
-                                                                                                            != null) {
-                                                                                                        try {
-                                                                                                            optsList =
-                                                                                                                    objectMapper
-                                                                                                                            .readValue(
-                                                                                                                                    q
-                                                                                                                                            .getOptions(),
-                                                                                                                                    new com
-                                                                                                                                                    .fasterxml
-                                                                                                                                                    .jackson
-                                                                                                                                                    .core
-                                                                                                                                                    .type
-                                                                                                                                                    .TypeReference<
-                                                                                                                                            List<
-                                                                                                                                                    String>>() {});
-                                                                                                        } catch (
-                                                                                                                Exception
-                                                                                                                        ignored) {
-                                                                                                        }
-                                                                                                    }
-                                                                                                    return new SubtopicDto
-                                                                                                            .QuizQuestionDto(
-                                                                                                            q
-                                                                                                                    .getId(),
-                                                                                                            q
-                                                                                                                    .getKind(),
-                                                                                                            q
-                                                                                                                    .getPrompt(),
-                                                                                                            optsList,
-                                                                                                            null, // Answer key stripped for anti-cheating security
-                                                                                                            null, // Explanation revealed only after server-side submit
-                                                                                                            q
-                                                                                                                    .getPoints());
-                                                                                                })
-                                                                                        .toList()
-                                                                                : List.of();
+        List<LessonOutlineDto> lessons =
+                rows.stream()
+                        .map(
+                                r ->
+                                        new LessonOutlineDto(
+                                                r.getId(),
+                                                r.getTitle(),
+                                                r.getOrderIndex(),
+                                                done.contains(r.getId()),
+                                                r.getLevel() != null ? r.getLevel() : "beginner",
+                                                r.getTrack() != null ? r.getTrack() : "concept",
+                                                minutesOf(r.getEstimatedMinutes()),
+                                                quizzes.getOrDefault(r.getId(), 0L).intValue()))
+                        .toList();
+        int completed = (int) lessons.stream().filter(LessonOutlineDto::isCompleted).count();
+        int progressPercentage =
+                topicCompleted ? 100 : (lessons.isEmpty() ? 0 : completed * 100 / lessons.size());
+        int totalMins = lessons.stream().mapToInt(LessonOutlineDto::estimatedMinutes).sum();
+        int interview = lessonIds.isEmpty() ? 0 : (int) interviewQuestions.countOpeners(lessonIds);
 
-                                                        List<String> prereqsList = List.of();
-                                                        if (st.getPrerequisites() != null) {
-                                                            try {
-                                                                prereqsList =
-                                                                        objectMapper.readValue(
-                                                                                st
-                                                                                        .getPrerequisites(),
-                                                                                new com.fasterxml
-                                                                                                .jackson
-                                                                                                .core
-                                                                                                .type
-                                                                                                .TypeReference<
-                                                                                        List<
-                                                                                                String>>() {});
-                                                            } catch (Exception ignored) {
-                                                            }
-                                                        }
+        return Optional.of(
+                new TopicDetailDto(
+                        topic.getId(),
+                        topic.getTitle(),
+                        topic.getDescription(),
+                        topic.getCategory(),
+                        duration(totalMins, topic.getDuration()),
+                        topicCompleted,
+                        progressPercentage,
+                        interview,
+                        lessons));
+    }
 
-                                                        List<SubtopicDto.CodeSnippetDto> snippets =
-                                                                st.getCodeSnippets() != null
-                                                                        ? st
-                                                                                .getCodeSnippets()
-                                                                                .stream()
-                                                                                .sorted(
-                                                                                        java.util
-                                                                                                .Comparator
-                                                                                                .comparingInt(
-                                                                                                        com
-                                                                                                                        .learnnow
-                                                                                                                        .paths
-                                                                                                                        .entity
-                                                                                                                        .SubtopicCodeSnippet
-                                                                                                                ::getOrderIndex))
-                                                                                .map(
-                                                                                        sn ->
-                                                                                                new SubtopicDto
-                                                                                                        .CodeSnippetDto(
-                                                                                                        sn
-                                                                                                                .getId(),
-                                                                                                        sn
-                                                                                                                .getLanguage(),
-                                                                                                        sn
-                                                                                                                .getLabel(),
-                                                                                                        sn
-                                                                                                                .getCode(),
-                                                                                                        sn
-                                                                                                                .getExpectedOutput(),
-                                                                                                        sn
-                                                                                                                .isRunnable(),
-                                                                                                        sn
-                                                                                                                .isEditable(),
-                                                                                                        sn
-                                                                                                                .getOrderIndex()))
-                                                                                .toList()
-                                                                        : List.of();
+    /**
+     * One published lesson of a published topic in full: text, code and concept check. A quiz
+     * question goes out without its answer; a question the learner has already answered carries
+     * that attempt, with the answer and explanation when it was answered correctly.
+     */
+    @Transactional(readOnly = true)
+    public Optional<SubtopicDto> getLesson(UUID subtopicId, String userId) {
+        Optional<Subtopic> found =
+                subtopicRepository
+                        .findByIdWithTopic(subtopicId)
+                        .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
+                        .filter(st -> st.getTopic().getStatus() == ContentStatus.PUBLISHED);
+        if (found.isEmpty()) return Optional.empty();
+        Subtopic st = found.get();
 
-                                                        return new SubtopicDto(
-                                                                st.getId(),
-                                                                st.getTitle(),
-                                                                st.getContent(),
-                                                                st.getOrderIndex(),
-                                                                subtopicCompletionMap.getOrDefault(
-                                                                        st.getId(), false),
-                                                                st.getLevel() != null
-                                                                        ? st.getLevel()
-                                                                        : "beginner",
-                                                                st.getTrack() != null
-                                                                        ? st.getTrack()
-                                                                        : "concept",
-                                                                prereqsList,
-                                                                st.getVideoUrl(),
-                                                                st.getEstimatedMinutes() > 0
-                                                                        ? st.getEstimatedMinutes()
-                                                                        : 5,
-                                                                snippets,
-                                                                questions);
-                                                    })
-                                            .toList();
+        List<com.learnnow.admin.entity.QuizQuestion> quiz =
+                st.getBlocks() == null
+                        ? List.of()
+                        : st.getBlocks().stream()
+                                .filter(
+                                        b ->
+                                                "quiz".equalsIgnoreCase(b.getType())
+                                                        && b.getQuestions() != null)
+                                .flatMap(b -> b.getQuestions().stream())
+                                .toList();
+        Map<UUID, UserQuizAttempt> attempts =
+                userId == null || quiz.isEmpty()
+                        ? Map.of()
+                        : quizAttempts
+                                .findByUserIdAndQuestionIdIn(
+                                        userId,
+                                        quiz.stream()
+                                                .map(com.learnnow.admin.entity.QuizQuestion::getId)
+                                                .toList())
+                                .stream()
+                                .collect(
+                                        Collectors.toMap(
+                                                UserQuizAttempt::getQuestionId,
+                                                a -> a,
+                                                (a, b) -> a));
+        boolean completed =
+                userId != null
+                        && !subtopicProgressRepository
+                                .findCompletedSubtopicIds(userId, List.of(subtopicId))
+                                .isEmpty();
 
-                            int totalSubtopics = subtopics.size();
-                            long completedSubtopics =
-                                    subtopics.stream().filter(SubtopicDto::isCompleted).count();
-                            int progressPercentage =
-                                    topicCompleted
-                                            ? 100
-                                            : (totalSubtopics > 0
-                                                    ? (int)
-                                                            ((completedSubtopics * 100)
-                                                                    / totalSubtopics)
-                                                    : 0);
+        List<SubtopicDto.QuizQuestionDto> questions =
+                quiz.stream()
+                        .map(
+                                q -> {
+                                    UserQuizAttempt a = attempts.get(q.getId());
+                                    return new SubtopicDto.QuizQuestionDto(
+                                            q.getId(),
+                                            q.getKind(),
+                                            q.getPrompt(),
+                                            readList(q.getOptions()),
+                                            q.getPoints(),
+                                            a == null
+                                                    ? null
+                                                    // As the quiz check itself does: the
+                                                    // answer is shown once it was answered
+                                                    // correctly, not after a miss.
+                                                    : new SubtopicDto.Attempt(
+                                                            a.isCorrect(),
+                                                            a.isCorrect()
+                                                                    ? q.getCorrectAnswer()
+                                                                    : null,
+                                                            a.isCorrect()
+                                                                    ? q.getExplanation()
+                                                                    : null));
+                                })
+                        .toList();
+        List<SubtopicDto.CodeSnippetDto> snippets =
+                st.getCodeSnippets() == null
+                        ? List.of()
+                        : st.getCodeSnippets().stream()
+                                .sorted(
+                                        java.util.Comparator.comparingInt(
+                                                SubtopicCodeSnippet::getOrderIndex))
+                                .map(
+                                        sn ->
+                                                new SubtopicDto.CodeSnippetDto(
+                                                        sn.getId(),
+                                                        sn.getLanguage(),
+                                                        sn.getLabel(),
+                                                        sn.getCode(),
+                                                        hasText(sn.getExpectedOutput()),
+                                                        sn.isRunnable(),
+                                                        sn.isEditable(),
+                                                        sn.getOrderIndex()))
+                                .toList();
 
-                            int totalMins =
-                                    subtopics.stream()
-                                            .mapToInt(
-                                                    st ->
-                                                            st.estimatedMinutes() > 0
-                                                                    ? st.estimatedMinutes()
-                                                                    : 5)
-                                            .sum();
-                            String computedDuration =
-                                    totalMins >= 60
-                                            ? (totalMins % 60 == 0
-                                                    ? (totalMins / 60)
-                                                            + (totalMins / 60 == 1
-                                                                    ? " hour"
-                                                                    : " hours")
-                                                    : (totalMins / 60)
-                                                            + "h "
-                                                            + (totalMins % 60)
-                                                            + "m")
-                                            : (totalMins > 0
-                                                    ? totalMins + " mins"
-                                                    : (topic.getDuration() != null
-                                                            ? topic.getDuration()
-                                                            : "15 mins"));
+        return Optional.of(
+                new SubtopicDto(
+                        st.getId(),
+                        st.getTitle(),
+                        st.getContent(),
+                        st.getOrderIndex(),
+                        completed,
+                        st.getLevel() != null ? st.getLevel() : "beginner",
+                        st.getTrack() != null ? st.getTrack() : "concept",
+                        readList(st.getPrerequisites()),
+                        st.getVideoUrl(),
+                        minutesOf(st.getEstimatedMinutes()),
+                        snippets,
+                        questions));
+    }
 
-                            return new TopicDetailDto(
-                                    topic.getId(),
-                                    topic.getTitle(),
-                                    topic.getDescription(),
-                                    topic.getCategory(),
-                                    computedDuration,
-                                    topicCompleted,
-                                    progressPercentage,
-                                    subtopics);
-                        });
+    /**
+     * What a runnable snippet of a published lesson is expected to print - asked for once the
+     * learner has run it, so a "predict the output" snippet does not give its answer away first.
+     */
+    @Transactional(readOnly = true)
+    public Optional<String> getExpectedOutput(UUID subtopicId, String snippetId) {
+        return subtopicRepository
+                .findByIdWithTopic(subtopicId)
+                .filter(st -> st.getStatus() == ContentStatus.PUBLISHED)
+                .filter(st -> st.getTopic().getStatus() == ContentStatus.PUBLISHED)
+                .flatMap(
+                        st ->
+                                st.getCodeSnippets() == null
+                                        ? Optional.empty()
+                                        : st.getCodeSnippets().stream()
+                                                .filter(sn -> sn.getId().equals(snippetId))
+                                                .findFirst())
+                .map(SubtopicCodeSnippet::getExpectedOutput)
+                .filter(CatalogService::hasText);
+    }
+
+    private List<String> readList(String json) {
+        if (json == null) return List.of();
+        try {
+            return objectMapper.readValue(
+                    json, new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private static boolean hasText(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    /** A lesson's authored estimate, or five minutes when none was given. */
+    private static int minutesOf(int estimatedMinutes) {
+        return estimatedMinutes > 0 ? estimatedMinutes : 5;
+    }
+
+    /** "2 hours", "1h 30m", "45 mins" - or the topic's own label when it has no lessons. */
+    private static String duration(int totalMins, String fallback) {
+        if (totalMins >= 60) {
+            int hours = totalMins / 60;
+            return totalMins % 60 == 0
+                    ? hours + (hours == 1 ? " hour" : " hours")
+                    : hours + "h " + (totalMins % 60) + "m";
+        }
+        if (totalMins > 0) return totalMins + " mins";
+        return fallback != null ? fallback : "15 mins";
     }
 }

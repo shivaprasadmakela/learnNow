@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { fetchTopicDetails, invalidatePathsCache } from '../../shared/api';
+import { fetchTopicDetails, invalidatePathsCache, invalidateTopicDetails } from '../../shared/api';
 import type { TopicDetails } from '../../shared/api';
 import { useRecordActivity } from '../../features/activity';
 import type { Course } from '../../types';
@@ -24,6 +24,17 @@ interface UseTopicSessionOptions {
      */
     resolveTopicIdBySlug?: (pathSlug: string, topicSlug: string) => Promise<string | number | null>;
 }
+
+/** The topic's percentage from its lessons, as the server computes it: 100 once marked complete. */
+const withProgress = (topic: TopicDetails): TopicDetails => {
+    const done = topic.subtopics.filter(st => st.isCompleted).length;
+    const progressPercentage = topic.isCompleted
+        ? 100
+        : topic.subtopics.length > 0
+          ? Math.floor((done * 100) / topic.subtopics.length)
+          : 0;
+    return { ...topic, progressPercentage };
+};
 
 export const useTopicSession = ({
     isLoggedIn,
@@ -150,11 +161,14 @@ export const useTopicSession = ({
 
         if (!resolveTopicIdBySlug) return;
 
-        let cancelled = false;
+        // Resolving fetches paths and topics, which changes `courses` and re-runs this effect.
+        // Cancelling on that re-run dropped the answer, and the URL is only tried once, so the
+        // console spun forever. Only a later URL supersedes this one.
+        const isCurrent = () => attemptedRestoreRef.current === path;
         (async () => {
             try {
                 const resolved = await resolveTopicIdBySlug(pathSlug, topicSlug);
-                if (cancelled) return;
+                if (!isCurrent()) return;
                 if (resolved !== null && String(activeTopicId) !== String(resolved)) {
                     handleSelectTopic(resolved, undefined, undefined, true);
                     return;
@@ -164,16 +178,12 @@ export const useTopicSession = ({
                     changeView('PATHS');
                 }
             } catch (err) {
-                if (cancelled) return;
+                if (!isCurrent()) return;
                 console.error("Failed to resolve the topic in the URL", err);
                 showToast("Failed to open that topic", "error");
                 changeView('PATHS');
             }
         })();
-
-        return () => {
-            cancelled = true;
-        };
     }, [
         isLoggedIn,
         activeTopic,
@@ -193,12 +203,11 @@ export const useTopicSession = ({
             const nextCompleted = !activeTopic.isCompleted;
             await recordTopicCompletion(activeTopicId, nextCompleted);
 
-            const details = await fetchTopicDetails(activeTopicId);
-            setActiveTopic(details);
-            // The topic details fetched above are what this screen renders. The path list and
-            // its per-path topics are only shown on other views, so they are marked stale and
-            // refetched when the user navigates there - rather than making them wait here for
-            // two more round trips to a database on another continent.
+            // The server has recorded it; the open topic is updated in place rather than
+            // fetched again. The cached outline and the path list are only shown on other
+            // views, so they are marked stale and refetched when the user goes there.
+            setActiveTopic(prev => (prev ? withProgress({ ...prev, isCompleted: nextCompleted }) : prev));
+            invalidateTopicDetails(activeTopicId);
             invalidatePathsCache();
             markPathsStale?.();
 
@@ -217,12 +226,18 @@ export const useTopicSession = ({
             setIsStudyUpdating(true);
             await recordSubtopicCompletion(subtopicId, completed);
 
-            const details = await fetchTopicDetails(activeTopicId);
-            setActiveTopic(details);
-            // The topic details fetched above are what this screen renders. The path list and
-            // its per-path topics are only shown on other views, so they are marked stale and
-            // refetched when the user navigates there - rather than making them wait here for
-            // two more round trips to a database on another continent.
+            // Updated in place, as for the topic above.
+            setActiveTopic(prev =>
+                prev
+                    ? withProgress({
+                          ...prev,
+                          subtopics: prev.subtopics.map(st =>
+                              String(st.id) === String(subtopicId) ? { ...st, isCompleted: completed } : st
+                          )
+                      })
+                    : prev
+            );
+            invalidateTopicDetails(activeTopicId);
             invalidatePathsCache();
             markPathsStale?.();
 

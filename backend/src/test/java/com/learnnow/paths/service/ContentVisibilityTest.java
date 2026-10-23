@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import com.learnnow.admin.dto.response.AdminPathDto;
 import com.learnnow.admin.service.ContentAuthoringService;
 import com.learnnow.paths.dto.response.CatalogPathDto;
+import com.learnnow.paths.dto.response.LessonOutlineDto;
 import com.learnnow.paths.dto.response.PathSummaryDto;
 import com.learnnow.paths.dto.response.TopicSummaryDto;
 import java.util.List;
@@ -61,7 +62,7 @@ class ContentVisibilityTest extends com.learnnow.AbstractIntegrationTest {
                 .hasValueSatisfying(
                         t ->
                                 assertThat(t.subtopics())
-                                        .extracting(s -> s.title())
+                                        .extracting(LessonOutlineDto::title)
                                         .containsExactly("Live lesson"));
     }
 

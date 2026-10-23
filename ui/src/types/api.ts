@@ -1,5 +1,3 @@
-import type { Topic } from '../features/topics';
-
 export interface PathData {
     id: number;
     title: string;
@@ -7,9 +5,18 @@ export interface PathData {
     category: string;
     managedBy: string;
     progressPercentage?: number;
-    /** Total topics on the path. `topics` holds only the first page of them. */
+    /** Total published topics on the path. They load from /api/paths/{id}/topics when it opens. */
     topicCount?: number;
     /** Sum of the authored minutes of the path's published lessons. */
     estimatedMinutes?: number;
-    topics?: Topic[];
+    /** Opening interview questions on the path - the Interview tab's label, before any are loaded. */
+    interviewQuestionCount?: number;
+    /** Career tracks the path is a step of. */
+    tracks?: PathTrackRef[];
+}
+
+/** A career track a path belongs to - enough to link to it. */
+export interface PathTrackRef {
+    slug: string;
+    title: string;
 }

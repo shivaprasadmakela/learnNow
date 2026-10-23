@@ -18,8 +18,8 @@ export const DEMO_WEEKLY_CALENDAR: WeeklyCalendarDay[] = [
 ];
 
 export const DEMO_LEADERBOARD: WeeklyLeaderboardEntry[] = [
-    { userId: '1', fullName: 'Shiva Prasad', avatar: '', weeklyPoints: 480, currentStreak: 7, rank: 1, badge: 'GOLD', isCurrentUser: true },
-    { userId: '2', fullName: 'Alex M.', avatar: '', weeklyPoints: 410, currentStreak: 5, rank: 2, badge: 'SILVER', isCurrentUser: false },
-    { userId: '3', fullName: 'Priya N.', avatar: '', weeklyPoints: 365, currentStreak: 4, rank: 3, badge: 'NONE', isCurrentUser: false },
-    { userId: '4', fullName: 'Dev K.', avatar: '', weeklyPoints: 290, currentStreak: 3, rank: 4, badge: 'NONE', isCurrentUser: false }
+    { fullName: 'Shiva Prasad', avatar: '', weeklyPoints: 480, currentStreak: 7, rank: 1, badge: 'GOLD', isCurrentUser: true },
+    { fullName: 'Alex M.', avatar: '', weeklyPoints: 410, currentStreak: 5, rank: 2, badge: 'SILVER', isCurrentUser: false },
+    { fullName: 'Priya N.', avatar: '', weeklyPoints: 365, currentStreak: 4, rank: 3, badge: 'NONE', isCurrentUser: false },
+    { fullName: 'Dev K.', avatar: '', weeklyPoints: 290, currentStreak: 3, rank: 4, badge: 'NONE', isCurrentUser: false }
 ];

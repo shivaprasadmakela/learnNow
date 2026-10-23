@@ -9,9 +9,13 @@ import java.util.UUID;
  * <p>{@code sectionPath} is the problem's full ancestry, root first. The client groups a flat page
  * of these back into a tree, which is why nesting deeper costs nothing here: a fourth level is one
  * more entry in the list, not a new field or a new endpoint.
+ *
+ * <p>{@code stepId} lets a page of the sheet-wide search, which spans steps, be filed back under
+ * each step's accordion.
  */
 public record DsaProblemRowDto(
         UUID id,
+        UUID stepId,
         String slug,
         String title,
         String difficulty,

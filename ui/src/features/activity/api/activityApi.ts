@@ -1,4 +1,5 @@
 import { apiFetch } from '../../../shared/api/client';
+import { progressChanged } from '../../../shared/api/cache';
 
 export const setTopicCompletion = async (topicId: string | number, completed: boolean): Promise<void> => {
     const response = await apiFetch(`/api/me/topics/${topicId}/completion`, {
@@ -7,6 +8,7 @@ export const setTopicCompletion = async (topicId: string | number, completed: bo
         body: JSON.stringify({ completed })
     });
     if (!response.ok) throw new Error('Failed to set topic completion status');
+    progressChanged();
 };
 
 export const setSubtopicCompletion = async (subtopicId: string | number, completed: boolean = true): Promise<void> => {
@@ -14,4 +16,5 @@ export const setSubtopicCompletion = async (subtopicId: string | number, complet
         method: 'PUT'
     });
     if (!response.ok) throw new Error('Failed to set subtopic completion status');
+    progressChanged();
 };

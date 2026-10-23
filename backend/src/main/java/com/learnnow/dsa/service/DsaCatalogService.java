@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnnow.common.dto.PageResponse;
 import com.learnnow.common.exception.NotFoundException;
+import com.learnnow.common.exception.ValidationException;
+import com.learnnow.dsa.dao.DsaProblemSearchDao;
 import com.learnnow.dsa.dao.DsaProgressDao;
 import com.learnnow.dsa.dto.response.*;
 import com.learnnow.dsa.entity.*;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +23,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +51,7 @@ public class DsaCatalogService {
     private final DsaCheckRepository checkRepository;
     private final UserDsaProblemProgressRepository progressRepository;
     private final DsaProgressDao progressDao;
+    private final DsaProblemSearchDao searchDao;
     private final NotesService notesService;
     private final ObjectMapper objectMapper;
     private final DsaApproachSolutions approachSolutions;
@@ -131,17 +136,86 @@ public class DsaCatalogService {
                 problemRepository.findByStepIdAndStatus(
                         stepId, DsaProblemStatus.PUBLISHED, pageable);
 
-        List<UUID> problemIds = page.getContent().stream().map(DsaProblem::getId).toList();
+        return PageResponse.of(
+                toRows(page.getContent(), userId), pageable, page.getTotalElements());
+    }
+
+    /**
+     * One page of the sheet's problems matching a search, across every step.
+     *
+     * <p>The rows are the step endpoint's rows, built by the same code, so the sheet page can file
+     * them under its step accordions exactly as if each step had been opened. Problems are loaded
+     * with their section and step in the same query, since every row needs both.
+     *
+     * @param difficulty {@code EASY}, {@code MEDIUM} or {@code HARD}; blank or {@code ALL} for any
+     * @param status {@code ALL}, {@code TODO}, {@code SOLVED} or {@code BOOKMARKED}
+     * @throws ValidationException for a difficulty or status outside those
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<DsaProblemRowDto> searchSheet(
+            String slug,
+            String userId,
+            String query,
+            String difficulty,
+            String status,
+            Pageable pageable) {
+
+        DsaSheet sheet =
+                sheetRepository
+                        .findBySlugAndStatus(slug, DsaProblemStatus.PUBLISHED)
+                        .orElseThrow(() -> new NotFoundException("dsa_sheet_not_found"));
+
+        DsaProblemSearchDao.Criteria criteria =
+                new DsaProblemSearchDao.Criteria(
+                        query, parseDifficulty(difficulty), parseStatusFilter(status));
+
+        Page<UUID> ids = searchDao.search(sheet.getId(), userId, criteria, pageable);
+        if (ids.isEmpty()) {
+            return PageResponse.of(List.of(), pageable, ids.getTotalElements());
+        }
+
+        Map<UUID, DsaProblem> byId = new HashMap<>();
+        for (DsaProblem problem : problemRepository.findAllWithSectionByIdIn(ids.getContent())) {
+            byId.put(problem.getId(), problem);
+        }
+        List<DsaProblem> ordered =
+                ids.getContent().stream().map(byId::get).filter(p -> p != null).toList();
+
+        return PageResponse.of(toRows(ordered, userId), pageable, ids.getTotalElements());
+    }
+
+    private static DsaDifficulty parseDifficulty(String raw) {
+        if (raw == null || raw.isBlank() || raw.equalsIgnoreCase("ALL")) return null;
+        try {
+            return DsaDifficulty.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("dsa_difficulty_invalid");
+        }
+    }
+
+    private static DsaProblemSearchDao.StatusFilter parseStatusFilter(String raw) {
+        if (raw == null || raw.isBlank()) return DsaProblemSearchDao.StatusFilter.ALL;
+        try {
+            return DsaProblemSearchDao.StatusFilter.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("dsa_status_filter_invalid");
+        }
+    }
+
+    /** Rows for a page of problems, with progress and bookmarks read once for the whole page. */
+    private List<DsaProblemRowDto> toRows(List<DsaProblem> problems, String userId) {
+        List<UUID> problemIds = problems.stream().map(DsaProblem::getId).toList();
         Map<UUID, UserDsaProblemProgress> progressByProblem = loadProgress(userId, problemIds);
         // One query for the whole page rather than one per row.
         Set<UUID> bookmarked = notesService.bookmarkedProblemIds(userId, problemIds);
 
         List<DsaProblemRowDto> rows = new ArrayList<>();
-        for (DsaProblem problem : page.getContent()) {
+        for (DsaProblem problem : problems) {
             UserDsaProblemProgress progress = progressByProblem.get(problem.getId());
             rows.add(
                     new DsaProblemRowDto(
                             problem.getId(),
+                            problem.getSection().getStep().getId(),
                             problem.getSlug(),
                             problem.getTitle(),
                             problem.getDifficulty().name(),
@@ -156,7 +230,7 @@ public class DsaCatalogService {
                                     : progress.getStatus().name(),
                             bookmarked.contains(problem.getId())));
         }
-        return PageResponse.of(rows, pageable, page.getTotalElements());
+        return rows;
     }
 
     @Transactional(readOnly = true)
@@ -197,6 +271,70 @@ public class DsaCatalogService {
         return assembleDetail(problem, userId);
     }
 
+    /**
+     * The {@code n}th hint of a published problem, counting from one.
+     *
+     * <p>One at a time, because that is how the page reveals them: a learner who needed only the
+     * first nudge is never sent the rest.
+     */
+    @Transactional(readOnly = true)
+    public DsaHintDto hint(UUID problemId, int n) {
+        requirePublished(problemId);
+        return nthHint(problemId, n);
+    }
+
+    /** The full editorial of a published problem: intuition, complexity and code. */
+    @Transactional(readOnly = true)
+    public DsaEditorialDto editorial(UUID problemId) {
+        requirePublished(problemId);
+        return editorialOf(problemId);
+    }
+
+    /** {@link #hint} for the authoring preview, which serves drafts too. */
+    @Transactional(readOnly = true)
+    public DsaHintDto previewHint(UUID problemId, int n) {
+        requireExists(problemId);
+        return nthHint(problemId, n);
+    }
+
+    /** {@link #editorial} for the authoring preview, which serves drafts too. */
+    @Transactional(readOnly = true)
+    public DsaEditorialDto previewEditorial(UUID problemId) {
+        requireExists(problemId);
+        return editorialOf(problemId);
+    }
+
+    private DsaHintDto nthHint(UUID problemId, int n) {
+        if (n < 1) throw new NotFoundException("dsa_hint_not_found");
+        return hintRepository
+                .findByProblemIdOrderByOrderIndexAsc(problemId, PageRequest.of(n - 1, 1))
+                .stream()
+                .findFirst()
+                .map(h -> new DsaHintDto(h.getId(), h.getOrderIndex(), h.getBody()))
+                .orElseThrow(() -> new NotFoundException("dsa_hint_not_found"));
+    }
+
+    private DsaEditorialDto editorialOf(UUID problemId) {
+        return new DsaEditorialDto(
+                problemId,
+                approachRepository.findByProblemIdOrderByOrderIndexAsc(problemId).stream()
+                        .map(approachSolutions::toDto)
+                        .toList());
+    }
+
+    private void requirePublished(UUID problemId) {
+        problemRepository
+                .findById(problemId)
+                .filter(p -> p.getStatus() == DsaProblemStatus.PUBLISHED)
+                .orElseThrow(() -> new NotFoundException("dsa_problem_not_found"));
+    }
+
+    private void requireExists(UUID problemId) {
+        if (!problemRepository.existsById(problemId)) {
+            throw new NotFoundException("dsa_problem_not_found");
+        }
+    }
+
     private DsaProblemDetailDto assembleDetail(DsaProblem problem, String userId) {
 
         UUID problemId = problem.getId();
@@ -216,14 +354,21 @@ public class DsaCatalogService {
                                                 tc.getExplanation()))
                         .toList();
 
-        List<DsaHintDto> hints =
-                hintRepository.findByProblemIdOrderByOrderIndexAsc(problemId).stream()
-                        .map(h -> new DsaHintDto(h.getId(), h.getOrderIndex(), h.getBody()))
-                        .toList();
+        // Only the outline of the hints and the editorial. Their text comes from hint() and
+        // editorial() when the learner asks for it, so nobody is sent the answer along with the
+        // statement.
+        int hintCount = (int) hintRepository.countByProblemId(problemId);
 
-        List<DsaApproachDto> approaches =
-                approachRepository.findByProblemIdOrderByOrderIndexAsc(problemId).stream()
-                        .map(approachSolutions::toDto)
+        List<DsaApproachSummaryDto> approaches =
+                approachRepository.findSummariesByProblemId(problemId).stream()
+                        .map(
+                                a ->
+                                        new DsaApproachSummaryDto(
+                                                a.getId(),
+                                                a.getKind().name(),
+                                                a.getOrderIndex(),
+                                                a.getTimeComplexity(),
+                                                a.getSpaceComplexity()))
                         .toList();
 
         List<DsaCheckDto> checks =
@@ -244,11 +389,11 @@ public class DsaCatalogService {
                         .map(h -> new DsaHarnessStubDto(h.getLanguage(), h.getStarterCode()))
                         .toList();
 
-        int totalCases = testCaseRepository.findByProblemIdOrderByOrderIndexAsc(problemId).size();
+        int totalCases = (int) testCaseRepository.countByProblemId(problemId);
         boolean judgeable = !harnesses.isEmpty() && totalCases > 0;
 
-        List<DsaProblem> siblings =
-                problemRepository.findAllByStepIdAndStatus(
+        List<DsaProblemRepository.SlugRef> siblings =
+                problemRepository.findSlugsByStepIdAndStatus(
                         step.getId(), DsaProblemStatus.PUBLISHED);
         String previousSlug = null;
         String nextSlug = null;
@@ -261,7 +406,13 @@ public class DsaCatalogService {
         }
 
         DsaProblemProgressDto progress = DsaProblemProgressDto.notStarted();
+        boolean bookmarked = false;
         if (userId != null && !userId.isBlank()) {
+            // The lookup the sheet's rows use, so the page needs no bookmark list of its own.
+            bookmarked =
+                    notesService
+                            .bookmarkedProblemIds(userId, List.of(problemId))
+                            .contains(problemId);
             progress =
                     progressRepository
                             .findByUserIdAndProblemId(userId, problemId)
@@ -291,13 +442,14 @@ public class DsaCatalogService {
                 step.getTitle(),
                 problem.getSection().getTitle(),
                 samples,
-                hints,
+                hintCount,
                 approaches,
                 checks,
                 harnesses,
                 judgeable,
                 totalCases,
                 progress,
+                bookmarked,
                 previousSlug,
                 nextSlug);
     }

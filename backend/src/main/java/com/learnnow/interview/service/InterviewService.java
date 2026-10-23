@@ -2,11 +2,13 @@ package com.learnnow.interview.service;
 
 import com.learnnow.common.exception.ValidationException;
 import com.learnnow.interview.dto.request.ImportInterviewBankRequest;
+import com.learnnow.interview.dto.response.InterviewAnswerDto;
 import com.learnnow.interview.dto.response.InterviewImportResultDto;
 import com.learnnow.interview.dto.response.InterviewQuestionDto;
 import com.learnnow.interview.dto.response.InterviewTopicDto;
 import com.learnnow.interview.entity.InterviewQuestion;
 import com.learnnow.interview.repository.InterviewQuestionRepository;
+import com.learnnow.interview.repository.InterviewQuestionRepository.CountRow;
 import com.learnnow.interview.repository.InterviewQuestionRepository.SightingRow;
 import com.learnnow.interview.repository.InterviewQuestionRepository.SubtopicRow;
 import com.learnnow.paths.entity.ContentStatus;
@@ -150,8 +152,9 @@ public class InterviewService {
     }
 
     /**
-     * A path's interview questions grouped by topic, topics and questions in the order the path
-     * teaches them; empty if the path is not published. Topics with no questions are left out.
+     * The topics of a path that have interview questions, in the path's order, each with how many
+     * questions it holds; empty if the path is not published. Only counts: a topic's questions load
+     * when the learner opens it ({@link #forTopic}).
      */
     @Transactional(readOnly = true)
     public Optional<List<InterviewTopicDto>> forPath(UUID pathId) {
@@ -161,31 +164,42 @@ public class InterviewService {
                         .filter(p -> p.getStatus() == ContentStatus.PUBLISHED);
         if (path.isEmpty()) return Optional.empty();
 
-        Map<UUID, Anchor> anchors = new LinkedHashMap<>();
-        for (SubtopicRow row : questionRepository.findSubtopicsInPath(pathId)) {
-            anchors.put(
-                    row.getId(), new Anchor(row.getTopicId(), row.getTopicTitle(), row.getTitle()));
-        }
-        Map<UUID, List<InterviewQuestionDto>> trees = treesBySubtopic(anchors);
+        // Published lessons only: a question anchored to a draft lesson stays out of sight, and so
+        // does the draft's title.
+        List<SubtopicRow> rows = questionRepository.findPublishedSubtopicsInPath(pathId);
+        if (rows.isEmpty()) return Optional.of(List.of());
+        Map<UUID, CountRow> counts =
+                questionRepository
+                        .countBySubtopic(
+                                rows.stream().map(SubtopicRow::getId).toList(),
+                                ContentStatus.PUBLISHED)
+                        .stream()
+                        .collect(Collectors.toMap(CountRow::getSubtopicId, Function.identity()));
 
         // Subtopics arrive in path order, so walking them groups topics in path order too.
-        Map<UUID, InterviewTopicDto> topics = new LinkedHashMap<>();
-        for (Map.Entry<UUID, Anchor> e : anchors.entrySet()) {
-            List<InterviewQuestionDto> qs = trees.get(e.getKey());
-            if (qs == null || qs.isEmpty()) continue;
-            Anchor a = e.getValue();
-            topics.computeIfAbsent(
-                            a.topicId(),
-                            id -> new InterviewTopicDto(id, a.topicTitle(), new ArrayList<>()))
-                    .questions()
-                    .addAll(qs);
+        Map<UUID, int[]> totals = new LinkedHashMap<>();
+        Map<UUID, String> titles = new HashMap<>();
+        for (SubtopicRow row : rows) {
+            CountRow c = counts.get(row.getId());
+            if (c == null) continue;
+            int[] t = totals.computeIfAbsent(row.getTopicId(), id -> new int[2]);
+            t[0] += c.getOpeners().intValue();
+            t[1] += c.getFollowUps().intValue();
+            titles.putIfAbsent(row.getTopicId(), row.getTopicTitle());
         }
-        return Optional.of(new ArrayList<>(topics.values()));
+        List<InterviewTopicDto> out = new ArrayList<>();
+        totals.forEach(
+                (topicId, t) -> {
+                    if (t[0] > 0)
+                        out.add(new InterviewTopicDto(topicId, titles.get(topicId), t[0], t[1]));
+                });
+        return Optional.of(out);
     }
 
     /**
-     * A topic's opening questions, each with its follow-ups, in the order the topic teaches the
-     * lessons they come from - what the study console shows beside the lessons themselves.
+     * A topic's opening questions in the order the topic teaches the lessons they come from, as the
+     * interviewer asks them: prompts, never answers. Empty when the topic has none or is not
+     * published.
      */
     @Transactional(readOnly = true)
     public List<InterviewQuestionDto> forTopic(UUID topicId) {
@@ -194,27 +208,90 @@ public class InterviewService {
             anchors.put(
                     row.getId(), new Anchor(row.getTopicId(), row.getTopicTitle(), row.getTitle()));
         }
-        Map<UUID, List<InterviewQuestionDto>> trees = treesBySubtopic(anchors);
+        if (anchors.isEmpty()) return List.of();
+        List<InterviewQuestion> all =
+                questionRepository.findBySubtopicIdInAndStatus(
+                        anchors.keySet(), ContentStatus.PUBLISHED);
+        Map<UUID, Long> children =
+                all.stream()
+                        .filter(q -> q.getParentId() != null)
+                        .collect(
+                                Collectors.groupingBy(
+                                        InterviewQuestion::getParentId, Collectors.counting()));
+        List<InterviewQuestion> openers =
+                all.stream()
+                        .filter(q -> q.getParentId() == null)
+                        .sorted(Comparator.comparingInt(InterviewQuestion::getOrderIndex))
+                        .toList();
+        Map<UUID, List<InterviewQuestionDto.Sighting>> sightings = sightingsOf(openers);
+
         List<InterviewQuestionDto> out = new ArrayList<>();
         for (UUID subtopicId : anchors.keySet()) {
-            out.addAll(trees.getOrDefault(subtopicId, List.of()));
+            for (InterviewQuestion q : openers) {
+                if (q.getSubtopicId().equals(subtopicId)) {
+                    out.add(promptOf(q, anchors.get(subtopicId), children, sightings));
+                }
+            }
         }
         return out;
     }
 
-    private Map<UUID, List<InterviewQuestionDto>> treesBySubtopic(Map<UUID, Anchor> anchors) {
-        if (anchors.isEmpty()) return Map.of();
-        List<InterviewQuestion> all =
-                questionRepository.findBySubtopicIdInAndStatus(
-                        anchors.keySet(), ContentStatus.PUBLISHED);
-        if (all.isEmpty()) return Map.of();
+    /**
+     * What revealing one question shows: its answer and the follow-ups it unlocks, as prompts.
+     * Empty when the question, its lesson or its topic is not published.
+     */
+    @Transactional(readOnly = true)
+    public Optional<InterviewAnswerDto> answer(UUID questionId) {
+        Optional<InterviewQuestion> found =
+                questionRepository
+                        .findById(questionId)
+                        .filter(q -> q.getStatus() == ContentStatus.PUBLISHED)
+                        .filter(q -> questionRepository.isPublishedSubtopic(q.getSubtopicId()));
+        if (found.isEmpty()) return Optional.empty();
+        InterviewQuestion q = found.get();
 
-        Map<UUID, List<InterviewQuestionDto.Sighting>> sightings = new HashMap<>();
+        List<InterviewQuestion> follow =
+                questionRepository.findByParentIdAndStatusOrderByOrderIndex(
+                        q.getId(), ContentStatus.PUBLISHED);
+        Map<UUID, Long> grandchildren = new HashMap<>();
+        for (InterviewQuestion f : follow) {
+            grandchildren.put(
+                    f.getId(),
+                    (long)
+                            questionRepository
+                                    .findByParentIdAndStatusOrderByOrderIndex(
+                                            f.getId(), ContentStatus.PUBLISHED)
+                                    .size());
+        }
+        Map<UUID, List<InterviewQuestionDto.Sighting>> sightings = sightingsOf(follow);
+        return Optional.of(
+                new InterviewAnswerDto(
+                        q.getId(),
+                        !hasBeginnerAnswer(q)
+                                ? null
+                                : new InterviewAnswerDto.Answer(
+                                        q.getAnswerSimple(),
+                                        q.getAnswerHow(),
+                                        q.getAnswerUsage(),
+                                        q.getAnswerExample(),
+                                        q.getAnswerScript(),
+                                        q.getAnswerRemember(),
+                                        q.getAnswerCaution()),
+                        q.getAnswerShort(),
+                        q.getAnswerDeep(),
+                        q.getAnswerSignal(),
+                        follow.stream()
+                                .map(f -> promptOf(f, null, grandchildren, sightings))
+                                .toList()));
+    }
+
+    private Map<UUID, List<InterviewQuestionDto.Sighting>> sightingsOf(List<InterviewQuestion> qs) {
+        Map<UUID, List<InterviewQuestionDto.Sighting>> out = new HashMap<>();
+        if (qs.isEmpty()) return out;
         for (SightingRow row :
                 questionRepository.findSightings(
-                        all.stream().map(InterviewQuestion::getId).toList())) {
-            sightings
-                    .computeIfAbsent(row.getQuestionId(), id -> new ArrayList<>())
+                        qs.stream().map(InterviewQuestion::getId).toList())) {
+            out.computeIfAbsent(row.getQuestionId(), id -> new ArrayList<>())
                     .add(
                             new InterviewQuestionDto.Sighting(
                                     row.getCompany(),
@@ -223,25 +300,6 @@ public class InterviewService {
                                     row.getRound(),
                                     row.getSeenMonth()));
         }
-        Map<UUID, List<InterviewQuestion>> children = new HashMap<>();
-        for (InterviewQuestion q : all) {
-            if (q.getParentId() != null) {
-                children.computeIfAbsent(q.getParentId(), id -> new ArrayList<>()).add(q);
-            }
-        }
-        Map<UUID, List<InterviewQuestionDto>> out = new HashMap<>();
-        all.stream()
-                .filter(q -> q.getParentId() == null)
-                .sorted(Comparator.comparingInt(InterviewQuestion::getOrderIndex))
-                .forEach(
-                        root ->
-                                out.computeIfAbsent(root.getSubtopicId(), id -> new ArrayList<>())
-                                        .add(
-                                                toDto(
-                                                        root,
-                                                        anchors.get(root.getSubtopicId()),
-                                                        children,
-                                                        sightings)));
         return out;
     }
 
@@ -249,16 +307,11 @@ public class InterviewService {
      * {@code anchor} is the opener's subtopic; follow-ups pass null and carry no anchor of their
      * own.
      */
-    private static InterviewQuestionDto toDto(
+    private static InterviewQuestionDto promptOf(
             InterviewQuestion q,
             Anchor anchor,
-            Map<UUID, List<InterviewQuestion>> children,
+            Map<UUID, Long> children,
             Map<UUID, List<InterviewQuestionDto.Sighting>> sightings) {
-        List<InterviewQuestionDto> follow =
-                children.getOrDefault(q.getId(), List.of()).stream()
-                        .sorted(Comparator.comparingInt(InterviewQuestion::getOrderIndex))
-                        .map(c -> toDto(c, null, children, sightings))
-                        .toList();
         List<InterviewQuestionDto.Sighting> seen = sightings.getOrDefault(q.getId(), List.of());
         return new InterviewQuestionDto(
                 q.getId(),
@@ -266,23 +319,10 @@ public class InterviewService {
                 anchor == null ? null : q.getSubtopicId(),
                 anchor == null ? null : anchor.subtopicTitle(),
                 q.getPrompt(),
-                !hasBeginnerAnswer(q)
-                        ? null
-                        : new InterviewQuestionDto.Answer(
-                                q.getAnswerSimple(),
-                                q.getAnswerHow(),
-                                q.getAnswerUsage(),
-                                q.getAnswerExample(),
-                                q.getAnswerScript(),
-                                q.getAnswerRemember(),
-                                q.getAnswerCaution()),
-                q.getAnswerShort(),
-                q.getAnswerDeep(),
-                q.getAnswerSignal(),
                 q.getDepth(),
                 seen.isEmpty(),
                 seen,
-                follow);
+                children.getOrDefault(q.getId(), 0L).intValue());
     }
 
     /** Walks one question and its follow-ups depth-first, parents before children. */

@@ -24,6 +24,7 @@ import { ContentRenderer } from '../../../../shared/components/content-renderer'
 import { EditorialPanel } from '../../components/EditorialPanel';
 import { BookmarkButton, NotesPanel, useBookmarks, useNote } from '../../../notes';
 import { useDsaProblem } from '../../hooks/useDsaProblem';
+import { useDsaHints } from '../../hooks/useDsaHints';
 import { useProblemRun, type RunPhase } from '../../hooks/useProblemRun';
 import { useCodeBuffer, writeDraft } from '../../hooks/useCodeBuffer';
 import { useSplitPane } from '../../hooks/useSplitPane';
@@ -97,7 +98,8 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     const [mobilePane, setMobilePane] = useState<MobilePane>('problem');
     const isMobile = useIsMobile();
     const [language, setLanguage] = useState<string>(DEFAULT_DSA_LANGUAGE);
-    const [revealedHints, setRevealedHints] = useState(0);
+    // Only the count comes with the problem; each hint is fetched as it is revealed.
+    const hintStack = useDsaHints(problem?.id, problem?.hintCount ?? 0, isPreview);
     /** An extra case the learner typed, sent along with the samples on Run. */
     const [customInput, setCustomInput] = useState('');
     /** Bumped after a submit so the submissions tab refetches instead of showing a stale list. */
@@ -133,7 +135,6 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
     useEffect(() => {
         if (!problem) return;
         setLanguage(defaultLanguageFor(problem.harnesses));
-        setRevealedHints(0);
         setLeftTab('description');
         setCustomInput('');
     }, [problem]);
@@ -479,29 +480,33 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                                     </>
                                 )}
 
-                                {problem.hints.length > 0 && (
+                                {problem.hintCount > 0 && (
                                     <>
                                         <h2 className={styles.sectionHead}>Hints</h2>
                                         <div className={styles.hintStack}>
-                                            {problem.hints
-                                                .slice(0, revealedHints)
-                                                .map((hint, index) => (
-                                                    <div key={hint.id} className={styles.hint}>
-                                                        <span className={styles.hintIndex}>
-                                                            Hint {index + 1}
-                                                        </span>
-                                                        {hint.body}
-                                                    </div>
-                                                ))}
-                                            {revealedHints < problem.hints.length && (
+                                            {hintStack.hints.map((hint, index) => (
+                                                <div key={hint.id} className={styles.hint}>
+                                                    <span className={styles.hintIndex}>
+                                                        Hint {index + 1}
+                                                    </span>
+                                                    {hint.body}
+                                                </div>
+                                            ))}
+                                            {hintStack.error && (
+                                                <p className={styles.exampleNote} role="alert">
+                                                    {hintStack.error}
+                                                </p>
+                                            )}
+                                            {hintStack.hasMore && (
                                                 <button
                                                     type="button"
                                                     className={styles.revealBtn}
-                                                    onClick={() => setRevealedHints(n => n + 1)}
+                                                    disabled={hintStack.isLoading}
+                                                    onClick={hintStack.revealNext}
                                                 >
-                                                    {revealedHints === 0
-                                                        ? `Show a hint (${problem.hints.length} available)`
-                                                        : `Show hint ${revealedHints + 1}`}
+                                                    {hintStack.hints.length === 0
+                                                        ? `Show a hint (${problem.hintCount} available)`
+                                                        : `Show hint ${hintStack.hints.length + 1}`}
                                                 </button>
                                             )}
                                         </div>
@@ -518,6 +523,7 @@ export const DsaProblemPage: React.FC<DsaProblemPageProps> = ({
                                 preferredLanguage={language}
                                 solved={solved}
                                 youtubeUrl={problem.youtubeUrl}
+                                preview={isPreview}
                             />
                         )}
 

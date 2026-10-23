@@ -1,5 +1,5 @@
 import React from 'react';
-import { countQuestions, type InterviewQuestion } from '../../api/interview.api';
+import type { InterviewQuestion } from '../../api/interview.api';
 import { groupByLesson, interviewAnchorId, type LessonQuestions } from '../../utils/topicInterview';
 import { HowItWorks } from '../HowItWorks/HowItWorks';
 import { InterviewQuestionCard } from '../InterviewQuestion/InterviewQuestion';
@@ -25,7 +25,7 @@ export const TopicInterviewSection: React.FC<TopicInterviewSectionProps> = ({
     onRevise
 }) => {
     const groups = numbered(groupByLesson(questions));
-    const followUps = questions.reduce((n, q) => n + countQuestions(q.followUps), 0);
+    const followUps = questions.reduce((n, q) => n + q.followUpCount, 0);
 
     return (
         <section className={styles.section} aria-labelledby="topic-interview-title">

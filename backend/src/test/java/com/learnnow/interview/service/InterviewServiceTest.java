@@ -9,10 +9,13 @@ import com.learnnow.admin.service.ContentAuthoringService;
 import com.learnnow.common.exception.ValidationException;
 import com.learnnow.interview.dto.request.ImportInterviewBankRequest;
 import com.learnnow.interview.dto.request.ImportInterviewBankRequest.Question;
+import com.learnnow.interview.dto.response.InterviewAnswerDto;
 import com.learnnow.interview.dto.response.InterviewImportResultDto;
 import com.learnnow.interview.dto.response.InterviewQuestionDto;
 import com.learnnow.interview.dto.response.InterviewTopicDto;
 import com.learnnow.interview.repository.InterviewQuestionRepository;
+import java.lang.reflect.RecordComponent;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -34,10 +37,9 @@ class InterviewServiceTest extends AbstractIntegrationTest {
     @Autowired private ContentAuthoringService authoring;
 
     @Test
-    void anImportedBankReadsBackAsTreesGroupedByTopicInPathOrder() {
+    void aPathListsItsTopicsWithCountsAndNoQuestions() {
         AdminPathDto path = path("PUBLISHED");
         String p = prefix();
-
         interview.importBank(
                 bank(
                         path,
@@ -54,25 +56,100 @@ class InterviewServiceTest extends AbstractIntegrationTest {
         List<InterviewTopicDto> topics = interview.forPath(path.id()).orElseThrow();
 
         assertThat(topics)
-                .extracting(InterviewTopicDto::topicTitle)
-                .containsExactly("Maps", "Sets");
-        InterviewQuestionDto opener = topics.get(0).questions().get(0);
+                .extracting(
+                        InterviewTopicDto::topicTitle,
+                        InterviewTopicDto::questionCount,
+                        InterviewTopicDto::followUpCount)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("Maps", 1, 2),
+                        org.assertj.core.groups.Tuple.tuple("Sets", 1, 0));
+    }
+
+    @Test
+    void aTopicGivesPromptsAndEachRevealGivesOneAnswerAndTheNextFollowUps() {
+        AdminPathDto path = path("PUBLISHED");
+        String p = prefix();
+        interview.importBank(
+                bank(
+                        path,
+                        root(
+                                p + "map",
+                                "First lesson",
+                                "How does a map find a key?",
+                                follow(
+                                        p + "collide",
+                                        "What happens on a collision?",
+                                        follow(p + "tree", "Why switch to a tree?")))));
+
+        InterviewQuestionDto opener = interview.forTopic(path.topics().get(0).id()).get(0);
         assertThat(opener.prompt()).isEqualTo("How does a map find a key?");
         assertThat(opener.subtopicTitle()).isEqualTo("First lesson");
         assertThat(opener.depth()).isEqualTo(1);
         assertThat(opener.practice()).isTrue();
+        assertThat(opener.followUpCount()).isEqualTo(1);
+        // A prompt carries nothing that answers it: the answer is a separate reveal.
+        assertThat(Arrays.stream(InterviewQuestionDto.class.getRecordComponents()))
+                .extracting(RecordComponent::getName)
+                .noneMatch(name -> name.toLowerCase().contains("answer"))
+                .doesNotContain("followUps");
 
-        InterviewQuestionDto collide = opener.followUps().get(0);
+        InterviewAnswerDto revealed = interview.answer(opener.id()).orElseThrow();
+        assertThat(revealed.answerShort()).isEqualTo("short");
+        InterviewQuestionDto collide = revealed.followUps().get(0);
         assertThat(collide.depth()).isEqualTo(2);
         // Follow-ups share their opener's lesson rather than repeating it.
         assertThat(collide.subtopicId()).isNull();
-        assertThat(collide.followUps())
+        assertThat(collide.followUpCount()).isEqualTo(1);
+
+        assertThat(interview.answer(collide.id()).orElseThrow().followUps())
                 .extracting(InterviewQuestionDto::prompt, InterviewQuestionDto::depth)
                 .containsExactly(org.assertj.core.groups.Tuple.tuple("Why switch to a tree?", 3));
+        assertThat(interview.answer(UUID.randomUUID())).isEmpty();
+    }
 
-        assertThat(topics.get(1).questions())
-                .extracting(InterviewQuestionDto::prompt)
-                .containsExactly("Asked later?");
+    @Test
+    void questionsOfADraftLessonStayHidden() {
+        AdminPathDto path = path("PUBLISHED");
+        String p = prefix();
+        interview.importBank(bank(path, root(p + "hidden", "Second lesson", "Hidden?")));
+        UUID hidden = questions.findByQuestionKeyIn(List.of(p + "hidden")).get(0).getId();
+        AdminPathDto.AdminTopicDto sets = path.topics().get(1);
+        AdminPathDto.AdminSubtopicDto lesson = sets.subtopics().get(0);
+        authoring.saveOrUpdatePath(
+                new AdminPathDto(
+                        path.id(),
+                        path.title(),
+                        path.description(),
+                        path.category(),
+                        path.managedBy(),
+                        path.status(),
+                        List.of(
+                                path.topics().get(0),
+                                new AdminPathDto.AdminTopicDto(
+                                        sets.id(),
+                                        sets.title(),
+                                        sets.description(),
+                                        sets.category(),
+                                        sets.duration(),
+                                        sets.orderIndex(),
+                                        sets.status(),
+                                        List.of(
+                                                new AdminPathDto.AdminSubtopicDto(
+                                                        lesson.id(),
+                                                        lesson.title(),
+                                                        lesson.content(),
+                                                        lesson.orderIndex(),
+                                                        "DRAFT",
+                                                        lesson.level(),
+                                                        lesson.track(),
+                                                        lesson.prerequisites(),
+                                                        lesson.videoUrl(),
+                                                        lesson.estimatedMinutes(),
+                                                        lesson.codeSnippets(),
+                                                        lesson.questions()))))));
+
+        assertThat(interview.forPath(path.id()).orElseThrow()).isEmpty();
+        assertThat(interview.answer(hidden)).isEmpty();
     }
 
     @Test
@@ -213,10 +290,18 @@ class InterviewServiceTest extends AbstractIntegrationTest {
                                 null,
                                 List.of())));
 
-        InterviewQuestionDto q =
-                interview.forTopic(path.topics().get(0).id()).stream()
-                        .filter(x -> x.prompt().startsWith("How do you run one app"))
-                        .findFirst()
+        InterviewAnswerDto q =
+                interview
+                        .answer(
+                                interview.forTopic(path.topics().get(0).id()).stream()
+                                        .filter(
+                                                x ->
+                                                        x.prompt()
+                                                                .startsWith(
+                                                                        "How do you run one app"))
+                                        .findFirst()
+                                        .orElseThrow()
+                                        .id())
                         .orElseThrow();
 
         assertThat(q.answer().simple()).contains("**profiles**");
@@ -250,10 +335,14 @@ class InterviewServiceTest extends AbstractIntegrationTest {
                                 "signal",
                                 List.of())));
 
-        InterviewQuestionDto q =
-                interview.forTopic(path.topics().get(0).id()).stream()
-                        .filter(x -> x.prompt().equals("Half rewritten?"))
-                        .findFirst()
+        InterviewAnswerDto q =
+                interview
+                        .answer(
+                                interview.forTopic(path.topics().get(0).id()).stream()
+                                        .filter(x -> x.prompt().equals("Half rewritten?"))
+                                        .findFirst()
+                                        .orElseThrow()
+                                        .id())
                         .orElseThrow();
 
         assertThat(q.answer()).isNull();
