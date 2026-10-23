@@ -41,6 +41,7 @@ public class ContentBlock {
     private Subtopic subtopic;
 
     @OneToMany(mappedBy = "block", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("orderIndex ASC")
     @Builder.Default
     private List<QuizQuestion> questions = new ArrayList<>();
 }

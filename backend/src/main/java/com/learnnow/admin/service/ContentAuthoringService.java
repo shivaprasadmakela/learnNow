@@ -142,20 +142,20 @@ public class ContentAuthoringService {
         ContentBlock savedBlock = contentBlockRepository.save(block);
 
         if (request.questions() != null && !request.questions().isEmpty()) {
-            List<QuizQuestion> questions =
-                    request.questions().stream()
-                            .map(
-                                    q ->
-                                            QuizQuestion.builder()
-                                                    .block(savedBlock)
-                                                    .kind(q.kind())
-                                                    .prompt(q.prompt())
-                                                    .options(q.options())
-                                                    .correctAnswer(q.correctAnswer())
-                                                    .explanation(q.explanation())
-                                                    .points(q.points() > 0 ? q.points() : 5)
-                                                    .build())
-                            .toList();
+            List<QuizQuestion> questions = new ArrayList<>();
+            for (var q : request.questions()) {
+                questions.add(
+                        QuizQuestion.builder()
+                                .block(savedBlock)
+                                .kind(q.kind())
+                                .prompt(q.prompt())
+                                .options(q.options())
+                                .correctAnswer(q.correctAnswer())
+                                .explanation(q.explanation())
+                                .points(q.points() > 0 ? q.points() : 5)
+                                .orderIndex(questions.size())
+                                .build());
+            }
             quizQuestionRepository.saveAll(questions);
             savedBlock.setQuestions(questions);
         }
@@ -358,6 +358,7 @@ public class ContentAuthoringService {
                                         qReq.correctAnswer() != null ? qReq.correctAnswer() : "");
                                 q.setExplanation(qReq.explanation());
                                 q.setPoints(qReq.points() > 0 ? qReq.points() : 5);
+                                q.setOrderIndex(updatedQuestionsList.size());
                                 updatedQuestionsList.add(q);
                             }
                             if (quizBlock.getQuestions() == null) {
@@ -801,7 +802,7 @@ public class ContentAuthoringService {
                         stReq.estimatedMinutes() != null && stReq.estimatedMinutes() > 0
                                 ? stReq.estimatedMinutes()
                                 : DEFAULT_ESTIMATED_MINUTES);
-                subtopic.getBlocks().clear();
+                // The quiz block is kept: processQuestions updates its questions in place.
             } else {
                 counts.subtopics++;
                 subtopic =
@@ -904,40 +905,81 @@ public class ContentAuthoringService {
         subtopic.getCodeSnippets().addAll(snippets);
     }
 
+    /**
+     * Brings a lesson's quiz in line with the request.
+     *
+     * <p>An OVERWRITE import used to drop the quiz and create every question again. Each new row
+     * had a new id, and a learner's answers reference the question id with ON DELETE CASCADE, so
+     * re-importing a course erased its quiz history and let every question score a second time.
+     * Questions are now matched to the ones already there - by prompt, then by position for one
+     * whose wording changed - and updated in place. Only a question with no match is created, and
+     * only one the request no longer has is deleted.
+     */
     private void processQuestions(
             List<ImportCourseRequest.ImportQuestionRequest> questions,
             Subtopic subtopic,
             ImportCounts counts) {
-        if (questions == null || questions.isEmpty()) return;
-        ContentBlock block =
-                ContentBlock.builder().subtopic(subtopic).type("quiz").orderIndex(1).build();
-
-        List<QuizQuestion> quizQuestions = new ArrayList<>();
-        for (ImportCourseRequest.ImportQuestionRequest qReq : questions) {
-            String prompt = qReq.prompt();
-            if (prompt == null || prompt.isBlank()) continue;
-
-            counts.questions++;
-            String optionsJson = serializeStringList(qReq.options(), "quiz options");
-
-            String kind = resolveQuestionKind(qReq.kind(), qReq.options(), qReq.correctAnswer());
-
-            QuizQuestion q =
-                    QuizQuestion.builder()
-                            .block(block)
-                            .kind(kind)
-                            .prompt(prompt)
-                            .options(optionsJson)
-                            .correctAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "")
-                            .explanation(qReq.explanation())
-                            .points(qReq.points() > 0 ? qReq.points() : DEFAULT_QUESTION_POINTS)
-                            .build();
-            quizQuestions.add(q);
+        List<ImportCourseRequest.ImportQuestionRequest> wanted = new ArrayList<>();
+        if (questions != null) {
+            for (ImportCourseRequest.ImportQuestionRequest qReq : questions) {
+                if (qReq.prompt() != null && !qReq.prompt().isBlank()) wanted.add(qReq);
+            }
         }
-        if (!quizQuestions.isEmpty()) {
-            block.setQuestions(quizQuestions);
+
+        ContentBlock block = null;
+        for (ContentBlock b : subtopic.getBlocks()) {
+            if ("quiz".equalsIgnoreCase(b.getType())) {
+                block = b;
+                break;
+            }
+        }
+        if (wanted.isEmpty()) {
+            subtopic.getBlocks().removeIf(b -> "quiz".equalsIgnoreCase(b.getType()));
+            return;
+        }
+        if (block == null) {
+            block = ContentBlock.builder().subtopic(subtopic).type("quiz").orderIndex(1).build();
             subtopic.getBlocks().add(block);
         }
+        ContentBlock quizBlock = block;
+        subtopic.getBlocks().removeIf(b -> b != quizBlock && "quiz".equalsIgnoreCase(b.getType()));
+
+        // Unclaimed existing questions, in their stored order.
+        List<QuizQuestion> unclaimed = new ArrayList<>(quizBlock.getQuestions());
+        QuizQuestion[] matched = new QuizQuestion[wanted.size()];
+        for (int i = 0; i < wanted.size(); i++) {
+            String prompt = wanted.get(i).prompt();
+            for (QuizQuestion q : unclaimed) {
+                if (prompt.equals(q.getPrompt())) {
+                    matched[i] = q;
+                    unclaimed.remove(q);
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < wanted.size(); i++) {
+            if (matched[i] == null && !unclaimed.isEmpty()) matched[i] = unclaimed.remove(0);
+        }
+
+        List<QuizQuestion> quizQuestions = new ArrayList<>();
+        for (int i = 0; i < wanted.size(); i++) {
+            ImportCourseRequest.ImportQuestionRequest qReq = wanted.get(i);
+            QuizQuestion q = matched[i];
+            if (q == null) {
+                counts.questions++;
+                q = QuizQuestion.builder().block(quizBlock).build();
+            }
+            q.setKind(resolveQuestionKind(qReq.kind(), qReq.options(), qReq.correctAnswer()));
+            q.setPrompt(qReq.prompt());
+            q.setOptions(serializeStringList(qReq.options(), "quiz options"));
+            q.setCorrectAnswer(qReq.correctAnswer() != null ? qReq.correctAnswer() : "");
+            q.setExplanation(qReq.explanation());
+            q.setPoints(qReq.points() > 0 ? qReq.points() : DEFAULT_QUESTION_POINTS);
+            q.setOrderIndex(i);
+            quizQuestions.add(q);
+        }
+        quizBlock.getQuestions().clear();
+        quizBlock.getQuestions().addAll(quizQuestions);
     }
 
     /**

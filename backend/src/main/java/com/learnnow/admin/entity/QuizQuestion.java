@@ -40,6 +40,11 @@ public class QuizQuestion {
     @Builder.Default
     private int points = 5;
 
+    /** Position within the block, from 0. */
+    @Column(name = "order_index", nullable = false)
+    @Builder.Default
+    private int orderIndex = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "block_id", nullable = false)
     @JsonIgnore
