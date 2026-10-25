@@ -13,9 +13,23 @@ import com.learnnow.notes.repository.BookmarkRepository;
 import com.learnnow.notes.repository.NoteRepository;
 import com.learnnow.privacy.dto.response.DataExportResponse;
 import com.learnnow.privacy.repository.UserConsentEventRepository;
+import com.learnnow.trainer.dto.GoalResponse;
+import com.learnnow.trainer.dto.NoteResponse;
+import com.learnnow.trainer.interview.entity.TopicInterview;
+import com.learnnow.trainer.interview.entity.TopicInterviewAnswer;
+import com.learnnow.trainer.interview.entity.TopicInterviewTurn;
+import com.learnnow.trainer.interview.repository.TopicInterviewAnswerRepository;
+import com.learnnow.trainer.interview.repository.TopicInterviewRepository;
+import com.learnnow.trainer.interview.repository.TopicInterviewTurnRepository;
+import com.learnnow.trainer.repository.LearnerGoalRepository;
+import com.learnnow.trainer.repository.TrainerNoteRepository;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +66,11 @@ public class DataExportService {
     private final UserDsaCheckAttemptRepository dsaCheckAttemptRepository;
     private final NoteRepository noteRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final LearnerGoalRepository learnerGoalRepository;
+    private final TrainerNoteRepository trainerNoteRepository;
+    private final TopicInterviewRepository interviewRepository;
+    private final TopicInterviewTurnRepository interviewTurnRepository;
+    private final TopicInterviewAnswerRepository interviewAnswerRepository;
 
     @Transactional(readOnly = true)
     public DataExportResponse export(String userId) {
@@ -91,6 +110,59 @@ public class DataExportService {
                                 .map(DataExportResponse.DsaCheckAttempt::from)
                                 .toList());
 
+        List<TopicInterview> interviews =
+                interviewRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<UUID> interviewIds = interviews.stream().map(TopicInterview::getId).toList();
+        Map<UUID, List<TopicInterviewTurn>> turnsByInterview =
+                interviewTurnRepository.findByInterviewIdIn(interviewIds).stream()
+                        .collect(Collectors.groupingBy(TopicInterviewTurn::getInterviewId));
+        Map<UUID, List<TopicInterviewAnswer>> answersByInterview =
+                interviewAnswerRepository.findByInterviewIdIn(interviewIds).stream()
+                        .collect(Collectors.groupingBy(TopicInterviewAnswer::getInterviewId));
+
+        List<DataExportResponse.TopicInterviewEntry> interviewEntries =
+                interviews.stream()
+                        .map(
+                                i ->
+                                        new DataExportResponse.TopicInterviewEntry(
+                                                i.getId(),
+                                                i.getTopicId(),
+                                                i.getStatus().name(),
+                                                i.getOverallScore(),
+                                                i.getPointsAwarded(),
+                                                i.getCreatedAt(),
+                                                i.getCompletedAt(),
+                                                turnsByInterview
+                                                        .getOrDefault(i.getId(), List.of())
+                                                        .stream()
+                                                        .map(
+                                                                t ->
+                                                                        new DataExportResponse
+                                                                                .TopicInterviewTurnEntry(
+                                                                                t.getSeq(),
+                                                                                t.getRole(),
+                                                                                t.getText(),
+                                                                                t.getQuestionId(),
+                                                                                t.getCreatedAt()))
+                                                        .toList(),
+                                                answersByInterview
+                                                        .getOrDefault(i.getId(), List.of())
+                                                        .stream()
+                                                        .map(
+                                                                a ->
+                                                                        new DataExportResponse
+                                                                                .TopicInterviewAnswerEntry(
+                                                                                a.getQuestionId(),
+                                                                                a.getSubtopicId(),
+                                                                                a.getPrompt(),
+                                                                                a.getScore(),
+                                                                                a.getGood(),
+                                                                                a.getMissing(),
+                                                                                a.getEvidence(),
+                                                                                a.getCreatedAt()))
+                                                        .toList()))
+                        .toList();
+
         return new DataExportResponse(
                 Instant.now(),
                 privacyNotice.currentVersion(),
@@ -108,7 +180,13 @@ public class DataExportService {
                         .toList(),
                 bookmarkRepository.findAllByUserId(userId).stream()
                         .map(DataExportResponse.BookmarkEntry::from)
-                        .toList());
+                        .toList(),
+                new DataExportResponse.Trainer(
+                        learnerGoalRepository.findById(userId).map(GoalResponse::from).orElse(null),
+                        trainerNoteRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                                .map(NoteResponse::from)
+                                .toList(),
+                        interviewEntries));
     }
 
     /**

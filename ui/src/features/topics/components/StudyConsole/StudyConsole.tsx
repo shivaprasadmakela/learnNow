@@ -21,6 +21,11 @@ import {
 import { PlaygroundSidePanel } from '../PlaygroundSidePanel';
 import { TopicCelebrationModal } from '../TopicCelebrationModal/TopicCelebrationModal';
 import { useLessons } from './useLessons';
+import { setTrainerPage, TopicInterviewOffer } from '../../../trainer';
+
+const TopicInterviewFlow = React.lazy(() =>
+    import('../../../trainer').then(m => ({ default: m.TopicInterviewFlow }))
+);
 import styles from './StudyConsole.module.css';
 
 interface StudyConsoleProps {
@@ -89,6 +94,7 @@ export function StudyConsole({
     const [isNotesDrawerOpen, setIsNotesDrawerOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(false);
     const [isTopicCelebrationOpen, setIsTopicCelebrationOpen] = useState(false);
+    const [isInterviewFlowOpen, setIsInterviewFlowOpen] = useState(false);
 
     // Interview questions sit in their own pane, reached from the table of contents: they test a
     // whole topic, so they belong beside the lessons rather than inside any one of them.
@@ -125,6 +131,11 @@ export function StudyConsole({
 
     const contentPaneRef = useRef<HTMLElement>(null);
     const activeSubtopic: LessonOutline | undefined = subtopics[activeSubtopicIndex];
+
+    // Ask AI answers "explain this" about the lesson on screen.
+    useEffect(() => {
+        setTrainerPage(activeSubtopic ? { kind: 'subtopic', id: String(activeSubtopic.id) } : { kind: 'topic', id: String(topic.id) });
+    }, [activeSubtopic, topic.id]);
 
     // Sync URL slug
     useEffect(() => {
@@ -513,6 +524,11 @@ export function StudyConsole({
                         <div className={isNotesDrawerOpen ? styles.contentFlexLayout : ''}>
                             {showInterview ? (
                                 <div className={styles.article}>
+                                    <TopicInterviewOffer
+                                        topicId={String(topic.id)}
+                                        topicTitle={topic.title}
+                                        onStartInterview={() => setIsInterviewFlowOpen(true)}
+                                    />
                                     <TopicInterviewSection
                                         topicTitle={topic.title}
                                         questions={interviewQuestions}
@@ -693,9 +709,14 @@ export function StudyConsole({
             {/* Topic Completion Celebration Modal Overlay */}
             <TopicCelebrationModal
                 isOpen={isTopicCelebrationOpen}
+                topicId={String(topic.id)}
                 topicTitle={topic.title}
                 problemsCount={subtopics.length}
                 nextTopicTitle={nextTopicTitle}
+                onStartInterview={() => {
+                    setIsTopicCelebrationOpen(false);
+                    setIsInterviewFlowOpen(true);
+                }}
                 onContinueNextTopic={() => {
                     setIsTopicCelebrationOpen(false);
                     if (onSelectNextTopic) {
@@ -706,6 +727,23 @@ export function StudyConsole({
                 }}
                 onClose={() => setIsTopicCelebrationOpen(false)}
             />
+
+            {isInterviewFlowOpen && (
+                <React.Suspense fallback={null}>
+                    <TopicInterviewFlow
+                        isOpen={isInterviewFlowOpen}
+                        topicId={String(topic.id)}
+                        topicTitle={topic.title}
+                        onClose={() => setIsInterviewFlowOpen(false)}
+                        onReviseLesson={subtopicId => {
+                            setIsInterviewFlowOpen(false);
+                            const index = subtopics.findIndex(s => String(s.id) === String(subtopicId));
+                            setPane('lessons');
+                            if (index >= 0) setTimeout(() => handleSubtopicChange(index), 0);
+                        }}
+                    />
+                </React.Suspense>
+            )}
         </div>
     );
 }

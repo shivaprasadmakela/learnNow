@@ -63,6 +63,20 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
+    @ExceptionHandler(AiLimitException.class)
+    public ResponseEntity<Map<String, String>> handleAiLimit(AiLimitException ex) {
+        log.warn("AI spending cap reached: {}", ex.getMessage());
+        return body(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
+    @ExceptionHandler(AiUnavailableException.class)
+    public ResponseEntity<Map<String, String>> handleAiUnavailable(AiUnavailableException ex) {
+        // Warn with the cause: an outage of the AI service should be visible in the logs, but
+        // the learner only needs to know it is temporary.
+        log.warn("AI service unavailable: {}", ex.getMessage(), ex.getCause());
+        return body(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<Map<String, String>> handleAuth(AuthException ex) {
         // Info, not warn: a failed sign-in is routine. Worth counting, not alerting on.

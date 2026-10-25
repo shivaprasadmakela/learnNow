@@ -17,6 +17,12 @@ public final class PointsConfig {
     /** Bonus points when all topics in a path are completed. */
     public static final int PATH_COMPLETED_BONUS = 100;
 
+    /** Completed topic interview. */
+    public static final int TOPIC_INTERVIEW_COMPLETED = 15;
+
+    /** Bonus when topic interview overall score >= 70. */
+    public static final int TOPIC_INTERVIEW_STRONG_BONUS = 10;
+
     /**
      * A solved DSA problem, scaled by difficulty.
      *

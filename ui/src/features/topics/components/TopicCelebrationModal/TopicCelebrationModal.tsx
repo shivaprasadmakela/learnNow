@@ -1,21 +1,27 @@
 import React from 'react';
 import { Check, Sparkles, FileText, Target, Award, ArrowRight } from 'lucide-react';
+import { TopicInterviewOffer } from '../../../trainer';
 import styles from './TopicCelebrationModal.module.css';
 
 interface TopicCelebrationModalProps {
     isOpen: boolean;
+    topicId?: string;
     topicTitle: string;
     problemsCount: number;
     nextTopicTitle?: string;
     onContinueNextTopic: () => void;
     onClose: () => void;
+    onStartInterview?: () => void;
 }
 
 export const TopicCelebrationModal: React.FC<TopicCelebrationModalProps> = ({
     isOpen,
+    topicId,
+    topicTitle,
     problemsCount,
     nextTopicTitle,
-    onContinueNextTopic
+    onContinueNextTopic,
+    onStartInterview
 }) => {
     if (!isOpen) return null;
 
@@ -64,6 +70,17 @@ export const TopicCelebrationModal: React.FC<TopicCelebrationModalProps> = ({
                         <span className={styles.statLabel}>Gems</span>
                     </div>
                 </div>
+
+                {/* Spoken Practice Interview Offer Card */}
+                {topicId && (
+                    <div style={{ width: '100%', marginTop: '1.25rem', textAlign: 'left' }}>
+                        <TopicInterviewOffer
+                            topicId={topicId}
+                            topicTitle={topicTitle}
+                            onStartInterview={onStartInterview}
+                        />
+                    </div>
+                )}
 
                 {/* Primary Action Button */}
                 <button

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserQuizAttemptRepository extends JpaRepository<UserQuizAttempt, UUID> {
 
@@ -18,4 +20,23 @@ public interface UserQuizAttemptRepository extends JpaRepository<UserQuizAttempt
     List<UserQuizAttempt> findByUserId(String userId);
 
     boolean existsByUserIdAndQuestionId(String userId, UUID questionId);
+
+    /** One learner's quiz record per topic: how many questions answered, and how many correctly. */
+    @Query(
+            "SELECT t.id AS topicId, t.title AS topicTitle, COUNT(a) AS attempts,"
+                    + " SUM(CASE WHEN a.correct = true THEN 1 ELSE 0 END) AS correct"
+                    + " FROM UserQuizAttempt a, QuizQuestion q JOIN q.block b JOIN b.subtopic s"
+                    + " JOIN s.topic t WHERE q.id = a.questionId AND a.userId = :userId"
+                    + " GROUP BY t.id, t.title")
+    List<TopicQuizRecord> quizRecordByTopic(@Param("userId") String userId);
+
+    interface TopicQuizRecord {
+        UUID getTopicId();
+
+        String getTopicTitle();
+
+        long getAttempts();
+
+        long getCorrect();
+    }
 }

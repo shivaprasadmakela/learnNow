@@ -8,6 +8,7 @@ import { useUserData } from './hooks/useUserData';
 import { useTopicSession } from './hooks/useTopicSession';
 import { AppViewRenderer } from './components/AppViewRenderer';
 import type { NextLesson, TopicRef } from '../types';
+import { AskAi, setTrainerPage } from '../features/trainer';
 
 const StudyConsole = React.lazy(() => import('../features/topics/components/StudyConsole/StudyConsole').then(m => ({ default: m.StudyConsole })));
 const PathCelebrationModal = React.lazy(() => import('./components/PathCelebrationModal').then(m => ({ default: m.PathCelebrationModal })));
@@ -73,6 +74,13 @@ export default function App() {
         markPathsStale,
         resolveTopicIdBySlug
     });
+
+    // Tell Ask AI where the learner is. The study console sets the exact lesson itself.
+    useEffect(() => {
+        if (activeView === 'STUDY') return;
+        const kind = activeView === 'DASHBOARD' ? 'dashboard' : activeView === 'TRACK' ? 'track' : 'paths';
+        setTrainerPage({ kind });
+    }, [activeView]);
 
     const slugify = (text: string) =>
         text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -440,6 +448,8 @@ export default function App() {
                     </main>
                 )}
             </div>
+
+            {isLoggedIn && <AskAi key={profile?.id ?? 'signed-in'} />}
 
             {/* Modals & Celebration */}
             <Suspense fallback={null}>

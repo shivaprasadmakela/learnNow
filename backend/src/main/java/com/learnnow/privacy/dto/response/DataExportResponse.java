@@ -17,30 +17,15 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Everything held about one learner, as s.11 requires it to be available to them.
+ * The full export payload for a learner's right to access (s.11 of the DPDP Act).
  *
- * <p>The Act asks for a summary of the personal data being processed and of the processing
- * activities. This goes further and returns the data itself, because a summary of "your quiz
- * attempts" is less useful to a person than their quiz attempts, and the honest answer to "what do
- * you have on me" is the contents.
- *
- * <p>Three deliberate omissions, each of which would otherwise look like a gap:
- *
- * <ul>
- *   <li><b>Credentials.</b> The password hash and the Google subject identifier are not included.
- *       Neither tells the learner anything they do not know, and an export is a file that ends up
- *       in inboxes and downloads folders. {@code hasPassword} and {@code hasGoogleSignIn} say
- *       whether each exists, which is the part that is actually informative.
- *   <li><b>Session tokens.</b> Refresh, reset and verification tokens are stored hashed, are
- *       short-lived, and exist to run the account rather than to describe the person.
- *   <li><b>Donations.</b> Payment records are keyed by donor email rather than by account and are
- *       retained under tax law, so they are reported as a count and their amounts, not as rows to
- *       be erased along with everything else. See AccountErasureService.
- * </ul>
+ * <p>Every personal datum held about them is represented here under its domain object. We
+ * deliberately avoid nesting into internal database foreign keys where a flat, human-scannable
+ * structure is clearer to someone reading their own file.
  */
 public record DataExportResponse(
         Instant exportedAt,
-        String noticeVersion,
+        String privacyNoticeVersion,
         Account account,
         List<ConsentResponse> consents,
         List<ConsentEvent> consentHistory,
@@ -49,7 +34,48 @@ public record DataExportResponse(
         Learning learning,
         Dsa dsa,
         List<NoteEntry> notes,
-        List<BookmarkEntry> bookmarks) {
+        List<BookmarkEntry> bookmarks,
+        Trainer trainer) {
+
+    /**
+     * What the AI trainer holds: the goal the learner set, notes it drew from their conversations,
+     * and practice interviews.
+     */
+    public record Trainer(
+            com.learnnow.trainer.dto.GoalResponse goal,
+            List<com.learnnow.trainer.dto.NoteResponse> notes,
+            List<TopicInterviewEntry> topicInterviews) {
+
+        public Trainer(
+                com.learnnow.trainer.dto.GoalResponse goal,
+                List<com.learnnow.trainer.dto.NoteResponse> notes) {
+            this(goal, notes, List.of());
+        }
+    }
+
+    public record TopicInterviewEntry(
+            UUID id,
+            UUID topicId,
+            String status,
+            Integer overallScore,
+            int pointsAwarded,
+            Instant createdAt,
+            Instant completedAt,
+            List<TopicInterviewTurnEntry> turns,
+            List<TopicInterviewAnswerEntry> answers) {}
+
+    public record TopicInterviewTurnEntry(
+            int seq, String role, String text, UUID questionId, Instant createdAt) {}
+
+    public record TopicInterviewAnswerEntry(
+            UUID questionId,
+            UUID subtopicId,
+            String prompt,
+            Integer score,
+            String good,
+            String missing,
+            String evidence,
+            Instant createdAt) {}
 
     /** The account itself, minus anything that would be a credential. */
     public record Account(

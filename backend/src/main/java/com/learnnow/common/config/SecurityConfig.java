@@ -57,7 +57,7 @@ public class SecurityConfig {
                                         .permissionsPolicy(
                                                 permissions ->
                                                         permissions.policy(
-                                                                "camera=(), microphone=(),"
+                                                                "camera=(), microphone=(self),"
                                                                         + " geolocation=(),"
                                                                         + " payment=()")))
                 .sessionManagement(
@@ -113,6 +113,10 @@ public class SecurityConfig {
                                         // attribute or quota abuse.
                                         .requestMatchers("/api/compiler/**")
                                         .authenticated()
+                                        // learnNow-ai posts interview transcripts here without a
+                                        // learner JWT; the controller checks the service token.
+                                        .requestMatchers("/api/internal/ai/interviews/**")
+                                        .permitAll()
                                         // Admin endpoints require ADMIN role
                                         .requestMatchers("/api/admin/**")
                                         .hasAnyAuthority("SCOPE_ADMIN", "ROLE_ADMIN", "ADMIN")
