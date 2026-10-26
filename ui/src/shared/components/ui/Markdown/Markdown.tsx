@@ -35,6 +35,29 @@ export const Markdown: React.FC<MarkdownProps> = ({
                     h2: ({ children }) => <h2 className={styles.h2}>{children}</h2>,
                     h3: ({ children }) => <h3 className={styles.h3}>{children}</h3>,
                     h4: ({ children }) => <h4 className={styles.h4}>{children}</h4>,
+                    a: ({ href, children, ...rest }) => {
+                        const isInternal = href && (href.startsWith("/") || href.startsWith("#"));
+                        if (isInternal) {
+                            return (
+                                <a
+                                    href={href}
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        window.history.pushState(null, "", href);
+                                        window.dispatchEvent(new PopStateEvent("popstate"));
+                                    }}
+                                    {...rest}
+                                >
+                                    {children}
+                                </a>
+                            );
+                        }
+                        return (
+                            <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+                                {children}
+                            </a>
+                        );
+                    },
                     img: ({ src, alt }) => (
                         <span className={styles.figure}>
                             <img src={src} alt={alt || ''} className={styles.image} loading="lazy" />

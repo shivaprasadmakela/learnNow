@@ -39,7 +39,10 @@ public class AiClient {
     private final String baseUrl;
     private final String serviceToken;
     private final HttpClient http =
-            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+            HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .build();
 
     private volatile Boolean cachedVoiceAvailable = null;
     private volatile long voiceAvailableCacheTime = 0;

@@ -28,9 +28,8 @@ export const TopicInterviewOffer: React.FC<TopicInterviewOfferProps> = ({
                 if (active) setAvailability(res);
             })
             .catch(() => {
-                // If unauthenticated or request error, set fallback so card stays accessible
                 if (active) {
-                    setAvailability(token ? { available: true, reason: null, left: 5 } : null);
+                    setAvailability(token ? { available: true, reason: null, leftThisMonth: 5, left: 5 } : null);
                 }
             })
             .finally(() => {
@@ -47,10 +46,13 @@ export const TopicInterviewOffer: React.FC<TopicInterviewOfferProps> = ({
     }
 
     const isAuthed = Boolean(token || availability);
+    const leftCount = availability?.leftThisMonth ?? availability?.left ?? 5;
     const quotaReached =
-        availability?.reason === 'topic_interview_quota_reached' || (availability && availability.left <= 0);
-    const voiceUnavailable = availability?.reason === 'topic_interview_voice_unavailable';
-    const canStart = !isAuthed || (availability?.available && !quotaReached && !voiceUnavailable);
+        availability?.reason === 'topic_interview_quota_reached' || (availability && leftCount <= 0);
+    const voiceUnavailable =
+        availability?.reason === 'topic_interview_voice_unavailable';
+    const aiUnavailable = availability?.reason === 'ai_unavailable';
+    const canStart = !isAuthed || (availability?.available && !quotaReached && !voiceUnavailable && !aiUnavailable);
 
     const handleStartClick = () => {
         if (!isAuthed) {
@@ -75,7 +77,7 @@ export const TopicInterviewOffer: React.FC<TopicInterviewOfferProps> = ({
                 </div>
                 {availability ? (
                     <span className={styles.quotaText}>
-                        {availability.left} of 5 left this month
+                        {leftCount} of 5 left this month
                     </span>
                 ) : (
                     <span className={styles.quotaText}>
@@ -85,7 +87,7 @@ export const TopicInterviewOffer: React.FC<TopicInterviewOfferProps> = ({
             </div>
 
             <h3 className={styles.offerTitle}>
-                <Mic size={18} color="#818cf8" />
+                <Mic size={18} color="var(--tech-blue)" />
                 Practice Topic Interview
             </h3>
             <p className={styles.offerDescription}>
@@ -101,6 +103,10 @@ export const TopicInterviewOffer: React.FC<TopicInterviewOfferProps> = ({
                 ) : voiceUnavailable ? (
                     <span className={styles.quotaText} style={{ color: '#94a3b8' }}>
                         Voice practice temporarily unavailable.
+                    </span>
+                ) : aiUnavailable ? (
+                    <span className={styles.quotaText} style={{ color: '#f59e0b' }}>
+                        AI trainer service connecting…
                     </span>
                 ) : null}
 

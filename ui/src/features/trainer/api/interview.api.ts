@@ -3,7 +3,8 @@ import { apiFetchJson } from '../../../shared/api/client';
 export interface InterviewAvailability {
     available: boolean;
     reason: string | null;
-    left: number;
+    left?: number;
+    leftThisMonth?: number;
 }
 
 export interface StartInterviewResponse {

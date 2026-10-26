@@ -222,3 +222,90 @@
 }
 
 .noteText { flex: 1; font-size: 0.875rem; }
+
+.personalisationBanner {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--tech-blue) 10%, var(--bg-secondary));
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.825rem;
+}
+
+.bannerContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.bannerTitle {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.bannerText {
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.bannerActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.bannerEnableBtn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: none;
+    background: var(--tech-blue);
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.bannerEnableBtn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.bannerEnableBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.bannerSettingsBtn {
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.bannerSettingsBtn:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.textLink {
+    display: inline;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--tech-blue);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.textLink:hover {
+    opacity: 0.8;
+}

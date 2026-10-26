@@ -1,14 +1,15 @@
 /* ==========================================================================
    Topic Voice Practice Interview Styles
+   Uses learnNow design system theme variables (--bg-card, --border-color, --text-*)
    ========================================================================== */
 
 /* --- Offer Card (used in Celebration Modal & Study Console Interview Tab) --- */
 .offerCard {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
-    border: 1px solid rgba(99, 102, 241, 0.25);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 14px;
     padding: 1.25rem 1.5rem;
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06);
     position: relative;
     overflow: hidden;
     margin-bottom: 1.5rem;
@@ -21,7 +22,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+    background: linear-gradient(90deg, var(--tech-blue), #8b5cf6, #ec4899);
 }
 
 .offerHeader {
@@ -46,9 +47,9 @@
     font-weight: 600;
     padding: 0.2rem 0.6rem;
     border-radius: 9999px;
-    background: rgba(99, 102, 241, 0.15);
-    color: #a5b4fc;
-    border: 1px solid rgba(99, 102, 241, 0.3);
+    background: color-mix(in srgb, var(--tech-blue) 12%, transparent);
+    color: var(--tech-blue);
+    border: 1px solid color-mix(in srgb, var(--tech-blue) 30%, transparent);
 }
 
 .pointsBadge {
@@ -60,14 +61,19 @@
     padding: 0.2rem 0.6rem;
     border-radius: 9999px;
     background: rgba(234, 179, 8, 0.15);
-    color: #fde047;
+    color: #b45309;
     border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+:global([data-theme="dark"]) .pointsBadge,
+:global(.dark-theme) .pointsBadge {
+    color: #fde047;
 }
 
 .offerTitle {
     font-size: 1.15rem;
     font-weight: 700;
-    color: #f8fafc;
+    color: var(--text-primary);
     margin: 0 0 0.4rem 0;
     display: flex;
     align-items: center;
@@ -77,7 +83,7 @@
 .offerDescription {
     font-size: 0.875rem;
     line-height: 1.45;
-    color: #94a3b8;
+    color: var(--text-secondary);
     margin: 0 0 1rem 0;
 }
 
@@ -91,7 +97,8 @@
 
 .quotaText {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--text-tertiary);
+    font-weight: 500;
 }
 
 .startBtn {
@@ -99,33 +106,32 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.6rem 1.25rem;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    color: #ffffff;
+    background: var(--tech-blue);
+    color: var(--bg-primary);
     font-size: 0.875rem;
     font-weight: 600;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
 }
 
 .startBtn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
+    background: var(--tech-blue-hover, #004b7d);
 }
 
 .startBtn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: #475569;
 }
 
 /* --- Full Screen Modal Overlay --- */
 .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 15, 29, 0.85);
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
     z-index: 9999;
     display: flex;
     align-items: center;
@@ -134,58 +140,67 @@
     animation: fadeIn 0.2s ease;
 }
 
-.modalWindow {
-    background: #0f172a;
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 20px;
+.modalCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
     width: 100%;
-    max-width: 760px;
+    max-width: 680px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
     display: flex;
     flex-direction: column;
     animation: slideUp 0.25s ease;
+    color: var(--text-primary);
 }
 
 .modalHeader {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.25rem 1.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.headerTitleGroup {
+.modalHeaderLeft {
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
 
-.topicHeading {
+.modalTitle {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #f1f5f9;
     margin: 0;
+    color: var(--text-primary);
 }
 
-.timerPill {
-    display: inline-flex;
+.modalTopic {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+.modalHeaderRight {
+    display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.75rem;
+}
+
+.timerBadge {
     padding: 0.25rem 0.65rem;
-    border-radius: 9999px;
-    background: rgba(30, 41, 59, 0.8);
+    border-radius: 6px;
+    background: var(--bg-secondary);
     font-size: 0.85rem;
     font-weight: 700;
     font-family: monospace;
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 .timerWarning {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
     border-color: rgba(239, 68, 68, 0.4);
     animation: pulse 1s infinite;
 }
@@ -193,7 +208,7 @@
 .closeButton {
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: var(--text-tertiary);
     cursor: pointer;
     padding: 0.4rem;
     border-radius: 6px;
@@ -201,8 +216,8 @@
 }
 
 .closeButton:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    background: var(--bg-secondary);
 }
 
 /* --- PreCheck Stage --- */
@@ -214,10 +229,10 @@
 }
 
 .instructionsBox {
-    background: rgba(30, 41, 59, 0.5);
+    background: var(--bg-secondary);
     border-radius: 12px;
     padding: 1.25rem;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
 }
 
 .instructionItem {
@@ -226,7 +241,7 @@
     gap: 0.75rem;
     margin-bottom: 0.75rem;
     font-size: 0.9rem;
-    color: #cbd5e1;
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 
@@ -235,8 +250,8 @@
 }
 
 .micTestCard {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(99, 102, 241, 0.25);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.25rem;
     display: flex;
@@ -247,7 +262,8 @@
 .micMeterBar {
     width: 100%;
     height: 10px;
-    background: rgba(30, 41, 59, 0.8);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
     border-radius: 9999px;
     overflow: hidden;
     position: relative;
@@ -255,15 +271,15 @@
 
 .micMeterFill {
     height: 100%;
-    background: linear-gradient(90deg, #10b981, #6366f1);
+    background: linear-gradient(90deg, #10b981, var(--tech-blue));
     border-radius: 9999px;
     transition: width 0.05s ease;
 }
 
 .errorBanner {
-    background: rgba(239, 68, 68, 0.15);
+    background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #fca5a5;
+    color: #ef4444;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     font-size: 0.875rem;
@@ -293,12 +309,12 @@
     position: absolute;
     inset: -15px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, rgba(99, 102, 241, 0) 70%);
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, rgba(99, 102, 241, 0) 70%);
     animation: orbPulse 2s ease-in-out infinite;
 }
 
 .orbUserSpeaking {
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0) 70%);
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%);
     animation: orbPulseFast 1s ease-in-out infinite;
 }
 
@@ -306,11 +322,11 @@
     width: 110px;
     height: 110px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+    background: linear-gradient(135deg, var(--tech-blue) 0%, #8b5cf6 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 35px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 35px rgba(99, 102, 241, 0.4);
     color: #ffffff;
     z-index: 2;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -318,7 +334,7 @@
 
 .visualizerOrbActive {
     transform: scale(1.08);
-    box-shadow: 0 0 50px rgba(168, 85, 247, 0.8);
+    box-shadow: 0 0 50px rgba(139, 92, 246, 0.6);
 }
 
 .speakingStatusPill {
@@ -327,11 +343,11 @@
     gap: 0.5rem;
     padding: 0.4rem 1rem;
     border-radius: 9999px;
-    background: rgba(30, 41, 59, 0.8);
+    background: var(--bg-secondary);
     font-size: 0.9rem;
     font-weight: 600;
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 .statusDot {
@@ -344,9 +360,9 @@
 }
 
 .endCallBtn {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
     border-radius: 8px;
     padding: 0.6rem 1.4rem;
     font-weight: 600;
@@ -356,7 +372,7 @@
 }
 
 .endCallBtn:hover {
-    background: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.25);
     transform: translateY(-1px);
 }
 
@@ -375,7 +391,7 @@
     width: 48px;
     height: 48px;
     border: 3px solid rgba(99, 102, 241, 0.2);
-    border-top-color: #6366f1;
+    border-top-color: var(--tech-blue);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -389,8 +405,8 @@
 }
 
 .reportHero {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
-    border: 1px solid rgba(99, 102, 241, 0.25);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 1.75rem;
     display: flex;
@@ -404,25 +420,25 @@
     width: 90px;
     height: 90px;
     border-radius: 50%;
-    background: rgba(15, 23, 42, 0.8);
-    border: 4px solid #6366f1;
+    background: var(--bg-card);
+    border: 4px solid var(--tech-blue);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
 }
 
 .scoreNum {
     font-size: 1.85rem;
     font-weight: 800;
-    color: #f8fafc;
+    color: var(--text-primary);
     line-height: 1;
 }
 
 .scoreOutOf {
     font-size: 0.65rem;
-    color: #94a3b8;
+    color: var(--text-tertiary);
     text-transform: uppercase;
     font-weight: 600;
 }
@@ -434,8 +450,8 @@
 }
 
 .habitCard {
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 1rem;
     text-align: center;
@@ -444,20 +460,20 @@
 .habitVal {
     font-size: 1.35rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--text-primary);
     margin-bottom: 0.2rem;
 }
 
 .habitLabel {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
 
 .questionCard {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.25rem 1.5rem;
     margin-bottom: 1rem;
@@ -474,7 +490,7 @@
 .questionPrompt {
     font-size: 1rem;
     font-weight: 600;
-    color: #f1f5f9;
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -483,9 +499,9 @@
     border-radius: 6px;
     font-weight: 700;
     font-size: 0.8rem;
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-    border: 1px solid rgba(99, 102, 241, 0.35);
+    background: color-mix(in srgb, var(--tech-blue) 15%, transparent);
+    color: var(--tech-blue);
+    border: 1px solid color-mix(in srgb, var(--tech-blue) 35%, transparent);
     white-space: nowrap;
 }
 
@@ -496,17 +512,17 @@
 }
 
 .feedbackGood {
-    color: #34d399;
+    color: #10b981;
 }
 
 .feedbackMissing {
-    color: #fbbf24;
+    color: #f59e0b;
 }
 
 .modelAnswerToggle {
     background: transparent;
     border: none;
-    color: #818cf8;
+    color: var(--tech-blue);
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
@@ -519,12 +535,14 @@
 
 .modelAnswerBox {
     margin-top: 0.5rem;
-    background: rgba(30, 41, 59, 0.7);
-    border-left: 3px solid #818cf8;
+    background: var(--bg-card);
+    border-left: 3px solid var(--tech-blue);
     padding: 0.75rem 1rem;
     font-size: 0.85rem;
-    color: #cbd5e1;
+    color: var(--text-secondary);
     border-radius: 0 8px 8px 0;
+    border: 1px solid var(--border-color);
+    border-left-width: 3px;
 }
 
 /* --- Animations --- */
@@ -539,13 +557,13 @@
 }
 
 @keyframes orbPulse {
-    0%, 100% { transform: scale(1); opacity: 0.4; }
-    50% { transform: scale(1.15); opacity: 0.7; }
+    0%, 100% { transform: scale(1); opacity: 0.35; }
+    50% { transform: scale(1.15); opacity: 0.65; }
 }
 
 @keyframes orbPulseFast {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.22); opacity: 0.9; }
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.22); opacity: 0.85; }
 }
 
 @keyframes spin {

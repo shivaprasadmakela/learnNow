@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { UserProfile } from '../../../../types';
 import { Avatar } from '../../../../shared/components/ui/Avatar';
 import { ConsentCentreSection } from '../../components/ConsentCentreSection';
@@ -36,12 +36,39 @@ const SECTIONS: Array<{ key: SectionKey; label: string; icon: string }> = [
  * Sections are mounted one at a time rather than rendered together and hidden. Four of the five
  * fetch on mount, so rendering all of them would fire five requests to show one panel.
  */
+const getInitialSection = (): SectionKey => {
+    if (typeof window !== 'undefined') {
+        const hash = window.location.hash.replace('#', '').toLowerCase();
+        if (hash === 'consent' || hash === 'data' || hash === 'nominee' || hash === 'grievances' || hash === 'details') {
+            return hash as SectionKey;
+        }
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab')?.toLowerCase();
+        if (tab === 'consent' || tab === 'data' || tab === 'nominee' || tab === 'grievances' || tab === 'details') {
+            return tab as SectionKey;
+        }
+    }
+    return 'details';
+};
+
 export const ProfilePage: React.FC<ProfilePageProps> = ({
     profile,
     onSaveProfile,
     onAccountErased
 }) => {
-    const [active, setActive] = useState<SectionKey>('details');
+    const [active, setActive] = useState<SectionKey>(getInitialSection);
+
+    useEffect(() => {
+        const handleRoute = () => {
+            setActive(getInitialSection());
+        };
+        window.addEventListener('hashchange', handleRoute);
+        window.addEventListener('popstate', handleRoute);
+        return () => {
+            window.removeEventListener('hashchange', handleRoute);
+            window.removeEventListener('popstate', handleRoute);
+        };
+    }, []);
 
     return (
         <div className={styles.page}>

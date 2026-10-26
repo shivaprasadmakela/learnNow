@@ -93,3 +93,16 @@
     font-style: italic;
     color: var(--text-tertiary);
 }
+
+.markdown a {
+    color: var(--tech-blue);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.markdown a:hover {
+    opacity: 0.8;
+}

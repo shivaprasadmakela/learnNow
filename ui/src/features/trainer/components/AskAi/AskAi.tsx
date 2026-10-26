@@ -11,6 +11,7 @@ import {
     type TrainerGoal,
     type TrainerProfile
 } from '../../api/trainer.api';
+import { updateConsents } from '../../../privacy/api/privacy.api';
 import { getTrainerContext, useInterviewActive } from '../../pageContext';
 import { toWav16k } from '../../utils/wav';
 import styles from './AskAi.module.css';
@@ -37,6 +38,19 @@ export const AskAi: React.FC = () => {
     const [recording, setRecording] = useState(false);
     const [transcribing, setTranscribing] = useState(false);
     const [view, setView] = useState<'chat' | 'about'>('chat');
+    const [enablingPersonalisation, setEnablingPersonalisation] = useState(false);
+
+    const enablePersonalisation = async () => {
+        setEnablingPersonalisation(true);
+        try {
+            await updateConsents([{ purpose: 'PERSONALISATION', granted: true }]);
+            loadProfile();
+        } catch {
+            setError('Could not enable personalisation. Please update it in Privacy settings.');
+        } finally {
+            setEnablingPersonalisation(false);
+        }
+    };
     const recorderRef = useRef<MediaRecorder | null>(null);
     const abortRef = useRef<AbortController | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
@@ -148,6 +162,37 @@ export const AskAi: React.FC = () => {
                             <X size={18} />
                         </button>
                     </header>
+
+                    {!profile.personalised && (
+                        <div className={styles.personalisationBanner}>
+                            <div className={styles.bannerContent}>
+                                <span className={styles.bannerTitle}>Personalisation is turned off</span>
+                                <span className={styles.bannerText}>
+                                    Turn it on so your trainer can see your progress, finished topics, and quizzes.
+                                </span>
+                            </div>
+                            <div className={styles.bannerActions}>
+                                <button
+                                    type="button"
+                                    className={styles.bannerEnableBtn}
+                                    onClick={enablePersonalisation}
+                                    disabled={enablingPersonalisation}
+                                >
+                                    {enablingPersonalisation ? 'Enabling…' : 'Turn on'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className={styles.bannerSettingsBtn}
+                                    onClick={() => {
+                                        window.history.pushState(null, '', '/profile#consent');
+                                        window.dispatchEvent(new PopStateEvent('popstate'));
+                                    }}
+                                >
+                                    Settings &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {view === 'about' ? (
                         <AboutYou profile={profile} onChanged={loadProfile} />
@@ -285,7 +330,37 @@ const AboutYou: React.FC<{ profile: TrainerProfile; onChanged: () => void }> = (
                     ))}
                 </ul>
             )}
-            <p className={styles.muted}>Your trainer also reads your progress, quiz results, streak and study times. Turn this off any time with Personalisation in Privacy settings.</p>
+            <p className={styles.muted}>
+                Your trainer reads your progress, quiz results, streak and study times. {!profile.personalised ? (
+                    <>
+                        Personalisation is currently off.{ ' ' }
+                        <button
+                            type="button"
+                            className={styles.textLink}
+                            onClick={() => {
+                                window.history.pushState(null, '', '/profile#consent');
+                                window.dispatchEvent(new PopStateEvent('popstate'));
+                            }}
+                        >
+                            Turn on in Privacy settings
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        Manage this any time in{ ' ' }
+                        <button
+                            type="button"
+                            className={styles.textLink}
+                            onClick={() => {
+                                window.history.pushState(null, '', '/profile#consent');
+                                window.dispatchEvent(new PopStateEvent('popstate'));
+                            }}
+                        >
+                            Privacy settings
+                        </button>
+                    </>
+                )}
+            </p>
         </div>
     );
 };
