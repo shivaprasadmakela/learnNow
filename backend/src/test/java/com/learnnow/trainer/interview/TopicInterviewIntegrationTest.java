@@ -3,6 +3,8 @@ package com.learnnow.trainer.interview;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.learnnow.AbstractIntegrationTest;
@@ -36,6 +38,7 @@ import com.learnnow.trainer.service.AiClient;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -370,6 +373,58 @@ public class TopicInterviewIntegrationTest extends AbstractIntegrationTest {
         assertThat(duplicate.getStatusCode()).isEqualTo(HttpStatus.OK);
         // Turn count should remain 2, not 4
         assertThat(turnRepository.findByInterviewIdOrderBySeqAsc(interviewId)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A transcript with no learner answers fails without scoring and refunds quota")
+    void transcriptWithoutAnswersFails() {
+        int leftBefore = interviewService.interviewsLeftThisMonth(learner.getId());
+        UUID interviewId = UUID.randomUUID();
+        interviewRepository.save(
+                TopicInterview.builder()
+                        .id(interviewId)
+                        .userId(learner.getId())
+                        .topicId(topic.getId())
+                        .status(InterviewStatus.CREATED)
+                        .plan(Map.of("topic_title", topic.getTitle()))
+                        .build());
+
+        interviewService.recordTranscript(
+                interviewId,
+                new TranscriptCallbackRequest(
+                        interviewId,
+                        List.of(),
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        "budget_exceeded"));
+
+        TopicInterview saved = interviewRepository.findById(interviewId).orElseThrow();
+        assertThat(saved.getStatus()).isEqualTo(InterviewStatus.FAILED);
+        assertThat(saved.getEndedReason()).isEqualTo("budget_exceeded");
+        assertThat(turnRepository.findByInterviewIdOrderBySeqAsc(interviewId)).isEmpty();
+        assertThat(interviewService.interviewsLeftThisMonth(learner.getId())).isEqualTo(leftBefore);
+        verify(aiClient, never()).scoreInterview(any());
+    }
+
+    @Test
+    @DisplayName("The sweeper gives up on an interview left unscored for too long")
+    void sweeperFailsLongStuckInterviews() {
+        UUID interviewId = UUID.randomUUID();
+        interviewRepository.save(
+                TopicInterview.builder()
+                        .id(interviewId)
+                        .userId(learner.getId())
+                        .topicId(topic.getId())
+                        .status(InterviewStatus.COMPLETED)
+                        .completedAt(Instant.now().minus(Duration.ofHours(1)))
+                        .plan(Map.of("topic_title", topic.getTitle()))
+                        .build());
+
+        interviewService.rescoreStuckInterviews();
+
+        TopicInterview saved = interviewRepository.findById(interviewId).orElseThrow();
+        assertThat(saved.getStatus()).isEqualTo(InterviewStatus.FAILED);
+        assertThat(saved.getEndedReason()).isEqualTo("scoring_timeout");
     }
 
     @Test

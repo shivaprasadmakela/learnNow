@@ -13,13 +13,15 @@ export interface StartInterviewResponse {
     token: string;
 }
 
+// Field names as learnNow-ai's interview/habits.py returns them; the backend passes them through.
 export interface SpeakingHabits {
-    wpm?: number;
-    filler_words?: number;
+    words_per_minute?: number;
+    filler_words_count?: number;
+    filler_words?: Record<string, number>;
     longest_pause_seconds?: number;
-    average_answer_words?: number;
-    turn_count?: number;
-    total_words?: number;
+    average_words_per_answer?: number;
+    total_user_words?: number;
+    user_turns_count?: number;
 }
 
 export interface AnswerFeedback {
@@ -80,10 +82,3 @@ export const fetchTopicInterview = (id: string) =>
 
 export const fetchTopicInterviews = () =>
     apiFetchJson<TopicInterviewSummary[]>('/api/trainer/interviews');
-
-export const saveInterviewNotes = (id: string, notes: { gap?: string; strength?: string }) =>
-    apiFetchJson<void>(`/api/trainer/interviews/${encodeURIComponent(id)}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(notes)
-    });

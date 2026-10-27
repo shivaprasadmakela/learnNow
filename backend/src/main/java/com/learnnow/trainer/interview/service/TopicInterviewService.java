@@ -34,21 +34,33 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @Slf4j
 public class TopicInterviewService {
 
     private static final int MONTHLY_QUOTA = 5;
+
+    /** Ended reasons the voice worker sends when it could not run the interview at all. */
+    private static final Set<String> WORKER_FAILURES = Set.of("budget_exceeded", "worker_error");
+
+    /** A COMPLETED interview not scored after this long is scored again by the sweeper... */
+    private static final long RESCORE_AFTER_MINUTES = 5;
+
+    /** ...and marked FAILED (refunding the quota) once it is this old. */
+    private static final long GIVE_UP_AFTER_MINUTES = 30;
 
     private final TopicInterviewRepository interviewRepository;
     private final TopicInterviewTurnRepository turnRepository;
@@ -61,6 +73,7 @@ public class TopicInterviewService {
     private final AiClient aiClient;
     private final TrainerService trainerService;
     private final Executor executor;
+    private final TransactionTemplate transactionTemplate;
 
     public TopicInterviewService(
             TopicInterviewRepository interviewRepository,
@@ -73,7 +86,8 @@ public class TopicInterviewService {
             TopicInterviewPlanner planner,
             AiClient aiClient,
             TrainerService trainerService,
-            @Qualifier("taskExecutor") Executor executor) {
+            @Qualifier("taskExecutor") Executor executor,
+            PlatformTransactionManager transactionManager) {
         this.interviewRepository = interviewRepository;
         this.turnRepository = turnRepository;
         this.answerRepository = answerRepository;
@@ -85,6 +99,7 @@ public class TopicInterviewService {
         this.aiClient = aiClient;
         this.trainerService = trainerService;
         this.executor = executor;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     public int interviewsLeftThisMonth(String userId) {
@@ -180,13 +195,30 @@ public class TopicInterviewService {
     public void recordTranscript(UUID interviewId, TranscriptCallbackRequest payload) {
         TopicInterview interview =
                 interviewRepository
-                        .findById(interviewId)
+                        .findByIdForUpdate(interviewId)
                         .orElseThrow(() -> new NotFoundException("topic_interview_not_found"));
 
         if (interview.getStatus() != InterviewStatus.CREATED) {
             log.info(
                     "Ignoring duplicate or non-created transcript callback for interview {}",
                     interviewId);
+            return;
+        }
+
+        // Nothing to score: the worker could not run the interview, or the learner never
+        // answered. FAILED refunds the monthly quota and skips a paid scoring call.
+        boolean learnerSpoke =
+                payload.turns() != null
+                        && payload.turns().stream().anyMatch(t -> "user".equals(t.role()));
+        if (WORKER_FAILURES.contains(payload.ended_reason()) || !learnerSpoke) {
+            interview.setStatus(InterviewStatus.FAILED);
+            interview.setCompletedAt(Instant.now());
+            interview.setCostInr(payload.cost_inr());
+            interview.setEndedReason(
+                    WORKER_FAILURES.contains(payload.ended_reason())
+                            ? payload.ended_reason()
+                            : "no_answers");
+            interviewRepository.save(interview);
             return;
         }
 
@@ -229,7 +261,8 @@ public class TopicInterviewService {
 
     public void scoreAsync(UUID interviewId) {
         try {
-            score(interviewId);
+            // Through the template, not this.score(): a self-call skips the @Transactional proxy.
+            transactionTemplate.executeWithoutResult(status -> score(interviewId));
         } catch (Exception e) {
             log.error("Asynchronous scoring failed for interview {}", interviewId, e);
         }
@@ -237,7 +270,7 @@ public class TopicInterviewService {
 
     @Transactional
     public void score(UUID interviewId) {
-        TopicInterview interview = interviewRepository.findById(interviewId).orElse(null);
+        TopicInterview interview = interviewRepository.findByIdForUpdate(interviewId).orElse(null);
         if (interview == null || interview.getStatus() != InterviewStatus.COMPLETED) {
             return;
         }
@@ -460,6 +493,39 @@ public class TopicInterviewService {
         if (!stale.isEmpty()) {
             interviewRepository.saveAll(stale);
             log.info("Marked {} stale interviews as ABANDONED", stale.size());
+        }
+    }
+
+    /**
+     * Scoring runs on an in-memory executor, so a restart, or a scoring run that threw, leaves an
+     * interview COMPLETED with no report. Score those again, and give up on old ones.
+     */
+    @Scheduled(fixedDelay = 300_000, initialDelay = 60_000)
+    public void rescoreStuckInterviews() {
+        Instant now = Instant.now();
+        List<TopicInterview> stuck =
+                interviewRepository.findByStatusAndCompletedAtBefore(
+                        InterviewStatus.COMPLETED,
+                        now.minus(RESCORE_AFTER_MINUTES, ChronoUnit.MINUTES));
+        Instant giveUpBefore = now.minus(GIVE_UP_AFTER_MINUTES, ChronoUnit.MINUTES);
+        for (TopicInterview i : stuck) {
+            if (i.getCompletedAt().isBefore(giveUpBefore)) {
+                transactionTemplate.executeWithoutResult(
+                        status ->
+                                interviewRepository
+                                        .findByIdForUpdate(i.getId())
+                                        .filter(row -> row.getStatus() == InterviewStatus.COMPLETED)
+                                        .ifPresent(
+                                                row -> {
+                                                    row.setStatus(InterviewStatus.FAILED);
+                                                    row.setEndedReason("scoring_timeout");
+                                                    interviewRepository.save(row);
+                                                }));
+                log.warn("Gave up scoring interview {}", i.getId());
+            } else {
+                log.info("Scoring interview {} again", i.getId());
+                scoreAsync(i.getId());
+            }
         }
     }
 

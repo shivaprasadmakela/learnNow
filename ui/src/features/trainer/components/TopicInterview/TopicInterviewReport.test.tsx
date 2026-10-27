@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { TopicInterviewReport } from './TopicInterviewReport';
 import type { TopicInterviewReport as ReportData } from '../../api/interview.api';
-import * as interviewApi from '../../api/interview.api';
 
 const mockReport: ReportData = {
     id: 'interview-1',
@@ -14,10 +13,11 @@ const mockReport: ReportData = {
     createdAt: '2026-10-24T12:00:00Z',
     completedAt: '2026-10-24T12:05:00Z',
     habits: {
-        wpm: 135,
-        filler_words: 2,
+        words_per_minute: 135,
+        filler_words_count: 2,
+        filler_words: { um: 2 },
         longest_pause_seconds: 3.2,
-        average_answer_words: 45
+        average_words_per_answer: 45
     },
     questions: [
         {
@@ -62,20 +62,6 @@ describe('TopicInterviewReport', () => {
         fireEvent.click(toggleBtn);
 
         expect(screen.getByText(/In Spring, beans are singleton by default/i)).toBeInTheDocument();
-    });
-
-    it('triggers saveInterviewNotes when clicking save to notes', async () => {
-        const saveSpy = vi.spyOn(interviewApi, 'saveInterviewNotes').mockResolvedValue();
-        const onDone = vi.fn();
-        render(<TopicInterviewReport report={mockReport} onDone={onDone} />);
-
-        const saveBtn = screen.getByRole('button', { name: /Save Insights to Ask AI/i });
-        fireEvent.click(saveBtn);
-
-        expect(saveSpy).toHaveBeenCalledWith('interview-1', {
-            gap: undefined,
-            strength: 'Spring Dependency Injection: Good distinction between singleton and prototype'
-        });
     });
 
     it('calls onDone when clicking Done button', () => {

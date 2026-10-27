@@ -29,6 +29,8 @@ export const TopicInterviewFlow: React.FC<TopicInterviewFlowProps> = ({
 }) => {
     const [stage, setStage] = useState<Stage>('precheck');
     const [error, setError] = useState<string | null>(null);
+    const [scoringTimedOut, setScoringTimedOut] = useState(false);
+    const [pollRound, setPollRound] = useState(0);
     const [micReady, setMicReady] = useState(false);
     const [micVolume, setMicVolume] = useState(0);
     const [interviewerSpeaking, setInterviewerSpeaking] = useState(false);
@@ -209,13 +211,16 @@ export const TopicInterviewFlow: React.FC<TopicInterviewFlowProps> = ({
         setStage('scoring');
     };
 
-    // Polling for scoring completion in 'scoring' stage
+    // Polling for scoring completion in 'scoring' stage. The room closing, the transcript
+    // callback and scoring (up to 90 s on the AI side) can take a few minutes, so back off
+    // and keep going for 4 minutes before offering a manual retry.
     useEffect(() => {
         if (stage !== 'scoring' || !interviewId) return;
 
         let active = true;
-        let attempts = 0;
-        const maxAttempts = 20;
+        let timer: ReturnType<typeof setTimeout>;
+        const deadline = Date.now() + 4 * 60_000;
+        let delay = 2000;
 
         const poll = async () => {
             try {
@@ -230,24 +235,28 @@ export const TopicInterviewFlow: React.FC<TopicInterviewFlowProps> = ({
                     setError('Interview scoring failed. Your monthly quota has been refunded.');
                     return;
                 }
+                if (rep.status === 'ABANDONED') {
+                    setError('The call ended before your answers were saved, so there is no report for this interview.');
+                    return;
+                }
             } catch {
                 // Keep polling
             }
-
-            attempts++;
-            if (attempts < maxAttempts && active) {
-                setTimeout(poll, 2000);
-            } else if (active) {
-                setError('Scoring is taking a little longer than expected. Your feedback report will be available in your profile history.');
+            if (!active) return;
+            if (Date.now() < deadline) {
+                timer = setTimeout(poll, delay);
+                delay = Math.min(delay * 1.5, 10_000);
+            } else {
+                setScoringTimedOut(true);
             }
         };
 
-        const timer = setTimeout(poll, 1500);
+        timer = setTimeout(poll, 1500);
         return () => {
             active = false;
             clearTimeout(timer);
         };
-    }, [stage, interviewId]);
+    }, [stage, interviewId, pollRound]);
 
     if (!isOpen) return null;
 
@@ -378,9 +387,23 @@ export const TopicInterviewFlow: React.FC<TopicInterviewFlowProps> = ({
                                 Scoring Your Interview
                             </h3>
                             <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>
-                                Analyzing your answers against key expected points and evaluating speaking pace…
+                                {scoringTimedOut
+                                    ? 'Scoring is taking longer than usual. Your report is still being prepared.'
+                                    : 'Analyzing your answers against key expected points and evaluating speaking pace…'}
                             </p>
                         </div>
+                        {scoringTimedOut && (
+                            <button
+                                type="button"
+                                className={styles.startBtn}
+                                onClick={() => {
+                                    setScoringTimedOut(false);
+                                    setPollRound(round => round + 1);
+                                }}
+                            >
+                                Check again
+                            </button>
+                        )}
                     </div>
                 )}
 

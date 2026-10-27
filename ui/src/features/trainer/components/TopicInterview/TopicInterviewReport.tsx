@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Award, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, BookOpen, Check } from 'lucide-react';
-import { type TopicInterviewReport as ReportData, saveInterviewNotes } from '../../api/interview.api';
+import { Award, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
+import { type TopicInterviewReport as ReportData } from '../../api/interview.api';
 import styles from './TopicInterview.module.css';
 
 interface TopicInterviewReportProps {
@@ -15,38 +15,9 @@ export const TopicInterviewReport: React.FC<TopicInterviewReportProps> = ({
     onReviseLesson
 }) => {
     const [openModelAnswers, setOpenModelAnswers] = useState<Record<string, boolean>>({});
-    const [notesSaved, setNotesSaved] = useState(false);
-    const [savingNotes, setSavingNotes] = useState(false);
 
     const toggleModel = (id: string) => {
         setOpenModelAnswers(prev => ({ ...prev, [id]: !prev[id] }));
-    };
-
-    const handleSaveNotes = async () => {
-        if (notesSaved || savingNotes) return;
-        setSavingNotes(true);
-        try {
-            // Find strongest and weakest question to distill
-            const valid = report.questions.filter(q => q.score != null);
-            let gap: string | undefined;
-            let strength: string | undefined;
-            if (valid.length > 0) {
-                const weakest = [...valid].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
-                const strongest = [...valid].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
-                if ((weakest.score ?? 0) < 7 && weakest.missing) {
-                    gap = `${report.topicTitle}: ${weakest.missing}`;
-                }
-                if ((strongest.score ?? 0) >= 7 && strongest.good) {
-                    strength = `${report.topicTitle}: ${strongest.good}`;
-                }
-            }
-            await saveInterviewNotes(report.id, { gap, strength });
-            setNotesSaved(true);
-        } catch {
-            // non-fatal
-        } finally {
-            setSavingNotes(false);
-        }
     };
 
     const habits = report.habits;
@@ -69,16 +40,6 @@ export const TopicInterviewReport: React.FC<TopicInterviewReportProps> = ({
                             <Award size={14} />
                             +{report.pointsAwarded} Points Earned
                         </span>
-                        <button
-                            type="button"
-                            className={styles.pillBadge}
-                            onClick={handleSaveNotes}
-                            disabled={notesSaved || savingNotes}
-                            style={{ cursor: notesSaved ? 'default' : 'pointer' }}
-                        >
-                            {notesSaved ? <Check size={12} color="#34d399" /> : null}
-                            {notesSaved ? 'Saved to Ask AI Notes' : savingNotes ? 'Saving…' : 'Save Insights to Ask AI'}
-                        </button>
                     </div>
                 </div>
 
@@ -96,11 +57,11 @@ export const TopicInterviewReport: React.FC<TopicInterviewReportProps> = ({
                     </h3>
                     <div className={styles.habitsGrid}>
                         <div className={styles.habitCard}>
-                            <div className={styles.habitVal}>{habits.wpm ?? 0}</div>
+                            <div className={styles.habitVal}>{habits.words_per_minute ?? 0}</div>
                             <div className={styles.habitLabel}>Words / Min</div>
                         </div>
                         <div className={styles.habitCard}>
-                            <div className={styles.habitVal}>{habits.filler_words ?? 0}</div>
+                            <div className={styles.habitVal}>{habits.filler_words_count ?? 0}</div>
                             <div className={styles.habitLabel}>Filler Words</div>
                         </div>
                         <div className={styles.habitCard}>
@@ -110,7 +71,7 @@ export const TopicInterviewReport: React.FC<TopicInterviewReportProps> = ({
                             <div className={styles.habitLabel}>Longest Pause</div>
                         </div>
                         <div className={styles.habitCard}>
-                            <div className={styles.habitVal}>{habits.average_answer_words ?? 0}</div>
+                            <div className={styles.habitVal}>{habits.average_words_per_answer ?? 0}</div>
                             <div className={styles.habitLabel}>Avg Answer Words</div>
                         </div>
                     </div>
