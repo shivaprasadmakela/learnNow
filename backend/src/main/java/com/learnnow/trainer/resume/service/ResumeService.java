@@ -39,6 +39,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ResumeService {
 
     static final long MAX_FILE_BYTES = 5L * 1024 * 1024;
+    static final int MAX_MATCH_TEXT = 24_000;
     static final int MIN_JOB_DESCRIPTION = 80;
     static final int MAX_JOB_DESCRIPTION = 8000;
     private static final Set<String> LEVELS =
@@ -73,8 +74,8 @@ public class ResumeService {
     }
 
     /**
-     * Analyses a new resume, replacing any earlier one. The 18-or-older confirmation is needed
-     * once: a learner who has uploaded before has already given it.
+     * Analyses a new resume, replacing any earlier one. The 18-or-older confirmation comes with
+     * every upload, so a learner who deleted their resume and comes back confirms again.
      */
     public ResumeResponse upload(
             String userId,
@@ -84,8 +85,7 @@ public class ResumeService {
             String targetRole,
             boolean adultConfirmed) {
         featureService.requireEnabled(AiFeature.RESUME);
-        Optional<LearnerResume> existing = repository.findById(userId);
-        if (!adultConfirmed && existing.isEmpty()) {
+        if (!adultConfirmed) {
             throw new ValidationException("resume_adult_confirmation_required");
         }
         if (file == null || file.length == 0) {
@@ -201,7 +201,8 @@ public class ResumeService {
                         .orElseThrow(() -> new NotFoundException("resume_not_found"));
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("resume_text", resume.getResumeText());
+        // learnnow-ai refuses text over 24,000 characters; a very long resume is cut, not refused.
+        body.put("resume_text", truncate(resume.getResumeText(), MAX_MATCH_TEXT));
         body.put("profile", resume.getProfile());
         body.put("job_description", jd);
         Map<String, Object> match = aiClient.matchResume(body);

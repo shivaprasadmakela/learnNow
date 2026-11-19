@@ -40,7 +40,7 @@ interface AppViewRendererProps {
     hasMoreTopics?: boolean;
     isLoadingMoreTopics?: boolean;
     onLoadMoreTopics?: () => void;
-    selectedPath: Course;
+    selectedPath: Course | undefined;
     dashboardTab: 'activities' | 'paths' | 'bookmarks';
     setDashboardTab: (tab: 'activities' | 'paths' | 'bookmarks') => void;
     signIn: (email: string, pass: string) => Promise<unknown>;
