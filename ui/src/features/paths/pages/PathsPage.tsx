@@ -21,7 +21,12 @@ export interface PathsPageProps {
     onLoadMorePaths?: () => void;
     /** Opens a career track's roadmap. Without it the tracks section is not shown. */
     onSelectTrack?: (slug: string) => void;
+    /** Opens the page listing every track; the Paths page shows the first few. */
+    onViewAllTracks?: () => void;
 }
+
+/** Tracks shown above the paths. More would push the paths out of sight as tracks are added. */
+const TRACKS_ON_PATHS_PAGE = 4;
 
 export const PathsPage: React.FC<PathsPageProps> = ({
     courses,
@@ -31,7 +36,8 @@ export const PathsPage: React.FC<PathsPageProps> = ({
     hasMorePaths = false,
     isLoadingMorePaths = false,
     onLoadMorePaths,
-    onSelectTrack
+    onSelectTrack,
+    onViewAllTracks
 }) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
     const [tracks, setTracks] = useState<TrackSummary[]>([]);
@@ -92,18 +98,28 @@ export const PathsPage: React.FC<PathsPageProps> = ({
                 </p>
             </div>
 
-            {onSelectTrack && <TrackCards tracks={tracks} onSelectTrack={onSelectTrack} />}
-
-            {onSelectTrack && tracks.length > 0 && (
-                <h2 className={styles.allPathsTitle}>All paths</h2>
+            {onSelectTrack && (
+                <TrackCards
+                    tracks={tracks}
+                    onSelectTrack={onSelectTrack}
+                    limit={TRACKS_ON_PATHS_PAGE}
+                    onViewAll={onViewAllTracks}
+                />
             )}
 
-            <CategoryFilterPills
-                categories={categories}
-                counts={counts}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-            />
+            {/* The heading and the category tabs share one line; without tracks there is no heading. */}
+            <div className={onSelectTrack && tracks.length > 0 ? styles.allPathsBar : undefined}>
+                {onSelectTrack && tracks.length > 0 && (
+                    <h2 className={styles.allPathsTitle}>All paths</h2>
+                )}
+
+                <CategoryFilterPills
+                    categories={categories}
+                    counts={counts}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={setSelectedCategory}
+                />
+            </div>
 
             <PathsGrid
                 paths={filteredPaths}

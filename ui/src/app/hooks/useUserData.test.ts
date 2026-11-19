@@ -262,3 +262,42 @@ describe('useUserData slug resolution', () => {
         );
     });
 });
+
+/**
+ * Coming back from the study console reloads the path list, which arrives without topics. The
+ * Topics view refetches whenever the paging is cleared, so a reload must clear it - a stale
+ * "already loaded" entry left the open path with no topics until it was selected again.
+ */
+describe('useUserData after the path list reloads', () => {
+    const topic = (id: number, title: string) => ({ id, title, isCompleted: false });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        fetchPathsPage.mockResolvedValue(page([path(1, 1)]));
+        fetchTopicsByPathPage.mockResolvedValue(page([topic(1, 'Topic 1')]));
+    });
+
+    it('clears loaded topics and lets the open path load them again', async () => {
+        const { result } = renderHook(() => useUserData(true, 'TOPICS', false));
+        await waitFor(() => expect(result.current.courses).toHaveLength(1));
+
+        await act(async () => {
+            await result.current.loadTopicsForPath(1);
+        });
+        expect(result.current.courses[0].topics?.map(t => t.id)).toEqual([1]);
+        const pagingBefore = result.current.getTopicPaging;
+
+        await act(async () => {
+            await result.current.refreshUserData(true);
+        });
+        expect(result.current.courses[0].topics ?? []).toEqual([]);
+        // A new function is what re-runs the Topics view's effect.
+        expect(result.current.getTopicPaging).not.toBe(pagingBefore);
+
+        await act(async () => {
+            await result.current.loadTopicsForPath(1);
+        });
+        expect(fetchTopicsByPathPage).toHaveBeenCalledTimes(2);
+        expect(result.current.courses[0].topics?.map(t => t.id)).toEqual([1]);
+    });
+});

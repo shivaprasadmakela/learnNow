@@ -18,6 +18,8 @@ const CompilerPage = React.lazy(() => import('../../features/compiler').then(m =
 const DsaSheetPage = React.lazy(() => import('../../features/dsa').then(m => ({ default: m.DsaSheetPage })));
 const ProfilePage = React.lazy(() => import('../../features/profile').then(m => ({ default: m.ProfilePage })));
 const TrackPage = React.lazy(() => import('../../features/tracks/pages/TrackPage').then(m => ({ default: m.TrackPage })));
+const TracksPage = React.lazy(() => import('../../features/tracks/pages/TracksPage').then(m => ({ default: m.TracksPage })));
+const TrainerPage = React.lazy(() => import('../../features/trainer/pages/TrainerPage').then(m => ({ default: m.TrainerPage })));
 const PrivacyPolicyPage = React.lazy(() => import('../../features/privacy').then(m => ({ default: m.PrivacyPolicyPage })));
 const UnauthorizedAccess = React.lazy(() => import('../../shared/components/ui/UnauthorizedAccess').then(m => ({ default: m.UnauthorizedAccess })));
 import { fetchAdminPathById, saveAdminPath, type AdminSubtopicData } from '../../features/iam-admin/api/admin.api';
@@ -48,6 +50,8 @@ interface AppViewRendererProps {
     /** The career track the URL names, for the TRACK view. */
     trackSlug?: string | null;
     onSelectTrack: (slug: string) => void;
+    /** Opens the page listing every career track. */
+    onViewAllTracks: () => void;
     onOpenPathFromTrack: (pathId: string, pathTitle: string) => void;
     /** Opens one lesson: Continue on a track, the dashboard's next-step card. */
     onOpenLesson: (lesson: NextLesson) => void;
@@ -90,6 +94,7 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
     handleSelectPath,
     trackSlug,
     onSelectTrack,
+    onViewAllTracks,
     onOpenPathFromTrack,
     onOpenLesson,
     onTrackTitleLoaded,
@@ -152,6 +157,12 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         activeTab={dashboardTab}
                         setActiveTab={setDashboardTab}
                         onMetricsLoaded={onMetricsLoaded}
+                        onOpenTrainer={section => {
+                            handleViewChange('TRAINER');
+                            // The trainer page scrolls to the section the hash names.
+                            if (section) window.history.replaceState(null, '', `/trainer#${section}`);
+                        }}
+                        onOpenTopic={(topicId, subtopicId) => handleSelectTopic(topicId, subtopicId ?? undefined)}
                     />
                 )}
 
@@ -215,7 +226,24 @@ export const AppViewRenderer: React.FC<AppViewRendererProps> = ({
                         isLoadingMorePaths={isLoadingMorePaths}
                         onLoadMorePaths={onLoadMorePaths}
                         onSelectTrack={onSelectTrack}
+                        onViewAllTracks={onViewAllTracks}
                     />
+                )}
+
+                {activeView === 'TRACKS' && (
+                    <TracksPage
+                        isLoggedIn={isLoggedIn}
+                        onSelectTrack={onSelectTrack}
+                        onBackToPaths={onSelectPaths}
+                    />
+                )}
+
+                {activeView === 'TRAINER' && (
+                    isLoggedIn ? (
+                        <TrainerPage onOpenLesson={(topicId, subtopicId) => handleSelectTopic(topicId, subtopicId ?? undefined)} />
+                    ) : (
+                        <UnauthorizedAccess changeView={changeView} isLoggedIn={isLoggedIn} />
+                    )
                 )}
 
                 {activeView === 'TRACK' && trackSlug && (

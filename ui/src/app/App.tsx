@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useProfileDashboard, type ViewState } from '../features/dashboard/hooks/useProfileDashboard';
 import { Header, Sidebar, Breadcrumb, Loader } from '../shared/components';
 import { useToast } from '../shared/components/feedback/Toast';
@@ -78,7 +78,8 @@ export default function App() {
     // Tell Ask AI where the learner is. The study console sets the exact lesson itself.
     useEffect(() => {
         if (activeView === 'STUDY') return;
-        const kind = activeView === 'DASHBOARD' ? 'dashboard' : activeView === 'TRACK' ? 'track' : 'paths';
+        const kind =
+            activeView === 'DASHBOARD' ? 'dashboard' : activeView === 'TRACK' || activeView === 'TRACKS' ? 'track' : 'paths';
         setTrainerPage({ kind });
     }, [activeView]);
 
@@ -86,6 +87,11 @@ export default function App() {
         text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
     const [selectedPathId, setSelectedPathId] = useState<number | null>(null);
+    // The first loaded path, for a URL whose path slug matches nothing.
+    const firstPathIdRef = useRef<number | undefined>(undefined);
+    useEffect(() => {
+        firstPathIdRef.current = courses[0]?.id as number | undefined;
+    }, [courses]);
 
     const [dashboardTab, setDashboardTab] = useState<'activities' | 'paths' | 'bookmarks'>('activities');
     const [isPathsActive, setIsPathsActive] = useState(() => {
@@ -114,7 +120,11 @@ export default function App() {
         let cancelled = false;
         resolvePathBySlug(parts[1])
             .then(path => {
-                if (!cancelled && path) setSelectedPathId(path.id as number);
+                if (cancelled) return;
+                // A slug that names no path (an old link, a renamed path) shows the first path
+                // rather than leaving the view waiting for one.
+                const id = path?.id ?? firstPathIdRef.current;
+                if (id !== undefined) setSelectedPathId(id as number);
             })
             .catch(err => console.error('Failed to resolve the path in the URL', err));
         return () => {
@@ -122,10 +132,24 @@ export default function App() {
         };
     }, [courses.length, activeView, resolvePathBySlug]);
 
-    // A path's topics are fetched when it is opened; loadTopicsForPath does so once per path.
+    // A /paths/:pathSlug URL the Topics view has not matched to a path yet. Until it has, the view
+    // shows no path rather than falling back to the first one, which flashed the wrong path's
+    // topics and fetched them for nothing.
+    const urlNamesPath =
+        typeof window !== 'undefined' && window.location.pathname.split('/').filter(Boolean)[0] === 'paths';
+    const awaitingUrlPath = activeView === 'TOPICS' && selectedPathId === null && urlNamesPath;
+
+    // The Topics view shows the selected path, or the first one when the URL names none.
+    const shownPathId =
+        activeView === 'TOPICS' && !awaitingUrlPath ? (selectedPathId ?? courses[0]?.id ?? null) : null;
+
+    // Fetches the shown path's topics. loadTopicsForPath does nothing for a path it has already
+    // loaded, so this runs on every change to the topic paging as well: reloading the path list
+    // (coming back from the study console, or after a lesson is completed) clears every path's
+    // topics, and keying this on the selection alone left the page empty until a reselect.
     useEffect(() => {
-        if (selectedPathId) loadTopicsForPath(selectedPathId);
-    }, [selectedPathId, loadTopicsForPath]);
+        if (shownPathId) loadTopicsForPath(shownPathId);
+    }, [shownPathId, loadTopicsForPath, getTopicPaging]);
 
     // Auth redirection effect
     useEffect(() => {
@@ -166,7 +190,7 @@ export default function App() {
         } else {
             changeView(view);
         }
-        setIsPathsActive(view === 'PATHS' || view === 'TOPICS' || view === 'TRACK');
+        setIsPathsActive(view === 'PATHS' || view === 'TOPICS' || view === 'TRACK' || view === 'TRACKS');
         if (view !== 'TOPICS') setSelectedPathId(null);
         if (view === 'DASHBOARD') setDashboardTab('activities');
     };
@@ -223,6 +247,11 @@ export default function App() {
         setIsPathsActive(true);
     };
 
+    const handleViewAllTracks = () => {
+        setIsPathsActive(true);
+        changeView('TRACKS');
+    };
+
     const handleSelectTrack = (slug: string) => {
         setTrackTitle(null);
         setIsPathsActive(true);
@@ -277,7 +306,9 @@ export default function App() {
 
     // The server's percentage covers every topic; one worked out here could only see the page
     // of topics loaded so far.
-    const rawSelectedPath = (selectedPathId ? courses.find(c => c.id === selectedPathId) : null) || courses[0];
+    const rawSelectedPath = awaitingUrlPath
+        ? undefined
+        : (selectedPathId ? courses.find(c => c.id === selectedPathId) : null) || courses[0];
     const selectedPath = rawSelectedPath;
 
     // Topic paging follows whichever path the Topics view is showing, which is not always the one
@@ -352,8 +383,12 @@ export default function App() {
                             <StudyConsole
                                 topic={activeTopic}
                                 onClose={() => {
+                                    // Back to the path this topic belongs to, which the study URL
+                                    // (/paths/:path/:topic) names; the Topics view resolves it.
+                                    const pathSlug = window.location.pathname.split('/').filter(Boolean)[1];
                                     clearTopicSession();
-                                    changeView('TOPICS', 'java-backend-path');
+                                    setSelectedPathId(null);
+                                    changeView('TOPICS', pathSlug || 'path');
                                     refreshUserData();
                                 }}
                                 onToggleComplete={handleToggleTopicComplete}
@@ -387,7 +422,7 @@ export default function App() {
                     )
                 ) : (
                     <main className={styles.mainContent}>
-                        {(activeView === 'PATHS' || activeView === 'TOPICS' || activeView === 'TRACK') && (
+                        {(activeView === 'PATHS' || activeView === 'TOPICS' || activeView === 'TRACK' || activeView === 'TRACKS') && (
                             <Breadcrumb
                                 crumbs={[
                                     { onClick: () => handleViewChange(isLoggedIn ? 'DASHBOARD' : 'HOME') },
@@ -399,9 +434,15 @@ export default function App() {
                                         : activeView === 'TRACK'
                                             ? [
                                                 { label: 'Paths', onClick: handleSelectPaths },
+                                                { label: 'Career tracks', onClick: handleViewAllTracks },
                                                 { label: trackTitle || 'Career track' },
                                             ]
-                                            : [{ label: 'Paths' }]
+                                            : activeView === 'TRACKS'
+                                                ? [
+                                                    { label: 'Paths', onClick: handleSelectPaths },
+                                                    { label: 'Career tracks' },
+                                                ]
+                                                : [{ label: 'Paths' }]
                                     ),
                                 ]}
                             />
@@ -429,6 +470,7 @@ export default function App() {
                             handleSelectPath={handleSelectPath}
                             trackSlug={trackSlug}
                             onSelectTrack={handleSelectTrack}
+                            onViewAllTracks={handleViewAllTracks}
                             onOpenPathFromTrack={handleOpenPathFromTrack}
                             onOpenLesson={handleOpenLesson}
                             onTrackTitleLoaded={setTrackTitle}

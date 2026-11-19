@@ -7,32 +7,67 @@ import type { TrackSummary } from '../../api/tracks.api';
 export interface TrackCardsProps {
     tracks: TrackSummary[];
     onSelectTrack: (slug: string) => void;
+    /** Shows only this many cards, with a link to the rest when there are more. */
+    limit?: number;
+    /** Opens the page listing every track. Shown only when limit hides some. */
+    onViewAll?: () => void;
+    /** Leaves out the section heading, for a page that has its own. */
+    hideHeader?: boolean;
 }
 
 /**
- * Career tracks above the path grid: one card per route, with its steps spelled out so the card
- * says what "Java Full Stack Developer" actually involves before anyone opens it.
+ * Steps listed on a card. The rest are counted, not listed, so a track gaining paths does not make
+ * its card taller than its neighbours - the full route is on the track's own page.
+ */
+export const MAX_CARD_STEPS = 4;
+
+/**
+ * Career tracks above the path grid: one card per route, with its first steps spelled out so the
+ * card says what "Java Full Stack Developer" actually involves before anyone opens it.
  *
  * The title is the card's only control and its click area is stretched over the whole card. A
  * button wrapping the card instead could not hold the step list - a list is not allowed inside a
  * button - and would read the entire card out as its name.
  */
-export const TrackCards: React.FC<TrackCardsProps> = ({ tracks, onSelectTrack }) => {
+export const TrackCards: React.FC<TrackCardsProps> = ({
+    tracks,
+    onSelectTrack,
+    limit,
+    onViewAll,
+    hideHeader = false
+}) => {
     if (tracks.length === 0) return null;
 
+    const shown = limit !== undefined ? tracks.slice(0, limit) : tracks;
+    const hasMore = shown.length < tracks.length;
+
     return (
-        <section className={styles.tracksSection} aria-labelledby="career-tracks-heading">
-            <div className={styles.sectionHeader}>
-                <h2 id="career-tracks-heading" className={styles.sectionTitle}>
-                    Career tracks
-                </h2>
-                <p className={styles.sectionSubtitle}>
-                    Follow a whole route to a role, in order, instead of choosing paths one at a time.
-                </p>
-            </div>
+        <section
+            className={styles.tracksSection}
+            aria-labelledby={hideHeader ? undefined : 'career-tracks-heading'}
+            aria-label={hideHeader ? 'Career tracks' : undefined}
+        >
+            {!hideHeader && (
+                <div className={styles.sectionHeaderRow}>
+                    <div className={styles.sectionHeader}>
+                        <h2 id="career-tracks-heading" className={styles.sectionTitle}>
+                            Career tracks
+                        </h2>
+                        <p className={styles.sectionSubtitle}>
+                            Follow a whole route to a role, in order, instead of choosing paths one at a time.
+                        </p>
+                    </div>
+                    {hasMore && onViewAll && (
+                        <button type="button" className={styles.viewAllButton} onClick={onViewAll}>
+                            View all {tracks.length} tracks
+                            <ArrowRight size={16} aria-hidden="true" />
+                        </button>
+                    )}
+                </div>
+            )}
 
             <div className={styles.trackGrid}>
-                {tracks.map(track => {
+                {shown.map(track => {
                     const required = track.stepCount - track.optionalStepCount;
                     const time = formatStudyTime(track.estimatedMinutes);
                     const progress = track.progressPercentage;
@@ -56,7 +91,7 @@ export const TrackCards: React.FC<TrackCardsProps> = ({ tracks, onSelectTrack })
                             )}
 
                             <ol className={styles.routePreview} aria-label={`${track.title} steps`}>
-                                {track.steps.map(step => (
+                                {track.steps.slice(0, MAX_CARD_STEPS).map(step => (
                                     <li
                                         key={step.pathId}
                                         className={step.optional ? styles.routeStepOptional : styles.routeStep}
@@ -65,6 +100,11 @@ export const TrackCards: React.FC<TrackCardsProps> = ({ tracks, onSelectTrack })
                                         {step.optional && <span className={styles.visuallyHidden}> (optional)</span>}
                                     </li>
                                 ))}
+                                {track.steps.length > MAX_CARD_STEPS && (
+                                    <li className={styles.routeMore}>
+                                        +{track.steps.length - MAX_CARD_STEPS} more
+                                    </li>
+                                )}
                             </ol>
 
                             {typeof progress === 'number' && progress > 0 ? (

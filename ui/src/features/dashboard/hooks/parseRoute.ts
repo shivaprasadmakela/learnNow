@@ -7,6 +7,8 @@ export type ViewState =
     | 'PATHS'
     | 'TOPICS'
     | 'TRACK'
+    | 'TRACKS'
+    | 'TRAINER'
     | 'STUDY'
     | 'VERIFY_EMAIL'
     | 'RESET_PASSWORD'
@@ -50,6 +52,7 @@ export const parseRoute = (pathname: string): ParsedRoute => {
         if (first === 'reset-password') return { view: 'RESET_PASSWORD' };
         if (first === 'paths') return { view: 'PATHS' };
         if (first === 'dsa') return { view: 'DSA' };
+        if (first === 'trainer') return { view: 'TRAINER' };
         if (first === 'iamAdmin') return { view: 'ADMIN' };
     }
 
@@ -63,9 +66,9 @@ export const parseRoute = (pathname: string): ParsedRoute => {
     }
 
     if (first === 'tracks') {
-        // Tracks are listed on the Paths page; /tracks alone has nothing of its own to show.
+        // /tracks lists every career track; the Paths page shows only the first few.
         if (parts.length === 2) return { view: 'TRACK', trackSlug: second };
-        return { view: 'PATHS' };
+        return { view: 'TRACKS' };
     }
 
     if (first === 'paths') {
@@ -113,7 +116,11 @@ export const routeToPath = (
         case 'STUDY':
             return `/paths/${slug || 'java-backend-path'}/${subSlug || ''}`;
         case 'TRACK':
-            return slug ? `/tracks/${slug}` : '/paths';
+            return slug ? `/tracks/${slug}` : '/tracks';
+        case 'TRACKS':
+            return '/tracks';
+        case 'TRAINER':
+            return '/trainer';
         case 'DSA':
             return '/dsa';
         case 'DSA_PROBLEM':

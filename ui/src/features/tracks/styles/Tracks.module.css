@@ -22,6 +22,43 @@
     margin-bottom: 16px;
 }
 
+/* The heading on the left and "View all" on the right; they stack on a narrow screen. */
+.sectionHeaderRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0 16px;
+}
+
+.viewAllButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 6px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--tech-blue);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.viewAllButton:hover {
+    border-color: var(--tech-blue);
+    background-color: rgba(26, 115, 232, 0.08);
+}
+
+.viewAllButton:focus-visible {
+    outline: 2px solid var(--tech-blue);
+    outline-offset: 2px;
+}
+
 .sectionTitle {
     font-size: 1.25rem;
     font-weight: 700;
@@ -38,7 +75,7 @@
 
 .trackGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 20px;
 }
 
@@ -127,35 +164,61 @@
 }
 
 .routePreview {
+    /* Room for MAX_CARD_STEPS steps and the "+N more" line whatever the track holds, so every
+       card in a row is the same height and keeps it as tracks gain paths. */
+    --route-line: 1.15rem;
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-direction: column;
+    gap: 3px;
+    height: calc(5 * var(--route-line) + 4 * 3px);
     margin: 6px 0 0;
     padding: 0;
     list-style: none;
+    overflow: hidden;
 }
 
 .routeStep,
-.routeStepOptional {
-    padding: 2px 8px;
-    border-radius: var(--radius-pill);
-    font-size: 0.72rem;
-    font-weight: 500;
-    line-height: 1.5;
+.routeStepOptional,
+.routeMore {
+    position: relative;
+    padding-left: 14px;
+    font-size: 0.8rem;
+    line-height: var(--route-line);
     white-space: nowrap;
-    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+.routeStep::before,
+.routeStepOptional::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: calc(var(--route-line) / 2 - 3px);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
 .routeStep {
-    border: 1px solid var(--border-color);
     color: var(--text-secondary);
 }
 
+.routeStep::before {
+    background-color: var(--tech-blue);
+}
+
 .routeStepOptional {
-    border: 1px dashed var(--border-color);
     color: var(--text-tertiary, var(--text-secondary));
+}
+
+.routeStepOptional::before {
+    border: 1px dashed var(--text-tertiary, var(--text-secondary));
+}
+
+.routeMore {
+    color: var(--tech-blue);
+    font-weight: 500;
 }
 
 .trackFooter {
@@ -217,6 +280,23 @@
     width: 100%;
     max-width: 960px;
     margin: 0 auto;
+}
+
+/* The page listing every track. */
+.tracksPage {
+    width: 100%;
+}
+
+.tracksPageHeader {
+    margin-bottom: 24px;
+}
+
+.tracksPageTitle {
+    margin: 0 0 6px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
 }
 
 .trackPageLoading {

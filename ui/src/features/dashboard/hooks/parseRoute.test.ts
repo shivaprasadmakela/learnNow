@@ -19,9 +19,10 @@ describe('parseRoute', () => {
         ['/paths/java-backend', 'TOPICS'],
         ['/paths/java-backend/collections', 'STUDY'],
         ['/tracks/java-full-stack-developer', 'TRACK'],
-        ['/tracks', 'PATHS'],
+        ['/tracks', 'TRACKS'],
         ['/dsa', 'DSA'],
         ['/dsa/binary-search/bs-lower-bound', 'DSA_PROBLEM'],
+        ['/trainer', 'TRAINER'],
         ['/iamAdmin', 'ADMIN'],
         ['/iamAdmin/create-path', 'ADMIN_CREATE_PATH'],
         ['/iamAdmin/import', 'ADMIN_IMPORT_COURSE'],
@@ -57,6 +58,8 @@ describe('routeToPath', () => {
     it.each<[ViewState, string]>([
         ['DASHBOARD', '/dashboard'],
         ['PATHS', '/paths'],
+        ['TRACKS', '/tracks'],
+        ['TRAINER', '/trainer'],
         ['DSA', '/dsa'],
         ['ADMIN', '/iamAdmin']
     ])('builds %s as %s', (view, expected) => {

@@ -887,3 +887,28 @@
     letter-spacing: -0.01em;
     color: var(--text-primary);
 }
+
+/* "All paths" on the left, the category tabs on the right, on one line. */
+.allPathsBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-bottom: 24px;
+}
+
+.allPathsBar .allPathsTitle {
+    margin: 0;
+}
+
+.allPathsBar .categoriesRow {
+    justify-content: flex-end;
+    margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+    .allPathsBar .categoriesRow {
+        justify-content: flex-start;
+    }
+}

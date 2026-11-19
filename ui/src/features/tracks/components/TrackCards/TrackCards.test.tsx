@@ -55,6 +55,34 @@ describe('TrackCards', () => {
         expect(screen.queryByText(/2 paths/)).not.toBeInTheDocument();
     });
 
+    it('lists at most four steps and counts the rest, so a longer track is not a taller card', () => {
+        const steps = Array.from({ length: 12 }, (_, i) => ({ pathId: `p${i}`, title: `Path ${i + 1}`, optional: false }));
+        render(<TrackCards tracks={[{ ...summary, steps, stepCount: 12, optionalStepCount: 0 }]} onSelectTrack={vi.fn()} />);
+
+        expect(screen.getAllByRole('listitem').map(li => li.textContent)).toEqual([
+            'Path 1',
+            'Path 2',
+            'Path 3',
+            'Path 4',
+            '+8 more'
+        ]);
+    });
+
+    it('shows only the first cards when limited, with a link to all of them', () => {
+        const tracks = Array.from({ length: 6 }, (_, i) => ({ ...summary, slug: `t${i}`, title: `Track ${i + 1}` }));
+        const onViewAll = vi.fn();
+        render(<TrackCards tracks={tracks} onSelectTrack={vi.fn()} limit={4} onViewAll={onViewAll} />);
+
+        expect(screen.getAllByRole('article')).toHaveLength(4);
+        fireEvent.click(screen.getByRole('button', { name: 'View all 6 tracks' }));
+        expect(onViewAll).toHaveBeenCalled();
+    });
+
+    it('offers no link when every track already fits', () => {
+        render(<TrackCards tracks={[summary]} onSelectTrack={vi.fn()} limit={4} onViewAll={vi.fn()} />);
+        expect(screen.queryByRole('button', { name: /View all/ })).not.toBeInTheDocument();
+    });
+
     it('renders nothing when there are no tracks', () => {
         const { container } = render(<TrackCards tracks={[]} onSelectTrack={vi.fn()} />);
         expect(container).toBeEmptyDOMElement();
