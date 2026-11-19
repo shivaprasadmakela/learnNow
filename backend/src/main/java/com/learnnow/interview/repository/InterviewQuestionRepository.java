@@ -101,6 +101,26 @@ public interface InterviewQuestionRepository extends JpaRepository<InterviewQues
                     + " ORDER BY st.orderIndex")
     List<SubtopicRow> findPublishedSubtopicsInTopic(@Param("topicId") UUID topicId);
 
+    /**
+     * Published topics with at least one published opening question on a published lesson - the
+     * topics a mock interview can draw bank questions from, and the ones a topic interview can run
+     * on.
+     */
+    @Query(
+            "SELECT DISTINCT t.id AS id, t.title AS title FROM InterviewQuestion q, Subtopic st"
+                    + " JOIN st.topic t WHERE q.subtopicId = st.id AND q.parentId IS NULL"
+                    + " AND q.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " AND st.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " AND t.status = com.learnnow.paths.entity.ContentStatus.PUBLISHED"
+                    + " ORDER BY t.title")
+    List<TopicRow> findTopicsWithPublishedOpeners();
+
+    interface TopicRow {
+        UUID getId();
+
+        String getTitle();
+    }
+
     interface SubtopicRow {
         UUID getId();
 

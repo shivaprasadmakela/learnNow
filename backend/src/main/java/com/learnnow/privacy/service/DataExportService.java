@@ -21,8 +21,10 @@ import com.learnnow.trainer.interview.entity.TopicInterviewTurn;
 import com.learnnow.trainer.interview.repository.TopicInterviewAnswerRepository;
 import com.learnnow.trainer.interview.repository.TopicInterviewRepository;
 import com.learnnow.trainer.interview.repository.TopicInterviewTurnRepository;
+import com.learnnow.trainer.plan.repository.TrainerWeeklyPlanRepository;
 import com.learnnow.trainer.repository.LearnerGoalRepository;
 import com.learnnow.trainer.repository.TrainerNoteRepository;
+import com.learnnow.trainer.resume.repository.LearnerResumeRepository;
 import com.learnnow.user.entity.User;
 import com.learnnow.user.repository.UserRepository;
 import java.time.Instant;
@@ -71,6 +73,8 @@ public class DataExportService {
     private final TopicInterviewRepository interviewRepository;
     private final TopicInterviewTurnRepository interviewTurnRepository;
     private final TopicInterviewAnswerRepository interviewAnswerRepository;
+    private final LearnerResumeRepository resumeRepository;
+    private final TrainerWeeklyPlanRepository weeklyPlanRepository;
 
     @Transactional(readOnly = true)
     public DataExportResponse export(String userId) {
@@ -126,9 +130,17 @@ public class DataExportService {
                                 i ->
                                         new DataExportResponse.TopicInterviewEntry(
                                                 i.getId(),
+                                                i.getKind().name(),
+                                                i.getTitle(),
                                                 i.getTopicId(),
+                                                i.getParentInterviewId(),
                                                 i.getStatus().name(),
                                                 i.getOverallScore(),
+                                                i.getFeedback(),
+                                                i.getLearnerRating() != null
+                                                        ? i.getLearnerRating().intValue()
+                                                        : null,
+                                                i.getLearnerComment(),
                                                 i.getPointsAwarded(),
                                                 i.getCreatedAt(),
                                                 i.getCompletedAt(),
@@ -152,13 +164,17 @@ public class DataExportService {
                                                                 a ->
                                                                         new DataExportResponse
                                                                                 .TopicInterviewAnswerEntry(
+                                                                                a
+                                                                                        .getPlanQuestionId(),
                                                                                 a.getQuestionId(),
                                                                                 a.getSubtopicId(),
+                                                                                a.getCategory(),
                                                                                 a.getPrompt(),
                                                                                 a.getScore(),
                                                                                 a.getGood(),
                                                                                 a.getMissing(),
                                                                                 a.getEvidence(),
+                                                                                a.getModelAnswer(),
                                                                                 a.getCreatedAt()))
                                                         .toList()))
                         .toList();
@@ -186,7 +202,14 @@ public class DataExportService {
                         trainerNoteRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                                 .map(NoteResponse::from)
                                 .toList(),
-                        interviewEntries));
+                        interviewEntries,
+                        resumeRepository
+                                .findPresent(userId)
+                                .map(DataExportResponse.ResumeEntry::from)
+                                .orElse(null),
+                        weeklyPlanRepository.findByUserIdOrderByWeekStartDesc(userId).stream()
+                                .map(DataExportResponse.WeeklyPlanEntry::from)
+                                .toList()));
     }
 
     /**

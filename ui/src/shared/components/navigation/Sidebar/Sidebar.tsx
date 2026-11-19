@@ -57,6 +57,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onClick={() => handleNavClick(onSelectDsa)}
                     />
                 )}
+                {isLoggedIn && (
+                    <SidebarNavItem
+                        iconClass="fa-solid fa-wand-magic-sparkles"
+                        label="AI Trainer"
+                        isActive={activeView === 'TRAINER'}
+                        isExpanded={isExpanded}
+                        onClick={() => handleNavClick(() => changeView('TRAINER'))}
+                    />
+                )}
                 <SidebarNavItem
                     iconClass="fa-solid fa-code"
                     label="Compiler"

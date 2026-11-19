@@ -1,0 +1,88 @@
+.goal {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.goal h3 { margin: 0; font-size: 1rem; color: var(--text-primary); }
+
+.goal label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.goal input {
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font: inherit;
+}
+
+.goalRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.saveButton {
+    align-self: flex-start;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--tech-blue);
+    color: var(--bg-primary);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.saveButton:disabled { opacity: 0.6; cursor: default; }
+
+.notes { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.notes li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+}
+
+.noteKind {
+    flex-shrink: 0;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: capitalize;
+}
+
+.noteText { flex: 1; min-width: 0; font-size: 0.875rem; overflow-wrap: anywhere; }
+
+.iconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.muted { color: var(--text-tertiary); font-size: 0.875rem; }
+
+.error { margin: 0; color: var(--tech-red, #dc2626); font-size: 0.85rem; }
+
+@media (max-width: 420px) {
+    .goalRow { grid-template-columns: 1fr; }
+}

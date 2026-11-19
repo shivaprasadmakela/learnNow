@@ -12,7 +12,22 @@ export interface MarkdownProps {
     onTryInPlayground?: (code: string, language: string) => void;
     onOpenFullCompiler?: (code: string, language: string) => void;
     className?: string;
+    /**
+     * Shows only images from this site. Set for AI answers: an image URL in the model's output is
+     * fetched as soon as it renders, so a prompt-injected one could carry data to another site.
+     */
+    sameOriginImagesOnly?: boolean;
 }
+
+/** True for a relative URL or one on this page's own origin; false for anything else, data: included. */
+const isSameOriginUrl = (src: string | undefined): boolean => {
+    if (!src || typeof window === 'undefined') return false;
+    try {
+        return new URL(src, window.location.href).origin === window.location.origin;
+    } catch {
+        return false;
+    }
+};
 
 /**
  * Written content - GitHub-flavoured Markdown with fenced code shown by the shared CodeBlock, so a
@@ -23,7 +38,8 @@ export const Markdown: React.FC<MarkdownProps> = ({
     runnableCode = true,
     onTryInPlayground,
     onOpenFullCompiler,
-    className = ''
+    className = '',
+    sameOriginImagesOnly = false
 }) => {
     if (!content) return null;
     return (
@@ -58,12 +74,16 @@ export const Markdown: React.FC<MarkdownProps> = ({
                             </a>
                         );
                     },
-                    img: ({ src, alt }) => (
-                        <span className={styles.figure}>
-                            <img src={src} alt={alt || ''} className={styles.image} loading="lazy" />
-                            {alt && <span className={styles.caption}>{alt}</span>}
-                        </span>
-                    ),
+                    img: ({ src, alt }) =>
+                        sameOriginImagesOnly && !isSameOriginUrl(typeof src === 'string' ? src : undefined) ? (
+                            // The picture is left out; its description still says what it was.
+                            alt ? <span className={styles.caption}>{alt}</span> : null
+                        ) : (
+                            <span className={styles.figure}>
+                                <img src={src} alt={alt || ''} className={styles.image} loading="lazy" />
+                                {alt && <span className={styles.caption}>{alt}</span>}
+                            </span>
+                        ),
                     table: ({ children }) => (
                         <div className={styles.tableWrap}>
                             <table className={styles.table}>{children}</table>

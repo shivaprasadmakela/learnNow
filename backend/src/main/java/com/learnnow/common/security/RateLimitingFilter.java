@@ -12,12 +12,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * IP-based rate limiting for endpoints that are expensive, abusable, or unauthenticated.
+ * Rate limiting for endpoints that are expensive, abusable, or unauthenticated: by address, and for
+ * the AI trainer's paid calls by learner.
  *
  * <p>Two things this deliberately does not do. It does not read {@code X-Forwarded-For} itself:
  * that header is attacker-controlled unless a trusted proxy has rewritten it, and trusting it
@@ -35,8 +39,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    /** A tier pairs a set of paths with how many requests per minute they allow. */
-    private record Tier(String name, int maxPerMinute, List<String> pathPrefixes) {
+    /**
+     * A tier pairs a set of paths with how many requests per minute they allow. A per-learner tier
+     * counts by the signed-in learner instead of by address.
+     */
+    private record Tier(
+            String name, int maxPerMinute, List<String> pathPrefixes, boolean perLearner) {
+        Tier(String name, int maxPerMinute, List<String> pathPrefixes) {
+            this(name, maxPerMinute, pathPrefixes, false);
+        }
+
         boolean matches(String path) {
             return pathPrefixes.stream().anyMatch(path::startsWith);
         }
@@ -77,9 +89,25 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     // The DSA inline check is the same kind of question by another door. Scoring
                     // is first-attempt-only now, so this only bounds how fast a script can walk
                     // the check ids.
-                    new Tier("dsa-check", 60, List.of("/api/dsa/checks/")));
+                    new Tier("dsa-check", 60, List.of("/api/dsa/checks/")),
+                    // The AI trainer's paid calls. Every learner shares one monthly spending cap
+                    // in learnnow-ai, so one learner (or one stolen token) looping on these could
+                    // use it up for everyone. Counted per learner, not per address: a college
+                    // network puts many learners behind one address, and one learner can switch
+                    // networks. Generous for a person, ruinous for a script.
+                    new Tier("ai-chat", 15, List.of("/api/trainer/chat"), true),
+                    new Tier("ai-transcribe", 15, List.of("/api/trainer/transcribe"), true),
+                    new Tier("ai-resume", 6, List.of("/api/trainer/resume"), true),
+                    new Tier("ai-plan", 6, List.of("/api/trainer/plan"), true),
+                    new Tier("ai-interviews", 10, List.of("/api/trainer/interviews"), true));
 
     private final Map<String, RequestTracker> trackers = new ConcurrentHashMap<>();
+
+    private final ObjectProvider<JwtDecoder> jwtDecoder;
+
+    public RateLimitingFilter(ObjectProvider<JwtDecoder> jwtDecoder) {
+        this.jwtDecoder = jwtDecoder;
+    }
 
     private static final class RequestTracker {
         private final Instant windowStart = Instant.now();
@@ -104,7 +132,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         Instant now = Instant.now();
         evictExpired(now);
 
-        String key = tier.name() + '|' + request.getRemoteAddr();
+        String key = tier.name() + '|' + clientKey(tier, request);
         RequestTracker tracker =
                 trackers.compute(
                         key,
@@ -132,6 +160,30 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Who to count. For a per-learner tier, the subject of a token whose signature checks out: this
+     * filter runs before authentication, and an unchecked subject would let anyone forge tokens
+     * naming another learner and use up that learner's allowance. A request without a valid token
+     * is counted by address; authentication turns it away straight after anyway.
+     */
+    private String clientKey(Tier tier, HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (tier.perLearner() && header != null && header.startsWith("Bearer ")) {
+            JwtDecoder decoder = jwtDecoder.getIfAvailable();
+            if (decoder != null) {
+                try {
+                    String subject = decoder.decode(header.substring(7).trim()).getSubject();
+                    if (subject != null) {
+                        return "user:" + subject;
+                    }
+                } catch (JwtException e) {
+                    // Counted by address below.
+                }
+            }
+        }
+        return request.getRemoteAddr();
     }
 
     private Tier resolveTier(HttpServletRequest request) {

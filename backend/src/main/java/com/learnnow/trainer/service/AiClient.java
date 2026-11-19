@@ -3,6 +3,7 @@ package com.learnnow.trainer.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnnow.common.exception.AiLimitException;
+import com.learnnow.common.exception.AiRejectedException;
 import com.learnnow.common.exception.AiUnavailableException;
 import com.learnnow.common.exception.ValidationException;
 import java.io.BufferedReader;
@@ -15,6 +16,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -144,7 +146,10 @@ public class AiClient {
     /** Text from one short WAV clip (up to 30 seconds). */
     public String transcribe(byte[] wav, String feature) {
         String boundary = "learnnow-" + UUID.randomUUID();
-        byte[] body = multipart(boundary, feature, wav);
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("tenant", TENANT);
+        fields.put("feature", feature);
+        byte[] body = multipart(boundary, fields, "clip.wav", "audio/wav", wav);
         HttpRequest request =
                 authorised("/v1/speech/transcribe", Duration.ofSeconds(40))
                         .header("Content-Type", "multipart/form-data; boundary=" + boundary)
@@ -184,6 +189,107 @@ public class AiClient {
         }
     }
 
+    /**
+     * Reads a resume (PDF or .docx) into {@code text}, {@code profile} and {@code review}. Takes
+     * 10-20 seconds. A file learnnow-ai cannot use comes back as {@link AiRejectedException} with
+     * its own learner-safe explanation.
+     */
+    public Map<String, Object> analyseResume(
+            byte[] file, String fileName, String contentType, String targetRole) {
+        String boundary = "learnnow-" + UUID.randomUUID();
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("tenant", TENANT);
+        if (targetRole != null && !targetRole.isBlank()) {
+            fields.put("target_role", targetRole.strip());
+        }
+        HttpRequest request =
+                authorised("/v1/resume/analyse", Duration.ofSeconds(90))
+                        .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                        .POST(
+                                HttpRequest.BodyPublishers.ofByteArray(
+                                        multipart(
+                                                boundary,
+                                                fields,
+                                                safeFileName(fileName),
+                                                contentType != null
+                                                        ? contentType
+                                                        : "application/octet-stream",
+                                                file)))
+                        .build();
+        return parse(send(request, HttpResponse.BodyHandlers.ofString()).body());
+    }
+
+    /** How well the resume fits one job description. */
+    public Map<String, Object> matchResume(Map<String, Object> body) {
+        return parse(
+                send(
+                                jsonPost("/v1/resume/match", body, Duration.ofSeconds(60)),
+                                HttpResponse.BodyHandlers.ofString())
+                        .body());
+    }
+
+    /**
+     * The questions for a mock interview: {@code title} and {@code items}, each a written question
+     * or a bank slot for this backend to fill. Takes 10-20 seconds.
+     */
+    public Map<String, Object> buildInterviewPlan(Map<String, Object> body) {
+        return parse(
+                send(
+                                jsonPost("/v1/interviews/plan", body, Duration.ofSeconds(60)),
+                                HttpResponse.BodyHandlers.ofString())
+                        .body());
+    }
+
+    /** A study plan for the learner's current week. */
+    public Map<String, Object> weeklyPlan(Map<String, Object> body) {
+        return parse(
+                send(
+                                jsonPost("/v1/trainer/plan", body, Duration.ofSeconds(60)),
+                                HttpResponse.BodyHandlers.ofString())
+                        .body());
+    }
+
+    /** This month's spend against the cap, by feature and by day. */
+    public Map<String, Object> usage() {
+        HttpRequest request =
+                authorised("/v1/usage?tenant=" + TENANT, Duration.ofSeconds(10)).GET().build();
+        return parse(send(request, HttpResponse.BodyHandlers.ofString()).body());
+    }
+
+    private Map<String, Object> parse(String json) {
+        try {
+            return objectMapper.readValue(json, new TypeReference<>() {});
+        } catch (IOException e) {
+            throw new AiUnavailableException("ai_unavailable", e);
+        }
+    }
+
+    /**
+     * learnnow-ai's {@code detail} when it is a sentence. FastAPI's own validation errors put a
+     * list there instead, which is not for a learner's eyes.
+     */
+    String rejectionDetail(String body) {
+        try {
+            Map<String, Object> parsed = objectMapper.readValue(body, new TypeReference<>() {});
+            if (parsed.get("detail") instanceof String detail && !detail.isBlank()) {
+                return detail;
+            }
+        } catch (IOException | RuntimeException ignored) {
+            // Fall through to the generic message.
+        }
+        return "This file could not be read as a resume. Upload a PDF or a Word (.docx) file.";
+    }
+
+    /** Only the name's last segment, without quotes or line breaks that would break the form. */
+    private static String safeFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return "resume";
+        }
+        String name = fileName.replace('\\', '/');
+        name = name.substring(name.lastIndexOf('/') + 1);
+        return name.replaceAll("[\"\\r\\n]", "_");
+    }
+
     private HttpRequest.Builder authorised(String path, Duration timeout) {
         if (!configured()) {
             throw new AiUnavailableException("ai_unavailable");
@@ -194,7 +300,7 @@ public class AiClient {
     }
 
     private HttpRequest jsonPost(String path, Map<String, Object> body, Duration timeout) {
-        Map<String, Object> withTenant = new java.util.LinkedHashMap<>(body);
+        Map<String, Object> withTenant = new LinkedHashMap<>(body);
         withTenant.put("tenant", TENANT);
         try {
             return authorised(path, timeout)
@@ -224,6 +330,11 @@ public class AiClient {
         if (status == 422 && request.uri().getPath().endsWith("/transcribe")) {
             throw new ValidationException("ai_clip_rejected");
         }
+        if (status == 422
+                && request.uri().getPath().endsWith("/resume/analyse")
+                && response.body() instanceof String body) {
+            throw new AiRejectedException("resume_rejected", rejectionDetail(body));
+        }
         if (status >= 400) {
             throw new AiUnavailableException(
                     "ai_unavailable", new IOException("learnnow-ai answered " + status));
@@ -231,30 +342,36 @@ public class AiClient {
         return response;
     }
 
-    private static byte[] multipart(String boundary, String feature, byte[] wav) {
-        String head =
-                "--"
-                        + boundary
-                        + "\r\nContent-Disposition: form-data; name=\"tenant\"\r\n\r\n"
-                        + TENANT
-                        + "\r\n"
-                        + "--"
-                        + boundary
-                        + "\r\nContent-Disposition: form-data; name=\"feature\"\r\n\r\n"
-                        + feature
-                        + "\r\n"
-                        + "--"
-                        + boundary
-                        + "\r\n"
-                        + "Content-Disposition: form-data; name=\"file\"; filename=\"clip.wav\"\r\n"
-                        + "Content-Type: audio/wav\r\n\r\n";
+    private static byte[] multipart(
+            String boundary,
+            Map<String, String> fields,
+            String fileName,
+            String contentType,
+            byte[] file) {
+        StringBuilder head = new StringBuilder();
+        fields.forEach(
+                (name, value) ->
+                        head.append("--")
+                                .append(boundary)
+                                .append("\r\nContent-Disposition: form-data; name=\"")
+                                .append(name)
+                                .append("\"\r\n\r\n")
+                                .append(value)
+                                .append("\r\n"));
+        head.append("--")
+                .append(boundary)
+                .append("\r\nContent-Disposition: form-data; name=\"file\"; filename=\"")
+                .append(fileName)
+                .append("\"\r\nContent-Type: ")
+                .append(contentType)
+                .append("\r\n\r\n");
         String tail = "\r\n--" + boundary + "--\r\n";
-        byte[] h = head.getBytes(StandardCharsets.UTF_8);
+        byte[] h = head.toString().getBytes(StandardCharsets.UTF_8);
         byte[] t = tail.getBytes(StandardCharsets.UTF_8);
-        byte[] out = new byte[h.length + wav.length + t.length];
+        byte[] out = new byte[h.length + file.length + t.length];
         System.arraycopy(h, 0, out, 0, h.length);
-        System.arraycopy(wav, 0, out, h.length, wav.length);
-        System.arraycopy(t, 0, out, h.length + wav.length, t.length);
+        System.arraycopy(file, 0, out, h.length, file.length);
+        System.arraycopy(t, 0, out, h.length + file.length, t.length);
         return out;
     }
 }

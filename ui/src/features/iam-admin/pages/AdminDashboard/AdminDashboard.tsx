@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ShieldCheck, Plus, BookOpen, Upload, FileJson, Layers, GraduationCap } from 'lucide-react';
+import { ShieldCheck, Plus, BookOpen, Upload, FileJson, Layers, GraduationCap, Bot } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 import { EmptyState } from '../../../../shared/components/ui/EmptyState';
 import { Loader } from '../../../../shared/components/ui/Loader';
@@ -11,6 +11,7 @@ import { Tabs } from '../../../../shared/components/ui/Tabs';
 import { ConfirmDeleteModal } from '../../components/ConfirmDeleteModal';
 import { DsaImporter } from '../../components/DsaImporter';
 import { DsaSheetManager } from '../../components/DsaSheetManager';
+import { AiAdmin } from '../../components/AiAdmin';
 
 interface AdminDashboardProps {
     onNavigateCreate: () => void;
@@ -31,7 +32,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
     const pageRef = useRef(0);
 
-    type AdminTab = 'courses' | 'dsa-import' | 'dsa-sheet';
+    type AdminTab = 'courses' | 'dsa-import' | 'dsa-sheet' | 'ai';
     const [tab, setTab] = useState<AdminTab>('courses');
     /** Bumped after an import so the sheet tab reloads without a remount. */
     const [dsaToken, setDsaToken] = useState(0);
@@ -128,7 +129,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 items={[
                     { id: 'courses', label: 'Courses', icon: <GraduationCap size={16} /> },
                     { id: 'dsa-import', label: 'DSA · Import JSON', icon: <FileJson size={16} /> },
-                    { id: 'dsa-sheet', label: 'DSA · Sheet', icon: <Layers size={16} /> }
+                    { id: 'dsa-sheet', label: 'DSA · Sheet', icon: <Layers size={16} /> },
+                    { id: 'ai', label: 'AI', icon: <Bot size={16} /> }
                 ]}
                 activeId={tab}
                 onChange={setTab}
@@ -147,6 +149,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             )}
 
             {tab === 'dsa-sheet' && <DsaSheetManager refreshToken={dsaToken} />}
+
+            {tab === 'ai' && <AiAdmin />}
 
             {tab === 'courses' && (isLoading ? (
                 <Loader variant="inline" text="Loading course catalog..." showColdStartFunnyMessages={true} />

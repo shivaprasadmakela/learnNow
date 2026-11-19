@@ -2,7 +2,6 @@ package com.learnnow.trainer.service;
 
 import com.learnnow.admin.entity.ContentBlock;
 import com.learnnow.common.exception.NotFoundException;
-import com.learnnow.learningprogress.repository.UserLearningPreferencesRepository;
 import com.learnnow.paths.entity.ContentStatus;
 import com.learnnow.paths.entity.Subtopic;
 import com.learnnow.paths.entity.Topic;
@@ -15,17 +14,12 @@ import com.learnnow.trainer.dto.NoteResponse;
 import com.learnnow.trainer.dto.TrainerProfileResponse;
 import com.learnnow.trainer.entity.LearnerGoal;
 import com.learnnow.trainer.entity.TrainerNote;
-import com.learnnow.trainer.interview.entity.InterviewStatus;
-import com.learnnow.trainer.interview.repository.TopicInterviewRepository;
 import com.learnnow.trainer.repository.LearnerGoalRepository;
 import com.learnnow.trainer.repository.TrainerNoteRepository;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
@@ -60,8 +54,7 @@ public class TrainerService {
     private final TrainerNoteRepository noteRepository;
     private final SubtopicRepository subtopicRepository;
     private final TopicRepository topicRepository;
-    private final TopicInterviewRepository interviewRepository;
-    private final UserLearningPreferencesRepository preferencesRepository;
+    private final TrainerQuotaService quotaService;
 
     private volatile String platformGuide;
 
@@ -79,25 +72,9 @@ public class TrainerService {
                 notes(userId));
     }
 
+    /** Topic interviews left this month; mock interviews and retries have their own quotas. */
     public int interviewsLeftThisMonth(String userId) {
-        ZoneId zone =
-                preferencesRepository
-                        .findByUserId(userId)
-                        .map(
-                                p -> {
-                                    try {
-                                        return ZoneId.of(p.getTimezone());
-                                    } catch (Exception e) {
-                                        return ZoneId.of("UTC");
-                                    }
-                                })
-                        .orElse(ZoneId.of("UTC"));
-        Instant monthStart =
-                ZonedDateTime.now(zone).withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).toInstant();
-        long used =
-                interviewRepository.countByUserIdAndCreatedAtAfterAndStatusNot(
-                        userId, monthStart, InterviewStatus.FAILED);
-        return (int) Math.max(0, 5 - used);
+        return quotaService.topicInterviewsLeft(userId);
     }
 
     @Transactional

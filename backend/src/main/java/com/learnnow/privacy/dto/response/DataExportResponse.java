@@ -14,6 +14,7 @@ import com.learnnow.user.entity.User;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -39,25 +40,34 @@ public record DataExportResponse(
 
     /**
      * What the AI trainer holds: the goal the learner set, notes it drew from their conversations,
-     * and practice interviews.
+     * practice and mock interviews, the resume as it was read (never the file, which is not kept)
+     * and weekly plans.
      */
     public record Trainer(
             com.learnnow.trainer.dto.GoalResponse goal,
             List<com.learnnow.trainer.dto.NoteResponse> notes,
-            List<TopicInterviewEntry> topicInterviews) {
+            List<TopicInterviewEntry> topicInterviews,
+            ResumeEntry resume,
+            List<WeeklyPlanEntry> weeklyPlans) {
 
         public Trainer(
                 com.learnnow.trainer.dto.GoalResponse goal,
                 List<com.learnnow.trainer.dto.NoteResponse> notes) {
-            this(goal, notes, List.of());
+            this(goal, notes, List.of(), null, List.of());
         }
     }
 
     public record TopicInterviewEntry(
             UUID id,
+            String kind,
+            String title,
             UUID topicId,
+            UUID parentInterviewId,
             String status,
             Integer overallScore,
+            Map<String, Object> feedback,
+            Integer learnerRating,
+            String learnerComment,
             int pointsAwarded,
             Instant createdAt,
             Instant completedAt,
@@ -68,14 +78,61 @@ public record DataExportResponse(
             int seq, String role, String text, UUID questionId, Instant createdAt) {}
 
     public record TopicInterviewAnswerEntry(
+            UUID planQuestionId,
             UUID questionId,
             UUID subtopicId,
+            String category,
             String prompt,
             Integer score,
             String good,
             String missing,
             String evidence,
+            String modelAnswer,
             Instant createdAt) {}
+
+    /** The text read from the resume, what the trainer made of it, and any job match. */
+    public record ResumeEntry(
+            String fileName,
+            String targetRole,
+            String resumeText,
+            Map<String, Object> profile,
+            Map<String, Object> review,
+            String jobDescription,
+            Map<String, Object> jobMatch,
+            Instant analysedAt,
+            Instant updatedAt) {
+
+        public static ResumeEntry from(com.learnnow.trainer.resume.entity.LearnerResume resume) {
+            return new ResumeEntry(
+                    resume.getFileName(),
+                    resume.getTargetRole(),
+                    resume.getResumeText(),
+                    resume.getProfile(),
+                    resume.getReview(),
+                    resume.getJobDescription(),
+                    resume.getJobMatch(),
+                    resume.getAnalysedAt(),
+                    resume.getUpdatedAt());
+        }
+    }
+
+    public record WeeklyPlanEntry(
+            java.time.LocalDate weekStart,
+            Map<String, Object> plan,
+            int generations,
+            Instant createdAt,
+            Instant updatedAt) {
+
+        public static WeeklyPlanEntry from(
+                com.learnnow.trainer.plan.entity.TrainerWeeklyPlan plan) {
+            return new WeeklyPlanEntry(
+                    plan.getWeekStart(),
+                    plan.getPlan(),
+                    plan.getGenerations(),
+                    plan.getCreatedAt(),
+                    plan.getUpdatedAt());
+        }
+    }
 
     /** The account itself, minus anything that would be a credential. */
     public record Account(

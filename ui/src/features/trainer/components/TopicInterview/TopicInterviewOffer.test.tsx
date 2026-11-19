@@ -66,4 +66,18 @@ describe('TopicInterviewOffer', () => {
         const startBtn = screen.getByRole('button', { name: /Start Practice Interview/i });
         expect(startBtn).toBeDisabled();
     });
+
+    it('renders null when an admin has switched topic interviews off', async () => {
+        vi.spyOn(interviewApi, 'fetchInterviewAvailability').mockResolvedValue({
+            available: false,
+            reason: 'ai_feature_off',
+            left: 5
+        });
+
+        const { container } = render(<TopicInterviewOffer topicId="topic-1" topicTitle="Spring Core" />);
+
+        await waitFor(() => {
+            expect(container).toBeEmptyDOMElement();
+        });
+    });
 });

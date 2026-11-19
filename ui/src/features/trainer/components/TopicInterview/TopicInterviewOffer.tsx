@@ -40,8 +40,8 @@ export const TopicInterviewOffer: React.FC<TopicInterviewOfferProps> = ({
         };
     }, [topicId, token]);
 
-    // Don't render if this topic has no bank questions
-    if (!loading && availability?.reason === 'topic_interview_no_questions') {
+    // Nothing to offer when the topic has no bank questions, or an admin has switched the feature off.
+    if (!loading && (availability?.reason === 'topic_interview_no_questions' || availability?.reason === 'ai_feature_off')) {
         return null;
     }
 

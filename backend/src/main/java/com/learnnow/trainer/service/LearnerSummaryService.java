@@ -19,13 +19,18 @@ import com.learnnow.paths.repository.TopicRepository.TopicHeader;
 import com.learnnow.privacy.entity.ConsentPurpose;
 import com.learnnow.privacy.service.ConsentService;
 import com.learnnow.trainer.entity.TrainerNote;
+import com.learnnow.trainer.interview.entity.InterviewKind;
 import com.learnnow.trainer.interview.entity.InterviewStatus;
 import com.learnnow.trainer.interview.entity.TopicInterview;
 import com.learnnow.trainer.interview.entity.TopicInterviewAnswer;
 import com.learnnow.trainer.interview.repository.TopicInterviewAnswerRepository;
 import com.learnnow.trainer.interview.repository.TopicInterviewRepository;
+import com.learnnow.trainer.readiness.ReadinessService;
+import com.learnnow.trainer.readiness.TopicReadiness;
 import com.learnnow.trainer.repository.LearnerGoalRepository;
 import com.learnnow.trainer.repository.TrainerNoteRepository;
+import com.learnnow.trainer.resume.entity.LearnerResume;
+import com.learnnow.trainer.resume.repository.LearnerResumeRepository;
 import com.learnnow.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -47,6 +52,9 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>Personal data in it is governed by the PERSONALISATION consent. A learner who has withdrawn it
  * still gets answers, but the summary says only that and carries none of their records.
+ *
+ * <p>It also carries the trainer's own findings: readiness per topic (weak and untested topics),
+ * recent mock interviews with their suggested next step, and a short view of the resume.
  */
 @Service
 @RequiredArgsConstructor
@@ -59,6 +67,8 @@ public class LearnerSummaryService {
     private static final int RECENT_TOPICS = 8;
     private static final int ACTIVITY_DAYS = 30;
     private static final int NOTES = 30;
+    private static final int TOPIC_ROWS = 8;
+    private static final int RESUME_SKILLS = 12;
 
     private final ConsentService consentService;
     private final UserRepository userRepository;
@@ -73,6 +83,8 @@ public class LearnerSummaryService {
     private final TrainerNoteRepository noteRepository;
     private final TopicInterviewRepository interviewRepository;
     private final TopicInterviewAnswerRepository interviewAnswerRepository;
+    private final ReadinessService readinessService;
+    private final LearnerResumeRepository resumeRepository;
 
     public boolean personalised(String userId) {
         return consentService.hasConsent(userId, ConsentPurpose.PERSONALISATION);
@@ -114,8 +126,13 @@ public class LearnerSummaryService {
         summary.put("next_step", nextStep(userId));
         summary.put("quiz", quiz(userId));
         summary.put("interviews", interviews(userId));
+        summary.put("mock_interviews", mockInterviews(userId));
+        List<TopicReadiness> readiness = readinessService.forUser(userId);
+        summary.put("weak_topics", weakTopics(readiness));
+        summary.put("untested_completed_topics", untestedCompleted(readiness));
         summary.put("trainer_notes", notes(userId));
-        summary.put("resume", null);
+        summary.put(
+                "resume", resumeRepository.findPresent(userId).map(r -> resume(r)).orElse(null));
         return summary;
     }
 
@@ -266,8 +283,8 @@ public class LearnerSummaryService {
 
     private List<Map<String, Object>> interviews(String userId) {
         List<TopicInterview> scored =
-                interviewRepository.findTop5ByUserIdAndStatusOrderByCreatedAtDesc(
-                        userId, InterviewStatus.SCORED);
+                interviewRepository.findTop5ByUserIdAndKindInAndStatusOrderByCreatedAtDesc(
+                        userId, List.of(InterviewKind.TOPIC), InterviewStatus.SCORED);
         if (scored.isEmpty()) {
             return List.of();
         }
@@ -307,6 +324,100 @@ public class LearnerSummaryService {
                             return m;
                         })
                 .toList();
+    }
+
+    /** Recent scored mock interviews: what they were for, how they went, what to do next. */
+    private List<Map<String, Object>> mockInterviews(String userId) {
+        return interviewRepository
+                .findTop5ByUserIdAndKindInAndStatusOrderByCreatedAtDesc(
+                        userId, InterviewKind.mockKinds(), InterviewStatus.SCORED)
+                .stream()
+                .map(
+                        i -> {
+                            Map<String, Object> m = new LinkedHashMap<>();
+                            m.put("kind", i.getKind().wire());
+                            m.put("title", i.getTitle());
+                            m.put(
+                                    "date",
+                                    i.getCreatedAt() != null
+                                            ? i.getCreatedAt().toString().substring(0, 10)
+                                            : null);
+                            m.put("score", i.getOverallScore());
+                            m.put(
+                                    "next_step",
+                                    i.getFeedback() != null
+                                            ? i.getFeedback().get("next_step")
+                                            : null);
+                            return m;
+                        })
+                .toList();
+    }
+
+    /** Topics whose readiness is weak, weakest first. */
+    static List<Map<String, Object>> weakTopics(List<TopicReadiness> readiness) {
+        return readiness.stream()
+                .filter(r -> "weak".equals(r.level()))
+                .limit(TOPIC_ROWS)
+                .map(
+                        r -> {
+                            Map<String, Object> m = new LinkedHashMap<>();
+                            m.put("topic", r.topicTitle());
+                            m.put("readiness", r.readiness());
+                            m.put("quiz_accuracy", r.quizAccuracy());
+                            m.put("interview_score", r.interviewScore());
+                            return m;
+                        })
+                .toList();
+    }
+
+    /** Topics the learner finished but has neither interviewed on nor answered enough quiz on. */
+    static List<String> untestedCompleted(List<TopicReadiness> readiness) {
+        return readiness.stream()
+                .filter(r -> r.completed() && r.readiness() == null)
+                .limit(TOPIC_ROWS)
+                .map(TopicReadiness::topicTitle)
+                .toList();
+    }
+
+    /**
+     * A short view of the resume: enough for the trainer to tailor advice, not the whole text. The
+     * profile holds no contact details.
+     */
+    static Map<String, Object> resume(LearnerResume r) {
+        Map<String, Object> profile = r.getProfile() != null ? r.getProfile() : Map.of();
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("headline", profile.get("headline"));
+        m.put("level", profile.get("level"));
+        m.put("years_experience", profile.get("years_experience"));
+        m.put("target_role", r.getTargetRole());
+        m.put(
+                "skills",
+                profile.get("skills") instanceof List<?> skills
+                        ? skills.stream().limit(RESUME_SKILLS).toList()
+                        : List.of());
+        m.put(
+                "projects",
+                profile.get("projects") instanceof List<?> projects
+                        ? projects.stream()
+                                .filter(p -> p instanceof Map<?, ?>)
+                                .map(p -> ((Map<?, ?>) p).get("name"))
+                                .filter(Objects::nonNull)
+                                .toList()
+                        : List.of());
+        Map<String, Object> review = r.getReview() != null ? r.getReview() : Map.of();
+        m.put("review_overall", review.get("overall"));
+        m.put(
+                "top_issues",
+                review.get("issues") instanceof List<?> issues
+                        ? issues.stream()
+                                .filter(i -> i instanceof Map<?, ?>)
+                                .map(i -> ((Map<?, ?>) i).get("title"))
+                                .filter(Objects::nonNull)
+                                .limit(3)
+                                .toList()
+                        : List.of());
+        m.put("has_job_description", r.getJobDescription() != null);
+        return m;
     }
 
     private List<Map<String, Object>> notes(String userId) {

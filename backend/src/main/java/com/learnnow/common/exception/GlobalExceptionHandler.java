@@ -21,6 +21,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -67,6 +68,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleAiLimit(AiLimitException ex) {
         log.warn("AI spending cap reached: {}", ex.getMessage());
         return body(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
+    @ExceptionHandler(AiFeatureOffException.class)
+    public ResponseEntity<Map<String, String>> handleAiFeatureOff(AiFeatureOffException ex) {
+        // An admin's decision, not an outage: nothing to alert on.
+        log.debug("AI feature switched off");
+        return body(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
+    @ExceptionHandler(AiRejectedException.class)
+    public ResponseEntity<Map<String, String>> handleAiRejected(AiRejectedException ex) {
+        // The message is learnnow-ai's own learner-safe text, so it is returned as it is.
+        log.debug("AI service refused the request: {}", ex.getCode());
+        return raw(HttpStatus.UNPROCESSABLE_ENTITY, ex.getCode(), ex.getMessage());
     }
 
     @ExceptionHandler(AiUnavailableException.class)
@@ -131,6 +146,14 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "invalid_parameter",
                 "A request parameter is missing or malformed.");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleUploadTooLarge(
+            MaxUploadSizeExceededException ex) {
+        // Without this the multipart limit surfaced as a 500 with a correlation id.
+        log.debug("Upload over the multipart limit: {}", ex.getMessage());
+        return body(HttpStatus.PAYLOAD_TOO_LARGE, "upload_too_large");
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

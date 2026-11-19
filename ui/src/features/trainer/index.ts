@@ -4,7 +4,8 @@ export {
     setQuizInProgress,
     setInterviewActive,
     isInterviewActive,
-    useInterviewActive
+    useInterviewActive,
+    openAskAi
 } from './pageContext';
 export { TopicInterviewOffer } from './components/TopicInterview/TopicInterviewOffer';
 export { TopicInterviewFlow } from './components/TopicInterview/TopicInterviewFlow';

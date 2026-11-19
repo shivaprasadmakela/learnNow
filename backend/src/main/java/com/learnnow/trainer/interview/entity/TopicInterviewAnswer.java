@@ -34,6 +34,17 @@ public class TopicInterviewAnswer {
     @Column(name = "subtopic_id")
     private UUID subtopicId;
 
+    /** The question's id in the plan; the only id an AI-written question has. */
+    @Column(name = "plan_question_id")
+    private UUID planQuestionId;
+
+    /** intro, technical, project, behavioural or hr. */
+    @Column(length = 20)
+    private String category;
+
+    @Column(name = "model_answer", columnDefinition = "TEXT")
+    private String modelAnswer;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String prompt;
 

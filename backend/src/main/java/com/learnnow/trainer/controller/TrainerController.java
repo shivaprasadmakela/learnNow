@@ -7,6 +7,8 @@ import com.learnnow.trainer.dto.ChatRequest;
 import com.learnnow.trainer.dto.GoalRequest;
 import com.learnnow.trainer.dto.GoalResponse;
 import com.learnnow.trainer.dto.TrainerProfileResponse;
+import com.learnnow.trainer.feature.AiFeature;
+import com.learnnow.trainer.feature.AiFeatureService;
 import com.learnnow.trainer.service.TrainerService;
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -46,6 +48,7 @@ public class TrainerController {
     private static final long MAX_CLIP_BYTES = 2_000_000;
 
     private final TrainerService trainerService;
+    private final AiFeatureService featureService;
     private final MessageSource messageSource;
     private final ExecutorService streams = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -76,6 +79,7 @@ public class TrainerController {
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter chat(
             @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ChatRequest request) {
+        featureService.requireEnabled(AiFeature.ASK_AI);
         String userId = jwt.getSubject();
         if (!"user".equals(request.messages().get(request.messages().size() - 1).role())) {
             throw new ValidationException("trainer_last_message_not_learner");
@@ -110,6 +114,7 @@ public class TrainerController {
     public ResponseEntity<Map<String, String>> transcribe(
             @AuthenticationPrincipal Jwt jwt, @RequestParam("file") MultipartFile file)
             throws IOException {
+        featureService.requireEnabled(AiFeature.ASK_AI);
         if (file.isEmpty() || file.getSize() > MAX_CLIP_BYTES) {
             throw new ValidationException("ai_clip_rejected");
         }

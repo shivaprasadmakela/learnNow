@@ -1,18 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Mic, Send, Sparkles, Square, Trash2, X } from 'lucide-react';
+import { Mic, Send, Sparkles, Square, X } from 'lucide-react';
 import { Markdown } from '../../../../shared/components/ui/Markdown';
 import {
-    deleteNote,
     fetchTrainer,
-    saveGoal,
     streamChat,
     transcribe,
     type ChatTurn,
-    type TrainerGoal,
     type TrainerProfile
 } from '../../api/trainer.api';
 import { updateConsents } from '../../../privacy/api/privacy.api';
-import { getTrainerContext, useInterviewActive } from '../../pageContext';
+import { getTrainerContext, takeAskAiRequest, useAskAiRequest, useInterviewActive } from '../../pageContext';
+import { GoalForm, TrainerNotes } from '../AboutYou';
 import { toWav16k } from '../../utils/wav';
 import styles from './AskAi.module.css';
 
@@ -55,6 +53,8 @@ export const AskAi: React.FC = () => {
     const abortRef = useRef<AbortController | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const interviewActive = useInterviewActive();
+    const askAiRequest = useAskAiRequest();
+    const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
 
     const loadProfile = useCallback(() => {
         fetchTrainer().then(setProfile).catch(() => setProfile(null));
@@ -102,6 +102,23 @@ export const AskAi: React.FC = () => {
             setBusy(false);
         }
     };
+
+    useEffect(() => {
+        sendRef.current = send;
+    });
+
+    // Another screen asked for Ask AI (a nudge, a weak topic): open the chat and send its prompt,
+    // or leave it in the box when a reply is still streaming.
+    useEffect(() => {
+        if (!askAiRequest || !profile?.available) return;
+        const request = takeAskAiRequest();
+        if (!request) return;
+        setOpen(true);
+        setView('chat');
+        if (!request.prompt) return;
+        if (busy) setDraft(request.prompt);
+        else void sendRef.current(request.prompt);
+    }, [askAiRequest, profile, busy]);
 
     const startRecording = async () => {
         setError(null);
@@ -217,7 +234,7 @@ export const AskAi: React.FC = () => {
                                 {messages.map((m, i) => (
                                     <div key={i} className={m.role === 'user' ? styles.user : styles.assistant}>
                                         {m.role === 'assistant' ? (
-                                            m.content ? <Markdown content={m.content} runnableCode={false} /> : <span className={styles.typing}>Thinking…</span>
+                                            m.content ? <Markdown content={m.content} runnableCode={false} sameOriginImagesOnly /> : <span className={styles.typing}>Thinking…</span>
                                         ) : (
                                             m.content
                                         )}
@@ -272,64 +289,11 @@ export const AskAi: React.FC = () => {
 
 /** What the trainer holds about the learner: their goal, editable, and its notes, deletable. */
 const AboutYou: React.FC<{ profile: TrainerProfile; onChanged: () => void }> = ({ profile, onChanged }) => {
-    const [goal, setGoal] = useState<TrainerGoal>(profile.goal ?? {});
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-
-    const submit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        try {
-            await saveGoal({
-                targetRole: goal.targetRole || null,
-                targetDate: goal.targetDate || null,
-                hoursPerWeek: goal.hoursPerWeek || null
-            });
-            setSaved(true);
-            onChanged();
-        } finally {
-            setSaving(false);
-        }
-    };
-
     return (
         <div className={styles.about}>
-            <form className={styles.goal} onSubmit={submit}>
-                <h3>Your goal</h3>
-                <label>
-                    Target role
-                    <input value={goal.targetRole ?? ''} maxLength={120} placeholder="e.g. Java backend developer" onChange={e => { setGoal({ ...goal, targetRole: e.target.value }); setSaved(false); }} />
-                </label>
-                <div className={styles.goalRow}>
-                    <label>
-                        Target date
-                        <input type="date" value={goal.targetDate ?? ''} onChange={e => { setGoal({ ...goal, targetDate: e.target.value }); setSaved(false); }} />
-                    </label>
-                    <label>
-                        Hours a week
-                        <input type="number" min={1} max={80} value={goal.hoursPerWeek ?? ''} onChange={e => { setGoal({ ...goal, hoursPerWeek: e.target.value ? Number(e.target.value) : null }); setSaved(false); }} />
-                    </label>
-                </div>
-                <button type="submit" className={styles.saveButton} disabled={saving}>
-                    {saved ? 'Saved' : saving ? 'Saving…' : 'Save goal'}
-                </button>
-            </form>
+            <GoalForm goal={profile.goal} onSaved={onChanged} />
             <h3>What your trainer has noted</h3>
-            {profile.notes.length === 0 ? (
-                <p className={styles.muted}>Nothing yet. Notes appear as you talk to your trainer, and you can delete any of them.</p>
-            ) : (
-                <ul className={styles.notes}>
-                    {profile.notes.map(n => (
-                        <li key={n.id}>
-                            <span className={styles.noteKind}>{n.kind}</span>
-                            <span className={styles.noteText}>{n.text}</span>
-                            <button type="button" className={styles.iconButton} aria-label="Delete note" onClick={() => deleteNote(n.id).then(onChanged)}>
-                                <Trash2 size={14} />
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-            )}
+            <TrainerNotes notes={profile.notes} onChanged={onChanged} />
             <p className={styles.muted}>
                 Your trainer reads your progress, quiz results, streak and study times. {!profile.personalised ? (
                     <>

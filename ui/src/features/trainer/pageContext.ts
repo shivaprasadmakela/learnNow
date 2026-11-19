@@ -41,6 +41,40 @@ export const useInterviewActive = () =>
         () => interviewActive
     );
 
+/**
+ * A request from another screen to open Ask AI, with a ready prompt when there is one: a nudge's
+ * "Ask AI", or a weak topic on the trainer page. Ask AI takes it once and clears it, so remounting
+ * the panel does not send the same prompt twice.
+ */
+export interface AskAiRequest {
+    id: number;
+    prompt: string | null;
+}
+
+let askAiRequest: AskAiRequest | null = null;
+let askAiSeq = 0;
+
+export const openAskAi = (prompt?: string | null) => {
+    askAiRequest = { id: ++askAiSeq, prompt: prompt?.trim() || null };
+    emit();
+};
+
+export const takeAskAiRequest = (): AskAiRequest | null => {
+    const request = askAiRequest;
+    askAiRequest = null;
+    if (request) emit();
+    return request;
+};
+
+export const useAskAiRequest = () =>
+    useSyncExternalStore(
+        l => {
+            listeners.add(l);
+            return () => listeners.delete(l);
+        },
+        () => askAiRequest
+    );
+
 export const useTrainerPage = () =>
     useSyncExternalStore(
         l => {

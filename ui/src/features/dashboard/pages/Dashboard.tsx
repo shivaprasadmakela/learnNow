@@ -13,6 +13,7 @@ import { WeeklyLeagueBoard } from '../components/WeeklyLeagueBoard';
 import { OverallProgress } from '../components/OverallProgress';
 import { BrandFooter } from '../components/BrandFooter';
 import { DsaProgressTile } from '../components/DsaProgressTile';
+import { TrainerCard, type TrainerSection } from '../../trainer/components/TrainerCard';
 
 import type { Course } from '../../../types';
 
@@ -32,6 +33,10 @@ export interface DashboardProps {
     onOpenDsaSheet?: () => void;
     onOpenDsaProblem?: (stepSlug: string, problemSlug: string) => void;
     onMetricsLoaded?: (streak: number, points: number) => void;
+    /** Opens the AI trainer page, at one section when given. Without it the trainer card is hidden. */
+    onOpenTrainer?: (section?: TrainerSection) => void;
+    /** Opens a topic in the study console, at one lesson when given (the trainer card's nudges). */
+    onOpenTopic?: (topicId: string, subtopicId?: string | null) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -47,7 +52,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     onViewAllPaths,
     onOpenDsaSheet,
     onOpenDsaProblem,
-    onMetricsLoaded
+    onMetricsLoaded,
+    onOpenTrainer,
+    onOpenTopic
 }) => {
     const { dashboardData, isLoading, error } = useDashboard();
     const hasReportedRef = React.useRef(false);
@@ -148,6 +155,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 {/* Right Column: Streak, League & Progress Table */}
                 <div className={styles.rightCol}>
+                    {onOpenTrainer && onOpenTopic && (
+                        <TrainerCard onOpenTrainer={onOpenTrainer} onOpenTopic={onOpenTopic} />
+                    )}
                     <StreakCalendar
                         currentStreak={currentStreak}
                         weeklyCalendar={weeklyCalendar}

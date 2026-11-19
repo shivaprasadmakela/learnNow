@@ -24,6 +24,15 @@ public final class PointsConfig {
     public static final int TOPIC_INTERVIEW_STRONG_BONUS = 10;
 
     /**
+     * A scored mock interview (resume, HR, behavioural, project or full round). Awarded for every
+     * one, not once per anything: they are few (a small monthly quota) and each is a long session.
+     */
+    public static final int MOCK_INTERVIEW_COMPLETED = 25;
+
+    /** Bonus when a mock interview's overall score is 70 or more. */
+    public static final int MOCK_INTERVIEW_STRONG_BONUS = 15;
+
+    /**
      * A solved DSA problem, scaled by difficulty.
      *
      * <p>All three sit above a subtopic's 5: solving a problem is more work than reading a section.
